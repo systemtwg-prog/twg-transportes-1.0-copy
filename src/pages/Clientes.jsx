@@ -3,13 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
     Plus, Search, Pencil, Trash2, Users, Building2, 
-    Phone, MapPin, FileText 
+    Phone, MapPin, FileText, Star
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ClienteForm from "@/components/clientes/ClienteForm";
@@ -18,6 +18,7 @@ export default function Clientes() {
     const [showForm, setShowForm] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
     const [search, setSearch] = useState("");
+    const [filterFavoritos, setFilterFavoritos] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: clientes = [], isLoading } = useQuery({
@@ -47,6 +48,11 @@ export default function Clientes() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clientes"] })
     });
 
+    const toggleFavorito = useMutation({
+        mutationFn: ({ id, favorito }) => base44.entities.Cliente.update(id, { favorito }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clientes"] })
+    });
+
     const handleSubmit = (data) => {
         if (editingCliente) {
             updateMutation.mutate({ id: editingCliente.id, data });
@@ -66,11 +72,22 @@ export default function Clientes() {
         }
     };
 
-    const filteredClientes = clientes.filter(c => 
+    let filteredClientes = clientes.filter(c => 
         c.razao_social?.toLowerCase().includes(search.toLowerCase()) ||
         c.codigo?.toLowerCase().includes(search.toLowerCase()) ||
         c.cnpj_cpf?.includes(search)
     );
+
+    if (filterFavoritos) {
+        filteredClientes = filteredClientes.filter(c => c.favorito);
+    }
+
+    // Ordenar favoritos primeiro
+    filteredClientes.sort((a, b) => {
+        if (a.favorito && !b.favorito) return -1;
+        if (!a.favorito && b.favorito) return 1;
+        return 0;
+    });
 
     const tipoColors = {
         remetente: "bg-amber-100 text-amber-800 border-amber-200",
@@ -82,6 +99,11 @@ export default function Clientes() {
         remetente: "Remetente",
         destinatario: "Destinatário",
         ambos: "Ambos"
+    };
+
+    const formatHorario = (inicio, fim) => {
+        if (!inicio || !fim) return null;
+        return `${inicio} - ${fim}`;
     };
 
     return (
@@ -108,7 +130,7 @@ export default function Clientes() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md">
                         <CardContent className="p-4 flex items-center gap-4">
                             <div className="p-3 bg-amber-100 rounded-xl">
@@ -131,6 +153,20 @@ export default function Clientes() {
                                 <p className="text-sm text-slate-500">Destinatários</p>
                                 <p className="text-2xl font-bold text-slate-800">
                                     {clientes.filter(c => c.tipo === "destinatario" || c.tipo === "ambos").length}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                          onClick={() => setFilterFavoritos(!filterFavoritos)}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <div className={`p-3 rounded-xl ${filterFavoritos ? "bg-yellow-200" : "bg-yellow-100"}`}>
+                                <Star className={`w-6 h-6 ${filterFavoritos ? "text-yellow-600 fill-yellow-600" : "text-yellow-600"}`} />
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500">Favoritos</p>
+                                <p className="text-2xl font-bold text-slate-800">
+                                    {clientes.filter(c => c.favorito).length}
                                 </p>
                             </div>
                         </CardContent>
@@ -170,11 +206,13 @@ export default function Clientes() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50">
+                                        <TableHead className="w-10"></TableHead>
                                         <TableHead>Código</TableHead>
                                         <TableHead>Razão Social</TableHead>
                                         <TableHead>CNPJ/CPF</TableHead>
                                         <TableHead>Tipo</TableHead>
                                         <TableHead>Cidade/UF</TableHead>
+                                        <TableHead>Horário</TableHead>
                                         <TableHead>Telefone</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
@@ -183,13 +221,13 @@ export default function Clientes() {
                                     <AnimatePresence>
                                         {isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-12">
+                                                <TableCell colSpan={9} className="text-center py-12">
                                                     <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : filteredClientes.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={9} className="text-center py-12 text-slate-500">
                                                     Nenhum cliente encontrado
                                                 </TableCell>
                                             </TableRow>
@@ -202,6 +240,19 @@ export default function Clientes() {
                                                     exit={{ opacity: 0 }}
                                                     className="hover:bg-slate-50 transition-colors"
                                                 >
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => toggleFavorito.mutate({ 
+                                                                id: cliente.id, 
+                                                                favorito: !cliente.favorito 
+                                                            })}
+                                                            className="hover:bg-yellow-100"
+                                                        >
+                                                            <Star className={`w-4 h-4 ${cliente.favorito ? "text-yellow-500 fill-yellow-500" : "text-slate-300"}`} />
+                                                        </Button>
+                                                    </TableCell>
                                                     <TableCell className="font-mono text-slate-600">
                                                         {cliente.codigo || "-"}
                                                     </TableCell>
@@ -218,6 +269,9 @@ export default function Clientes() {
                                                     </TableCell>
                                                     <TableCell className="text-slate-600">
                                                         {cliente.cidade}{cliente.uf ? `/${cliente.uf}` : ""}
+                                                    </TableCell>
+                                                    <TableCell className="text-slate-600 text-xs">
+                                                        {formatHorario(cliente.horario_funcionamento_inicio, cliente.horario_funcionamento_fim) || "-"}
                                                     </TableCell>
                                                     <TableCell className="text-slate-600">
                                                         <div className="flex items-center gap-1">

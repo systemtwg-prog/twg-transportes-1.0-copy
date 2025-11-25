@@ -3,14 +3,16 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
     Plus, Search, Pencil, Trash2, Package, Printer,
-    Calendar, Truck, Clock, Eye
+    Calendar, Truck, Clock, Eye, Filter, X, MapPin
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { format } from "date-fns";
@@ -23,8 +25,19 @@ export default function OrdensColeta() {
     const [showPrint, setShowPrint] = useState(false);
     const [editingOrdem, setEditingOrdem] = useState(null);
     const [selectedOrdem, setSelectedOrdem] = useState(null);
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("todos");
+    
+    // Filtros avançados
+    const [filters, setFilters] = useState({
+        search: "",
+        status: "todos",
+        dataInicio: "",
+        dataFim: "",
+        remetente: "",
+        destinatario: "",
+        motorista: ""
+    });
+    const [showFilters, setShowFilters] = useState(false);
+
     const queryClient = useQueryClient();
 
     const { data: ordens = [], isLoading } = useQuery({
@@ -32,10 +45,31 @@ export default function OrdensColeta() {
         queryFn: () => base44.entities.OrdemColeta.list("-created_date")
     });
 
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const config = configs[0] || {};
+
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.OrdemColeta.create(data),
+        mutationFn: async (data) => {
+            const result = await base44.entities.OrdemColeta.create(data);
+            // Atualizar o último número
+            if (config.id) {
+                await base44.entities.Configuracoes.update(config.id, {
+                    ultimo_numero_ordem: parseInt(data.numero) || 0
+                });
+            } else {
+                await base44.entities.Configuracoes.create({
+                    ultimo_numero_ordem: parseInt(data.numero) || 0
+                });
+            }
+            return result;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ordens"] });
+            queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
             setShowForm(false);
         }
     });
@@ -55,9 +89,11 @@ export default function OrdensColeta() {
     });
 
     const getProximoNumero = () => {
-        if (ordens.length === 0) return "1";
-        const numeros = ordens.map(o => parseInt(o.numero) || 0);
-        return String(Math.max(...numeros) + 1);
+        const ultimoConfig = config.ultimo_numero_ordem || 0;
+        const ultimoOrdens = ordens.length > 0 
+            ? Math.max(...ordens.map(o => parseInt(o.numero) || 0))
+            : 0;
+        return String(Math.max(ultimoConfig, ultimoOrdens) + 1);
     };
 
     const handleSubmit = (data) => {
@@ -94,15 +130,52 @@ export default function OrdensColeta() {
         }
     };
 
+    // Aplicar filtros
     const filteredOrdens = ordens.filter(o => {
-        const matchSearch = 
-            o.numero?.toLowerCase().includes(search.toLowerCase()) ||
-            o.remetente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-            o.destinatario_nome?.toLowerCase().includes(search.toLowerCase()) ||
-            o.nfe?.includes(search);
-        const matchStatus = statusFilter === "todos" || o.status === statusFilter;
-        return matchSearch && matchStatus;
+        // Busca geral
+        const matchSearch = !filters.search || 
+            o.numero?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            o.remetente_nome?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            o.destinatario_nome?.toLowerCase().includes(filters.search.toLowerCase()) ||
+            o.nfe?.includes(filters.search);
+        
+        // Status
+        const matchStatus = filters.status === "todos" || o.status === filters.status;
+        
+        // Datas
+        const matchDataInicio = !filters.dataInicio || (o.data_ordem && o.data_ordem >= filters.dataInicio);
+        const matchDataFim = !filters.dataFim || (o.data_ordem && o.data_ordem <= filters.dataFim);
+        
+        // Remetente
+        const matchRemetente = !filters.remetente || 
+            o.remetente_nome?.toLowerCase().includes(filters.remetente.toLowerCase());
+        
+        // Destinatário
+        const matchDestinatario = !filters.destinatario || 
+            o.destinatario_nome?.toLowerCase().includes(filters.destinatario.toLowerCase());
+        
+        // Motorista
+        const matchMotorista = !filters.motorista || 
+            o.motorista?.toLowerCase().includes(filters.motorista.toLowerCase());
+
+        return matchSearch && matchStatus && matchDataInicio && matchDataFim && 
+               matchRemetente && matchDestinatario && matchMotorista;
     });
+
+    const clearFilters = () => {
+        setFilters({
+            search: "",
+            status: "todos",
+            dataInicio: "",
+            dataFim: "",
+            remetente: "",
+            destinatario: "",
+            motorista: ""
+        });
+    };
+
+    const hasActiveFilters = filters.status !== "todos" || filters.dataInicio || 
+        filters.dataFim || filters.remetente || filters.destinatario || filters.motorista;
 
     const statusColors = {
         pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -153,7 +226,7 @@ export default function OrdensColeta() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                          onClick={() => setStatusFilter("pendente")}>
+                          onClick={() => setFilters({ ...filters, status: "pendente" })}>
                         <CardContent className="p-4 flex items-center gap-4">
                             <div className="p-3 bg-yellow-100 rounded-xl">
                                 <Clock className="w-6 h-6 text-yellow-600" />
@@ -165,7 +238,7 @@ export default function OrdensColeta() {
                         </CardContent>
                     </Card>
                     <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                          onClick={() => setStatusFilter("em_andamento")}>
+                          onClick={() => setFilters({ ...filters, status: "em_andamento" })}>
                         <CardContent className="p-4 flex items-center gap-4">
                             <div className="p-3 bg-blue-100 rounded-xl">
                                 <Truck className="w-6 h-6 text-blue-600" />
@@ -177,7 +250,7 @@ export default function OrdensColeta() {
                         </CardContent>
                     </Card>
                     <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                          onClick={() => setStatusFilter("coletado")}>
+                          onClick={() => setFilters({ ...filters, status: "coletado" })}>
                         <CardContent className="p-4 flex items-center gap-4">
                             <div className="p-3 bg-purple-100 rounded-xl">
                                 <Package className="w-6 h-6 text-purple-600" />
@@ -189,7 +262,7 @@ export default function OrdensColeta() {
                         </CardContent>
                     </Card>
                     <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                          onClick={() => setStatusFilter("entregue")}>
+                          onClick={() => setFilters({ ...filters, status: "entregue" })}>
                         <CardContent className="p-4 flex items-center gap-4">
                             <div className="p-3 bg-green-100 rounded-xl">
                                 <Calendar className="w-6 h-6 text-green-600" />
@@ -210,12 +283,12 @@ export default function OrdensColeta() {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <Input
                                     placeholder="Buscar por número, remetente, destinatário ou NFe..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    value={filters.search}
+                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                                     className="pl-10 bg-white border-slate-200"
                                 />
                             </div>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
                                 <SelectTrigger className="w-full md:w-48 bg-white">
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
@@ -228,6 +301,81 @@ export default function OrdensColeta() {
                                     <SelectItem value="cancelado">Cancelado</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <Popover open={showFilters} onOpenChange={setShowFilters}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}>
+                                        <Filter className="w-4 h-4 mr-2" />
+                                        Filtros Avançados
+                                        {hasActiveFilters && <Badge className="ml-2 bg-blue-500">!</Badge>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-4" align="end">
+                                    <div className="space-y-4">
+                                        <h4 className="font-semibold">Filtros Avançados</h4>
+                                        
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Data Início</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={filters.dataInicio}
+                                                    onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Data Fim</Label>
+                                                <Input
+                                                    type="date"
+                                                    value={filters.dataFim}
+                                                    onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Remetente</Label>
+                                            <Input
+                                                placeholder="Nome do remetente..."
+                                                value={filters.remetente}
+                                                onChange={(e) => setFilters({ ...filters, remetente: e.target.value })}
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Destinatário</Label>
+                                            <Input
+                                                placeholder="Nome do destinatário..."
+                                                value={filters.destinatario}
+                                                onChange={(e) => setFilters({ ...filters, destinatario: e.target.value })}
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Motorista</Label>
+                                            <Input
+                                                placeholder="Nome do motorista..."
+                                                value={filters.motorista}
+                                                onChange={(e) => setFilters({ ...filters, motorista: e.target.value })}
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2 pt-2 border-t">
+                                            <Button variant="outline" size="sm" onClick={clearFilters} className="flex-1">
+                                                <X className="w-3 h-3 mr-1" />
+                                                Limpar
+                                            </Button>
+                                            <Button size="sm" onClick={() => setShowFilters(false)} className="flex-1">
+                                                Aplicar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </CardContent>
                 </Card>
@@ -243,6 +391,7 @@ export default function OrdensColeta() {
                                         <TableHead>Data</TableHead>
                                         <TableHead>Remetente</TableHead>
                                         <TableHead>Destinatário</TableHead>
+                                        <TableHead>Motorista</TableHead>
                                         <TableHead>NFe</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
@@ -252,13 +401,13 @@ export default function OrdensColeta() {
                                     <AnimatePresence>
                                         {isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-12">
+                                                <TableCell colSpan={8} className="text-center py-12">
                                                     <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : filteredOrdens.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={8} className="text-center py-12 text-slate-500">
                                                     Nenhuma ordem encontrada
                                                 </TableCell>
                                             </TableRow>
@@ -287,6 +436,14 @@ export default function OrdensColeta() {
                                                         <div>
                                                             <p className="font-medium text-slate-800">{ordem.destinatario_nome}</p>
                                                             <p className="text-xs text-slate-500">{ordem.destinatario_telefone}</p>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm">{ordem.motorista || "-"}</span>
+                                                            {ordem.localizacao_latitude && (
+                                                                <MapPin className="w-3 h-3 text-green-500" />
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="font-mono text-sm text-slate-600">

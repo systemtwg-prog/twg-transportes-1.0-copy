@@ -12,10 +12,13 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy
+    X, Save, Star, Copy, Menu
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 function ColetaForm({ coleta, onSubmit, onCancel }) {
     const { data: clientes = [] } = useQuery({
@@ -23,6 +26,8 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
         queryFn: () => base44.entities.Cliente.list()
     });
 
+    const [searchRemetente, setSearchRemetente] = useState("");
+    const [searchDestinatario, setSearchDestinatario] = useState("");
     const [form, setForm] = useState({
         data_coleta: coleta?.data_coleta || format(new Date(), "yyyy-MM-dd"),
         remetente_id: coleta?.remetente_id || "",
@@ -47,6 +52,24 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
     const destinatarios = clientes.filter(c => c.tipo === "destinatario" || c.tipo === "ambos");
     const remetentesFavoritos = remetentes.filter(c => c.favorito);
     const destinatariosFavoritos = destinatarios.filter(c => c.favorito);
+
+    // Filtrar remetentes pela pesquisa
+    const filteredRemetentes = remetentes.filter(c => {
+        if (!searchRemetente) return true;
+        const search = searchRemetente.toLowerCase();
+        return c.razao_social?.toLowerCase().includes(search) ||
+               c.cnpj_cpf?.toLowerCase().includes(search) ||
+               c.codigo?.toLowerCase().includes(search);
+    });
+
+    // Filtrar destinatários pela pesquisa
+    const filteredDestinatarios = destinatarios.filter(c => {
+        if (!searchDestinatario) return true;
+        const search = searchDestinatario.toLowerCase();
+        return c.razao_social?.toLowerCase().includes(search) ||
+               c.cnpj_cpf?.toLowerCase().includes(search) ||
+               c.codigo?.toLowerCase().includes(search);
+    });
 
     const selectRemetente = (clienteId) => {
         const cliente = clientes.find(c => c.id === clienteId);
@@ -132,24 +155,21 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
                                 <Label>Selecionar Cliente</Label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="Buscar por nome, CNPJ ou CPF..."
+                                        value={searchRemetente}
+                                        onChange={(e) => setSearchRemetente(e.target.value)}
+                                        className="pl-9 mb-2"
+                                    />
+                                </div>
                                 <Select value={form.remetente_id} onValueChange={selectRemetente}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Buscar remetente..." />
+                                        <SelectValue placeholder="Selecione o remetente..." />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        <div className="p-2">
-                                            <Input
-                                                placeholder="Buscar por nome, CNPJ ou CPF..."
-                                                className="mb-2"
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => {
-                                                    const search = e.target.value.toLowerCase();
-                                                    // Filtro aplicado via estado local
-                                                    e.target.dataset.search = search;
-                                                }}
-                                            />
-                                        </div>
-                                        {remetentesFavoritos.length > 0 && (
+                                    <SelectContent className="max-h-60">
+                                        {!searchRemetente && remetentesFavoritos.length > 0 && (
                                             <>
                                                 <div className="px-2 py-1 text-xs text-amber-600 font-semibold flex items-center gap-1">
                                                     <Star className="w-3 h-3 fill-amber-500" /> Favoritos
@@ -162,11 +182,14 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                                 <div className="border-t my-1" />
                                             </>
                                         )}
-                                        {remetentes.filter(c => !c.favorito).map(c => (
+                                        {filteredRemetentes.filter(c => !c.favorito || searchRemetente).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.razao_social}
+                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                             </SelectItem>
                                         ))}
+                                        {filteredRemetentes.length === 0 && (
+                                            <div className="p-2 text-sm text-slate-500 text-center">Nenhum resultado</div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -235,12 +258,21 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Selecionar Cliente</Label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="Buscar por nome, CNPJ ou CPF..."
+                                        value={searchDestinatario}
+                                        onChange={(e) => setSearchDestinatario(e.target.value)}
+                                        className="pl-9 mb-2"
+                                    />
+                                </div>
                                 <Select value={form.destinatario_id} onValueChange={selectDestinatario}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Buscar destinatário..." />
+                                        <SelectValue placeholder="Selecione o destinatário..." />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        {destinatariosFavoritos.length > 0 && (
+                                    <SelectContent className="max-h-60">
+                                        {!searchDestinatario && destinatariosFavoritos.length > 0 && (
                                             <>
                                                 <div className="px-2 py-1 text-xs text-emerald-600 font-semibold flex items-center gap-1">
                                                     <Star className="w-3 h-3 fill-emerald-500" /> Favoritos
@@ -253,11 +285,14 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                                 <div className="border-t my-1" />
                                             </>
                                         )}
-                                        {destinatarios.filter(c => !c.favorito).map(c => (
+                                        {filteredDestinatarios.filter(c => !c.favorito || searchDestinatario).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.razao_social}
+                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                             </SelectItem>
                                         ))}
+                                        {filteredDestinatarios.length === 0 && (
+                                            <div className="p-2 text-sm text-slate-500 text-center">Nenhum resultado</div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -411,9 +446,58 @@ export default function AdicionarColetaDiaria() {
         cancelado: "Cancelado"
     };
 
+    const menuItems = [
+        { name: "Home", href: "Home" },
+        { name: "Ordens de Coleta", href: "OrdensColeta" },
+        { name: "Adicionar Coletas", href: "AdicionarColetaDiaria" },
+        { name: "Coletas Diárias", href: "ColetasDiarias" },
+        { name: "Clientes", href: "Clientes" },
+        { name: "Colaboradores", href: "Motoristas" },
+        { name: "Veículos", href: "Veiculos" },
+        { name: "Rastreamento", href: "Rastreamento" },
+        { name: "Comprovantes", href: "Comprovantes" },
+        { name: "Relatórios", href: "Relatorios" },
+    ];
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
+                {/* Menu rápido no topo */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" className="shrink-0">
+                                <Menu className="w-5 h-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-64">
+                            <h2 className="font-bold text-lg mb-4">Menu</h2>
+                            <div className="space-y-2">
+                                {menuItems.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        to={createPageUrl(item.href)}
+                                        className="block p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                                    >
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                    {menuItems.slice(0, 6).map((item) => (
+                        <Link key={item.href} to={createPageUrl(item.href)}>
+                            <Button 
+                                variant={item.href === "AdicionarColetaDiaria" ? "default" : "outline"} 
+                                size="sm"
+                                className={item.href === "AdicionarColetaDiaria" ? "bg-indigo-600" : ""}
+                            >
+                                {item.name}
+                            </Button>
+                        </Link>
+                    ))}
+                </div>
+
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">

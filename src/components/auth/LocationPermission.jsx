@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { MapPin, AlertCircle, Loader2, X } from "lucide-react";
 
 export default function LocationPermission({ onPermissionGranted }) {
     const [status, setStatus] = useState("checking"); // checking, denied, granted, requesting
     const [error, setError] = useState(null);
+    const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
+        // Verificar se já foi dispensado anteriormente
+        const wasDismissed = sessionStorage.getItem("location_dismissed");
+        if (wasDismissed) {
+            setDismissed(true);
+            onPermissionGranted(null);
+            return;
+        }
         checkPermission();
     }, []);
 
@@ -26,9 +34,11 @@ export default function LocationPermission({ onPermissionGranted }) {
                 getCurrentLocation();
             } else if (permission.state === 'denied') {
                 setStatus("denied");
-                setError("Permissão de localização foi negada. Habilite nas configurações do navegador.");
+                setError("Permissão de localização foi negada.");
             } else {
                 setStatus("requesting");
+                // Solicitar automaticamente
+                requestLocation();
             }
 
             permission.onchange = () => {
@@ -79,7 +89,13 @@ export default function LocationPermission({ onPermissionGranted }) {
         );
     };
 
-    if (status === "granted") {
+    const handleDismiss = () => {
+        sessionStorage.setItem("location_dismissed", "true");
+        setDismissed(true);
+        onPermissionGranted(null);
+    };
+
+    if (status === "granted" || dismissed) {
         return null;
     }
 
@@ -98,30 +114,38 @@ export default function LocationPermission({ onPermissionGranted }) {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <Card className="max-w-md mx-4 bg-white shadow-2xl">
+            <Card className="max-w-md mx-4 bg-white shadow-2xl relative">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={handleDismiss}
+                >
+                    <X className="w-4 h-4" />
+                </Button>
                 <CardContent className="p-8 text-center">
                     <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 ${
-                        status === "denied" ? "bg-red-100" : "bg-blue-100"
+                        status === "denied" ? "bg-amber-100" : "bg-blue-100"
                     }`}>
                         {status === "denied" ? (
-                            <AlertCircle className="w-8 h-8 text-red-600" />
+                            <AlertCircle className="w-8 h-8 text-amber-600" />
                         ) : (
                             <MapPin className="w-8 h-8 text-blue-600" />
                         )}
                     </div>
 
                     <h2 className="text-xl font-semibold text-slate-800 mb-2">
-                        {status === "denied" ? "Localização Necessária" : "Permitir Localização"}
+                        {status === "denied" ? "Localização Recomendada" : "Permitir Localização"}
                     </h2>
 
                     <p className="text-slate-600 mb-6">
                         {status === "denied" 
-                            ? error || "Precisamos da sua localização para o funcionamento do sistema. Por favor, habilite nas configurações do navegador."
-                            : "Para o correto funcionamento do sistema de rastreamento, precisamos acessar sua localização."
+                            ? "A localização ajuda no rastreamento. Você pode continuar sem ela."
+                            : "Para o correto funcionamento do rastreamento, precisamos acessar sua localização."
                         }
                     </p>
 
-                    {status === "requesting" && (
+                    <div className="space-y-3">
                         <Button 
                             onClick={requestLocation}
                             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
@@ -129,21 +153,14 @@ export default function LocationPermission({ onPermissionGranted }) {
                             <MapPin className="w-4 h-4 mr-2" />
                             Permitir Localização
                         </Button>
-                    )}
-
-                    {status === "denied" && (
-                        <div className="space-y-3">
-                            <Button 
-                                onClick={requestLocation}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                            >
-                                Tentar Novamente
-                            </Button>
-                            <p className="text-xs text-slate-500">
-                                Se o problema persistir, verifique as configurações de privacidade do seu navegador.
-                            </p>
-                        </div>
-                    )}
+                        <Button 
+                            variant="outline"
+                            onClick={handleDismiss}
+                            className="w-full"
+                        >
+                            Continuar Sem Localização
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>

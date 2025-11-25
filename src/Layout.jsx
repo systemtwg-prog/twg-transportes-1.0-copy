@@ -2,7 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
-import { Package, Users, FileText, Home, Menu, X, Truck } from "lucide-react";
+import { 
+    Package, Users, FileText, Home, Menu, Truck, 
+    Settings, User, Navigation, Award, Car
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -13,7 +16,12 @@ export default function Layout({ children, currentPageName }) {
         { name: "Home", href: "Home", icon: Home },
         { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
         { name: "Clientes", href: "Clientes", icon: Users },
-        { name: "Relatórios", href: "Relatorios", icon: FileText }
+        { name: "Motoristas", href: "Motoristas", icon: User },
+        { name: "Veículos", href: "Veiculos", icon: Car },
+        { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
+        { name: "Relatórios", href: "Relatorios", icon: FileText },
+        { name: "Performance", href: "RelatorioMotoristas", icon: Award },
+        { name: "Configurações", href: "Configuracoes", icon: Settings }
     ];
 
     const NavLinks = ({ onClick }) => (
@@ -37,7 +45,8 @@ export default function Layout({ children, currentPageName }) {
         </>
     );
 
-    if (currentPageName === "Home") {
+    // Páginas sem layout
+    if (currentPageName === "Home" || currentPageName === "AtualizarLocalizacao") {
         return <>{children}</>;
     }
 
@@ -56,7 +65,7 @@ export default function Layout({ children, currentPageName }) {
                         </div>
                     </Link>
                 </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <NavLinks />
                 </nav>
             </aside>
@@ -87,7 +96,7 @@ export default function Layout({ children, currentPageName }) {
                                 </div>
                             </div>
                         </div>
-                        <nav className="p-4 space-y-2">
+                        <nav className="p-4 space-y-1">
                             <NavLinks onClick={() => setOpen(false)} />
                         </nav>
                     </SheetContent>

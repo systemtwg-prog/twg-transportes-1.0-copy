@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
     Package, Users, FileText, TrendingUp, 
     Clock, Truck, CheckCircle, ArrowRight,
-    Calendar
+    Calendar, Settings, User, Navigation, Car, Award
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +28,13 @@ export default function Home() {
         queryKey: ["all-ordens"],
         queryFn: () => base44.entities.OrdemColeta.list()
     });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const config = configs[0] || {};
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
@@ -73,18 +80,53 @@ export default function Home() {
         },
         {
             title: "Clientes",
-            description: "Cadastrar remetentes e destinatários",
+            description: "Remetentes e destinatários",
             icon: Users,
             href: "Clientes",
             color: "from-emerald-500 to-teal-600",
             count: stats.totalClientes
         },
         {
+            title: "Motoristas",
+            description: "Cadastro de motoristas",
+            icon: User,
+            href: "Motoristas",
+            color: "from-orange-500 to-amber-600"
+        },
+        {
+            title: "Veículos",
+            description: "Gestão da frota",
+            icon: Car,
+            href: "Veiculos",
+            color: "from-teal-500 to-cyan-600"
+        },
+        {
+            title: "Rastreamento",
+            description: "Localização em tempo real",
+            icon: Navigation,
+            href: "Rastreamento",
+            color: "from-green-500 to-emerald-600"
+        },
+        {
             title: "Relatórios",
-            description: "Consultar e exportar dados",
+            description: "Consultar e exportar",
             icon: FileText,
             href: "Relatorios",
             color: "from-purple-500 to-indigo-600"
+        },
+        {
+            title: "Performance",
+            description: "Relatório de motoristas",
+            icon: Award,
+            href: "RelatorioMotoristas",
+            color: "from-red-500 to-orange-600"
+        },
+        {
+            title: "Configurações",
+            description: "Personalizar sistema",
+            icon: Settings,
+            href: "Configuracoes",
+            color: "from-slate-500 to-slate-700"
         }
     ];
 
@@ -94,11 +136,17 @@ export default function Home() {
             <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white">
                 <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
                     <div className="flex items-center gap-4 mb-2">
-                        <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                            <Truck className="w-10 h-10" />
-                        </div>
+                        {config.logo_url ? (
+                            <img src={config.logo_url} alt="Logo" className="h-16 object-contain bg-white/20 p-2 rounded-xl" />
+                        ) : (
+                            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                                <Truck className="w-10 h-10" />
+                            </div>
+                        )}
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-bold">Sistema de Coletas</h1>
+                            <h1 className="text-3xl md:text-4xl font-bold">
+                                {config.nome_empresa || "Sistema de Coletas"}
+                            </h1>
                             <p className="text-blue-100 mt-1">Gestão de ordens de coleta e transportes</p>
                         </div>
                     </div>
@@ -155,28 +203,24 @@ export default function Home() {
                 </div>
 
                 {/* Quick Access */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {menuItems.map((item, index) => (
                         <Link key={index} to={createPageUrl(item.href)}>
-                            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden group">
-                                <div className={`h-2 bg-gradient-to-r ${item.color}`} />
-                                <CardContent className="p-6">
-                                    <div className="flex items-start justify-between">
-                                        <div className={`p-4 rounded-2xl bg-gradient-to-r ${item.color} text-white shadow-lg`}>
-                                            <item.icon className="w-8 h-8" />
+                            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden group h-full">
+                                <div className={`h-1.5 bg-gradient-to-r ${item.color}`} />
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className={`p-3 rounded-xl bg-gradient-to-r ${item.color} text-white shadow-lg`}>
+                                            <item.icon className="w-6 h-6" />
                                         </div>
                                         {item.count !== undefined && (
-                                            <Badge className="bg-slate-100 text-slate-700 text-lg px-3">
+                                            <Badge className="bg-slate-100 text-slate-700 text-sm px-2">
                                                 {item.count}
                                             </Badge>
                                         )}
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-800 mt-4">{item.title}</h3>
-                                    <p className="text-slate-500 mt-1">{item.description}</p>
-                                    <div className="flex items-center gap-2 mt-4 text-blue-600 font-medium group-hover:gap-3 transition-all">
-                                        Acessar
-                                        <ArrowRight className="w-4 h-4" />
-                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-800">{item.title}</h3>
+                                    <p className="text-slate-500 text-sm mt-1">{item.description}</p>
                                 </CardContent>
                             </Card>
                         </Link>
@@ -230,9 +274,9 @@ export default function Home() {
                                                 <p className="text-sm font-medium text-slate-700">
                                                     {formatDate(ordem.data_ordem)}
                                                 </p>
-                                                {ordem.nfe && (
-                                                    <p className="text-xs text-slate-500 font-mono">
-                                                        NFe: {ordem.nfe}
+                                                {ordem.motorista && (
+                                                    <p className="text-xs text-slate-500">
+                                                        {ordem.motorista}
                                                     </p>
                                                 )}
                                             </div>

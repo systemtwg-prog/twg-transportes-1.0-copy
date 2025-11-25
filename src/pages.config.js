@@ -7,6 +7,7 @@ import Veiculos from './pages/Veiculos';
 import Configuracoes from './pages/Configuracoes';
 import Rastreamento from './pages/Rastreamento';
 import AtualizarLocalizacao from './pages/AtualizarLocalizacao';
+import RelatorioMotoristas from './pages/RelatorioMotoristas';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Configuracoes": Configuracoes,
     "Rastreamento": Rastreamento,
     "AtualizarLocalizacao": AtualizarLocalizacao,
+    "RelatorioMotoristas": RelatorioMotoristas,
 }
 
 export const pagesConfig = {

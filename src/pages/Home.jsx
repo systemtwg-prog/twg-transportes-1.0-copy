@@ -145,7 +145,7 @@ export default function Home() {
                         )}
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold">
-                                {config.nome_empresa || "Sistema de Coletas"}
+                                {config.nome_empresa || "Controle TWG"}
                             </h1>
                             <p className="text-blue-100 mt-1">Gestão de ordens de coleta e transportes</p>
                         </div>

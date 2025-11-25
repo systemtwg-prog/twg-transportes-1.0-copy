@@ -57,14 +57,23 @@ ${config.telefone || ""}`;
     };
 
     const handlePrint = () => {
-        const winPrint = window.open('', '', 'width=800,height=600');
-        
-        winPrint.document.write(`
+        // Criar iframe oculto para impressão
+        const printFrame = document.createElement('iframe');
+        printFrame.style.position = 'absolute';
+        printFrame.style.top = '-10000px';
+        printFrame.style.left = '-10000px';
+        document.body.appendChild(printFrame);
+
+        const printContent = `
+            <!DOCTYPE html>
             <html>
             <head>
                 <title>Ordem de Coleta ${ordem.numero}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; }
+                    @media print {
+                        @page { margin: 10mm; size: A4; }
+                    }
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     .container { border: 2px solid #000; }
                     .header { display: flex; border-bottom: 2px solid #000; }
                     .logo { width: 120px; border-right: 2px solid #000; padding: 10px; display: flex; align-items: center; justify-content: center; }
@@ -145,14 +154,32 @@ ${config.telefone || ""}`;
                 </div>
             </body>
             </html>
-        `);
-        
-        winPrint.document.close();
-        winPrint.focus();
-        setTimeout(() => {
-            winPrint.print();
-            winPrint.close();
-        }, 250);
+        `;
+
+        printFrame.contentDocument.write(printContent);
+        printFrame.contentDocument.close();
+
+        // Aguardar imagem carregar se houver
+        const checkAndPrint = () => {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+            setTimeout(() => {
+                document.body.removeChild(printFrame);
+            }, 1000);
+        };
+
+        if (config.logo_url) {
+            const img = printFrame.contentDocument.querySelector('img');
+            if (img) {
+                img.onload = checkAndPrint;
+                img.onerror = checkAndPrint;
+                setTimeout(checkAndPrint, 2000); // Fallback
+            } else {
+                setTimeout(checkAndPrint, 500);
+            }
+        } else {
+            setTimeout(checkAndPrint, 500);
+        }
     };
 
     return (

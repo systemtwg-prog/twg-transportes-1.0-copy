@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
     Plus, Search, Pencil, Trash2, Package, Printer,
-    Calendar, Truck, Clock, Eye, Filter, X, MapPin, Share2, AlertTriangle
+    Calendar, Truck, Clock, Eye, Filter, X, MapPin, Share2, AlertTriangle, Copy
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { format } from "date-fns";
@@ -118,6 +118,21 @@ export default function OrdensColeta() {
     const handlePrint = (ordem) => {
         setSelectedOrdem(ordem);
         setShowPrint(true);
+    };
+
+    const handleDuplicate = (ordem) => {
+        const novaOrdem = {
+            ...ordem,
+            numero: getProximoNumero(),
+            data_ordem: new Date().toISOString().split("T")[0],
+            status: "pendente"
+        };
+        delete novaOrdem.id;
+        delete novaOrdem.created_date;
+        delete novaOrdem.updated_date;
+        delete novaOrdem.created_by;
+        setEditingOrdem(novaOrdem);
+        setShowForm(true);
     };
 
     const handleWhatsApp = (ordem) => {
@@ -534,6 +549,15 @@ Horário: ${ordem.horario || "-"}
                                                                 className="hover:bg-blue-100"
                                                             >
                                                                 <Printer className="w-4 h-4 text-blue-600" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => handleDuplicate(ordem)}
+                                                                className="hover:bg-purple-100"
+                                                                title="Duplicar Ordem"
+                                                            >
+                                                                <Copy className="w-4 h-4 text-purple-600" />
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"

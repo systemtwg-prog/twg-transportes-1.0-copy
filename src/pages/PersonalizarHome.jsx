@@ -17,6 +17,9 @@ const WIDGETS_DISPONIVEIS = [
     { id: "stats", nome: "Estatísticas Rápidas", descricao: "Pendentes, Em Andamento, Entregues, Total", icon: TrendingUp },
     { id: "menu", nome: "Menu de Acesso Rápido", descricao: "Cards de acesso às páginas", icon: LayoutGrid },
     { id: "ultimas_ordens", nome: "Últimas Ordens", descricao: "Lista das ordens mais recentes", icon: Package },
+    { id: "clientes", nome: "Clientes Favoritos", descricao: "Lista de clientes favoritos para acesso rápido", icon: Users },
+    { id: "colaboradores", nome: "Colaboradores Ativos", descricao: "Lista de motoristas/colaboradores ativos", icon: Truck },
+    { id: "calendario", nome: "Coletas do Dia", descricao: "Coletas programadas para hoje", icon: Clock },
 ];
 
 export default function PersonalizarHome() {

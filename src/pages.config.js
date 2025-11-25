@@ -12,6 +12,7 @@ import ColetasDiarias from './pages/ColetasDiarias';
 import AdicionarColetaDiaria from './pages/AdicionarColetaDiaria';
 import AprovacaoUsuarios from './pages/AprovacaoUsuarios';
 import PersonalizarHome from './pages/PersonalizarHome';
+import Comprovantes from './pages/Comprovantes';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "AdicionarColetaDiaria": AdicionarColetaDiaria,
     "AprovacaoUsuarios": AprovacaoUsuarios,
     "PersonalizarHome": PersonalizarHome,
+    "Comprovantes": Comprovantes,
 }
 
 export const pagesConfig = {

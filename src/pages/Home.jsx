@@ -44,6 +44,24 @@ export default function Home() {
 
     const config = configs[0] || {};
 
+    const { data: clientesFavoritos = [] } = useQuery({
+        queryKey: ["clientes-favoritos"],
+        queryFn: () => base44.entities.Cliente.filter({ favorito: true })
+    });
+
+    const { data: colaboradoresAtivos = [] } = useQuery({
+        queryKey: ["colaboradores-ativos"],
+        queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
+    });
+
+    const { data: coletasHoje = [] } = useQuery({
+        queryKey: ["coletas-hoje"],
+        queryFn: async () => {
+            const hoje = new Date().toISOString().split("T")[0];
+            return base44.entities.OrdemColeta.filter({ data_coleta: hoje });
+        }
+    });
+
     const userWidgets = currentUser?.widgets_home?.length > 0 
         ? currentUser.widgets_home 
         : ["stats", "menu", "ultimas_ordens"];
@@ -264,6 +282,97 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
+
+                {/* Clientes Favoritos */}
+                {userWidgets.includes("clientes") && clientesFavoritos.length > 0 && (
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl mb-8">
+                    <CardHeader className="border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-emerald-600" />
+                            Clientes Favoritos
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {clientesFavoritos.slice(0, 8).map((cliente) => (
+                                <div key={cliente.id} className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                                    <p className="font-medium text-slate-800 text-sm truncate">{cliente.razao_social}</p>
+                                    <p className="text-xs text-slate-500">{cliente.cidade}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                )}
+
+                {/* Colaboradores Ativos */}
+                {userWidgets.includes("colaboradores") && colaboradoresAtivos.length > 0 && (
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl mb-8">
+                    <CardHeader className="border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            <User className="w-5 h-5 text-orange-600" />
+                            Colaboradores Ativos
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {colaboradoresAtivos.slice(0, 8).map((colab) => (
+                                <div key={colab.id} className="p-3 bg-orange-50 rounded-lg border border-orange-100 flex items-center gap-3">
+                                    {colab.foto_url ? (
+                                        <img src={colab.foto_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center">
+                                            <User className="w-5 h-5 text-orange-600" />
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="font-medium text-slate-800 text-sm">{colab.nome}</p>
+                                        <p className="text-xs text-slate-500">{colab.telefone}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                )}
+
+                {/* Coletas do Dia */}
+                {userWidgets.includes("calendario") && (
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl mb-8">
+                    <CardHeader className="border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-blue-600" />
+                            Coletas de Hoje ({coletasHoje.length})
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {coletasHoje.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500">
+                                Nenhuma coleta programada para hoje
+                            </div>
+                        ) : (
+                            <div className="divide-y">
+                                {coletasHoje.slice(0, 5).map((coleta) => (
+                                    <div key={coleta.id} className="p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-100 rounded-lg">
+                                                <Package className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-800">#{coleta.numero}</p>
+                                                <p className="text-sm text-slate-500">{coleta.remetente_nome}</p>
+                                            </div>
+                                        </div>
+                                        <Badge className={`${statusColors[coleta.status]} border-0`}>
+                                            {statusLabels[coleta.status]}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
                 )}
 
                 {/* Recent Orders */}

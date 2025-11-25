@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
     Plus, Search, Pencil, Trash2, Users, Building2, 
-    Phone, MapPin, FileText, Star
+    Phone, MapPin, FileText, Star, Upload
 } from "lucide-react";
+import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import ClienteForm from "@/components/clientes/ClienteForm";
 
@@ -52,6 +53,61 @@ export default function Clientes() {
         mutationFn: ({ id, favorito }) => base44.entities.Cliente.update(id, { favorito }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clientes"] })
     });
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            
+            const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+                file_url,
+                json_schema: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            codigo: { type: "string" },
+                            razao_social: { type: "string" },
+                            cnpj_cpf: { type: "string" },
+                            tipo: { type: "string" },
+                            contato: { type: "string" },
+                            telefone: { type: "string" },
+                            email: { type: "string" },
+                            cep: { type: "string" },
+                            endereco: { type: "string" },
+                            bairro: { type: "string" },
+                            cidade: { type: "string" },
+                            uf: { type: "string" }
+                        }
+                    }
+                }
+            });
+
+            if (result.status === "success" && result.output) {
+                const clientesImport = Array.isArray(result.output) ? result.output : [result.output];
+                
+                for (const cliente of clientesImport) {
+                    if (cliente.razao_social) {
+                        await base44.entities.Cliente.create({
+                            ...cliente,
+                            tipo: cliente.tipo?.toLowerCase() || "remetente"
+                        });
+                    }
+                }
+                
+                queryClient.invalidateQueries({ queryKey: ["clientes"] });
+                toast.success(`${clientesImport.length} cliente(s) importado(s) com sucesso!`);
+            } else {
+                toast.error("Erro ao processar arquivo");
+            }
+        } catch (error) {
+            toast.error("Erro ao importar arquivo");
+        }
+        
+        e.target.value = "";
+    };
 
     const handleSubmit = (data) => {
         if (editingCliente) {
@@ -120,13 +176,29 @@ export default function Clientes() {
                             <p className="text-slate-500">Gerencie remetentes e destinatários</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { setEditingCliente(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Novo Cliente
-                    </Button>
+                    <div className="flex gap-2">
+                        <label className="cursor-pointer">
+                            <input
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                onChange={handleImportExcel}
+                                className="hidden"
+                            />
+                            <Button variant="outline" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50" asChild>
+                                <span>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Importar Excel
+                                </span>
+                            </Button>
+                        </label>
+                        <Button 
+                            onClick={() => { setEditingCliente(null); setShowForm(true); }}
+                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Novo Cliente
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Stats */}

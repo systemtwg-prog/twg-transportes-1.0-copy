@@ -118,8 +118,38 @@ export default function OrdensColeta() {
     const handlePrint = (ordem) => {
         setSelectedOrdem(ordem);
         setShowPrint(true);
-        setTimeout(() => window.print(), 500);
     };
+
+    const handleWhatsApp = (ordem) => {
+        const texto = `*ORDEM DE COLETA Nº ${ordem.numero}*
+Data: ${formatDate(ordem.data_ordem)}
+
+*REMETENTE:*
+${ordem.remetente_nome}
+${ordem.remetente_endereco || ""} - ${ordem.remetente_bairro || ""} - ${ordem.remetente_cidade || ""}
+CEP: ${ordem.remetente_cep || ""} - Tel: ${ordem.remetente_telefone || ""}
+
+*DESTINATÁRIO:*
+${ordem.destinatario_nome}
+Tel: ${ordem.destinatario_telefone || ""}
+
+*DADOS TRANSPORTE:*
+Peso: ${ordem.peso || "-"} | Volume: ${ordem.volume || "-"}
+NFe: ${ordem.nfe || "-"}
+Data Coleta: ${formatDate(ordem.data_coleta)}
+Horário: ${ordem.horario || "-"}
+
+*MOTORISTA:* ${ordem.motorista || "-"} | Placa: ${ordem.placa || "-"}`;
+
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    };
+
+    // Verificar ordens atrasadas
+    const hoje = new Date().toISOString().split("T")[0];
+    const ordensAtrasadas = ordens.filter(o => 
+        o.data_coleta && o.data_coleta < hoje && 
+        (o.status === "pendente" || o.status === "em_andamento")
+    );
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
@@ -222,6 +252,30 @@ export default function OrdensColeta() {
                         Nova Ordem
                     </Button>
                 </div>
+
+                {/* Alerta de Ordens Atrasadas */}
+                {ordensAtrasadas.length > 0 && (
+                    <Card className="bg-red-50 border-red-200 shadow-md">
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <div className="p-3 bg-red-100 rounded-xl">
+                                <AlertTriangle className="w-6 h-6 text-red-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-bold text-red-800">⚠️ ATENÇÃO: {ordensAtrasadas.length} ordem(ns) atrasada(s)!</p>
+                                <p className="text-sm text-red-600">
+                                    Ordens: {ordensAtrasadas.map(o => `#${o.numero}`).join(", ")}
+                                </p>
+                            </div>
+                            <Button 
+                                variant="outline" 
+                                className="border-red-300 text-red-700 hover:bg-red-100"
+                                onClick={() => setFilters({ ...filters, status: "pendente" })}
+                            >
+                                Ver Atrasadas
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -459,6 +513,15 @@ export default function OrdensColeta() {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
+                                                                onClick={() => handleWhatsApp(ordem)}
+                                                                className="hover:bg-green-100"
+                                                                title="Enviar WhatsApp"
+                                                            >
+                                                                <Share2 className="w-4 h-4 text-green-600" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
                                                                 onClick={() => { setSelectedOrdem(ordem); setShowPrint(true); }}
                                                                 className="hover:bg-slate-100"
                                                             >
@@ -468,17 +531,17 @@ export default function OrdensColeta() {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => handlePrint(ordem)}
-                                                                className="hover:bg-green-100"
+                                                                className="hover:bg-blue-100"
                                                             >
-                                                                <Printer className="w-4 h-4 text-green-600" />
+                                                                <Printer className="w-4 h-4 text-blue-600" />
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => handleEdit(ordem)}
-                                                                className="hover:bg-blue-100"
+                                                                className="hover:bg-amber-100"
                                                             >
-                                                                <Pencil className="w-4 h-4 text-blue-600" />
+                                                                <Pencil className="w-4 h-4 text-amber-600" />
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"

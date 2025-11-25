@@ -9,6 +9,7 @@ import Rastreamento from './pages/Rastreamento';
 import AtualizarLocalizacao from './pages/AtualizarLocalizacao';
 import RelatorioMotoristas from './pages/RelatorioMotoristas';
 import ColetasDiarias from './pages/ColetasDiarias';
+import AdicionarColetaDiaria from './pages/AdicionarColetaDiaria';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "AtualizarLocalizacao": AtualizarLocalizacao,
     "RelatorioMotoristas": RelatorioMotoristas,
     "ColetasDiarias": ColetasDiarias,
+    "AdicionarColetaDiaria": AdicionarColetaDiaria,
 }
 
 export const pagesConfig = {

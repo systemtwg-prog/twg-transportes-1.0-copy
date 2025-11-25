@@ -12,7 +12,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star
+    X, Save, Star, Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -350,11 +350,23 @@ export default function AdicionarColetaDiaria() {
     });
 
     const handleSubmit = (data) => {
-        if (editing) {
+        if (editing && editing.id) {
             updateMutation.mutate({ id: editing.id, data });
         } else {
             createMutation.mutate(data);
         }
+    };
+
+    const handleDuplicate = (coleta) => {
+        const nova = { ...coleta };
+        delete nova.id;
+        delete nova.created_date;
+        delete nova.updated_date;
+        delete nova.created_by;
+        nova.data_coleta = new Date().toISOString().split("T")[0];
+        nova.status = "pendente";
+        setEditing(nova);
+        setShowForm(true);
     };
 
     const formatDate = (dateStr) => {
@@ -481,6 +493,14 @@ export default function AdicionarColetaDiaria() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDuplicate(coleta)}
+                                                        title="Duplicar"
+                                                    >
+                                                        <Copy className="w-4 h-4 text-purple-600" />
+                                                    </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"

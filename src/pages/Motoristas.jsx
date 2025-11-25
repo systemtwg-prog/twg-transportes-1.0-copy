@@ -11,12 +11,13 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save
+    CreditCard, Calendar, X, Save, Upload, Camera, Users
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-function MotoristaForm({ motorista, onSubmit, onCancel }) {
+function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
     const [form, setForm] = useState({
         nome: motorista?.nome || "",
         cpf: motorista?.cpf || "",
@@ -28,8 +29,22 @@ function MotoristaForm({ motorista, onSubmit, onCancel }) {
         endereco: motorista?.endereco || "",
         data_admissao: motorista?.data_admissao || "",
         status: motorista?.status || "ativo",
+        foto_url: motorista?.foto_url || "",
+        tipo_vinculo: motorista?.tipo_vinculo || "funcionario",
+        usuario_vinculado: motorista?.usuario_vinculado || "",
         observacoes: motorista?.observacoes || ""
     });
+    const [uploading, setUploading] = useState(false);
+
+    const handleFotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploading(true);
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setForm({ ...form, foto_url: file_url });
+        setUploading(false);
+        toast.success("Foto enviada!");
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -40,7 +55,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel }) {
         <Card className="border-0 shadow-xl">
             <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-amber-50">
                 <CardTitle className="flex items-center justify-between">
-                    <span>{motorista ? "Editar Motorista" : "Novo Motorista"}</span>
+                    <span>{motorista ? "Editar Colaborador" : "Novo Colaborador"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>
                         <X className="h-5 w-5" />
                     </Button>
@@ -48,6 +63,34 @@ function MotoristaForm({ motorista, onSubmit, onCancel }) {
             </CardHeader>
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Foto do Colaborador */}
+                    <div className="flex items-center gap-6">
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                                {form.foto_url ? (
+                                    <img src={form.foto_url} alt="Foto" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Camera className="w-8 h-8 text-slate-400" />
+                                )}
+                            </div>
+                            <label className="absolute -bottom-1 -right-1 p-2 bg-orange-500 rounded-full cursor-pointer hover:bg-orange-600 transition-colors">
+                                <Upload className="w-4 h-4 text-white" />
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFotoUpload}
+                                    className="hidden"
+                                    disabled={uploading}
+                                />
+                            </label>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-slate-700">Foto do Colaborador</h3>
+                            <p className="text-sm text-slate-500">Clique no ícone para enviar uma foto</p>
+                            {uploading && <p className="text-sm text-orange-600">Enviando...</p>}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Nome Completo *</Label>
@@ -151,6 +194,37 @@ function MotoristaForm({ motorista, onSubmit, onCancel }) {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Tipo de Vínculo</Label>
+                            <Select value={form.tipo_vinculo} onValueChange={(v) => setForm({ ...form, tipo_vinculo: v })}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="funcionario">Funcionário</SelectItem>
+                                    <SelectItem value="agregado">Agregado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Usuário de Acesso Vinculado</Label>
+                            <Select value={form.usuario_vinculado} onValueChange={(v) => setForm({ ...form, usuario_vinculado: v })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um usuário..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Nenhum</SelectItem>
+                                    {usuarios?.map(u => (
+                                        <SelectItem key={u.id} value={u.id}>
+                                            {u.full_name || u.email}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
                         <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
@@ -173,6 +247,11 @@ export default function Motoristas() {
     const { data: motoristas = [], isLoading } = useQuery({
         queryKey: ["motoristas"],
         queryFn: () => base44.entities.Motorista.list("-created_date")
+    });
+
+    const { data: usuarios = [] } = useQuery({
+        queryKey: ["usuarios"],
+        queryFn: () => base44.entities.User.list()
     });
 
     const createMutation = useMutation({
@@ -224,11 +303,11 @@ export default function Motoristas() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-lg">
-                            <User className="w-8 h-8 text-white" />
+                            <Users className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Motoristas</h1>
-                            <p className="text-slate-500">Gerencie os motoristas da frota</p>
+                            <h1 className="text-3xl font-bold text-slate-800">Colaboradores</h1>
+                            <p className="text-slate-500">Gerencie motoristas e colaboradores</p>
                         </div>
                     </div>
                     <Button 
@@ -236,7 +315,7 @@ export default function Motoristas() {
                         className="bg-gradient-to-r from-orange-500 to-amber-600"
                     >
                         <Plus className="w-5 h-5 mr-2" />
-                        Novo Motorista
+                        Novo Colaborador
                     </Button>
                 </div>
 
@@ -278,13 +357,31 @@ export default function Motoristas() {
                                 ) : filtered.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12 text-slate-500">
-                                            Nenhum motorista encontrado
+                                            Nenhum colaborador encontrado
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filtered.map((mot) => (
                                         <TableRow key={mot.id} className="hover:bg-slate-50">
-                                            <TableCell className="font-medium">{mot.nome}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-3">
+                                                    {mot.foto_url ? (
+                                                        <img src={mot.foto_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                                                            <User className="w-5 h-5 text-slate-400" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p>{mot.nome}</p>
+                                                        {mot.tipo_vinculo && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {mot.tipo_vinculo === "funcionario" ? "Funcionário" : "Agregado"}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="font-mono text-sm">{mot.cpf}</TableCell>
                                             <TableCell className="font-mono text-sm">{mot.cnh}</TableCell>
                                             <TableCell>
@@ -309,7 +406,7 @@ export default function Motoristas() {
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => {
-                                                            if (confirm(`Excluir motorista ${mot.nome}?`)) {
+                                                            if (confirm(`Excluir colaborador ${mot.nome}?`)) {
                                                                 deleteMutation.mutate(mot.id);
                                                             }
                                                         }}
@@ -333,6 +430,7 @@ export default function Motoristas() {
                         motorista={editing}
                         onSubmit={handleSubmit}
                         onCancel={() => { setShowForm(false); setEditing(null); }}
+                        usuarios={usuarios}
                     />
                 </DialogContent>
             </Dialog>

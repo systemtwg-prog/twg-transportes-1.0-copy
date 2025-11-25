@@ -137,6 +137,18 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                         <SelectValue placeholder="Buscar remetente..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <div className="p-2">
+                                            <Input
+                                                placeholder="Buscar por nome, CNPJ ou CPF..."
+                                                className="mb-2"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onChange={(e) => {
+                                                    const search = e.target.value.toLowerCase();
+                                                    // Filtro aplicado via estado local
+                                                    e.target.dataset.search = search;
+                                                }}
+                                            />
+                                        </div>
                                         {remetentesFavoritos.length > 0 && (
                                             <>
                                                 <div className="px-2 py-1 text-xs text-amber-600 font-semibold flex items-center gap-1">

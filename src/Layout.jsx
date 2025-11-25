@@ -23,7 +23,9 @@ export default function Layout({ children, currentPageName }) {
         { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
         { name: "Relatórios", href: "Relatorios", icon: FileText },
         { name: "Performance", href: "RelatorioMotoristas", icon: Award },
-        { name: "Configurações", href: "Configuracoes", icon: Settings }
+        { name: "Configurações", href: "Configuracoes", icon: Settings },
+        { name: "Usuários", href: "AprovacaoUsuarios", icon: Users },
+        { name: "Personalizar Home", href: "PersonalizarHome", icon: Settings }
     ];
 
     const NavLinks = ({ onClick }) => (
@@ -62,7 +64,7 @@ export default function Layout({ children, currentPageName }) {
                             <Truck className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-white text-lg">Sistema de Coletas</h1>
+                            <h1 className="font-bold text-white text-lg">Controle TWG</h1>
                             <p className="text-xs text-slate-400">Gestão de transportes</p>
                         </div>
                     </Link>
@@ -78,7 +80,7 @@ export default function Layout({ children, currentPageName }) {
                     <div className="p-1.5 bg-blue-600 rounded-lg">
                         <Truck className="w-5 h-5 text-white" />
                     </div>
-                    <span className="font-bold text-white">Sistema de Coletas</span>
+                    <span className="font-bold text-white">Controle TWG</span>
                 </Link>
                 <Sheet open={open} onOpenChange={setOpen}>
                     <SheetTrigger asChild>
@@ -93,7 +95,7 @@ export default function Layout({ children, currentPageName }) {
                                     <Truck className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="font-bold text-white">Sistema de Coletas</h1>
+                                    <h1 className="font-bold text-white">Controle TWG</h1>
                                     <p className="text-xs text-slate-400">Gestão de transportes</p>
                                 </div>
                             </div>

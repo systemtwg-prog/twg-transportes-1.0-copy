@@ -3,8 +3,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Printer, Share2 } from "lucide-react";
 
-export default function OrdemPrint({ ordem }) {
+export default function OrdemPrint({ ordem, showActions = true }) {
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
@@ -23,211 +25,191 @@ export default function OrdemPrint({ ordem }) {
         }
     };
 
+    const handleWhatsApp = () => {
+        const texto = `*ORDEM DE COLETA Nº ${ordem.numero}*
+Data: ${formatDate(ordem.data_ordem)}
+
+*REMETENTE:*
+${ordem.remetente_nome}
+${ordem.remetente_endereco || ""} - ${ordem.remetente_bairro || ""} - ${ordem.remetente_cidade || ""}
+CEP: ${ordem.remetente_cep || ""} - Tel: ${ordem.remetente_telefone || ""}
+CNPJ: ${ordem.remetente_cnpj || ""}
+
+*DESTINATÁRIO:*
+${ordem.destinatario_nome}
+Tel: ${ordem.destinatario_telefone || ""}
+CNPJ: ${ordem.destinatario_cnpj || ""}
+
+*DADOS TRANSPORTE:*
+Peso: ${ordem.peso || "-"} | Volume: ${ordem.volume || "-"}
+NFe: ${ordem.nfe || "-"}
+Data Coleta: ${formatDate(ordem.data_coleta)}
+Horário: ${ordem.horario || "-"} | Almoço: ${ordem.almoco || "-"}
+
+*MOTORISTA:*
+${ordem.motorista || "-"} | Placa: ${ordem.placa || "-"}
+
+${config.nome_empresa || "Sistema de Coletas"}
+${config.telefone || ""}`;
+
+        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, "_blank");
+    };
+
     return (
-        <div className="bg-white p-8 max-w-4xl mx-auto print:p-4" id="ordem-print">
+        <div className="bg-white" id="ordem-print">
             <style>
                 {`
                 @media print {
                     body * { visibility: hidden; }
                     #ordem-print, #ordem-print * { visibility: visible; }
-                    #ordem-print { position: absolute; left: 0; top: 0; width: 100%; }
-                    .print-hide { display: none !important; }
+                    #ordem-print { 
+                        position: absolute; 
+                        left: 0; 
+                        top: 0; 
+                        width: 100%;
+                        padding: 10mm;
+                        font-size: 11pt;
+                    }
+                    .no-print { display: none !important; }
+                    @page { 
+                        size: A4; 
+                        margin: 10mm; 
+                    }
                 }
                 `}
             </style>
+
+            {/* Botões de Ação */}
+            {showActions && (
+                <div className="flex justify-end gap-2 mb-4 no-print">
+                    <Button onClick={handleWhatsApp} variant="outline" className="bg-green-50 border-green-500 text-green-700 hover:bg-green-100">
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Enviar WhatsApp
+                    </Button>
+                    <Button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700">
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir
+                    </Button>
+                </div>
+            )}
             
-            {/* Cabeçalho com Logo */}
-            <div className="border-2 border-black">
-                <div className="flex">
-                    <div className="w-48 border-r-2 border-black p-4 flex items-center justify-center">
+            {/* Documento */}
+            <div className="border-2 border-black text-sm">
+                {/* Cabeçalho */}
+                <div className="flex border-b-2 border-black">
+                    <div className="w-40 border-r-2 border-black p-3 flex items-center justify-center bg-white">
                         {config.logo_url ? (
-                            <img src={config.logo_url} alt="Logo" className="max-w-full max-h-20 object-contain" />
+                            <img src={config.logo_url} alt="Logo" className="max-w-full max-h-16 object-contain" />
                         ) : (
-                            <div className="text-center text-gray-400 text-sm">
-                                [LOGO]
+                            <div className="text-center text-gray-400 text-xs font-bold">
+                                {config.nome_empresa || "LOGO"}
                             </div>
                         )}
                     </div>
                     <div className="flex-1 border-r-2 border-black">
-                        <div className="p-2 text-center border-b border-black">
-                            <h1 className="text-xl font-bold">ORDEM DE COLETA</h1>
+                        <div className="p-2 text-center border-b border-black bg-gray-100">
+                            <h1 className="text-lg font-bold">ORDEM DE COLETA</h1>
                         </div>
-                        <div className="p-2 text-center">
-                            <p className="font-bold text-lg">{config.nome_empresa || "TRANSPORTES"}</p>
-                            <p className="text-sm">{config.endereco}</p>
-                            <p className="text-sm">Telefone: {config.telefone}</p>
+                        <div className="p-2 text-center text-xs">
+                            <p className="font-bold">{config.nome_empresa || "TRANSPORTES"}</p>
+                            <p>{config.endereco}</p>
+                            <p>Tel: {config.telefone}</p>
                         </div>
                     </div>
-                    <div className="w-36">
-                        <div className="border-b border-black p-2 flex justify-between">
-                            <span className="font-bold">Nº:</span>
-                            <span className="font-bold text-xl">{ordem.numero}</span>
+                    <div className="w-28">
+                        <div className="border-b border-black p-2 text-center">
+                            <span className="text-xs">Nº:</span>
+                            <span className="font-bold text-lg ml-1">{ordem.numero}</span>
                         </div>
-                        <div className="p-2 flex justify-between">
-                            <span className="font-bold">Data:</span>
-                            <span>{formatDate(ordem.data_ordem)}</span>
+                        <div className="p-2 text-center text-xs">
+                            <span>Data:</span>
+                            <p className="font-bold">{formatDate(ordem.data_ordem)}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Dados Remetente */}
-                <div className="border-t-2 border-black">
-                    <div className="bg-amber-100 p-2 font-bold text-center border-b border-black">
+                {/* Remetente */}
+                <div className="border-b-2 border-black">
+                    <div className="bg-amber-100 p-1 font-bold text-center text-xs border-b border-black">
                         DADOS REMETENTE
                     </div>
-                    <div className="p-3 space-y-1 text-sm">
-                        <div className="flex gap-4">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Cod.:</span>
-                                <span>{ordem.remetente_codigo}</span>
-                            </div>
-                            <span className="font-medium">{ordem.remetente_nome}</span>
-                            <div className="flex gap-1 ml-auto">
-                                <span className="font-bold">Contato:</span>
-                                <span>{ordem.remetente_contato}</span>
-                            </div>
+                    <div className="p-2 text-xs space-y-0.5">
+                        <div className="flex flex-wrap gap-x-4">
+                            <span><strong>Cod:</strong> {ordem.remetente_codigo || "-"}</span>
+                            <span><strong>Nome:</strong> {ordem.remetente_nome}</span>
+                            <span className="ml-auto"><strong>Contato:</strong> {ordem.remetente_contato || "-"}</span>
                         </div>
-                        <div className="flex gap-4">
-                            <div className="flex gap-1">
-                                <span className="font-bold">CEP:</span>
-                                <span>{ordem.remetente_cep}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">End.:</span>
-                                <span>{ordem.remetente_endereco}</span>
-                            </div>
+                        <div className="flex flex-wrap gap-x-4">
+                            <span><strong>CEP:</strong> {ordem.remetente_cep || "-"}</span>
+                            <span><strong>End:</strong> {ordem.remetente_endereco || "-"}</span>
                         </div>
-                        <div className="flex gap-1">
-                            <span className="font-bold">CNPJ:</span>
-                            <span>{ordem.remetente_cnpj}</span>
+                        <div className="flex flex-wrap gap-x-4">
+                            <span><strong>CNPJ:</strong> {ordem.remetente_cnpj || "-"}</span>
+                            <span><strong>Bairro:</strong> {ordem.remetente_bairro || "-"}</span>
+                            <span><strong>Cidade:</strong> {ordem.remetente_cidade || "-"}</span>
+                            <span><strong>Fone:</strong> {ordem.remetente_telefone || "-"}</span>
                         </div>
-                        <div className="flex gap-4">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Bairro:</span>
-                                <span>{ordem.remetente_bairro}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Cidade:</span>
-                                <span>{ordem.remetente_cidade}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Fone:</span>
-                                <span>{ordem.remetente_telefone}</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-1">
-                            <span className="font-bold">Obs:</span>
-                            <span>{ordem.remetente_obs}</span>
-                        </div>
+                        {ordem.remetente_obs && <div><strong>Obs:</strong> {ordem.remetente_obs}</div>}
                     </div>
                 </div>
 
-                {/* Dados Destinatário */}
-                <div className="border-t-2 border-black">
-                    <div className="bg-emerald-100 p-2 font-bold text-center border-b border-black">
+                {/* Destinatário */}
+                <div className="border-b-2 border-black">
+                    <div className="bg-emerald-100 p-1 font-bold text-center text-xs border-b border-black">
                         DADOS DESTINATÁRIO
                     </div>
-                    <div className="p-3 space-y-1 text-sm">
-                        <div className="flex gap-4">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Cod.:</span>
-                                <span>{ordem.destinatario_codigo}</span>
-                            </div>
-                            <span className="font-medium">{ordem.destinatario_nome}</span>
-                            <div className="flex gap-1 ml-auto">
-                                <span className="font-bold">Contato:</span>
-                                <span>{ordem.destinatario_contato}</span>
-                            </div>
+                    <div className="p-2 text-xs space-y-0.5">
+                        <div className="flex flex-wrap gap-x-4">
+                            <span><strong>Cod:</strong> {ordem.destinatario_codigo || "-"}</span>
+                            <span><strong>Nome:</strong> {ordem.destinatario_nome}</span>
+                            <span className="ml-auto"><strong>Contato:</strong> {ordem.destinatario_contato || "-"}</span>
                         </div>
-                        <div className="flex gap-4">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Fone:</span>
-                                <span>{ordem.destinatario_telefone}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">CNPJ:</span>
-                                <span>{ordem.destinatario_cnpj}</span>
-                            </div>
+                        <div className="flex flex-wrap gap-x-4">
+                            <span><strong>Fone:</strong> {ordem.destinatario_telefone || "-"}</span>
+                            <span><strong>CNPJ:</strong> {ordem.destinatario_cnpj || "-"}</span>
                         </div>
-                        <div className="flex gap-1">
-                            <span className="font-bold">Ref. Obs:</span>
-                            <span>{ordem.destinatario_ref_obs}</span>
-                        </div>
+                        {ordem.destinatario_ref_obs && <div><strong>Ref/Obs:</strong> {ordem.destinatario_ref_obs}</div>}
                     </div>
                 </div>
 
-                {/* Dados Transporte */}
-                <div className="border-t-2 border-black">
-                    <div className="bg-blue-100 p-2 font-bold text-center border-b border-black">
+                {/* Transporte */}
+                <div className="border-b-2 border-black">
+                    <div className="bg-blue-100 p-1 font-bold text-center text-xs border-b border-black">
                         DADOS TRANSPORTE
                     </div>
-                    <div className="p-3 space-y-1 text-sm">
-                        <div className="flex gap-6">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Peso:</span>
-                                <span>{ordem.peso}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Volume:</span>
-                                <span>{ordem.volume}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Espécie:</span>
-                                <span>{ordem.especie}</span>
-                            </div>
+                    <div className="p-2 text-xs">
+                        <div className="flex flex-wrap gap-x-6 mb-1">
+                            <span><strong>Peso:</strong> {ordem.peso || "-"}</span>
+                            <span><strong>Volume:</strong> {ordem.volume || "-"}</span>
+                            <span><strong>Espécie:</strong> {ordem.especie || "-"}</span>
+                            <span><strong>NFe:</strong> {ordem.nfe || "-"}</span>
                         </div>
-                        <div className="flex gap-6">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Data Coleta:</span>
-                                <span>{formatDate(ordem.data_coleta)}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">NFe:</span>
-                                <span>{ordem.nfe}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Solicitante:</span>
-                                <span>{ordem.solicitante}</span>
-                            </div>
+                        <div className="flex flex-wrap gap-x-6 mb-1">
+                            <span><strong>Data Coleta:</strong> {formatDate(ordem.data_coleta)}</span>
+                            <span><strong>Horário:</strong> {ordem.horario || "-"}</span>
+                            <span><strong>Almoço:</strong> {ordem.almoco || "-"}</span>
+                            <span><strong>Solicitante:</strong> {ordem.solicitante || "-"}</span>
                         </div>
-                        <div className="flex gap-6">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Horário:</span>
-                                <span>{ordem.horario}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Almoço:</span>
-                                <span>{ordem.almoco}</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-6 border-t pt-2 mt-2">
-                            <div className="flex gap-1">
-                                <span className="font-bold">Motorista:</span>
-                                <span>{ordem.motorista}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">Placa:</span>
-                                <span>{ordem.placa}</span>
-                            </div>
-                            <div className="flex gap-1">
-                                <span className="font-bold">CPF:</span>
-                                <span>{ordem.cpf_motorista}</span>
-                            </div>
+                        <div className="flex flex-wrap gap-x-6 pt-1 border-t border-gray-300">
+                            <span><strong>Motorista:</strong> {ordem.motorista || "-"}</span>
+                            <span><strong>Placa:</strong> {ordem.placa || "-"}</span>
+                            <span><strong>CPF:</strong> {ordem.cpf_motorista || "-"}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Assinaturas */}
-                <div className="border-t-2 border-black p-4">
+                <div className="p-3">
                     <div className="grid grid-cols-2 gap-8 mt-8">
                         <div className="text-center">
-                            <div className="border-t border-black pt-2">
-                                <p className="text-sm">Assinatura do Remetente</p>
+                            <div className="border-t border-black pt-1">
+                                <p className="text-xs">Assinatura do Remetente</p>
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="border-t border-black pt-2">
-                                <p className="text-sm">Assinatura do Motorista</p>
+                            <div className="border-t border-black pt-1">
+                                <p className="text-xs">Assinatura do Motorista</p>
                             </div>
                         </div>
                     </div>

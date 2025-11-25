@@ -15,6 +15,7 @@ export default function Layout({ children, currentPageName }) {
     const navItems = [
         { name: "Home", href: "Home", icon: Home },
         { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
+        { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
         { name: "Clientes", href: "Clientes", icon: Users },
         { name: "Motoristas", href: "Motoristas", icon: User },
         { name: "Veículos", href: "Veiculos", icon: Car },

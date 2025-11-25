@@ -516,13 +516,7 @@ export default function OrdensColeta() {
             {/* Print Dialog */}
             <Dialog open={showPrint} onOpenChange={setShowPrint}>
                 <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
-                    <div className="flex justify-end mb-4 print:hidden">
-                        <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700">
-                            <Printer className="w-4 h-4 mr-2" />
-                            Imprimir
-                        </Button>
-                    </div>
-                    <OrdemPrint ordem={selectedOrdem} />
+                    <OrdemPrint ordem={selectedOrdem} showActions={true} />
                 </DialogContent>
             </Dialog>
         </div>

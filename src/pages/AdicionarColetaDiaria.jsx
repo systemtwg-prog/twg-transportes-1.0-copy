@@ -12,13 +12,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy, Menu
+    X, Save, Star, Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 function ColetaForm({ coleta, onSubmit, onCancel }) {
     const { data: clientes = [] } = useQuery({
@@ -446,59 +443,10 @@ export default function AdicionarColetaDiaria() {
         cancelado: "Cancelado"
     };
 
-    const menuItems = [
-        { name: "Home", href: "Home" },
-        { name: "Ordens de Coleta", href: "OrdensColeta" },
-        { name: "Adicionar Coletas", href: "AdicionarColetaDiaria" },
-        { name: "Coletas Diárias", href: "ColetasDiarias" },
-        { name: "Clientes", href: "Clientes" },
-        { name: "Colaboradores", href: "Motoristas" },
-        { name: "Veículos", href: "Veiculos" },
-        { name: "Rastreamento", href: "Rastreamento" },
-        { name: "Comprovantes", href: "Comprovantes" },
-        { name: "Relatórios", href: "Relatorios" },
-    ];
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Menu rápido no topo */}
-                <div className="flex items-center justify-between gap-2 pb-2">
-                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                        {menuItems.slice(0, 5).map((item) => (
-                            <Link key={item.href} to={createPageUrl(item.href)}>
-                                <Button 
-                                    variant={item.href === "AdicionarColetaDiaria" ? "default" : "outline"} 
-                                    size="sm"
-                                    className={item.href === "AdicionarColetaDiaria" ? "bg-indigo-600" : ""}
-                                >
-                                    {item.name}
-                                </Button>
-                            </Link>
-                        ))}
-                    </div>
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0">
-                                <Menu className="w-5 h-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="w-64">
-                            <h2 className="font-bold text-lg mb-4">Menu</h2>
-                            <div className="space-y-2">
-                                {menuItems.map((item) => (
-                                    <Link
-                                        key={item.href}
-                                        to={createPageUrl(item.href)}
-                                        className="block p-3 rounded-lg hover:bg-slate-100 transition-colors"
-                                    >
-                                        {item.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </SheetContent>
-                    </Sheet>
-                </div>
+
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">

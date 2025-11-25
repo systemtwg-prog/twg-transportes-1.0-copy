@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import FloatingMenu from "@/components/navigation/FloatingMenu";
 
 export default function Layout({ children, currentPageName }) {
     const [open, setOpen] = React.useState(false);
@@ -50,9 +51,14 @@ export default function Layout({ children, currentPageName }) {
         </>
     );
 
-    // Páginas sem layout
+    // Páginas sem layout (mas com menu flutuante)
     if (currentPageName === "Home" || currentPageName === "AtualizarLocalizacao") {
-        return <>{children}</>;
+        return (
+            <>
+                <FloatingMenu currentPage={currentPageName} />
+                {children}
+            </>
+        );
     }
 
     return (
@@ -107,6 +113,9 @@ export default function Layout({ children, currentPageName }) {
                     </SheetContent>
                 </Sheet>
             </header>
+
+            {/* Floating Menu for all pages */}
+            <FloatingMenu currentPage={currentPageName} />
 
             {/* Main Content */}
             <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">

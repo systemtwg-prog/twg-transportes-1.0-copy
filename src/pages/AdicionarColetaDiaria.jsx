@@ -463,14 +463,27 @@ export default function AdicionarColetaDiaria() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Menu rápido no topo */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex items-center justify-between gap-2 pb-2">
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                        {menuItems.slice(0, 5).map((item) => (
+                            <Link key={item.href} to={createPageUrl(item.href)}>
+                                <Button 
+                                    variant={item.href === "AdicionarColetaDiaria" ? "default" : "outline"} 
+                                    size="sm"
+                                    className={item.href === "AdicionarColetaDiaria" ? "bg-indigo-600" : ""}
+                                >
+                                    {item.name}
+                                </Button>
+                            </Link>
+                        ))}
+                    </div>
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button variant="outline" size="icon" className="shrink-0">
                                 <Menu className="w-5 h-5" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-64">
+                        <SheetContent side="right" className="w-64">
                             <h2 className="font-bold text-lg mb-4">Menu</h2>
                             <div className="space-y-2">
                                 {menuItems.map((item) => (
@@ -485,17 +498,6 @@ export default function AdicionarColetaDiaria() {
                             </div>
                         </SheetContent>
                     </Sheet>
-                    {menuItems.slice(0, 6).map((item) => (
-                        <Link key={item.href} to={createPageUrl(item.href)}>
-                            <Button 
-                                variant={item.href === "AdicionarColetaDiaria" ? "default" : "outline"} 
-                                size="sm"
-                                className={item.href === "AdicionarColetaDiaria" ? "bg-indigo-600" : ""}
-                            >
-                                {item.name}
-                            </Button>
-                        </Link>
-                    ))}
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

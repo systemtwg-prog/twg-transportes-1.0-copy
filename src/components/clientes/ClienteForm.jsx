@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { X, Save, Star, Clock } from "lucide-react";
+import CepAutoComplete from "@/components/cep/CepAutoComplete";
 
 export default function ClienteForm({ cliente, onSubmit, onCancel }) {
     const [form, setForm] = useState({
@@ -153,14 +154,17 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label>CEP</Label>
-                            <Input
-                                value={form.cep}
-                                onChange={(e) => setForm({ ...form, cep: e.target.value })}
-                                placeholder="00000-000"
-                            />
-                        </div>
+                        <CepAutoComplete
+                            value={form.cep}
+                            onChange={(cep) => setForm({ ...form, cep })}
+                            onAddressFound={(addr) => setForm({ 
+                                ...form, 
+                                endereco: addr.endereco,
+                                bairro: addr.bairro,
+                                cidade: addr.cidade,
+                                uf: addr.uf
+                            })}
+                        />
                         <div className="md:col-span-2 space-y-2">
                             <Label>Endereço</Label>
                             <Input

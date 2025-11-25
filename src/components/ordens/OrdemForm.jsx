@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Save, Search, Package, Truck, User } from "lucide-react";
+import { X, Save, Package, Truck, User, Star } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -40,7 +39,9 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
         solicitante: "",
         horario: "",
         almoco: "",
+        motorista_id: "",
         motorista: "",
+        veiculo_id: "",
         placa: "",
         cpf_motorista: ""
     });
@@ -48,6 +49,16 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
     const { data: clientes = [] } = useQuery({
         queryKey: ["clientes"],
         queryFn: () => base44.entities.Cliente.list()
+    });
+
+    const { data: motoristas = [] } = useQuery({
+        queryKey: ["motoristas"],
+        queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
+    });
+
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos"],
+        queryFn: () => base44.entities.Veiculo.filter({ status: "disponivel" })
     });
 
     useEffect(() => {
@@ -82,7 +93,9 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                 solicitante: ordem.solicitante || "",
                 horario: ordem.horario || "",
                 almoco: ordem.almoco || "",
+                motorista_id: ordem.motorista_id || "",
                 motorista: ordem.motorista || "",
+                veiculo_id: ordem.veiculo_id || "",
                 placa: ordem.placa || "",
                 cpf_motorista: ordem.cpf_motorista || ""
             });
@@ -91,12 +104,23 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
         }
     }, [ordem, proximoNumero]);
 
+    // Separar favoritos
     const remetentes = clientes.filter(c => c.tipo === "remetente" || c.tipo === "ambos");
     const destinatarios = clientes.filter(c => c.tipo === "destinatario" || c.tipo === "ambos");
+    
+    const remetentesFavoritos = remetentes.filter(c => c.favorito);
+    const destinatariosFavoritos = destinatarios.filter(c => c.favorito);
 
     const selectRemetente = (clienteId) => {
         const cliente = clientes.find(c => c.id === clienteId);
         if (cliente) {
+            const horarioFunc = cliente.horario_funcionamento_inicio && cliente.horario_funcionamento_fim
+                ? `${cliente.horario_funcionamento_inicio}/${cliente.horario_funcionamento_fim}`
+                : "";
+            const horarioAlmoco = cliente.horario_almoco_inicio && cliente.horario_almoco_fim
+                ? `${cliente.horario_almoco_inicio} às ${cliente.horario_almoco_fim}`
+                : "SEM INTERVALO";
+            
             setForm(prev => ({
                 ...prev,
                 remetente_id: cliente.id,
@@ -108,7 +132,9 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                 remetente_cnpj: cliente.cnpj_cpf || "",
                 remetente_bairro: cliente.bairro || "",
                 remetente_cidade: `${cliente.cidade || ""}${cliente.uf ? "/" + cliente.uf : ""}`,
-                remetente_telefone: cliente.telefone || ""
+                remetente_telefone: cliente.telefone || "",
+                horario: horarioFunc || prev.horario,
+                almoco: horarioAlmoco
             }));
         }
     };
@@ -124,6 +150,29 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                 destinatario_contato: cliente.contato || "",
                 destinatario_telefone: cliente.telefone || "",
                 destinatario_cnpj: cliente.cnpj_cpf || ""
+            }));
+        }
+    };
+
+    const selectMotorista = (motoristaId) => {
+        const mot = motoristas.find(m => m.id === motoristaId);
+        if (mot) {
+            setForm(prev => ({
+                ...prev,
+                motorista_id: mot.id,
+                motorista: mot.nome,
+                cpf_motorista: mot.cpf || ""
+            }));
+        }
+    };
+
+    const selectVeiculo = (veiculoId) => {
+        const vei = veiculos.find(v => v.id === veiculoId);
+        if (vei) {
+            setForm(prev => ({
+                ...prev,
+                veiculo_id: vei.id,
+                placa: vei.placa
             }));
         }
     };
@@ -156,8 +205,10 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                                 value={form.numero}
                                 onChange={(e) => setForm({ ...form, numero: e.target.value })}
                                 required
-                                className="font-bold text-lg"
+                                className="font-bold text-lg bg-slate-100"
+                                readOnly={!ordem}
                             />
+                            {!ordem && <p className="text-xs text-slate-500">Gerado automaticamente</p>}
                         </div>
                         <div className="space-y-2">
                             <Label>Data da Ordem *</Label>
@@ -199,7 +250,20 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                                         <SelectValue placeholder="Buscar remetente..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {remetentes.map(c => (
+                                        {remetentesFavoritos.length > 0 && (
+                                            <>
+                                                <div className="px-2 py-1 text-xs text-amber-600 font-semibold flex items-center gap-1">
+                                                    <Star className="w-3 h-3 fill-amber-500" /> Favoritos
+                                                </div>
+                                                {remetentesFavoritos.map(c => (
+                                                    <SelectItem key={c.id} value={c.id}>
+                                                        ⭐ {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                    </SelectItem>
+                                                ))}
+                                                <div className="border-t my-1" />
+                                            </>
+                                        )}
+                                        {remetentes.filter(c => !c.favorito).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
                                                 {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
                                             </SelectItem>
@@ -301,7 +365,20 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                                         <SelectValue placeholder="Buscar destinatário..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {destinatarios.map(c => (
+                                        {destinatariosFavoritos.length > 0 && (
+                                            <>
+                                                <div className="px-2 py-1 text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                                                    <Star className="w-3 h-3 fill-emerald-500" /> Favoritos
+                                                </div>
+                                                {destinatariosFavoritos.map(c => (
+                                                    <SelectItem key={c.id} value={c.id}>
+                                                        ⭐ {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                    </SelectItem>
+                                                ))}
+                                                <div className="border-t my-1" />
+                                            </>
+                                        )}
+                                        {destinatarios.filter(c => !c.favorito).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
                                                 {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
                                             </SelectItem>
@@ -428,9 +505,44 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                        {/* Motorista e Veículo */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pt-4 border-t border-blue-200">
                             <div className="space-y-2">
                                 <Label>Motorista</Label>
+                                <Select value={form.motorista_id} onValueChange={selectMotorista}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o motorista..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {motoristas.map(m => (
+                                            <SelectItem key={m.id} value={m.id}>
+                                                {m.nome} - {m.cpf}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Veículo</Label>
+                                <Select value={form.veiculo_id} onValueChange={selectVeiculo}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o veículo..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {veiculos.map(v => (
+                                            <SelectItem key={v.id} value={v.id}>
+                                                {v.placa} - {v.modelo}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nome Motorista</Label>
                                 <Input
                                     value={form.motorista}
                                     onChange={(e) => setForm({ ...form, motorista: e.target.value })}

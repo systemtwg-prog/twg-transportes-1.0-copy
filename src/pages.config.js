@@ -4,6 +4,7 @@ import Relatorios from './pages/Relatorios';
 import Home from './pages/Home';
 import Motoristas from './pages/Motoristas';
 import Veiculos from './pages/Veiculos';
+import Configuracoes from './pages/Configuracoes';
 import __Layout from './Layout.jsx';
 
 
@@ -14,6 +15,7 @@ export const PAGES = {
     "Home": Home,
     "Motoristas": Motoristas,
     "Veiculos": Veiculos,
+    "Configuracoes": Configuracoes,
 }
 
 export const pagesConfig = {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -12,8 +12,11 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import LocationPermission from "@/components/auth/LocationPermission";
+import AccessCheck from "@/components/auth/AccessCheck";
 
 export default function Home() {
+    const [locationGranted, setLocationGranted] = useState(false);
     const { data: ordens = [] } = useQuery({
         queryKey: ["ordens"],
         queryFn: () => base44.entities.OrdemColeta.list("-created_date", 10)
@@ -34,7 +37,34 @@ export default function Home() {
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
+    const { data: currentUser, isLoading: loadingUser } = useQuery({
+        queryKey: ["current-user"],
+        queryFn: () => base44.auth.me()
+    });
+
     const config = configs[0] || {};
+
+    const userWidgets = currentUser?.widgets_home?.length > 0 
+        ? currentUser.widgets_home 
+        : ["stats", "menu", "ultimas_ordens"];
+
+    const handleLocationGranted = async (location) => {
+        setLocationGranted(true);
+        if (currentUser) {
+            await base44.auth.updateMe({ ultima_localizacao: location });
+        }
+    };
+
+    // Verificar aprovação do usuário
+    const accessDenied = currentUser && (
+        currentUser.status === "pendente" || 
+        currentUser.status === "rejeitado" || 
+        !currentUser.status
+    );
+
+    if (accessDenied) {
+        return <AccessCheck user={currentUser} isLoading={loadingUser} pageName="Home" />;
+    }
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
@@ -132,6 +162,11 @@ export default function Home() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+            {/* Location Permission */}
+            {!locationGranted && (
+                <LocationPermission onPermissionGranted={handleLocationGranted} />
+            )}
+
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white">
                 <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
@@ -155,6 +190,7 @@ export default function Home() {
 
             <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-6 pb-12">
                 {/* Stats */}
+                {userWidgets.includes("stats") && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
                         <CardContent className="p-5 flex items-center gap-4">
@@ -201,8 +237,10 @@ export default function Home() {
                         </CardContent>
                     </Card>
                 </div>
+                )}
 
                 {/* Quick Access */}
+                {userWidgets.includes("menu") && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {menuItems.map((item, index) => (
                         <Link key={index} to={createPageUrl(item.href)}>
@@ -226,8 +264,10 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
 
                 {/* Recent Orders */}
+                {userWidgets.includes("ultimas_ordens") && (
                 <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
                     <CardHeader className="border-b">
                         <div className="flex items-center justify-between">
@@ -287,6 +327,7 @@ export default function Home() {
                         </div>
                     </CardContent>
                 </Card>
+                )}
             </div>
         </div>
     );

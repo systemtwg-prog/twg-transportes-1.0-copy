@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { X, Save, Star, Clock } from "lucide-react";
 
 export default function ClienteForm({ cliente, onSubmit, onCancel }) {
     const [form, setForm] = useState({
@@ -15,11 +16,17 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
         cnpj_cpf: "",
         contato: "",
         telefone: "",
+        email: "",
         cep: "",
         endereco: "",
         bairro: "",
         cidade: "",
         uf: "",
+        horario_funcionamento_inicio: "",
+        horario_funcionamento_fim: "",
+        horario_almoco_inicio: "",
+        horario_almoco_fim: "",
+        favorito: false,
         observacoes: ""
     });
 
@@ -32,11 +39,17 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                 cnpj_cpf: cliente.cnpj_cpf || "",
                 contato: cliente.contato || "",
                 telefone: cliente.telefone || "",
+                email: cliente.email || "",
                 cep: cliente.cep || "",
                 endereco: cliente.endereco || "",
                 bairro: cliente.bairro || "",
                 cidade: cliente.cidade || "",
                 uf: cliente.uf || "",
+                horario_funcionamento_inicio: cliente.horario_funcionamento_inicio || "",
+                horario_funcionamento_fim: cliente.horario_funcionamento_fim || "",
+                horario_almoco_inicio: cliente.horario_almoco_inicio || "",
+                horario_almoco_fim: cliente.horario_almoco_fim || "",
+                favorito: cliente.favorito || false,
                 observacoes: cliente.observacoes || ""
             });
         }
@@ -59,7 +72,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
             </CardHeader>
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>Código</Label>
                             <Input
@@ -89,6 +102,16 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                                 placeholder="00.000.000/0000-00"
                             />
                         </div>
+                        <div className="flex items-center gap-3 pt-6">
+                            <Switch
+                                checked={form.favorito}
+                                onCheckedChange={(v) => setForm({ ...form, favorito: v })}
+                            />
+                            <Label className="flex items-center gap-2 cursor-pointer">
+                                <Star className={`w-4 h-4 ${form.favorito ? "text-yellow-500 fill-yellow-500" : "text-slate-400"}`} />
+                                Favorito
+                            </Label>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -101,7 +124,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label>Contato</Label>
                             <Input
@@ -116,6 +139,15 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                                 value={form.telefone}
                                 onChange={(e) => setForm({ ...form, telefone: e.target.value })}
                                 placeholder="(00) 0000-0000"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                                type="email"
+                                value={form.email}
+                                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                                placeholder="email@exemplo.com"
                             />
                         </div>
                     </div>
@@ -164,6 +196,48 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                                 placeholder="SP"
                                 maxLength={2}
                             />
+                        </div>
+                    </div>
+
+                    {/* Horários */}
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <h3 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Horários de Funcionamento
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label>Abre às</Label>
+                                <Input
+                                    type="time"
+                                    value={form.horario_funcionamento_inicio}
+                                    onChange={(e) => setForm({ ...form, horario_funcionamento_inicio: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Fecha às</Label>
+                                <Input
+                                    type="time"
+                                    value={form.horario_funcionamento_fim}
+                                    onChange={(e) => setForm({ ...form, horario_funcionamento_fim: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Almoço de</Label>
+                                <Input
+                                    type="time"
+                                    value={form.horario_almoco_inicio}
+                                    onChange={(e) => setForm({ ...form, horario_almoco_inicio: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Até</Label>
+                                <Input
+                                    type="time"
+                                    value={form.horario_almoco_fim}
+                                    onChange={(e) => setForm({ ...form, horario_almoco_fim: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
 

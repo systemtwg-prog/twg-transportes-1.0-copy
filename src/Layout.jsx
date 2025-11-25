@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { cn } from "@/lib/utils";
 import { 
     Package, Users, FileText, Home, Menu, Truck, 
-    Settings, User, Navigation, Award, Car
+    Settings, User, Navigation, Award, Car, LayoutGrid, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -24,8 +24,8 @@ export default function Layout({ children, currentPageName }) {
         { name: "Relatórios", href: "Relatorios", icon: FileText },
         { name: "Performance", href: "RelatorioMotoristas", icon: Award },
         { name: "Configurações", href: "Configuracoes", icon: Settings },
-        { name: "Usuários", href: "AprovacaoUsuarios", icon: Users },
-        { name: "Personalizar Home", href: "PersonalizarHome", icon: Settings }
+        { name: "Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
+        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid }
     ];
 
     const NavLinks = ({ onClick }) => (

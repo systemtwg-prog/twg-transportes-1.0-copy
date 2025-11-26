@@ -86,6 +86,7 @@ export default function AprovacaoUsuarios() {
             id: selectedUser.id,
             data: {
                 tipo_usuario: selectedUser.tipo_usuario,
+                role: selectedUser.tipo_usuario === "admin" ? "admin" : "user",
                 paginas_permitidas: selectedUser.paginas_permitidas
             }
         });
@@ -142,7 +143,7 @@ export default function AprovacaoUsuarios() {
                                         {user.status === "aprovado" ? "Aprovado" : 
                                          user.status === "rejeitado" ? "Rejeitado" : "Pendente"}
                                     </Badge>
-                                    {user.tipo_usuario === "admin" && (
+                                    {(user.tipo_usuario === "admin" || user.role === "admin") && (
                                         <Badge className="bg-purple-100 text-purple-800 border border-purple-200">
                                             <Shield className="w-3 h-3 mr-1" />
                                             Admin
@@ -343,16 +344,20 @@ export default function AprovacaoUsuarios() {
                                     <p className="text-sm text-purple-600">Acesso total ao sistema</p>
                                 </div>
                                 <Switch
-                                    checked={selectedUser.tipo_usuario === "admin"}
-                                    onCheckedChange={(v) => setSelectedUser({
-                                        ...selectedUser, 
-                                        tipo_usuario: v ? "admin" : "usuario",
-                                        paginas_permitidas: v ? TODAS_PAGINAS.map(p => p.id) : selectedUser.paginas_permitidas
-                                    })}
+                                    checked={selectedUser.tipo_usuario === "admin" || selectedUser.role === "admin"}
+                                    onCheckedChange={(v) => {
+                                        const novoUser = {
+                                            ...selectedUser, 
+                                            tipo_usuario: v ? "admin" : "usuario",
+                                            role: v ? "admin" : "user",
+                                            paginas_permitidas: v ? TODAS_PAGINAS.map(p => p.id) : selectedUser.paginas_permitidas
+                                        };
+                                        setSelectedUser(novoUser);
+                                    }}
                                 />
                             </div>
 
-                            {selectedUser.tipo_usuario !== "admin" && (
+                            {selectedUser.tipo_usuario !== "admin" && selectedUser.role !== "admin" && (
                                 <div className="space-y-3">
                                     <Label className="font-semibold">Páginas Permitidas</Label>
                                     <div className="grid grid-cols-2 gap-2">

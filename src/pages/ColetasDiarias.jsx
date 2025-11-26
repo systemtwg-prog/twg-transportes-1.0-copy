@@ -8,13 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ColetasDiarias() {
-    const [dataFiltro, setDataFiltro] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [dataFiltro, setDataFiltro] = useState("");
+    const [statusFiltro, setStatusFiltro] = useState("todos");
+    const [searchFiltro, setSearchFiltro] = useState("");
     const printRef = useRef();
     const queryClient = useQueryClient();
 
@@ -35,8 +37,24 @@ export default function ColetasDiarias() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
     });
 
-    // Mostrar todas as coletas da data selecionada (sem filtrar por status)
-    const coletasFiltradas = coletas.filter(c => c.data_coleta === dataFiltro);
+    // Aplicar todos os filtros
+    let coletasFiltradas = coletas;
+    
+    if (dataFiltro) {
+        coletasFiltradas = coletasFiltradas.filter(c => c.data_coleta === dataFiltro);
+    }
+    
+    if (statusFiltro !== "todos") {
+        coletasFiltradas = coletasFiltradas.filter(c => c.status === statusFiltro);
+    }
+    
+    if (searchFiltro) {
+        const search = searchFiltro.toLowerCase();
+        coletasFiltradas = coletasFiltradas.filter(c => 
+            c.remetente_nome?.toLowerCase().includes(search) ||
+            c.destinatario_nome?.toLowerCase().includes(search)
+        );
+    }
 
     const statusColors = {
         pendente: "bg-yellow-100 text-yellow-800",
@@ -145,21 +163,10 @@ export default function ColetasDiarias() {
                             <p className="text-slate-500">Visualize coletas realizadas por data</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="space-y-1">
-                            <Label>Data</Label>
-                            <Input
-                                type="date"
-                                value={dataFiltro}
-                                onChange={(e) => setDataFiltro(e.target.value)}
-                                className="w-40"
-                            />
-                        </div>
-                        <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 mt-6">
-                            <Printer className="w-4 h-4 mr-2" />
-                            Imprimir
-                        </Button>
-                    </div>
+                    <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir
+                    </Button>
                 </div>
 
                 {/* Documento */}

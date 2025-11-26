@@ -1,12 +1,14 @@
 import React, { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Calendar, Printer, Package
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 export default function ColetasDiarias() {
     const [dataFiltro, setDataFiltro] = useState(format(new Date(), "yyyy-MM-dd"));
     const printRef = useRef();
+    const queryClient = useQueryClient();
 
     const { data: coletas = [], isLoading } = useQuery({
         queryKey: ["coletas-diarias"],
@@ -27,10 +30,25 @@ export default function ColetasDiarias() {
 
     const config = configs[0] || {};
 
-    // Filtrar coletas pela data e status realizado
-    const coletasFiltradas = coletas.filter(c => 
-        c.data_coleta === dataFiltro && c.status === "realizado"
-    );
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, status }) => base44.entities.ColetaDiaria.update(id, { status }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
+    });
+
+    // Mostrar todas as coletas da data selecionada (sem filtrar por status)
+    const coletasFiltradas = coletas.filter(c => c.data_coleta === dataFiltro);
+
+    const statusColors = {
+        pendente: "bg-yellow-100 text-yellow-800",
+        realizado: "bg-green-100 text-green-800",
+        cancelado: "bg-red-100 text-red-800"
+    };
+
+    const statusLabels = {
+        pendente: "Pendente",
+        realizado: "Realizado",
+        cancelado: "Cancelado"
+    };
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
@@ -91,7 +109,7 @@ export default function ColetasDiarias() {
                                         ${c.volume || "-"} / ${c.peso || "-"}<br>
                                         NFE${c.nfe || "-"}
                                     </td>
-                                    <td class="status">Realizado</td>
+                                    <td class="status">${c.status === 'realizado' ? 'Realizado' : c.status === 'cancelado' ? 'Cancelado' : 'Pendente'}</td>
                                 </tr>
                             `;
                         }).join("")}
@@ -162,7 +180,7 @@ export default function ColetasDiarias() {
                             <div className="text-right">
                                 <p className="text-lg font-bold">DATA: {formatDate(dataFiltro)}</p>
                                 <p className="text-sm text-slate-500">
-                                    {coletasFiltradas.length} coleta(s) realizada(s)
+                                    {coletasFiltradas.length} coleta(s) cadastrada(s)
                                 </p>
                             </div>
                         </div>
@@ -220,7 +238,30 @@ export default function ColetasDiarias() {
                                                     </div>
                                                 </td>
                                                 <td className="text-center p-3">
-                                                    <span className="font-medium text-green-600">Realizado</span>
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Badge className={statusColors[coleta.status]}>
+                                                            {statusLabels[coleta.status]}
+                                                        </Badge>
+                                                        <Select 
+                                                            value={coleta.status} 
+                                                            onValueChange={(v) => updateStatusMutation.mutate({ id: coleta.id, status: v })}
+                                                        >
+                                                            <SelectTrigger className="w-28 h-7 text-xs">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="pendente">
+                                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pendente</span>
+                                                                </SelectItem>
+                                                                <SelectItem value="realizado">
+                                                                    <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Realizado</span>
+                                                                </SelectItem>
+                                                                <SelectItem value="cancelado">
+                                                                    <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Cancelado</span>
+                                                                </SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

@@ -191,13 +191,15 @@ Horário: ${ordem.horario || "-"}
         const matchDataInicio = !filters.dataInicio || (o.data_ordem && o.data_ordem >= filters.dataInicio);
         const matchDataFim = !filters.dataFim || (o.data_ordem && o.data_ordem <= filters.dataFim);
         
-        // Remetente
+        // Remetente (nome ou CNPJ)
         const matchRemetente = !filters.remetente || 
-            o.remetente_nome?.toLowerCase().includes(filters.remetente.toLowerCase());
-        
-        // Destinatário
+            o.remetente_nome?.toLowerCase().includes(filters.remetente.toLowerCase()) ||
+            o.remetente_cnpj?.toLowerCase().includes(filters.remetente.toLowerCase());
+
+        // Destinatário (nome ou CNPJ)
         const matchDestinatario = !filters.destinatario || 
-            o.destinatario_nome?.toLowerCase().includes(filters.destinatario.toLowerCase());
+            o.destinatario_nome?.toLowerCase().includes(filters.destinatario.toLowerCase()) ||
+            o.destinatario_cnpj?.toLowerCase().includes(filters.destinatario.toLowerCase());
         
         // Motorista
         const matchMotorista = !filters.motorista || 
@@ -404,24 +406,24 @@ Horário: ${ordem.horario || "-"}
                                         </div>
 
                                         <div className="space-y-1">
-                                            <Label className="text-xs">Remetente</Label>
-                                            <Input
-                                                placeholder="Nome do remetente..."
-                                                value={filters.remetente}
-                                                onChange={(e) => setFilters({ ...filters, remetente: e.target.value })}
-                                                className="h-8 text-sm"
-                                            />
-                                        </div>
+                                                    <Label className="text-xs">Remetente (Nome ou CNPJ)</Label>
+                                                    <Input
+                                                        placeholder="Nome ou CNPJ do remetente..."
+                                                        value={filters.remetente}
+                                                        onChange={(e) => setFilters({ ...filters, remetente: e.target.value })}
+                                                        className="h-8 text-sm"
+                                                    />
+                                                </div>
 
-                                        <div className="space-y-1">
-                                            <Label className="text-xs">Destinatário</Label>
-                                            <Input
-                                                placeholder="Nome do destinatário..."
-                                                value={filters.destinatario}
-                                                onChange={(e) => setFilters({ ...filters, destinatario: e.target.value })}
-                                                className="h-8 text-sm"
-                                            />
-                                        </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-xs">Destinatário (Nome ou CNPJ)</Label>
+                                                <Input
+                                                    placeholder="Nome ou CNPJ do destinatário..."
+                                                    value={filters.destinatario}
+                                                    onChange={(e) => setFilters({ ...filters, destinatario: e.target.value })}
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
 
                                         <div className="space-y-1">
                                             <Label className="text-xs">Motorista</Label>

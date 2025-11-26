@@ -363,7 +363,6 @@ export default function AdicionarColetaDiaria() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("todos");
     const queryClient = useQueryClient();
 
     const { data: coletas = [], isLoading } = useQuery({
@@ -422,14 +421,13 @@ export default function AdicionarColetaDiaria() {
         }
     };
 
+    // Filtrar apenas coletas pendentes (excluir cancelado e realizado)
     let filtered = coletas.filter(c => 
-        c.remetente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-        c.destinatario_nome?.toLowerCase().includes(search.toLowerCase())
+        c.status === "pendente" && (
+            c.remetente_nome?.toLowerCase().includes(search.toLowerCase()) ||
+            c.destinatario_nome?.toLowerCase().includes(search.toLowerCase())
+        )
     );
-
-    if (statusFilter !== "todos") {
-        filtered = filtered.filter(c => c.status === statusFilter);
-    }
 
     const statusColors = {
         pendente: "bg-yellow-100 text-yellow-800",
@@ -469,28 +467,16 @@ export default function AdicionarColetaDiaria() {
 
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <Input
-                                    placeholder="Buscar por remetente ou destinatário..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 bg-white"
-                                />
-                            </div>
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-full md:w-48 bg-white">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todos">Todos</SelectItem>
-                                    <SelectItem value="pendente">Pendente</SelectItem>
-                                    <SelectItem value="realizado">Realizado</SelectItem>
-                                    <SelectItem value="cancelado">Cancelado</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <Input
+                                placeholder="Buscar por remetente ou destinatário..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pl-10 bg-white"
+                            />
                         </div>
+                        <p className="text-sm text-slate-500 mt-2">Exibindo apenas coletas pendentes ({filtered.length})</p>
                     </CardContent>
                 </Card>
 

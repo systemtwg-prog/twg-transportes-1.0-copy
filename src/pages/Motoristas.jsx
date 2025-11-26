@@ -11,8 +11,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save, Upload, Camera, Users
+    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2
 } from "lucide-react";
+import FlipbookViewer from "@/components/shared/FlipbookViewer";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +25,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
         cnh: motorista?.cnh || "",
         categoria_cnh: motorista?.categoria_cnh || "B",
         validade_cnh: motorista?.validade_cnh || "",
+        documentos_cnh: motorista?.documentos_cnh || [],
         telefone: motorista?.telefone || "",
         email: motorista?.email || "",
         endereco: motorista?.endereco || "",
@@ -35,6 +37,31 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
         observacoes: motorista?.observacoes || ""
     });
     const [uploading, setUploading] = useState(false);
+    const [uploadingDoc, setUploadingDoc] = useState(false);
+    const [viewDocs, setViewDocs] = useState(null);
+
+    const handleDocUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        setUploadingDoc(true);
+        const novosArquivos = [];
+        for (const file of files) {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            novosArquivos.push({ nome: file.name, url: file_url, tipo: file.type });
+        }
+        setForm({ ...form, documentos_cnh: [...form.documentos_cnh, ...novosArquivos] });
+        setUploadingDoc(false);
+        toast.success("Documento enviado!");
+    };
+
+    const removeDoc = (index) => {
+        setForm({ ...form, documentos_cnh: form.documentos_cnh.filter((_, i) => i !== index) });
+    };
+
+    const handleShareWhatsApp = () => {
+        const texto = `*COLABORADOR: ${form.nome}*\nCPF: ${form.cpf}\nCNH: ${form.cnh} - ${form.categoria_cnh}\nTelefone: ${form.telefone}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    };
 
     const handleFotoUpload = async (e) => {
         const file = e.target.files[0];
@@ -143,6 +170,44 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                         </div>
                     </div>
 
+                    {/* Documentos CNH */}
+                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                        <Label className="font-semibold text-amber-800 mb-3 block">Documentos da CNH (Foto ou PDF)</Label>
+                        <div className="flex gap-2 mb-3">
+                            <input type="file" accept="image/*,.pdf" multiple onChange={handleDocUpload} className="hidden" id="doc-cnh" />
+                            <label htmlFor="doc-cnh" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 cursor-pointer">
+                                <Upload className="w-4 h-4 text-amber-600" />
+                                <span className="text-sm text-amber-700">Adicionar arquivo</span>
+                            </label>
+                            <input type="file" accept="image/*" capture="environment" onChange={handleDocUpload} className="hidden" id="camera-cnh" />
+                            <label htmlFor="camera-cnh" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 cursor-pointer">
+                                <Camera className="w-4 h-4 text-amber-600" />
+                                <span className="text-sm text-amber-700">Tirar Foto</span>
+                            </label>
+                            {uploadingDoc && <div className="animate-spin w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full" />}
+                        </div>
+                        {form.documentos_cnh.length > 0 && (
+                            <div className="space-y-2">
+                                {form.documentos_cnh.map((doc, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-amber-600" />
+                                            <span className="text-sm truncate max-w-[200px]">{doc.nome}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewDocs(form.documentos_cnh)}>
+                                                <Eye className="w-4 h-4 text-blue-600" />
+                                            </Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeDoc(i)}>
+                                                <X className="w-4 h-4 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Telefone</Label>
@@ -226,12 +291,24 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button type="button" variant="outline" onClick={handleShareWhatsApp}>
+                            <Share2 className="w-4 h-4 mr-2" />
+                            WhatsApp
+                        </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
                         <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                         </Button>
                     </div>
+                    
+                    {viewDocs && (
+                        <FlipbookViewer 
+                            files={viewDocs} 
+                            onClose={() => setViewDocs(null)} 
+                            title={`Documentos CNH - ${form.nome}`}
+                        />
+                    )}
                 </form>
             </CardContent>
         </Card>

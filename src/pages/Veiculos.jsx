@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Plus, Search, Pencil, Trash2, Truck, X, Save
+    Plus, Search, Pencil, Trash2, Truck, X, Save, Upload, Camera, FileText, Eye, Share2
 } from "lucide-react";
+import FlipbookViewer from "@/components/shared/FlipbookViewer";
 
 function VeiculoForm({ veiculo, onSubmit, onCancel }) {
     const [form, setForm] = useState({
@@ -27,8 +28,52 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
         chassi: veiculo?.chassi || "",
         km_atual: veiculo?.km_atual || "",
         status: veiculo?.status || "disponivel",
+        documentos_veiculo: veiculo?.documentos_veiculo || [],
+        documentos_carroceria: veiculo?.documentos_carroceria || [],
         observacoes: veiculo?.observacoes || ""
     });
+    const [uploadingVeiculo, setUploadingVeiculo] = useState(false);
+    const [uploadingCarroceria, setUploadingCarroceria] = useState(false);
+    const [viewDocs, setViewDocs] = useState(null);
+
+    const handleDocVeiculoUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        setUploadingVeiculo(true);
+        const novosArquivos = [];
+        for (const file of files) {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            novosArquivos.push({ nome: file.name, url: file_url, tipo: file.type });
+        }
+        setForm({ ...form, documentos_veiculo: [...form.documentos_veiculo, ...novosArquivos] });
+        setUploadingVeiculo(false);
+    };
+
+    const handleDocCarroceriaUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        setUploadingCarroceria(true);
+        const novosArquivos = [];
+        for (const file of files) {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            novosArquivos.push({ nome: file.name, url: file_url, tipo: file.type });
+        }
+        setForm({ ...form, documentos_carroceria: [...form.documentos_carroceria, ...novosArquivos] });
+        setUploadingCarroceria(false);
+    };
+
+    const removeDocVeiculo = (index) => {
+        setForm({ ...form, documentos_veiculo: form.documentos_veiculo.filter((_, i) => i !== index) });
+    };
+
+    const removeDocCarroceria = (index) => {
+        setForm({ ...form, documentos_carroceria: form.documentos_carroceria.filter((_, i) => i !== index) });
+    };
+
+    const handleShareWhatsApp = () => {
+        const texto = `*VEÍCULO: ${form.placa}*\nModelo: ${form.modelo}\nMarca: ${form.marca}\nAno: ${form.ano}\nTipo: ${form.tipo}\nCapacidade: ${form.capacidade_kg} KG`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -177,13 +222,101 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
                         </div>
                     </div>
 
+                    {/* Documentos do Veículo */}
+                    <div className="p-4 bg-teal-50 rounded-xl border border-teal-200">
+                        <Label className="font-semibold text-teal-800 mb-3 block">Documentos do Veículo (CRLV)</Label>
+                        <div className="flex gap-2 mb-3">
+                            <input type="file" accept="image/*,.pdf" multiple onChange={handleDocVeiculoUpload} className="hidden" id="doc-veiculo" />
+                            <label htmlFor="doc-veiculo" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-teal-300 rounded-lg hover:border-teal-500 cursor-pointer">
+                                <Upload className="w-4 h-4 text-teal-600" />
+                                <span className="text-sm text-teal-700">Adicionar</span>
+                            </label>
+                            <input type="file" accept="image/*" capture="environment" onChange={handleDocVeiculoUpload} className="hidden" id="camera-veiculo" />
+                            <label htmlFor="camera-veiculo" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-teal-300 rounded-lg hover:border-teal-500 cursor-pointer">
+                                <Camera className="w-4 h-4 text-teal-600" />
+                                <span className="text-sm text-teal-700">Foto</span>
+                            </label>
+                            {uploadingVeiculo && <div className="animate-spin w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full" />}
+                        </div>
+                        {form.documentos_veiculo.length > 0 && (
+                            <div className="space-y-2">
+                                {form.documentos_veiculo.map((doc, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-teal-600" />
+                                            <span className="text-sm truncate max-w-[150px]">{doc.nome}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewDocs(form.documentos_veiculo)}>
+                                                <Eye className="w-4 h-4 text-blue-600" />
+                                            </Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeDocVeiculo(i)}>
+                                                <X className="w-4 h-4 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Documentos da Carroceria */}
+                    <div className="p-4 bg-cyan-50 rounded-xl border border-cyan-200">
+                        <Label className="font-semibold text-cyan-800 mb-3 block">Documentos da Carroceria</Label>
+                        <div className="flex gap-2 mb-3">
+                            <input type="file" accept="image/*,.pdf" multiple onChange={handleDocCarroceriaUpload} className="hidden" id="doc-carroceria" />
+                            <label htmlFor="doc-carroceria" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-cyan-300 rounded-lg hover:border-cyan-500 cursor-pointer">
+                                <Upload className="w-4 h-4 text-cyan-600" />
+                                <span className="text-sm text-cyan-700">Adicionar</span>
+                            </label>
+                            <input type="file" accept="image/*" capture="environment" onChange={handleDocCarroceriaUpload} className="hidden" id="camera-carroceria" />
+                            <label htmlFor="camera-carroceria" className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-cyan-300 rounded-lg hover:border-cyan-500 cursor-pointer">
+                                <Camera className="w-4 h-4 text-cyan-600" />
+                                <span className="text-sm text-cyan-700">Foto</span>
+                            </label>
+                            {uploadingCarroceria && <div className="animate-spin w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full" />}
+                        </div>
+                        {form.documentos_carroceria.length > 0 && (
+                            <div className="space-y-2">
+                                {form.documentos_carroceria.map((doc, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-cyan-600" />
+                                            <span className="text-sm truncate max-w-[150px]">{doc.nome}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewDocs(form.documentos_carroceria)}>
+                                                <Eye className="w-4 h-4 text-blue-600" />
+                                            </Button>
+                                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeDocCarroceria(i)}>
+                                                <X className="w-4 h-4 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button type="button" variant="outline" onClick={handleShareWhatsApp}>
+                            <Share2 className="w-4 h-4 mr-2" />
+                            WhatsApp
+                        </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
                         <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                         </Button>
                     </div>
+                    
+                    {viewDocs && (
+                        <FlipbookViewer 
+                            files={viewDocs} 
+                            onClose={() => setViewDocs(null)} 
+                            title={`Documentos - ${form.placa}`}
+                        />
+                    )}
                 </form>
             </CardContent>
         </Card>

@@ -85,6 +85,11 @@ export default function LocationPermission({ onPermissionGranted }) {
             (err) => {
                 setStatus("denied");
                 setError("Permissão de localização negada");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
         );
     };
@@ -147,16 +152,26 @@ export default function LocationPermission({ onPermissionGranted }) {
 
                     <div className="space-y-3">
                         <Button 
-                            onClick={requestLocation}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                requestLocation();
+                            }}
                             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                            type="button"
                         >
                             <MapPin className="w-4 h-4 mr-2" />
                             Permitir Localização
                         </Button>
                         <Button 
                             variant="outline"
-                            onClick={handleDismiss}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDismiss();
+                            }}
                             className="w-full"
+                            type="button"
                         >
                             Continuar Sem Localização
                         </Button>

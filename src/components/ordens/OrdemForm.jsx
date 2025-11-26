@@ -4,11 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Save, Package, Truck, User, Star } from "lucide-react";
+import { X, Save, Package, Truck, User, Star, Search, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
 export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) {
+    const [searchRemetente, setSearchRemetente] = useState("");
+    const [searchDestinatario, setSearchDestinatario] = useState("");
+    const [loadingCep, setLoadingCep] = useState(false);
+    
     const [form, setForm] = useState({
         numero: "",
         data_ordem: new Date().toISOString().split("T")[0],
@@ -110,6 +114,48 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
     
     const remetentesFavoritos = remetentes.filter(c => c.favorito);
     const destinatariosFavoritos = destinatarios.filter(c => c.favorito);
+
+    // Filtrar por busca (razão social ou CNPJ)
+    const filteredRemetentes = remetentes.filter(c => {
+        if (!searchRemetente) return true;
+        const search = searchRemetente.toLowerCase();
+        return c.razao_social?.toLowerCase().includes(search) ||
+               c.cnpj_cpf?.toLowerCase().includes(search) ||
+               c.codigo?.toLowerCase().includes(search);
+    });
+
+    const filteredDestinatarios = destinatarios.filter(c => {
+        if (!searchDestinatario) return true;
+        const search = searchDestinatario.toLowerCase();
+        return c.razao_social?.toLowerCase().includes(search) ||
+               c.cnpj_cpf?.toLowerCase().includes(search) ||
+               c.codigo?.toLowerCase().includes(search);
+    });
+
+    // Buscar CEP nos Correios
+    const buscarCep = async (cep, tipo) => {
+        const cepLimpo = cep.replace(/\D/g, "");
+        if (cepLimpo.length !== 8) return;
+        
+        setLoadingCep(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+            const data = await response.json();
+            if (!data.erro) {
+                if (tipo === "remetente") {
+                    setForm(prev => ({
+                        ...prev,
+                        remetente_endereco: data.logradouro || prev.remetente_endereco,
+                        remetente_bairro: data.bairro || prev.remetente_bairro,
+                        remetente_cidade: `${data.localidade || ""}/${data.uf || ""}`
+                    }));
+                }
+            }
+        } catch (err) {
+            console.log("Erro ao buscar CEP:", err);
+        }
+        setLoadingCep(false);
+    };
 
     const selectRemetente = (clienteId) => {
         const cliente = clientes.find(c => c.id === clienteId);
@@ -245,29 +291,41 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Selecionar Cliente</Label>
+                                <div className="relative mb-2">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="Buscar por nome, CNPJ..."
+                                        value={searchRemetente}
+                                        onChange={(e) => setSearchRemetente(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
                                 <Select value={form.remetente_id} onValueChange={selectRemetente}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Buscar remetente..." />
+                                        <SelectValue placeholder="Selecione o remetente..." />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        {remetentesFavoritos.length > 0 && (
+                                    <SelectContent className="max-h-60">
+                                        {!searchRemetente && remetentesFavoritos.length > 0 && (
                                             <>
                                                 <div className="px-2 py-1 text-xs text-amber-600 font-semibold flex items-center gap-1">
                                                     <Star className="w-3 h-3 fill-amber-500" /> Favoritos
                                                 </div>
                                                 {remetentesFavoritos.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        ⭐ {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                        ⭐ {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                                     </SelectItem>
                                                 ))}
                                                 <div className="border-t my-1" />
                                             </>
                                         )}
-                                        {remetentes.filter(c => !c.favorito).map(c => (
+                                        {filteredRemetentes.filter(c => !c.favorito || searchRemetente).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                             </SelectItem>
                                         ))}
+                                        {filteredRemetentes.length === 0 && (
+                                            <div className="p-2 text-sm text-slate-500 text-center">Nenhum resultado</div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -306,10 +364,22 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div className="space-y-2">
                                 <Label>CEP</Label>
-                                <Input
-                                    value={form.remetente_cep}
-                                    onChange={(e) => setForm({ ...form, remetente_cep: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <Input
+                                        value={form.remetente_cep}
+                                        onChange={(e) => {
+                                            const cep = e.target.value;
+                                            setForm({ ...form, remetente_cep: cep });
+                                            if (cep.replace(/\D/g, "").length === 8) {
+                                                buscarCep(cep, "remetente");
+                                            }
+                                        }}
+                                        placeholder="00000-000"
+                                    />
+                                    {loadingCep && (
+                                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />
+                                    )}
+                                </div>
                             </div>
                             <div className="md:col-span-3 space-y-2">
                                 <Label>Endereço</Label>
@@ -360,29 +430,41 @@ export default function OrdemForm({ ordem, onSubmit, onCancel, proximoNumero }) 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Selecionar Cliente</Label>
+                                <div className="relative mb-2">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="Buscar por nome, CNPJ..."
+                                        value={searchDestinatario}
+                                        onChange={(e) => setSearchDestinatario(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
                                 <Select value={form.destinatario_id} onValueChange={selectDestinatario}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Buscar destinatário..." />
+                                        <SelectValue placeholder="Selecione o destinatário..." />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        {destinatariosFavoritos.length > 0 && (
+                                    <SelectContent className="max-h-60">
+                                        {!searchDestinatario && destinatariosFavoritos.length > 0 && (
                                             <>
                                                 <div className="px-2 py-1 text-xs text-emerald-600 font-semibold flex items-center gap-1">
                                                     <Star className="w-3 h-3 fill-emerald-500" /> Favoritos
                                                 </div>
                                                 {destinatariosFavoritos.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        ⭐ {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                        ⭐ {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                                     </SelectItem>
                                                 ))}
                                                 <div className="border-t my-1" />
                                             </>
                                         )}
-                                        {destinatarios.filter(c => !c.favorito).map(c => (
+                                        {filteredDestinatarios.filter(c => !c.favorito || searchDestinatario).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.codigo ? `${c.codigo} - ` : ""}{c.razao_social}
+                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
                                             </SelectItem>
                                         ))}
+                                        {filteredDestinatarios.length === 0 && (
+                                            <div className="p-2 text-sm text-slate-500 text-center">Nenhum resultado</div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>

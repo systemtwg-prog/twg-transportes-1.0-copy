@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,15 +37,20 @@ export default function ColetasDiarias() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
     });
 
-    // Aplicar todos os filtros
-    let coletasFiltradas = coletas;
+    // Aplicar todos os filtros - ocultar cancelados e pendentes por padrão
+    let coletasFiltradas = coletas.filter(c => c.status !== "cancelado");
     
     if (dataFiltro) {
         coletasFiltradas = coletasFiltradas.filter(c => c.data_coleta === dataFiltro);
     }
     
     if (statusFiltro !== "todos") {
-        coletasFiltradas = coletasFiltradas.filter(c => c.status === statusFiltro);
+        if (statusFiltro === "cancelado") {
+            // Se explicitamente filtrar por cancelado, mostrar todos os cancelados
+            coletasFiltradas = coletas.filter(c => c.status === "cancelado");
+        } else {
+            coletasFiltradas = coletasFiltradas.filter(c => c.status === statusFiltro);
+        }
     }
     
     if (searchFiltro) {
@@ -275,7 +280,17 @@ export default function ColetasDiarias() {
                                                     <div className="space-y-0.5 text-sm">
                                                         <p><strong>REMETENTE:</strong> {coleta.remetente_nome}</p>
                                                         <p><strong>DESTINATARIO:</strong> {coleta.destinatario_nome}</p>
-                                                        <p>{endereco}</p>
+                                                        {endereco && (
+                                                            <a 
+                                                                href={`https://waze.com/ul?q=${encodeURIComponent(endereco + " " + (coleta.remetente_cep || ""))}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
+                                                            >
+                                                                <MapPin className="w-3 h-3" />
+                                                                {endereco}
+                                                            </a>
+                                                        )}
                                                         <p>CEP {coleta.remetente_cep || "-"} - {coleta.remetente_telefone || "-"}</p>
                                                         <p>HORARIO: {coleta.remetente_horario || "-"}{coleta.remetente_intervalo ? ` - INTERVALO ${coleta.remetente_intervalo}` : ""}</p>
                                                         {coleta.recado && (

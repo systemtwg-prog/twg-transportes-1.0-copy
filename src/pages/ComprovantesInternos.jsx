@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -117,11 +117,17 @@ export default function ComprovantesInternos() {
     });
 
     const [form, setForm] = useState({
-        titulo: "",
+        nota_fiscal: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         texto_extraido: "",
+        romaneio_id: "",
         observacoes: ""
+    });
+
+    const { data: romaneios = [] } = useQuery({
+        queryKey: ["romaneios"],
+        queryFn: () => base44.entities.Romaneio.list("-created_date")
     });
 
     const createMutation = useMutation({
@@ -149,10 +155,11 @@ export default function ComprovantesInternos() {
 
     const resetForm = () => {
         setForm({
-            titulo: "",
+            nota_fiscal: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             texto_extraido: "",
+            romaneio_id: "",
             observacoes: ""
         });
         setEditing(null);
@@ -236,7 +243,7 @@ export default function ComprovantesInternos() {
     };
 
     const filtered = comprovantes.filter(c =>
-        c.titulo?.toLowerCase().includes(search.toLowerCase()) ||
+        c.nota_fiscal?.toLowerCase().includes(search.toLowerCase()) ||
         c.texto_extraido?.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -269,7 +276,7 @@ export default function ComprovantesInternos() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <Input
-                                placeholder="Buscar por título ou conteúdo..."
+                                placeholder="Buscar por nota fiscal..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="pl-10 bg-white"
@@ -295,7 +302,7 @@ export default function ComprovantesInternos() {
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between mb-3">
                                         <div>
-                                            <h3 className="font-semibold text-slate-800">{comprovante.titulo}</h3>
+                                            <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
                                             <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
                                         </div>
                                         <Badge variant="outline">
@@ -366,11 +373,12 @@ export default function ComprovantesInternos() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Título *</Label>
+                                <Label>Nota Fiscal *</Label>
                                 <Input
-                                    value={form.titulo}
-                                    onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                                    value={form.nota_fiscal}
+                                    onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
                                     required
+                                    placeholder="Número da NF"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -384,31 +392,68 @@ export default function ComprovantesInternos() {
                             </div>
                         </div>
 
+                        {/* Vincular a Romaneio */}
+                        {romaneios.length > 0 && (
+                            <div className="space-y-2">
+                                <Label>Vincular a Romaneio (opcional)</Label>
+                                <Select value={form.romaneio_id} onValueChange={(v) => setForm({ ...form, romaneio_id: v })}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um romaneio..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={null}>Nenhum</SelectItem>
+                                        {romaneios.map(r => (
+                                            <SelectItem key={r.id} value={r.id}>
+                                                {formatDate(r.data)} - {r.motorista_nome} ({r.notas_fiscais?.length || 0} NFs)
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
                         {/* Upload de arquivos */}
                         <div className="space-y-2">
                             <Label>Arquivos</Label>
-                            <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*,.pdf"
-                                    onChange={handleUploadFiles}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
-                                <label htmlFor="file-upload" className="cursor-pointer">
-                                    <div className="flex flex-col items-center gap-2">
-                                        {uploading ? (
-                                            <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
-                                        ) : (
-                                            <>
-                                                <Upload className="w-8 h-8 text-slate-400" />
-                                                <span className="text-sm text-slate-600">Clique para adicionar fotos ou PDFs</span>
-                                                <span className="text-xs text-slate-400">ou arraste e solte aqui</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*,.pdf"
+                                        onChange={handleUploadFiles}
+                                        className="hidden"
+                                        id="file-upload"
+                                    />
+                                    <label htmlFor="file-upload" className="cursor-pointer">
+                                        <div className="flex flex-col items-center gap-2">
+                                            {uploading ? (
+                                                <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-8 h-8 text-slate-400" />
+                                                    <span className="text-sm text-slate-600">Adicionar arquivos</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </label>
+                                </div>
+                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={handleUploadFiles}
+                                        className="hidden"
+                                        id="camera-upload"
+                                    />
+                                    <label htmlFor="camera-upload" className="cursor-pointer">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <CameraIcon className="w-8 h-8 text-slate-400" />
+                                            <span className="text-sm text-slate-600">Tirar Foto</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             {/* Lista de arquivos */}

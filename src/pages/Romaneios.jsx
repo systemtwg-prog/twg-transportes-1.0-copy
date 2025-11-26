@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Plus, FileText, Truck, Camera, Trash2, Pencil, 
-    CheckCircle, Package, X, Upload, Search
+    CheckCircle, Package, X, Upload, Search, AlertCircle, CameraIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -45,11 +45,43 @@ export default function Romaneios() {
         motorista_nome: "",
         veiculo_id: "",
         placa: "",
-        notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "" }],
+        notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }],
         comprovante_url: "",
         status: "pendente",
         observacoes: ""
     });
+
+    const validarCNPJ = (cnpj) => {
+        cnpj = cnpj.replace(/[^\d]/g, "");
+        if (cnpj.length !== 14) return false;
+        
+        let soma = 0;
+        let peso = 2;
+        for (let i = 11; i >= 0; i--) {
+            soma += parseInt(cnpj.charAt(i)) * peso;
+            peso = peso === 9 ? 2 : peso + 1;
+        }
+        let dig = 11 - (soma % 11);
+        if (dig > 9) dig = 0;
+        if (parseInt(cnpj.charAt(12)) !== dig) return false;
+        
+        soma = 0;
+        peso = 2;
+        for (let i = 12; i >= 0; i--) {
+            soma += parseInt(cnpj.charAt(i)) * peso;
+            peso = peso === 9 ? 2 : peso + 1;
+        }
+        dig = 11 - (soma % 11);
+        if (dig > 9) dig = 0;
+        return parseInt(cnpj.charAt(13)) === dig;
+    };
+
+    const calcularValorTotal = () => {
+        return form.notas_fiscais.reduce((sum, nf) => {
+            const valor = parseFloat(nf.valor) || 0;
+            return sum + valor;
+        }, 0);
+    };
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Romaneio.create(data),
@@ -81,7 +113,7 @@ export default function Romaneios() {
             motorista_nome: "",
             veiculo_id: "",
             placa: "",
-            notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "" }],
+            notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }],
             comprovante_url: "",
             status: "pendente",
             observacoes: ""
@@ -92,7 +124,7 @@ export default function Romaneios() {
     const handleEdit = (romaneio) => {
         setForm({
             ...romaneio,
-            notas_fiscais: romaneio.notas_fiscais || [{ numero_nf: "", valor: "", destinatario: "" }]
+            notas_fiscais: romaneio.notas_fiscais || [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }]
         });
         setEditing(romaneio);
         setShowForm(true);
@@ -115,7 +147,7 @@ export default function Romaneios() {
     const addNotaFiscal = () => {
         setForm({
             ...form,
-            notas_fiscais: [...form.notas_fiscais, { numero_nf: "", valor: "", destinatario: "" }]
+            notas_fiscais: [...form.notas_fiscais, { numero_nf: "", valor: "", destinatario: "", cnpj: "" }]
         });
     };
 
@@ -362,55 +394,131 @@ export default function Romaneios() {
                             </div>
                         </div>
 
-                        {/* Notas Fiscais */}
+                        {/* Notas Fiscais - Formato Planilha */}
                         <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
                             <div className="flex items-center justify-between mb-4">
-                                <Label className="font-semibold text-orange-800">Notas Fiscais</Label>
+                                <div>
+                                    <Label className="font-semibold text-orange-800">Notas Fiscais</Label>
+                                    <p className="text-sm text-orange-600 mt-1">
+                                        Valor Total: R$ {calcularValorTotal().toFixed(2)}
+                                    </p>
+                                </div>
                                 <Button type="button" size="sm" variant="outline" onClick={addNotaFiscal}>
                                     <Plus className="w-4 h-4 mr-1" /> Adicionar NF
                                 </Button>
                             </div>
-                            <div className="space-y-3">
-                                {form.notas_fiscais.map((nf, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <Input
-                                            placeholder="Nº NF"
-                                            value={nf.numero_nf}
-                                            onChange={(e) => updateNotaFiscal(index, "numero_nf", e.target.value)}
-                                            className="flex-1"
-                                        />
-                                        <Input
-                                            placeholder="Valor"
-                                            type="number"
-                                            value={nf.valor}
-                                            onChange={(e) => updateNotaFiscal(index, "valor", e.target.value)}
-                                            className="w-24"
-                                        />
-                                        <Input
-                                            placeholder="Destinatário"
-                                            value={nf.destinatario}
-                                            onChange={(e) => updateNotaFiscal(index, "destinatario", e.target.value)}
-                                            className="flex-1"
-                                        />
-                                        {form.notas_fiscais.length > 1 && (
-                                            <Button type="button" variant="ghost" size="icon" onClick={() => removeNotaFiscal(index)}>
-                                                <X className="w-4 h-4 text-red-600" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                ))}
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-orange-100">
+                                            <th className="p-2 text-left border text-sm">Nº NF</th>
+                                            <th className="p-2 text-left border text-sm">Valor (R$)</th>
+                                            <th className="p-2 text-left border text-sm">Destinatário</th>
+                                            <th className="p-2 text-left border text-sm">CNPJ</th>
+                                            <th className="p-2 text-center border text-sm w-12">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {form.notas_fiscais.map((nf, index) => {
+                                            const cnpjInvalido = nf.cnpj && !validarCNPJ(nf.cnpj);
+                                            return (
+                                                <tr key={index} className="bg-white">
+                                                    <td className="p-1 border">
+                                                        <Input
+                                                            placeholder="10000"
+                                                            value={nf.numero_nf}
+                                                            onChange={(e) => updateNotaFiscal(index, "numero_nf", e.target.value)}
+                                                            className="h-8 text-sm border-0"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border">
+                                                        <Input
+                                                            placeholder="0,00"
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={nf.valor}
+                                                            onChange={(e) => updateNotaFiscal(index, "valor", e.target.value)}
+                                                            className="h-8 text-sm border-0"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border">
+                                                        <Input
+                                                            placeholder="Nome do destinatário"
+                                                            value={nf.destinatario}
+                                                            onChange={(e) => updateNotaFiscal(index, "destinatario", e.target.value)}
+                                                            className="h-8 text-sm border-0"
+                                                        />
+                                                    </td>
+                                                    <td className="p-1 border">
+                                                        <div className="relative">
+                                                            <Input
+                                                                placeholder="00.000.000/0000-00"
+                                                                value={nf.cnpj}
+                                                                onChange={(e) => updateNotaFiscal(index, "cnpj", e.target.value)}
+                                                                className={`h-8 text-sm border-0 ${cnpjInvalido ? "bg-red-50" : ""}`}
+                                                            />
+                                                            {cnpjInvalido && (
+                                                                <AlertCircle className="absolute right-2 top-2 w-4 h-4 text-red-500" />
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-1 border text-center">
+                                                        {form.notas_fiscais.length > 1 && (
+                                                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeNotaFiscal(index)}>
+                                                                <X className="w-4 h-4 text-red-600" />
+                                                            </Button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
                         {/* Comprovante */}
                         <div className="space-y-2">
-                            <Label>Comprovante (Foto)</Label>
-                            <div className="flex items-center gap-4">
-                                <Input type="file" accept="image/*" onChange={handleUploadComprovante} className="flex-1" />
-                                {uploading && <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full" />}
+                            <Label>Comprovante (Foto ou PDF)</Label>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*,.pdf" 
+                                        onChange={handleUploadComprovante} 
+                                        className="hidden" 
+                                        id="file-comprovante"
+                                    />
+                                    <label htmlFor="file-comprovante" className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-500 cursor-pointer transition-colors">
+                                        <Upload className="w-5 h-5 text-slate-400" />
+                                        <span className="text-sm text-slate-600">Escolher arquivo</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        capture="environment"
+                                        onChange={handleUploadComprovante} 
+                                        className="hidden" 
+                                        id="camera-comprovante"
+                                    />
+                                    <label htmlFor="camera-comprovante" className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:border-orange-500 cursor-pointer transition-colors h-full">
+                                        <CameraIcon className="w-5 h-5 text-slate-400" />
+                                        <span className="text-sm text-slate-600">Tirar Foto</span>
+                                    </label>
+                                </div>
                             </div>
+                            {uploading && (
+                                <div className="flex items-center gap-2 text-orange-600">
+                                    <div className="animate-spin w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full" />
+                                    <span className="text-sm">Enviando...</span>
+                                </div>
+                            )}
                             {form.comprovante_url && (
-                                <img src={form.comprovante_url} alt="Comprovante" className="w-32 h-32 object-cover rounded-lg border" />
+                                <div className="mt-2">
+                                    <img src={form.comprovante_url} alt="Comprovante" className="w-32 h-32 object-cover rounded-lg border" />
+                                </div>
                             )}
                         </div>
 

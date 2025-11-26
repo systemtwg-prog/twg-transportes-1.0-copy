@@ -169,6 +169,51 @@ export default function ColetasDiarias() {
                     </Button>
                 </div>
 
+                {/* Filtros */}
+                <Card className="bg-white/60 border-0 shadow-md">
+                    <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                                    placeholder="Buscar por remetente ou destinatário..."
+                                    value={searchFiltro}
+                                    onChange={(e) => setSearchFiltro(e.target.value)}
+                                    className="pl-10 bg-white"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="date"
+                                    value={dataFiltro}
+                                    onChange={(e) => setDataFiltro(e.target.value)}
+                                    className="w-40 bg-white"
+                                    placeholder="Data"
+                                />
+                                {dataFiltro && (
+                                    <Button variant="ghost" size="icon" onClick={() => setDataFiltro("")}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+                                <SelectTrigger className="w-full md:w-40 bg-white">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todos</SelectItem>
+                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                    <SelectItem value="realizado">Realizado</SelectItem>
+                                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-2">
+                            {coletasFiltradas.length} coleta(s) encontrada(s)
+                        </p>
+                    </CardContent>
+                </Card>
+
                 {/* Documento */}
                 <Card className="border-0 shadow-xl" ref={printRef}>
                     <CardHeader className="border-b">

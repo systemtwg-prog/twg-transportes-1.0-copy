@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
     MapPin, Truck, Clock, Navigation, RefreshCw,
-    CheckCircle, Phone, Package
+    CheckCircle, Phone, Package, User, Circle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +40,22 @@ export default function Rastreamento() {
             status: "em_andamento" 
         }),
         refetchInterval: 30000 // Atualiza a cada 30 segundos
+    });
+
+    // Buscar todos os usuários com localização recente (online)
+    const { data: usuarios = [] } = useQuery({
+        queryKey: ["usuarios-online"],
+        queryFn: () => base44.entities.User.list(),
+        refetchInterval: 30000
+    });
+
+    // Filtrar usuários que têm localização atualizada nos últimos 10 minutos
+    const usuariosOnline = usuarios.filter(u => {
+        if (!u.ultima_localizacao?.timestamp) return false;
+        const lastUpdate = new Date(u.ultima_localizacao.timestamp);
+        const agora = new Date();
+        const diffMinutes = (agora - lastUpdate) / (1000 * 60);
+        return diffMinutes < 10;
     });
 
     const updateLocationMutation = useMutation({
@@ -119,7 +135,7 @@ export default function Rastreamento() {
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Mapa */}
                     <div className="lg:col-span-2">
                         <Card className="bg-white/80 border-0 shadow-xl overflow-hidden">
@@ -159,6 +175,23 @@ export default function Rastreamento() {
                                                 </Popup>
                                             </Marker>
                                         ))}
+                                        {/* Usuários online no mapa */}
+                                        {usuariosOnline.map((usuario) => (
+                                            <Marker 
+                                                key={usuario.id}
+                                                position={[usuario.ultima_localizacao.lat, usuario.ultima_localizacao.lng]}
+                                            >
+                                                <Popup>
+                                                    <div className="p-2">
+                                                        <p className="font-bold text-green-600">{usuario.full_name}</p>
+                                                        <p className="text-sm text-slate-600">{usuario.email}</p>
+                                                        <p className="text-xs text-slate-500 mt-1">
+                                                            Atualizado: {formatDateTime(usuario.ultima_localizacao.timestamp)}
+                                                        </p>
+                                                    </div>
+                                                </Popup>
+                                            </Marker>
+                                        ))}
                                     </MapContainer>
                                 </div>
                             </CardContent>
@@ -179,7 +212,7 @@ export default function Rastreamento() {
                                     </Badge>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-0 max-h-[450px] overflow-y-auto">
+                            <CardContent className="p-0 max-h-[350px] overflow-y-auto">
                                 {isLoading ? (
                                     <div className="p-8 text-center">
                                         <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
@@ -249,6 +282,53 @@ export default function Rastreamento() {
                                                             Notificado
                                                         </Badge>
                                                     )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Usuários Online */}
+                    <div>
+                        <Card className="bg-white/80 border-0 shadow-xl">
+                            <CardHeader className="border-b">
+                                <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <User className="w-5 h-5 text-green-600" />
+                                        Usuários Online
+                                    </div>
+                                    <Badge className="bg-green-100 text-green-800">
+                                        {usuariosOnline.length}
+                                    </Badge>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0 max-h-[350px] overflow-y-auto">
+                                {usuariosOnline.length === 0 ? (
+                                    <div className="p-8 text-center text-slate-500">
+                                        <User className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                        Nenhum usuário online
+                                    </div>
+                                ) : (
+                                    <div className="divide-y">
+                                        {usuariosOnline.map((usuario) => (
+                                            <div key={usuario.id} className="p-4 hover:bg-slate-50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="relative">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold">
+                                                            {usuario.full_name?.[0]?.toUpperCase() || "U"}
+                                                        </div>
+                                                        <Circle className="w-3 h-3 text-green-500 fill-green-500 absolute -bottom-0.5 -right-0.5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-slate-800">{usuario.full_name}</p>
+                                                        <p className="text-xs text-green-600 flex items-center gap-1">
+                                                            <MapPin className="w-3 h-3" />
+                                                            Online agora
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

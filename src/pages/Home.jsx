@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
     Package, Users, FileText, TrendingUp, 
     Clock, Truck, CheckCircle, ArrowRight,
-    Calendar, Settings, User, Navigation, Car, Award
+    Calendar, Settings, User, Navigation, Car, Award, Bell, AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -59,6 +59,19 @@ export default function Home() {
         queryFn: async () => {
             const hoje = new Date().toISOString().split("T")[0];
             return base44.entities.OrdemColeta.filter({ data_coleta: hoje });
+        }
+    });
+
+    const { data: avisosAtivos = [] } = useQuery({
+        queryKey: ["avisos-ativos"],
+        queryFn: async () => {
+            const avisos = await base44.entities.Aviso.filter({ ativo: true });
+            const hoje = new Date().toISOString().split("T")[0];
+            return avisos.filter(a => {
+                if (a.data_inicio && a.data_inicio > hoje) return false;
+                if (a.data_fim && a.data_fim < hoje) return false;
+                return true;
+            });
         }
     });
 
@@ -207,6 +220,43 @@ export default function Home() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-6 pb-12">
+                {/* Avisos Ativos */}
+                {avisosAtivos.length > 0 && (
+                    <div className="space-y-3 mb-6">
+                        {avisosAtivos.map(aviso => (
+                            <Card key={aviso.id} className={`border-l-4 shadow-lg ${
+                                aviso.tipo === "urgente" ? "bg-red-50 border-l-red-500" :
+                                aviso.tipo === "alerta" ? "bg-amber-50 border-l-amber-500" :
+                                "bg-blue-50 border-l-blue-500"
+                            }`}>
+                                <CardContent className="p-4 flex items-start gap-3">
+                                    <div className={`p-2 rounded-lg ${
+                                        aviso.tipo === "urgente" ? "bg-red-100" :
+                                        aviso.tipo === "alerta" ? "bg-amber-100" :
+                                        "bg-blue-100"
+                                    }`}>
+                                        {aviso.tipo === "urgente" || aviso.tipo === "alerta" ? (
+                                            <AlertTriangle className={`w-5 h-5 ${
+                                                aviso.tipo === "urgente" ? "text-red-600" : "text-amber-600"
+                                            }`} />
+                                        ) : (
+                                            <Bell className="w-5 h-5 text-blue-600" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className={`font-semibold ${
+                                            aviso.tipo === "urgente" ? "text-red-800" :
+                                            aviso.tipo === "alerta" ? "text-amber-800" :
+                                            "text-blue-800"
+                                        }`}>{aviso.titulo}</h3>
+                                        <p className="text-slate-600 text-sm">{aviso.mensagem}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+
                 {/* Stats */}
                 {userWidgets.includes("stats") && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

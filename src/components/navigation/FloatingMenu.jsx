@@ -14,6 +14,8 @@ const menuItems = [
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
     { name: "Romaneios/Entregas", href: "Romaneios", icon: Package },
+    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
+    { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
     { name: "Clientes", href: "Clientes", icon: Users },
     { name: "Colaboradores", href: "Motoristas", icon: User },
     { name: "Veículos", href: "Veiculos", icon: Car },

@@ -24,6 +24,23 @@ export default function Romaneios() {
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
 
+    const { data: currentUser } = useQuery({
+        queryKey: ["current-user"],
+        queryFn: () => base44.auth.me()
+    });
+
+    const { data: colaboradorVinculado } = useQuery({
+        queryKey: ["colaborador-vinculado", currentUser?.id],
+        queryFn: async () => {
+            if (!currentUser?.id) return null;
+            const colaboradores = await base44.entities.Motorista.filter({ usuario_vinculado: currentUser.id });
+            return colaboradores[0] || null;
+        },
+        enabled: !!currentUser?.id
+    });
+
+    const isAdmin = currentUser?.role === "admin";
+
     const { data: romaneios = [], isLoading } = useQuery({
         queryKey: ["romaneios"],
         queryFn: () => base44.entities.Romaneio.list("-created_date")
@@ -45,36 +62,12 @@ export default function Romaneios() {
         motorista_nome: "",
         veiculo_id: "",
         placa: "",
-        notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }],
+        transportadora: "",
+        notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "" }],
         comprovante_url: "",
         status: "pendente",
         observacoes: ""
     });
-
-    const validarCNPJ = (cnpj) => {
-        cnpj = cnpj.replace(/[^\d]/g, "");
-        if (cnpj.length !== 14) return false;
-        
-        let soma = 0;
-        let peso = 2;
-        for (let i = 11; i >= 0; i--) {
-            soma += parseInt(cnpj.charAt(i)) * peso;
-            peso = peso === 9 ? 2 : peso + 1;
-        }
-        let dig = 11 - (soma % 11);
-        if (dig > 9) dig = 0;
-        if (parseInt(cnpj.charAt(12)) !== dig) return false;
-        
-        soma = 0;
-        peso = 2;
-        for (let i = 12; i >= 0; i--) {
-            soma += parseInt(cnpj.charAt(i)) * peso;
-            peso = peso === 9 ? 2 : peso + 1;
-        }
-        dig = 11 - (soma % 11);
-        if (dig > 9) dig = 0;
-        return parseInt(cnpj.charAt(13)) === dig;
-    };
 
     const calcularValorTotal = () => {
         return form.notas_fiscais.reduce((sum, nf) => {
@@ -113,7 +106,8 @@ export default function Romaneios() {
             motorista_nome: "",
             veiculo_id: "",
             placa: "",
-            notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }],
+            transportadora: "",
+            notas_fiscais: [{ numero_nf: "", valor: "", destinatario: "" }],
             comprovante_url: "",
             status: "pendente",
             observacoes: ""
@@ -124,7 +118,7 @@ export default function Romaneios() {
     const handleEdit = (romaneio) => {
         setForm({
             ...romaneio,
-            notas_fiscais: romaneio.notas_fiscais || [{ numero_nf: "", valor: "", destinatario: "", cnpj: "" }]
+            notas_fiscais: romaneio.notas_fiscais || [{ numero_nf: "", valor: "", destinatario: "" }]
         });
         setEditing(romaneio);
         setShowForm(true);
@@ -147,7 +141,7 @@ export default function Romaneios() {
     const addNotaFiscal = () => {
         setForm({
             ...form,
-            notas_fiscais: [...form.notas_fiscais, { numero_nf: "", valor: "", destinatario: "", cnpj: "" }]
+            notas_fiscais: [...form.notas_fiscais, { numero_nf: "", valor: "", destinatario: "" }]
         });
     };
 
@@ -195,9 +189,15 @@ export default function Romaneios() {
         }
     };
 
-    const filtered = romaneios.filter(r =>
+    // Filtrar romaneios - colaborador vê apenas os seus
+    let filtered = romaneios;
+    if (!isAdmin && colaboradorVinculado) {
+        filtered = romaneios.filter(r => r.motorista_id === colaboradorVinculado.id);
+    }
+    filtered = filtered.filter(r =>
         r.motorista_nome?.toLowerCase().includes(search.toLowerCase()) ||
-        r.placa?.toLowerCase().includes(search.toLowerCase())
+        r.placa?.toLowerCase().includes(search.toLowerCase()) ||
+        r.transportadora?.toLowerCase().includes(search.toLowerCase())
     );
 
     const statusColors = {
@@ -394,6 +394,15 @@ export default function Romaneios() {
                             </div>
                         </div>
 
+                        <div className="space-y-2">
+                            <Label>Transportadora</Label>
+                            <Input
+                                value={form.transportadora}
+                                onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
+                                placeholder="Nome da transportadora"
+                            />
+                        </div>
+
                         {/* Notas Fiscais - Formato Planilha */}
                         <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
                             <div className="flex items-center justify-between mb-4">
@@ -414,64 +423,47 @@ export default function Romaneios() {
                                             <th className="p-2 text-left border text-sm">Nº NF</th>
                                             <th className="p-2 text-left border text-sm">Valor (R$)</th>
                                             <th className="p-2 text-left border text-sm">Destinatário</th>
-                                            <th className="p-2 text-left border text-sm">CNPJ</th>
                                             <th className="p-2 text-center border text-sm w-12">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {form.notas_fiscais.map((nf, index) => {
-                                            const cnpjInvalido = nf.cnpj && !validarCNPJ(nf.cnpj);
-                                            return (
-                                                <tr key={index} className="bg-white">
-                                                    <td className="p-1 border">
-                                                        <Input
-                                                            placeholder="10000"
-                                                            value={nf.numero_nf}
-                                                            onChange={(e) => updateNotaFiscal(index, "numero_nf", e.target.value)}
-                                                            className="h-8 text-sm border-0"
-                                                        />
-                                                    </td>
-                                                    <td className="p-1 border">
-                                                        <Input
-                                                            placeholder="0,00"
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={nf.valor}
-                                                            onChange={(e) => updateNotaFiscal(index, "valor", e.target.value)}
-                                                            className="h-8 text-sm border-0"
-                                                        />
-                                                    </td>
-                                                    <td className="p-1 border">
-                                                        <Input
-                                                            placeholder="Nome do destinatário"
-                                                            value={nf.destinatario}
-                                                            onChange={(e) => updateNotaFiscal(index, "destinatario", e.target.value)}
-                                                            className="h-8 text-sm border-0"
-                                                        />
-                                                    </td>
-                                                    <td className="p-1 border">
-                                                        <div className="relative">
-                                                            <Input
-                                                                placeholder="00.000.000/0000-00"
-                                                                value={nf.cnpj}
-                                                                onChange={(e) => updateNotaFiscal(index, "cnpj", e.target.value)}
-                                                                className={`h-8 text-sm border-0 ${cnpjInvalido ? "bg-red-50" : ""}`}
-                                                            />
-                                                            {cnpjInvalido && (
-                                                                <AlertCircle className="absolute right-2 top-2 w-4 h-4 text-red-500" />
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-1 border text-center">
-                                                        {form.notas_fiscais.length > 1 && (
-                                                            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeNotaFiscal(index)}>
-                                                                <X className="w-4 h-4 text-red-600" />
-                                                            </Button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                        {form.notas_fiscais.map((nf, index) => (
+                                            <tr key={index} className="bg-white">
+                                                <td className="p-1 border">
+                                                    <Input
+                                                        placeholder="10000"
+                                                        value={nf.numero_nf}
+                                                        onChange={(e) => updateNotaFiscal(index, "numero_nf", e.target.value)}
+                                                        className="h-8 text-sm border-0"
+                                                    />
+                                                </td>
+                                                <td className="p-1 border">
+                                                    <Input
+                                                        placeholder="0,00"
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={nf.valor}
+                                                        onChange={(e) => updateNotaFiscal(index, "valor", e.target.value)}
+                                                        className="h-8 text-sm border-0"
+                                                    />
+                                                </td>
+                                                <td className="p-1 border">
+                                                    <Input
+                                                        placeholder="Nome do destinatário"
+                                                        value={nf.destinatario}
+                                                        onChange={(e) => updateNotaFiscal(index, "destinatario", e.target.value)}
+                                                        className="h-8 text-sm border-0"
+                                                    />
+                                                </td>
+                                                <td className="p-1 border text-center">
+                                                    {form.notas_fiscais.length > 1 && (
+                                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeNotaFiscal(index)}>
+                                                            <X className="w-4 h-4 text-red-600" />
+                                                        </Button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>

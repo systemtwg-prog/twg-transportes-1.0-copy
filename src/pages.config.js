@@ -16,6 +16,8 @@ import Comprovantes from './pages/Comprovantes';
 import Romaneios from './pages/Romaneios';
 import Avisos from './pages/Avisos';
 import ComprovantesInternos from './pages/ComprovantesInternos';
+import NotaDeposito from './pages/NotaDeposito';
+import RotasGPS from './pages/RotasGPS';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +40,8 @@ export const PAGES = {
     "Romaneios": Romaneios,
     "Avisos": Avisos,
     "ComprovantesInternos": ComprovantesInternos,
+    "NotaDeposito": NotaDeposito,
+    "RotasGPS": RotasGPS,
 }
 
 export const pagesConfig = {

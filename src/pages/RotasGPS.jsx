@@ -8,16 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Navigation, MapPin, Truck, Package, ExternalLink, 
-    Trash2, Plus, Route
+    Trash2, Plus, Route, Mic, MicOff, CheckCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import AudioRecorder from "@/components/shared/AudioRecorder";
 
 export default function RotasGPS() {
     const [selectedRomaneio, setSelectedRomaneio] = useState(null);
     const [showAddDestino, setShowAddDestino] = useState(false);
     const [sourceType, setSourceType] = useState("coleta");
+    const [destinoFinalizado, setDestinoFinalizado] = useState(null);
+    const [audioUrl, setAudioUrl] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
@@ -329,23 +332,33 @@ export default function RotasGPS() {
                                                     )}
                                                 </div>
                                             </div>
-                                            {dest.endereco && (
-                                                <Button 
-                                                    size="sm" 
+                                            <div className="flex items-center gap-1">
+                                                {dest.endereco && (
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            const endereco = [dest.endereco, dest.bairro, dest.cidade].filter(Boolean).join(", ");
+                                                            window.open(`https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`, "_blank");
+                                                        }}
+                                                    >
+                                                        <Navigation className="w-4 h-4 text-blue-600" />
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    size="sm"
                                                     variant="ghost"
-                                                    onClick={() => {
-                                                        const endereco = [dest.endereco, dest.bairro, dest.cidade].filter(Boolean).join(", ");
-                                                        window.open(`https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`, "_blank");
-                                                    }}
+                                                    onClick={() => setDestinoFinalizado(dest)}
+                                                    className="text-green-600 hover:bg-green-50"
                                                 >
-                                                    <Navigation className="w-4 h-4 text-blue-600" />
+                                                    <CheckCircle className="w-4 h-4" />
                                                 </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                            </div>
+                                            </div>
+                                            </div>
+                                            ))}
 
-                                {(!selectedRomaneio.notas_fiscais || selectedRomaneio.notas_fiscais.length === 0) && (
+                                            {(!selectedRomaneio.notas_fiscais || selectedRomaneio.notas_fiscais.length === 0) && (
                                     <div className="text-center py-8 text-slate-500">
                                         <Package className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                         Nenhum destino cadastrado neste romaneio
@@ -414,6 +427,93 @@ export default function RotasGPS() {
                     </Card>
                 )}
             </div>
+
+            {/* Dialog Finalizar Destino */}
+            <Dialog open={!!destinoFinalizado} onOpenChange={() => { setDestinoFinalizado(null); setAudioUrl(null); }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            Finalizar Entrega
+                        </DialogTitle>
+                    </DialogHeader>
+                    {destinoFinalizado && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                <p className="font-semibold text-green-800">{destinoFinalizado.destinatario}</p>
+                                <p className="text-sm text-green-600">NF: {destinoFinalizado.numero_nf}</p>
+                                {destinoFinalizado.endereco && (
+                                    <p className="text-sm text-slate-600 mt-1">
+                                        <MapPin className="w-3 h-3 inline mr-1" />
+                                        {[destinoFinalizado.endereco, destinoFinalizado.bairro, destinoFinalizado.cidade].filter(Boolean).join(", ")}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Gravação de Áudio */}
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium text-slate-700">Gravar observação em áudio:</p>
+                                <AudioRecorder 
+                                    onRecordingComplete={async (blob, url) => {
+                                        setAudioUrl(url);
+                                        const file = new File([blob], "audio_entrega.webm", { type: "audio/webm" });
+                                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                        setAudioUrl(file_url);
+                                        toast.success("Áudio gravado!");
+                                    }}
+                                />
+                                {audioUrl && (
+                                    <div className="p-2 bg-slate-100 rounded-lg">
+                                        <audio controls src={audioUrl} className="w-full" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Botão Como Chegar */}
+                            {destinoFinalizado.endereco && (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium text-slate-700">Navegar para o próximo destino:</p>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            onClick={() => {
+                                                const endereco = [destinoFinalizado.endereco, destinoFinalizado.bairro, destinoFinalizado.cidade].filter(Boolean).join(", ");
+                                                window.open(`https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`, "_blank");
+                                            }}
+                                            className="flex-1 bg-blue-500 hover:bg-blue-600"
+                                        >
+                                            <Navigation className="w-4 h-4 mr-2" />
+                                            Waze
+                                        </Button>
+                                        <Button 
+                                            onClick={() => {
+                                                const endereco = [destinoFinalizado.endereco, destinoFinalizado.bairro, destinoFinalizado.cidade].filter(Boolean).join(", ");
+                                                window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(endereco)}`, "_blank");
+                                            }}
+                                            variant="outline"
+                                            className="flex-1 border-green-500 text-green-600"
+                                        >
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            Maps
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <Button 
+                                onClick={() => {
+                                    toast.success("Entrega finalizada!");
+                                    setDestinoFinalizado(null);
+                                    setAudioUrl(null);
+                                }}
+                                className="w-full bg-green-600 hover:bg-green-700"
+                            >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Confirmar Finalização
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog para adicionar destino */}
             <Dialog open={showAddDestino} onOpenChange={setShowAddDestino}>

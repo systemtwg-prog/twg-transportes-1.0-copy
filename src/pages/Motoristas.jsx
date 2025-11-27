@@ -65,6 +65,10 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
 
     const handlePrintColaborador = () => {
         const winPrint = window.open('', '', 'width=800,height=600');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
         winPrint.document.write(`
             <html>
             <head>

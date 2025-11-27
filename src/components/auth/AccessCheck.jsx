@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Clock, XCircle, Home, Loader2 } from "lucide-react";
 
-export default function AccessCheck({ user, isLoading, pageName }) {
+export default function AccessCheck({ user, isLoading, pageName, skipApprovalCheck = false }) {
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

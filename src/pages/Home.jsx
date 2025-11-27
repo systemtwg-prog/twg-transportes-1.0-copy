@@ -75,8 +75,9 @@ export default function Home() {
         }
     };
 
-    // Verificar aprovação do usuário
-    const accessDenied = currentUser && (
+    // Verificar aprovação do usuário - mas se for admin ou role admin, deixa passar
+    const isAdmin = currentUser?.role === "admin" || currentUser?.tipo_usuario === "admin";
+    const accessDenied = currentUser && !isAdmin && (
         currentUser.status === "pendente" || 
         currentUser.status === "rejeitado" || 
         !currentUser.status

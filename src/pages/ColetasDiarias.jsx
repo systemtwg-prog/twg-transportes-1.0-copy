@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,8 +20,10 @@ export default function ColetasDiarias() {
     const [searchFiltro, setSearchFiltro] = useState("");
     const [motoristaFiltro, setMotoristaFiltro] = useState("");
     const [activeTab, setActiveTab] = useState("pendentes");
+    const [criandoOrdem, setCriandoOrdem] = useState(null);
     const printRef = useRef();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const { data: coletas = [], isLoading } = useQuery({
         queryKey: ["coletas-diarias"],
@@ -55,6 +59,51 @@ export default function ColetasDiarias() {
 
     const moverParaInicio = (coleta) => {
         updateOrdemMutation.mutate({ id: coleta.id, ordem: 0 });
+    };
+
+    const criarOrdemColeta = async (coleta) => {
+        setCriandoOrdem(coleta.id);
+        
+        // Buscar configurações para obter o próximo número
+        const configList = await base44.entities.Configuracoes.list();
+        const configAtual = configList[0] || {};
+        const proximoNumero = (configAtual.ultimo_numero_ordem || 0) + 1;
+        
+        // Criar a ordem de coleta
+        const ordemData = {
+            numero: String(proximoNumero).padStart(5, "0"),
+            data_ordem: coleta.data_coleta || new Date().toISOString().split("T")[0],
+            status: "pendente",
+            remetente_id: coleta.remetente_id || "",
+            remetente_nome: coleta.remetente_nome || "",
+            remetente_endereco: coleta.remetente_endereco || "",
+            remetente_bairro: coleta.remetente_bairro || "",
+            remetente_cidade: coleta.remetente_cidade || "",
+            remetente_cep: coleta.remetente_cep || "",
+            remetente_telefone: coleta.remetente_telefone || "",
+            destinatario_id: coleta.destinatario_id || "",
+            destinatario_nome: coleta.destinatario_nome || "",
+            peso: coleta.peso || "",
+            volume: coleta.volume || "",
+            nfe: coleta.nfe || "",
+            data_coleta: coleta.data_coleta || new Date().toISOString().split("T")[0],
+            horario: coleta.remetente_horario || "",
+            almoco: coleta.remetente_intervalo || "",
+            motorista_id: coleta.motorista_id || ""
+        };
+        
+        await base44.entities.OrdemColeta.create(ordemData);
+        
+        // Atualizar o número da ordem nas configurações
+        if (configAtual.id) {
+            await base44.entities.Configuracoes.update(configAtual.id, { ultimo_numero_ordem: proximoNumero });
+        } else {
+            await base44.entities.Configuracoes.create({ ultimo_numero_ordem: proximoNumero });
+        }
+        
+        setCriandoOrdem(null);
+        alert(`Ordem de Coleta #${String(proximoNumero).padStart(5, "0")} criada com sucesso!`);
+        navigate(createPageUrl("OrdensColeta"));
     };
 
     // Separar coletas por status
@@ -315,6 +364,20 @@ export default function ColetasDiarias() {
                                 title="Mover para final"
                             >
                                 <ArrowDown className="w-3 h-3 text-orange-600" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => criarOrdemColeta(coleta)}
+                                disabled={criandoOrdem === coleta.id}
+                                title="Criar Ordem de Coleta"
+                            >
+                                {criandoOrdem === coleta.id ? (
+                                    <div className="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <FileText className="w-3 h-3 text-indigo-600" />
+                                )}
                             </Button>
                         </div>
                     </div>

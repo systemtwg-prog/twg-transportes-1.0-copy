@@ -195,7 +195,7 @@ export default function ColetasDiarias() {
                     .num { width: 40px; text-align: center; font-weight: 900; background: #f0f9ff; font-size: 18px; }
                     .status { text-align: center; width: 80px; font-size: 20px; }
                     .carga { text-align: center; width: 100px; font-weight: 700; }
-                    .empty-row { height: 45px; }
+                    .empty-row { height: 65px; }
                     tr:nth-child(even) { background: #f8fafc; }
                     .priority { background: #fef3c7 !important; }
                     strong { font-size: 16px; font-weight: 800; }

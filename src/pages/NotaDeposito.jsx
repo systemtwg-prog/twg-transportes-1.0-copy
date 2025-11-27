@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Receipt, Camera, Trash2, Pencil, Eye, 
-    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine
+    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine, CheckSquare, Square
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,6 +44,8 @@ export default function NotaDeposito() {
         data: format(new Date(), "yyyy-MM-dd"),
         fotos: [],
         status: "pendente",
+        nota_fiscal: "",
+        cadastrada: false,
         observacoes: ""
     });
 
@@ -76,6 +78,8 @@ export default function NotaDeposito() {
             data: format(new Date(), "yyyy-MM-dd"),
             fotos: [],
             status: "pendente",
+            nota_fiscal: "",
+            cadastrada: false,
             observacoes: ""
         });
         setEditing(null);
@@ -84,10 +88,16 @@ export default function NotaDeposito() {
     const handleEdit = (nota) => {
         setForm({
             ...nota,
-            fotos: nota.fotos || (nota.foto_url ? [{ url: nota.foto_url, nome: "foto" }] : [])
+            fotos: nota.fotos || (nota.foto_url ? [{ url: nota.foto_url, nome: "foto" }] : []),
+            nota_fiscal: nota.nota_fiscal || "",
+            cadastrada: nota.cadastrada || false
         });
         setEditing(nota);
         setShowForm(true);
+    };
+
+    const toggleCadastrada = (nota) => {
+        updateMutation.mutate({ id: nota.id, data: { ...nota, cadastrada: !nota.cadastrada } });
     };
 
     const handleUploadFotos = async (e) => {
@@ -222,6 +232,9 @@ export default function NotaDeposito() {
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
                                             <h3 className="font-semibold text-slate-800">{nota.titulo || "Sem título"}</h3>
+                                            {nota.nota_fiscal && (
+                                                <p className="text-sm font-medium text-blue-600">NF: {nota.nota_fiscal}</p>
+                                            )}
                                             <p className="text-sm text-slate-500">{formatDate(nota.data)}</p>
                                             {nota.usuario_foto && (
                                                 <p className="text-xs text-violet-600">📷 {nota.usuario_foto}</p>
@@ -257,20 +270,31 @@ export default function NotaDeposito() {
                                         <p className="text-sm text-slate-600 line-clamp-2">{nota.observacoes}</p>
                                     )}
 
-                                    <div className="flex justify-end gap-2 mt-3">
-                                        {(nota.fotos?.length > 0 || nota.foto_url) && (
-                                            <Button variant="ghost" size="sm" onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}>
-                                                <Eye className="w-4 h-4" />
+                                    <div className="flex justify-between items-center mt-3">
+                                        <Button 
+                                            variant={nota.cadastrada ? "default" : "outline"}
+                                            size="sm" 
+                                            onClick={() => toggleCadastrada(nota)}
+                                            className={nota.cadastrada ? "bg-green-500 hover:bg-green-600 text-white" : "border-green-500 text-green-600 hover:bg-green-50"}
+                                        >
+                                            {nota.cadastrada ? <CheckSquare className="w-4 h-4 mr-1" /> : <Square className="w-4 h-4 mr-1" />}
+                                            {nota.cadastrada ? "Cadastrada" : "Cadastrar"}
+                                        </Button>
+                                        <div className="flex gap-1">
+                                            {(nota.fotos?.length > 0 || nota.foto_url) && (
+                                                <Button variant="ghost" size="sm" onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}>
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(nota)}>
+                                                <Pencil className="w-4 h-4" />
                                             </Button>
-                                        )}
-                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(nota)}>
-                                            <Pencil className="w-4 h-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="sm" onClick={() => {
-                                            if (confirm("Excluir esta nota?")) deleteMutation.mutate(nota.id);
-                                        }}>
-                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                        </Button>
+                                            <Button variant="ghost" size="sm" onClick={() => {
+                                                if (confirm("Excluir esta nota?")) deleteMutation.mutate(nota.id);
+                                            }}>
+                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -311,14 +335,24 @@ export default function NotaDeposito() {
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Data *</Label>
-                            <Input
-                                type="date"
-                                value={form.data}
-                                onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                required
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Data *</Label>
+                                <Input
+                                    type="date"
+                                    value={form.data}
+                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Nota Fiscal</Label>
+                                <Input
+                                    value={form.nota_fiscal}
+                                    onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
+                                    placeholder="Número da NF"
+                                />
+                            </div>
                         </div>
 
                         {/* Fotos */}

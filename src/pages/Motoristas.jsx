@@ -144,7 +144,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
 
     return (
         <Card className="border-0 shadow-xl">
-            <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-amber-50">
+            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
                 <CardTitle className="flex items-center justify-between">
                     <span>{motorista ? "Editar Colaborador" : "Novo Colaborador"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -164,7 +164,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                                     <Camera className="w-8 h-8 text-slate-400" />
                                 )}
                             </div>
-                            <label className="absolute -bottom-1 -right-1 p-2 bg-orange-500 rounded-full cursor-pointer hover:bg-orange-600 transition-colors">
+                            <label className="absolute -bottom-1 -right-1 p-2 bg-sky-500 rounded-full cursor-pointer hover:bg-sky-600 transition-colors">
                                 <Upload className="w-4 h-4 text-white" />
                                 <input
                                     type="file"
@@ -178,7 +178,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-700">Foto do Colaborador</h3>
                             <p className="text-sm text-slate-500">Clique no ícone para enviar uma foto</p>
-                            {uploading && <p className="text-sm text-orange-600">Enviando...</p>}
+                            {uploading && <p className="text-sm text-sky-600">Enviando...</p>}
                         </div>
                     </div>
 

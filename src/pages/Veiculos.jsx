@@ -96,7 +96,7 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
 
     return (
         <Card className="border-0 shadow-xl">
-            <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-cyan-50">
+            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
                 <CardTitle className="flex items-center justify-between">
                     <span>{veiculo ? "Editar Veículo" : "Novo Veículo"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>

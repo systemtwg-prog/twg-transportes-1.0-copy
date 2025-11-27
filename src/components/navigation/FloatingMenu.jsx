@@ -29,6 +29,7 @@ const menuItems = [
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
     { name: "Backup", href: "Backup", icon: LayoutGrid },
     { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
+    { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
 ];
 
 export default function FloatingMenu({ currentPage }) {

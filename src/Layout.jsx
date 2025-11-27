@@ -33,7 +33,8 @@ export default function Layout({ children, currentPageName }) {
         { name: "Configurações", href: "Configuracoes", icon: Settings },
         { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
         { name: "Backup", href: "Backup", icon: LayoutGrid },
-        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid }
+        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
+        { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText }
     ];
 
     const NavLinks = ({ onClick }) => (

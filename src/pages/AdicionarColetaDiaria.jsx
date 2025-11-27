@@ -12,8 +12,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy
+    X, Save, Star, Copy, AlertTriangle
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,6 +43,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
         peso: coleta?.peso || "",
         nfe: coleta?.nfe || "",
         status: coleta?.status || "pendente",
+        prioridade: coleta?.prioridade || false,
         recado: coleta?.recado || ""
     });
 
@@ -143,6 +145,21 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                     <SelectItem value="cancelado">Cancelado</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Prioridade</Label>
+                            <div className={`flex items-center gap-3 p-3 rounded-lg border ${form.prioridade ? "bg-yellow-100 border-yellow-400" : "bg-white border-slate-200"}`}>
+                                <Switch
+                                    checked={form.prioridade}
+                                    onCheckedChange={(v) => setForm({ ...form, prioridade: v })}
+                                />
+                                <div className="flex items-center gap-2">
+                                    {form.prioridade && <AlertTriangle className="w-4 h-4 text-yellow-600" />}
+                                    <span className={form.prioridade ? "font-semibold text-yellow-800" : "text-slate-500"}>
+                                        {form.prioridade ? "PRIORITÁRIO" : "Normal"}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -508,9 +525,16 @@ export default function AdicionarColetaDiaria() {
                                     </TableRow>
                                 ) : (
                                     filtered.map((coleta) => (
-                                        <TableRow key={coleta.id} className="hover:bg-slate-50">
+                                        <TableRow key={coleta.id} className={`hover:bg-slate-50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}
                                             <TableCell className="font-medium">
-                                                {formatDate(coleta.data_coleta)}
+                                                <div className="flex items-center gap-2">
+                                                    {coleta.prioridade && (
+                                                        <span className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                                                            <AlertTriangle className="w-3 h-3 text-yellow-900" />
+                                                        </span>
+                                                    )}
+                                                    {formatDate(coleta.data_coleta)}
+                                                </div>
                                             </TableCell>
                                             <TableCell>{coleta.remetente_nome}</TableCell>
                                             <TableCell>{coleta.destinatario_nome}</TableCell>

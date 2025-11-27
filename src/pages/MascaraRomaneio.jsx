@@ -281,10 +281,10 @@ export default function MascaraRomaneio() {
                                 ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div class="logo-placeholder">TWG</div>'}
                             </div>
                             <div class="company-info">
-                                <p class="company-name">${config.nome_empresa || "TWG TRANSPORTES"}</p>
-                                <p class="company-address">${config.endereco || ""}</p>
-                                <p class="company-address">Telefone: ${config.telefone || ""}</p>
-                            </div>
+                                              <p class="company-name">TWG TRANSPORTES</p>
+                                              <p class="company-address">${config.endereco || ""}</p>
+                                              <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                                          </div>
                             <div class="romaneio-info">
                                 <p class="romaneio-title">ROMANEIO DE ENTREGAS${paginaInfo}</p>
                                 <p class="motorista-label">Motorista: ${motoristaObj ? motoristaObj.nome : (motorista || "_________________")}</p>

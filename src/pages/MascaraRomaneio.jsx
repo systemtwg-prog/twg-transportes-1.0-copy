@@ -360,10 +360,10 @@ export default function MascaraRomaneio() {
                         vertical-align: top;
                     }
                     
-                    .col-remetente { width: 22%; }
-                    .col-destinatario { width: 38%; }
-                    .col-nfe { width: 15%; text-align: center; }
-                    .col-carimbo { width: 25%; }
+                    .col-remetente { width: ${layoutConfig.colRemetente}%; }
+                    .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
+                    .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
+                    .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
                     
                     .nota-row .remetente { 
                         padding: 10px; 

@@ -22,15 +22,22 @@ const TODAS_PAGINAS = [
     { id: "OrdensColeta", nome: "Ordens de Coleta" },
     { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas" },
     { id: "ColetasDiarias", nome: "Coletas Diárias" },
+    { id: "ComprovantesInternos", nome: "Comprovantes Internos" },
+    { id: "NotaDeposito", nome: "Nota Depósito" },
+    { id: "Romaneios", nome: "Romaneios/Entregas" },
+    { id: "RotasGPS", nome: "Rotas GPS" },
     { id: "Clientes", nome: "Clientes" },
-    { id: "Motoristas", nome: "Motoristas" },
+    { id: "Motoristas", nome: "Colaboradores" },
     { id: "Veiculos", nome: "Veículos" },
     { id: "Rastreamento", nome: "Rastreamento" },
+    { id: "Comprovantes", nome: "Comprovantes" },
+    { id: "Avisos", nome: "Avisos" },
     { id: "Relatorios", nome: "Relatórios" },
     { id: "RelatorioMotoristas", nome: "Performance" },
     { id: "Configuracoes", nome: "Configurações" },
     { id: "AprovacaoUsuarios", nome: "Aprovação de Usuários" },
-    { id: "PersonalizarHome", nome: "Personalizar Home" }
+    { id: "PersonalizarHome", nome: "Personalizar Home" },
+    { id: "Backup", nome: "Backup" }
 ];
 
 export default function AprovacaoUsuarios() {

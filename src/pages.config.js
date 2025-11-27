@@ -18,6 +18,7 @@ import Avisos from './pages/Avisos';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import NotaDeposito from './pages/NotaDeposito';
 import RotasGPS from './pages/RotasGPS';
+import Backup from './pages/Backup';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +43,7 @@ export const PAGES = {
     "ComprovantesInternos": ComprovantesInternos,
     "NotaDeposito": NotaDeposito,
     "RotasGPS": RotasGPS,
+    "Backup": Backup,
 }
 
 export const pagesConfig = {

@@ -22,6 +22,7 @@ export default function MascaraRomaneio() {
     const [notasSelecionadas, setNotasSelecionadas] = useState([]);
     const [search, setSearch] = useState("");
     const [filterPlaca, setFilterPlaca] = useState("");
+    const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
     const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
     const [notasDigitadas, setNotasDigitadas] = useState("");
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);

@@ -41,6 +41,28 @@ export default function ImportacaoDocumentos() {
         queryFn: () => base44.entities.Veiculo.filter({ status: "disponivel" })
     });
 
+    const { data: clientes = [] } = useQuery({
+        queryKey: ["clientes"],
+        queryFn: () => base44.entities.Cliente.list()
+    });
+
+    const { data: transportadoras = [] } = useQuery({
+        queryKey: ["transportadoras"],
+        queryFn: () => base44.entities.Transportadora.list()
+    });
+
+    const clienteCnpjExiste = (cnpj) => {
+        if (!cnpj) return false;
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        return clientes.some(c => c.cnpj_cpf?.replace(/\D/g, "") === cnpjLimpo);
+    };
+
+    const transportadoraCnpjExiste = (cnpj) => {
+        if (!cnpj) return false;
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        return transportadoras.some(t => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
+    };
+
     const createRomaneioMutation = useMutation({
         mutationFn: (data) => base44.entities.Romaneio.create(data),
         onSuccess: () => {
@@ -73,9 +95,14 @@ export default function ImportacaoDocumentos() {
     });
 
     const handleCadastrarCliente = (cliente, tipo) => {
+        const cnpj = cliente.cnpj || cliente.destinatario_cnpj || cliente.remetente_cnpj || "";
+        if (cnpj && clienteCnpjExiste(cnpj)) {
+            toast.error("Cliente já cadastrado com este CNPJ!");
+            return;
+        }
         createClienteMutation.mutate({
             razao_social: cliente.nome || cliente.destinatario || cliente.remetente,
-            cnpj_cpf: cliente.cnpj || cliente.destinatario_cnpj || cliente.remetente_cnpj || "",
+            cnpj_cpf: cnpj,
             endereco: cliente.endereco || cliente.destinatario_endereco || cliente.remetente_endereco || "",
             cidade: cliente.cidade || cliente.destinatario_cidade || cliente.remetente_cidade || "",
             uf: cliente.uf || cliente.destinatario_uf || cliente.remetente_uf || "",
@@ -89,15 +116,67 @@ export default function ImportacaoDocumentos() {
             toast.error("Nenhuma transportadora encontrada");
             return;
         }
+        const cnpj = extractedData.transportadora_cnpj || "";
+        if (cnpj && transportadoraCnpjExiste(cnpj)) {
+            toast.error("Transportadora já cadastrada com este CNPJ!");
+            return;
+        }
         createTransportadoraMutation.mutate({
             razao_social: extractedData.transportadora_principal,
-            cnpj: extractedData.transportadora_cnpj || "",
+            cnpj: cnpj,
             endereco: extractedData.transportadora_endereco || extractedData.endereco_transportadora || "",
             cidade: extractedData.transportadora_cidade || "",
             uf: extractedData.transportadora_uf || "",
             telefone: extractedData.transportadora_telefone || "",
             status: "ativo"
         });
+    };
+
+    const handleCadastrarTodosClientes = () => {
+        let cadastrados = 0;
+        let ignorados = 0;
+
+        extractedData?.notas_fiscais?.forEach(nf => {
+            // Cadastrar destinatário
+            const cnpjDest = nf.destinatario_cnpj || "";
+            if (nf.destinatario && (!cnpjDest || !clienteCnpjExiste(cnpjDest))) {
+                createClienteMutation.mutate({
+                    razao_social: nf.destinatario,
+                    cnpj_cpf: cnpjDest,
+                    endereco: nf.destinatario_endereco || nf.endereco || "",
+                    cidade: nf.destinatario_cidade || nf.cidade || "",
+                    uf: nf.destinatario_uf || "",
+                    telefone: nf.destinatario_telefone || "",
+                    tipo: "ambos"
+                });
+                cadastrados++;
+            } else if (cnpjDest && clienteCnpjExiste(cnpjDest)) {
+                ignorados++;
+            }
+
+            // Cadastrar remetente
+            const cnpjRem = nf.remetente_cnpj || "";
+            if (nf.remetente && (!cnpjRem || !clienteCnpjExiste(cnpjRem))) {
+                createClienteMutation.mutate({
+                    razao_social: nf.remetente,
+                    cnpj_cpf: cnpjRem,
+                    endereco: nf.remetente_endereco || "",
+                    cidade: nf.remetente_cidade || "",
+                    uf: nf.remetente_uf || "",
+                    tipo: "ambos"
+                });
+                cadastrados++;
+            } else if (cnpjRem && clienteCnpjExiste(cnpjRem)) {
+                ignorados++;
+            }
+        });
+
+        if (cadastrados > 0) {
+            toast.success(`${cadastrados} cliente(s) cadastrado(s)!`);
+        }
+        if (ignorados > 0) {
+            toast.info(`${ignorados} cliente(s) já existente(s) ignorado(s)`);
+        }
     };
 
     const handleFileUpload = async (e, tipo) => {
@@ -501,11 +580,11 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                             <Button 
                                                 size="sm" 
                                                 onClick={handleCadastrarTransportadora}
-                                                className="bg-blue-600 hover:bg-blue-700"
-                                                disabled={createTransportadoraMutation.isPending}
+                                                className={transportadoraCnpjExiste(extractedData.transportadora_cnpj) ? "bg-red-100 text-red-600 border-red-500" : "bg-blue-600 hover:bg-blue-700"}
+                                                disabled={createTransportadoraMutation.isPending || transportadoraCnpjExiste(extractedData.transportadora_cnpj)}
                                             >
                                                 <Building2 className="w-4 h-4 mr-1" />
-                                                Cadastrar
+                                                {transportadoraCnpjExiste(extractedData.transportadora_cnpj) ? "Já cadastrada" : "Cadastrar"}
                                             </Button>
                                         </div>
                                     </CardContent>
@@ -547,12 +626,12 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                                 <TableCell>{nf.volume}</TableCell>
                                                 <TableCell>{nf.destinatario_cidade || nf.cidade}</TableCell>
                                                 <TableCell>
-                                                    <div className="flex gap-1">
+                                                    <div className="flex flex-col gap-1">
                                                         {nf.destinatario && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="h-7 px-2 text-xs"
+                                                                className={`h-7 px-2 text-xs ${clienteCnpjExiste(nf.destinatario_cnpj) ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                                                                 onClick={() => handleCadastrarCliente({
                                                                     nome: nf.destinatario,
                                                                     cnpj: nf.destinatario_cnpj,
@@ -560,29 +639,29 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                                                     cidade: nf.destinatario_cidade || nf.cidade,
                                                                     uf: nf.destinatario_uf,
                                                                     telefone: nf.destinatario_telefone
-                                                                }, "destinatario")}
-                                                                disabled={createClienteMutation.isPending}
+                                                                }, "ambos")}
+                                                                disabled={createClienteMutation.isPending || clienteCnpjExiste(nf.destinatario_cnpj)}
                                                             >
                                                                 <UserPlus className="w-3 h-3 mr-1" />
-                                                                Dest.
+                                                                {clienteCnpjExiste(nf.destinatario_cnpj) ? "Já existe" : "Cad. Dest."}
                                                             </Button>
                                                         )}
                                                         {nf.remetente && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                className="h-7 px-2 text-xs"
+                                                                className={`h-7 px-2 text-xs ${clienteCnpjExiste(nf.remetente_cnpj) ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                                                                 onClick={() => handleCadastrarCliente({
                                                                     nome: nf.remetente,
                                                                     cnpj: nf.remetente_cnpj,
                                                                     endereco: nf.remetente_endereco,
                                                                     cidade: nf.remetente_cidade,
                                                                     uf: nf.remetente_uf
-                                                                }, "remetente")}
-                                                                disabled={createClienteMutation.isPending}
+                                                                }, "ambos")}
+                                                                disabled={createClienteMutation.isPending || clienteCnpjExiste(nf.remetente_cnpj)}
                                                             >
                                                                 <UserPlus className="w-3 h-3 mr-1" />
-                                                                Rem.
+                                                                {clienteCnpjExiste(nf.remetente_cnpj) ? "Já existe" : "Cad. Rem."}
                                                             </Button>
                                                         )}
                                                     </div>
@@ -596,6 +675,15 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                             <div className="flex justify-end gap-3 pt-4 border-t">
                                 <Button variant="outline" onClick={() => setShowPreview(false)}>
                                     Cancelar
+                                </Button>
+                                <Button 
+                                    onClick={handleCadastrarTodosClientes}
+                                    variant="outline"
+                                    className="border-green-500 text-green-700 hover:bg-green-50"
+                                    disabled={createClienteMutation.isPending}
+                                >
+                                    <Users className="w-4 h-4 mr-2" />
+                                    Adicionar ao Sistema
                                 </Button>
                                 <Button 
                                     onClick={handleSaveRomaneio}

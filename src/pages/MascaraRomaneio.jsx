@@ -366,39 +366,40 @@ export default function MascaraRomaneio() {
                     .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
                     
                     .nota-row .remetente { 
-                        padding: 10px; 
-                        height: 40px;
-                        font-size: 14px;
+                        padding: 8px; 
+                        height: ${layoutConfig.alturaLinha}px;
+                        font-size: 13px;
                         font-weight: bold;
                     }
                     .nota-row .destinatario { 
                         text-align: center; 
                         font-weight: bold; 
-                        font-size: 18px; 
-                        padding: 10px;
+                        font-size: 20px; 
+                        padding: 8px;
+                        height: ${layoutConfig.alturaLinha}px;
                     }
                     .nota-row .nfe { 
                         text-align: center; 
                         font-weight: bold; 
                         font-size: 22px; 
-                        padding: 10px;
-                    }
-                    .nota-row .carimbo { 
-                        min-height: 80px;
                         padding: 8px;
                     }
-                    
+                    .nota-row .carimbo { 
+                        min-height: ${layoutConfig.alturaLinha * 2}px;
+                        padding: 6px;
+                    }
+
                     .transportadora-row td { 
                         border-top: none; 
-                        padding: 3px 10px 12px 10px; 
+                        padding: 2px 8px 6px 8px; 
                     }
                     .transportadora-row .transportadora-nome { 
-                        font-size: 11px; 
-                        line-height: 1.1; 
+                        font-size: 10px; 
+                        line-height: 1; 
                     }
                     .transportadora-row .volume { 
                         text-align: center; 
-                        font-size: 16px; 
+                        font-size: 14px; 
                         font-weight: bold; 
                     }
                 </style>

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    FileText, Printer, Truck, Calendar, Search, X, Plus
+    FileText, Printer, Truck, Calendar, Search, X, Plus, Car
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +18,7 @@ export default function MascaraRomaneio() {
     const [dataRomaneio, setDataRomaneio] = useState(format(new Date(), "yyyy-MM-dd"));
     const [notasSelecionadas, setNotasSelecionadas] = useState([]);
     const [search, setSearch] = useState("");
+    const [filterPlaca, setFilterPlaca] = useState("");
     const printRef = useRef();
 
     const { data: notasFiscais = [], isLoading } = useQuery({
@@ -30,12 +31,20 @@ export default function MascaraRomaneio() {
         queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
     });
 
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-romaneio"],
+        queryFn: () => base44.entities.Veiculo.list()
+    });
+
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
     const config = configs[0] || {};
+
+    // Obter placas únicas das notas fiscais
+    const placasUnicas = [...new Set(notasFiscais.map(n => n.placa).filter(Boolean))];
 
     const toggleNota = (notaId) => {
         setNotasSelecionadas(prev => 
@@ -53,11 +62,13 @@ export default function MascaraRomaneio() {
         }
     };
 
-    const filtered = notasFiscais.filter(n =>
-        n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
-        n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
-        n.transportadora?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = notasFiscais.filter(n => {
+        const matchSearch = n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
+            n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
+            n.transportadora?.toLowerCase().includes(search.toLowerCase());
+        const matchPlaca = !filterPlaca || n.placa === filterPlaca;
+        return matchSearch && matchPlaca;
+    });
 
     const notasParaImprimir = notasFiscais.filter(n => notasSelecionadas.includes(n.id));
     const motoristaObj = motoristas.find(m => m.id === motorista);
@@ -78,53 +89,99 @@ export default function MascaraRomaneio() {
             return;
         }
 
-        // Agrupar notas por transportadora
-        const notasPorTransportadora = {};
+        // Agrupar notas por placa
+        const notasPorPlaca = {};
         notasParaImprimir.forEach(nota => {
-            const transp = nota.transportadora || "SEM TRANSPORTADORA";
-            if (!notasPorTransportadora[transp]) {
-                notasPorTransportadora[transp] = [];
+            const placa = nota.placa || "SEM_PLACA";
+            if (!notasPorPlaca[placa]) {
+                notasPorPlaca[placa] = [];
             }
-            notasPorTransportadora[transp].push(nota);
+            notasPorPlaca[placa].push(nota);
         });
 
-        let rowsHtml = "";
-        Object.entries(notasPorTransportadora).forEach(([transportadora, notas]) => {
-            notas.forEach((nota, idx) => {
-                rowsHtml += `
-                    <tr>
-                        <td class="remetente">${nota.remetente || config.nome_empresa || "TWG Transportes"}</td>
-                        <td class="destinatario">${nota.destinatario || "-"}</td>
-                        <td class="nfe">${nota.numero_nf || "-"}</td>
-                        <td class="carimbo"></td>
-                    </tr>
-                    <tr class="transportadora-row">
-                        <td colspan="2" class="transportadora-nome">${transportadora}</td>
-                        <td class="volume">${nota.volume || "-"}</td>
-                        <td class="vol-label">vol.</td>
-                    </tr>
+        let pagesHtml = "";
+
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            // Dividir em grupos de 6 notas por página
+            const NOTAS_POR_PAGINA = 6;
+            const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+
+            for (let pagina = 0; pagina < totalPaginas; pagina++) {
+                const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+                
+                let rowsHtml = "";
+                notasDaPagina.forEach((nota) => {
+                    rowsHtml += `
+                        <tr class="nota-row">
+                            <td class="remetente">${nota.remetente || ""}</td>
+                            <td class="destinatario">${nota.destinatario || "-"}</td>
+                            <td class="nfe">${nota.numero_nf || "-"}</td>
+                            <td class="carimbo" rowspan="2"></td>
+                        </tr>
+                        <tr class="transportadora-row">
+                            <td class="transportadora-nome" colspan="2">${nota.transportadora || ""}</td>
+                            <td class="volume">${nota.volume || "-"} vol</td>
+                        </tr>
+                    `;
+                });
+
+                // Adicionar linhas em branco para completar 6 notas
+                const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+                for (let i = 0; i < linhasRestantes; i++) {
+                    rowsHtml += `
+                        <tr class="nota-row">
+                            <td class="remetente"></td>
+                            <td class="destinatario"></td>
+                            <td class="nfe"></td>
+                            <td class="carimbo" rowspan="2"></td>
+                        </tr>
+                        <tr class="transportadora-row">
+                            <td class="transportadora-nome" colspan="2"></td>
+                            <td class="volume"></td>
+                        </tr>
+                    `;
+                }
+
+                const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+                const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+
+                pagesHtml += `
+                    <div class="page">
+                        <div class="header">
+                            <div class="logo">
+                                ${config.logo_url ? `<img src="${config.logo_url}" />` : '<div class="logo-placeholder">TWG</div>'}
+                            </div>
+                            <div class="company-info">
+                                <p class="company-name">${config.nome_empresa || "TWG TRANSPORTES"}</p>
+                                <p class="company-address">${config.endereco || "Rua Epaminondas de Oliveira, 249"}</p>
+                                <p class="company-address">Centro, São Roque/SP CEP 18130-505</p>
+                                <p class="company-address">Telefone: ${config.telefone || "11 4712.7072"}</p>
+                            </div>
+                            <div class="romaneio-info">
+                                <p class="romaneio-title">ROMANEIO DE ENTREGAS${paginaInfo}</p>
+                                <p class="motorista-label">Motorista: ${motoristaObj?.nome || motorista || ""}</p>
+                                ${placaDisplay ? `<p class="placa-label">Placa: ${placaDisplay}</p>` : ""}
+                                <p class="date">${formatDate(dataRomaneio)}</p>
+                            </div>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-remetente">Remetente</th>
+                                    <th class="col-destinatario">Destinatário</th>
+                                    <th class="col-nfe">NFE</th>
+                                    <th class="col-carimbo">Carimbo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
                 `;
-            });
+            }
         });
-
-        // Adicionar linhas em branco para completar
-        const linhasUsadas = notasParaImprimir.length * 2;
-        const linhasRestantes = Math.max(0, 12 - linhasUsadas);
-        for (let i = 0; i < linhasRestantes; i++) {
-            rowsHtml += `
-                <tr>
-                    <td class="remetente"></td>
-                    <td class="destinatario"></td>
-                    <td class="nfe"></td>
-                    <td class="carimbo"></td>
-                </tr>
-                <tr class="transportadora-row">
-                    <td colspan="2" class="transportadora-nome"></td>
-                    <td class="volume"></td>
-                    <td class="vol-label">vol.</td>
-                </tr>
-            `;
-        }
 
         winPrint.document.write(`
             <html>
@@ -133,70 +190,48 @@ export default function MascaraRomaneio() {
                 <title>Romaneio de Entregas</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4; }
+                        @page { margin: 8mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .page { page-break-after: always; }
+                        .page:last-child { page-break-after: avoid; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; }
-                    .header { display: flex; align-items: flex-start; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                    .logo { width: 120px; margin-right: 20px; }
-                    .logo img { max-width: 100%; max-height: 80px; }
+                    * { box-sizing: border-box; }
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                    .page { padding: 10px; min-height: 100vh; }
+                    .header { display: flex; align-items: flex-start; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+                    .logo { width: 100px; margin-right: 15px; }
+                    .logo img { max-width: 100%; max-height: 70px; }
+                    .logo-placeholder { width: 80px; height: 50px; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 22px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 12px; color: #333; margin: 3px 0; }
+                    .company-name { font-size: 18px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 10px; color: #333; margin: 2px 0; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: 18px; font-weight: bold; margin: 0; }
-                    .motorista-label { font-size: 14px; font-weight: bold; margin: 5px 0; }
-                    .date { font-size: 20px; font-weight: bold; }
+                    .romaneio-title { font-size: 14px; font-weight: bold; margin: 0; }
+                    .motorista-label { font-size: 12px; font-weight: bold; margin: 3px 0; }
+                    .placa-label { font-size: 12px; font-weight: bold; margin: 3px 0; color: #0ea5e9; }
+                    .date { font-size: 16px; font-weight: bold; }
                     
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th { background: #f0f0f0; padding: 8px; text-align: left; border: 2px solid #000; font-size: 14px; }
-                    td { padding: 10px 8px; border: 2px solid #000; font-size: 13px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #e5e5e5; padding: 6px; text-align: left; border: 2px solid #000; font-size: 12px; }
+                    td { padding: 4px 6px; border: 2px solid #000; font-size: 11px; }
                     
-                    .remetente { width: 25%; }
-                    .destinatario { width: 35%; text-align: center; font-weight: bold; font-size: 14px; }
-                    .nfe { width: 20%; text-align: center; font-weight: bold; font-size: 18px; }
-                    .carimbo { width: 20%; }
+                    .col-remetente { width: 25%; }
+                    .col-destinatario { width: 35%; }
+                    .col-nfe { width: 15%; text-align: center; }
+                    .col-carimbo { width: 25%; }
                     
-                    .transportadora-row td { border-top: none; padding-top: 5px; padding-bottom: 15px; }
-                    .transportadora-nome { font-size: 11px; font-weight: bold; }
-                    .volume { text-align: center; font-size: 16px; font-weight: bold; }
-                    .vol-label { font-size: 11px; font-weight: bold; }
+                    .nota-row .remetente { vertical-align: top; height: 30px; }
+                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 13px; vertical-align: top; }
+                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 16px; vertical-align: top; }
+                    .nota-row .carimbo { vertical-align: top; min-height: 60px; }
                     
-                    tr:nth-child(4n+1) td, tr:nth-child(4n+2) td { background: #fff; }
-                    tr:nth-child(4n+3) td, tr:nth-child(4n) td { background: #fff; }
+                    .transportadora-row td { border-top: none; padding-top: 0; padding-bottom: 8px; }
+                    .transportadora-row .transportadora-nome { font-size: 9px; line-height: 1.1; }
+                    .transportadora-row .volume { text-align: center; font-size: 12px; font-weight: bold; }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <div class="logo">
-                        ${config.logo_url ? `<img src="${config.logo_url}" />` : '<div style="width:100px;height:60px;background:#0ea5e9;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:20px;">TWG</div>'}
-                    </div>
-                    <div class="company-info">
-                        <p class="company-name">${config.nome_empresa || "TWG TRANSPORTES"}</p>
-                        <p class="company-address">${config.endereco || "Rua Epaminondas de Oliveira, 249"}</p>
-                        <p class="company-address">Centro, São Roque/SP CEP 18130-505</p>
-                        <p class="company-address">Telefone: ${config.telefone || "11 4712.7072"}</p>
-                    </div>
-                    <div class="romaneio-info">
-                        <p class="romaneio-title">ROMANEIO DE ENTREGAS</p>
-                        <p class="motorista-label">Motorista: ${motoristaObj?.nome || motorista || ""}</p>
-                        <p class="date">${formatDate(dataRomaneio)}</p>
-                    </div>
-                </div>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Remetente</th>
-                            <th>Destinatário</th>
-                            <th>NFE</th>
-                            <th>Carimbo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml}
-                    </tbody>
-                </table>
+                ${pagesHtml}
             </body>
             </html>
         `);
@@ -236,7 +271,7 @@ export default function MascaraRomaneio() {
                             <Calendar className="w-5 h-5 text-emerald-600" />
                             Configurações do Romaneio
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label>Motorista</Label>
                                 <Select value={motorista} onValueChange={setMotorista}>
@@ -258,6 +293,22 @@ export default function MascaraRomaneio() {
                                     onChange={(e) => setDataRomaneio(e.target.value)}
                                     className="bg-white"
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <Car className="w-4 h-4" /> Filtrar por Placa
+                                </Label>
+                                <Select value={filterPlaca} onValueChange={setFilterPlaca}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Todas as placas" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={null}>Todas as placas</SelectItem>
+                                        {placasUnicas.map(placa => (
+                                            <SelectItem key={placa} value={placa}>{placa}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </CardContent>
@@ -282,7 +333,7 @@ export default function MascaraRomaneio() {
                                     />
                                 </div>
                                 <Button variant="outline" onClick={selecionarTodas}>
-                                    {notasSelecionadas.length === filtered.length ? "Desmarcar" : "Selecionar"} Todas
+                                    {notasSelecionadas.length === filtered.length && filtered.length > 0 ? "Desmarcar" : "Selecionar"} Todas
                                 </Button>
                             </div>
                         </div>
@@ -294,7 +345,7 @@ export default function MascaraRomaneio() {
                         ) : filtered.length === 0 ? (
                             <div className="text-center py-12 text-slate-500">
                                 <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                                Nenhuma nota fiscal cadastrada. Cadastre notas no menu "Notas Fiscais".
+                                Nenhuma nota fiscal encontrada. Cadastre notas no menu "Notas Fiscais".
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -312,7 +363,7 @@ export default function MascaraRomaneio() {
                                             checked={notasSelecionadas.includes(nota.id)}
                                             onCheckedChange={() => toggleNota(nota.id)}
                                         />
-                                        <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-2">
+                                        <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-2">
                                             <div>
                                                 <p className="text-xs text-slate-500">NF</p>
                                                 <p className="font-bold text-blue-600">{nota.numero_nf}</p>
@@ -327,11 +378,15 @@ export default function MascaraRomaneio() {
                                             </div>
                                             <div>
                                                 <p className="text-xs text-slate-500">Volume</p>
-                                                <p className="font-medium">{nota.volume || "-"}</p>
+                                                <p className="font-medium">{nota.volume || "-"} vol</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-slate-500">Peso</p>
                                                 <p className="text-sm">{nota.peso || "-"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-slate-500">Placa</p>
+                                                <p className="font-medium text-emerald-600">{nota.placa || "-"}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -346,6 +401,18 @@ export default function MascaraRomaneio() {
                     <Card className="bg-white/80 border-0 shadow-lg">
                         <CardContent className="p-6">
                             <h3 className="font-semibold text-lg mb-4">Preview do Romaneio</h3>
+                            <p className="text-sm text-slate-500 mb-4">
+                                {Object.keys(
+                                    notasParaImprimir.reduce((acc, n) => {
+                                        acc[n.placa || "SEM_PLACA"] = true;
+                                        return acc;
+                                    }, {})
+                                ).length > 1 && (
+                                    <span className="text-orange-600 font-medium">
+                                        ⚠️ Notas com placas diferentes serão impressas em romaneios separados.
+                                    </span>
+                                )}
+                            </p>
                             <div className="bg-white border rounded-xl p-4 overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
@@ -355,16 +422,18 @@ export default function MascaraRomaneio() {
                                             <th className="p-2 text-center border">NFE</th>
                                             <th className="p-2 text-left border">Transportadora</th>
                                             <th className="p-2 text-center border">Vol.</th>
+                                            <th className="p-2 text-center border">Placa</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {notasParaImprimir.map(nota => (
                                             <tr key={nota.id} className="hover:bg-slate-50">
-                                                <td className="p-2 border">{nota.remetente || config.nome_empresa || "TWG"}</td>
+                                                <td className="p-2 border">{nota.remetente || "-"}</td>
                                                 <td className="p-2 border font-medium">{nota.destinatario}</td>
                                                 <td className="p-2 border text-center font-bold text-blue-600">{nota.numero_nf}</td>
                                                 <td className="p-2 border text-xs">{nota.transportadora || "-"}</td>
-                                                <td className="p-2 border text-center">{nota.volume || "-"}</td>
+                                                <td className="p-2 border text-center">{nota.volume || "-"} vol</td>
+                                                <td className="p-2 border text-center font-medium text-emerald-600">{nota.placa || "-"}</td>
                                             </tr>
                                         ))}
                                     </tbody>

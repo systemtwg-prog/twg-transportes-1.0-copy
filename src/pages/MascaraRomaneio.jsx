@@ -512,10 +512,80 @@ export default function MascaraRomaneio() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                    </Card>
 
-                {/* Campo para digitar notas fiscais */}
-                <Card className="bg-white/80 border-0 shadow-lg">
+                    {/* Configurações de Layout */}
+                    <Card className="bg-white/80 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                            Layout da Impressão (%)
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs">Remetente (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="5"
+                                    max="50"
+                                    value={layoutConfig.colRemetente}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colRemetente: parseInt(e.target.value) || 18})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Destinatário (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="10"
+                                    max="60"
+                                    value={layoutConfig.colDestinatario}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colDestinatario: parseInt(e.target.value) || 42})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">NFE (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="5"
+                                    max="30"
+                                    value={layoutConfig.colNfe}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colNfe: parseInt(e.target.value) || 15})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Carimbo (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="10"
+                                    max="40"
+                                    value={layoutConfig.colCarimbo}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colCarimbo: parseInt(e.target.value) || 25})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Altura Linha (px)</Label>
+                                <Input
+                                    type="number"
+                                    min="30"
+                                    max="80"
+                                    value={layoutConfig.alturaLinha}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, alturaLinha: parseInt(e.target.value) || 45})}
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Total colunas: {layoutConfig.colRemetente + layoutConfig.colDestinatario + layoutConfig.colNfe + layoutConfig.colCarimbo}% (ideal: 100%)
+                        </p>
+                    </CardContent>
+                    </Card>
+
+                    {/* Campo para digitar notas fiscais */}
+                    <Card className="bg-white/80 border-0 shadow-lg">
                     <CardContent className="p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                             <FileText className="w-5 h-5 text-purple-600" />

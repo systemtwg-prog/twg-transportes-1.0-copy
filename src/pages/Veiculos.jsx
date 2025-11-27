@@ -304,7 +304,7 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
                             WhatsApp
                         </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
+                        <Button type="submit" className="bg-sky-600 hover:bg-sky-700">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                         </Button>
@@ -387,11 +387,11 @@ export default function Veiculos() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-50 p-4 md:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl shadow-lg">
+                        <div className="p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl shadow-lg">
                             <Truck className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -401,7 +401,7 @@ export default function Veiculos() {
                     </div>
                     <Button 
                         onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-teal-500 to-cyan-600"
+                        className="bg-gradient-to-r from-sky-500 to-cyan-600"
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Novo Veículo
@@ -440,7 +440,7 @@ export default function Veiculos() {
                                 {isLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12">
-                                            <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto" />
+                                            <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (
@@ -452,7 +452,7 @@ export default function Veiculos() {
                                 ) : (
                                     filtered.map((vei) => (
                                         <TableRow key={vei.id} className="hover:bg-slate-50">
-                                            <TableCell className="font-bold text-teal-600">{vei.placa}</TableCell>
+                                            <TableCell className="font-bold text-sky-600">{vei.placa}</TableCell>
                                             <TableCell className="font-medium">{vei.modelo}</TableCell>
                                             <TableCell>{vei.marca || "-"}</TableCell>
                                             <TableCell>

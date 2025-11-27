@@ -195,14 +195,19 @@ export default function Clientes() {
                         <label className="cursor-pointer">
                             <input
                                 type="file"
-                                accept=".xlsx,.xls,.csv"
-                                onChange={handleImportExcel}
+                                accept=".xlsx,.xls,.csv,.pdf"
+                                onChange={handleImportFile}
                                 className="hidden"
+                                disabled={importing}
                             />
-                            <Button variant="outline" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50" asChild>
+                            <Button variant="outline" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50" asChild disabled={importing}>
                                 <span>
-                                    <Upload className="w-4 h-4 mr-2" />
-                                    Importar Excel
+                                    {importing ? (
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-emerald-500 border-t-transparent rounded-full" />
+                                    ) : (
+                                        <Upload className="w-4 h-4 mr-2" />
+                                    )}
+                                    {importing ? "Importando..." : "Importar Arquivo"}
                                 </span>
                             </Button>
                         </label>

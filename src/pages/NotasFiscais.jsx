@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Building2, Car
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -26,12 +26,8 @@ export default function NotasFiscais() {
     const [search, setSearch] = useState("");
     const [importing, setImporting] = useState(false);
     const [selecionados, setSelecionados] = useState([]);
-    const [showRemetenteDialog, setShowRemetenteDialog] = useState(false);
-    const [remetenteEmMassa, setRemetenteEmMassa] = useState("");
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [placaEmMassa, setPlacaEmMassa] = useState("");
-    const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
-    const [remetenteForm, setRemetenteForm] = useState({ nome: "", cnpj: "", endereco: "", telefone: "" });
-    const [editingRemetente, setEditingRemetente] = useState(null);
     const queryClient = useQueryClient();
 
     const [form, setForm] = useState({
@@ -50,42 +46,9 @@ export default function NotasFiscais() {
         queryFn: () => base44.entities.NotaFiscal.list("-created_date")
     });
 
-    const { data: empresasRemetentes = [] } = useQuery({
-        queryKey: ["empresas-remetentes"],
-        queryFn: () => base44.entities.EmpresaRemetente.list()
-    });
-
     const { data: veiculos = [] } = useQuery({
         queryKey: ["veiculos-notas"],
         queryFn: () => base44.entities.Veiculo.list()
-    });
-
-    // Mutations para empresas remetentes
-    const createRemetenteMutation = useMutation({
-        mutationFn: (data) => base44.entities.EmpresaRemetente.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] });
-            setShowCadastroRemetente(false);
-            setRemetenteForm({ nome: "", cnpj: "", endereco: "", telefone: "" });
-            setEditingRemetente(null);
-            toast.success("Empresa remetente cadastrada!");
-        }
-    });
-
-    const updateRemetenteMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.EmpresaRemetente.update(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] });
-            setShowCadastroRemetente(false);
-            setRemetenteForm({ nome: "", cnpj: "", endereco: "", telefone: "" });
-            setEditingRemetente(null);
-            toast.success("Empresa remetente atualizada!");
-        }
-    });
-
-    const deleteRemetenteMutation = useMutation({
-        mutationFn: (id) => base44.entities.EmpresaRemetente.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] })
     });
 
     const createMutation = useMutation({
@@ -125,9 +88,8 @@ export default function NotasFiscais() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            setShowRemetenteDialog(false);
+            setShowEditDialog(false);
             setSelecionados([]);
-            setRemetenteEmMassa("");
             setPlacaEmMassa("");
             toast.success("Notas fiscais atualizadas!");
         }
@@ -355,14 +317,6 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                         </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <Button 
-                            onClick={() => { setRemetenteForm({ nome: "", cnpj: "", endereco: "", telefone: "" }); setEditingRemetente(null); setShowCadastroRemetente(true); }}
-                            variant="outline"
-                            className="border-orange-500 text-orange-700 hover:bg-orange-50"
-                        >
-                            <Building2 className="w-4 h-4 mr-2" />
-                            Empresas Remetentes
-                        </Button>
                         <label className="cursor-pointer">
                             <input
                                 type="file"
@@ -422,10 +376,10 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                                         <Button 
                                             variant="outline"
                                             className="border-green-500 text-green-700 hover:bg-green-50"
-                                            onClick={() => setShowRemetenteDialog(true)}
+                                            onClick={() => setShowEditDialog(true)}
                                         >
-                                            <Building2 className="w-4 h-4 mr-1" />
-                                            Editar ({selecionados.length})
+                                            <Car className="w-4 h-4 mr-1" />
+                                            Atribuir Placa ({selecionados.length})
                                         </Button>
                                         <Button 
                                             variant="outline"
@@ -521,34 +475,19 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                 </Card>
             </div>
 
-            {/* Dialog Editar em Massa (Remetente e Placa) */}
-            <Dialog open={showRemetenteDialog} onOpenChange={setShowRemetenteDialog}>
+            {/* Dialog Atribuir Placa em Massa */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-green-600" />
-                            Editar Notas Selecionadas
+                            <Car className="w-5 h-5 text-green-600" />
+                            Atribuir Placa
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
-                            Alterar dados de <strong>{selecionados.length}</strong> nota(s) fiscal(is) selecionada(s).
+                            Atribuir placa a <strong>{selecionados.length}</strong> nota(s) fiscal(is) selecionada(s).
                         </p>
-                        <div className="space-y-2">
-                            <Label>Empresa Remetente</Label>
-                            <Select value={remetenteEmMassa} onValueChange={setRemetenteEmMassa}>
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione o remetente..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {empresasRemetentes.map(emp => (
-                                        <SelectItem key={emp.id} value={emp.nome}>
-                                            {emp.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="space-y-2">
                             <Label className="flex items-center gap-2">
                                 <Car className="w-4 h-4" /> Placa do Veículo
@@ -567,129 +506,20 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                             </Select>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowRemetenteDialog(false)}>
+                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                                 Cancelar
                             </Button>
                             <Button 
                                 onClick={() => {
-                                    const data = {};
-                                    if (remetenteEmMassa) data.remetente = remetenteEmMassa;
-                                    if (placaEmMassa) data.placa = placaEmMassa;
-                                    if (Object.keys(data).length > 0) {
-                                        updateEmMassaMutation.mutate({ ids: selecionados, data });
+                                    if (placaEmMassa) {
+                                        updateEmMassaMutation.mutate({ ids: selecionados, data: { placa: placaEmMassa } });
                                     }
                                 }}
-                                disabled={updateEmMassaMutation.isPending || (!remetenteEmMassa && !placaEmMassa)}
+                                disabled={updateEmMassaMutation.isPending || !placaEmMassa}
                                 className="bg-green-600 hover:bg-green-700"
                             >
                                 {updateEmMassaMutation.isPending ? "Salvando..." : "Salvar"}
                             </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Dialog Cadastro de Empresas Remetentes */}
-            <Dialog open={showCadastroRemetente} onOpenChange={setShowCadastroRemetente}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-orange-600" />
-                            Empresas Remetentes
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        {/* Lista de empresas */}
-                        {empresasRemetentes.length > 0 && !editingRemetente && (
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                <Label className="text-xs text-slate-500">Empresas Cadastradas</Label>
-                                {empresasRemetentes.map(emp => (
-                                    <div key={emp.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                                        <div>
-                                            <span className="font-medium">{emp.nome}</span>
-                                            {emp.cnpj && <span className="text-xs text-slate-500 ml-2">({emp.cnpj})</span>}
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="h-7 w-7"
-                                                onClick={() => { setRemetenteForm(emp); setEditingRemetente(emp); }}
-                                            >
-                                                <Pencil className="w-3 h-3" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="h-7 w-7"
-                                                onClick={() => { if(confirm("Excluir esta empresa?")) deleteRemetenteMutation.mutate(emp.id); }}
-                                            >
-                                                <Trash2 className="w-3 h-3 text-red-600" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Formulário */}
-                        <div className="border-t pt-4 space-y-4">
-                            <h4 className="font-medium text-sm">{editingRemetente ? "Editar Empresa" : "Nova Empresa"}</h4>
-                            <div className="space-y-2">
-                                <Label>Nome *</Label>
-                                <Input
-                                    value={remetenteForm.nome}
-                                    onChange={(e) => setRemetenteForm({ ...remetenteForm, nome: e.target.value })}
-                                    placeholder="Nome da empresa"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>CNPJ</Label>
-                                    <Input
-                                        value={remetenteForm.cnpj}
-                                        onChange={(e) => setRemetenteForm({ ...remetenteForm, cnpj: e.target.value })}
-                                        placeholder="00.000.000/0001-00"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Telefone</Label>
-                                    <Input
-                                        value={remetenteForm.telefone}
-                                        onChange={(e) => setRemetenteForm({ ...remetenteForm, telefone: e.target.value })}
-                                        placeholder="(00) 0000-0000"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Endereço</Label>
-                                <Input
-                                    value={remetenteForm.endereco}
-                                    onChange={(e) => setRemetenteForm({ ...remetenteForm, endereco: e.target.value })}
-                                    placeholder="Endereço completo"
-                                />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                {editingRemetente && (
-                                    <Button variant="ghost" onClick={() => { setEditingRemetente(null); setRemetenteForm({ nome: "", cnpj: "", endereco: "", telefone: "" }); }}>
-                                        Cancelar
-                                    </Button>
-                                )}
-                                <Button 
-                                    onClick={() => {
-                                        if (editingRemetente) {
-                                            updateRemetenteMutation.mutate({ id: editingRemetente.id, data: remetenteForm });
-                                        } else {
-                                            createRemetenteMutation.mutate(remetenteForm);
-                                        }
-                                    }}
-                                    disabled={!remetenteForm.nome}
-                                    className="bg-orange-500 hover:bg-orange-600"
-                                >
-                                    <Save className="w-4 h-4 mr-1" />
-                                    {editingRemetente ? "Atualizar" : "Cadastrar"}
-                                </Button>
-                            </div>
                         </div>
                     </div>
                 </DialogContent>

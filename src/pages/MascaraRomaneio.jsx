@@ -303,7 +303,7 @@ export default function MascaraRomaneio() {
                                         <SelectValue placeholder="Todas as placas" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={null}>Todas as placas</SelectItem>
+                                        <SelectItem value="all">Todas as placas</SelectItem>
                                         {placasUnicas.map(placa => (
                                             <SelectItem key={placa} value={placa}>{placa}</SelectItem>
                                         ))}

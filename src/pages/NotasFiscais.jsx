@@ -36,7 +36,6 @@ export default function NotasFiscais() {
 
     const [form, setForm] = useState({
         numero_nf: "",
-        remetente: "",
         destinatario: "",
         peso: "",
         volume: "",
@@ -151,7 +150,6 @@ export default function NotasFiscais() {
     const resetForm = () => {
         setForm({
             numero_nf: "",
-            remetente: "",
             destinatario: "",
             peso: "",
             volume: "",
@@ -462,7 +460,6 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                                             />
                                         </TableHead>
                                         <TableHead>NF</TableHead>
-                                        <TableHead>Remetente</TableHead>
                                         <TableHead>Destinatário</TableHead>
                                         <TableHead>Peso</TableHead>
                                         <TableHead>Volume</TableHead>
@@ -496,7 +493,6 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                                                     />
                                                 </TableCell>
                                                 <TableCell className="font-bold text-blue-600">{nota.numero_nf}</TableCell>
-                                                <TableCell>{nota.remetente || "-"}</TableCell>
                                                 <TableCell className="font-medium">{nota.destinatario}</TableCell>
                                                 <TableCell>{nota.peso || "-"}</TableCell>
                                                 <TableCell>{nota.volume || "-"}</TableCell>
@@ -777,20 +773,6 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     onChange={(e) => setForm({ ...form, data: e.target.value })}
                                 />
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Remetente</Label>
-                            <Select value={form.remetente} onValueChange={(v) => setForm({ ...form, remetente: v })}>
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione o remetente..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {empresasRemetentes.map(emp => (
-                                        <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
 
                         <div className="space-y-2">

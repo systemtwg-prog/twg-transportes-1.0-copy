@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Receipt, Camera, Trash2, Pencil, Eye, 
-    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download
+    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AudioRecorder from "@/components/shared/AudioRecorder";
+import ScannerCamera from "@/components/shared/ScannerCamera";
 
 export default function NotaDeposito() {
     const [showForm, setShowForm] = useState(false);
@@ -23,6 +24,7 @@ export default function NotaDeposito() {
     const [search, setSearch] = useState("");
     const [uploading, setUploading] = useState(false);
     const [viewImage, setViewImage] = useState(null);
+    const [showScanner, setShowScanner] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
@@ -103,6 +105,13 @@ export default function NotaDeposito() {
 
     const removeFoto = (index) => {
         setForm({ ...form, fotos: form.fotos.filter((_, i) => i !== index) });
+    };
+
+    const handleScanCapture = async (file) => {
+        setUploading(true);
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), { url: file_url, nome: file.name, tipo: file.type }] }));
+        setUploading(false);
     };
 
     const handleSubmit = (e) => {
@@ -305,17 +314,27 @@ export default function NotaDeposito() {
                         {/* Fotos */}
                         <div className="space-y-2">
                             <Label>Fotos do Comprovante</Label>
-                            <div className="flex gap-2">
-                                <input type="file" accept="image/*" multiple onChange={handleUploadFotos} className="hidden" id="foto-nota" />
-                                <label htmlFor="foto-nota" className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
-                                    <Upload className="w-5 h-5 text-slate-400" />
-                                    <span className="text-sm text-slate-600">Escolher arquivos</span>
-                                </label>
-                                <input type="file" accept="image/*" capture="environment" onChange={handleUploadFotos} className="hidden" id="camera-nota" />
-                                <label htmlFor="camera-nota" className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
-                                    <Camera className="w-5 h-5 text-slate-400" />
-                                    <span className="text-sm text-slate-600">Tirar Foto</span>
-                                </label>
+                            <div className="flex flex-col gap-2">
+                                <Button 
+                                    type="button"
+                                    onClick={() => setShowScanner(true)}
+                                    className="w-full h-14 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                                >
+                                    <ScanLine className="w-5 h-5 mr-2" />
+                                    Escanear Documento
+                                </Button>
+                                <div className="flex gap-2">
+                                    <input type="file" accept="image/*" multiple onChange={handleUploadFotos} className="hidden" id="foto-nota" />
+                                    <label htmlFor="foto-nota" className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
+                                        <Upload className="w-5 h-5 text-slate-400" />
+                                        <span className="text-sm text-slate-600">Galeria</span>
+                                    </label>
+                                    <input type="file" accept="image/*" capture="environment" multiple onChange={handleUploadFotos} className="hidden" id="camera-nota" />
+                                    <label htmlFor="camera-nota" className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
+                                        <Camera className="w-5 h-5 text-slate-400" />
+                                        <span className="text-sm text-slate-600">Foto Rápida</span>
+                                    </label>
+                                </div>
                             </div>
                             {uploading && (
                                 <div className="flex items-center gap-2 text-violet-600">
@@ -370,6 +389,14 @@ export default function NotaDeposito() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Scanner Camera */}
+            {showScanner && (
+                <ScannerCamera 
+                    onCapture={handleScanCapture}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </div>
     );
 }

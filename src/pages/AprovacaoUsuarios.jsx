@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
     UserCheck, UserX, Users, Shield, Search, 
-    Settings, Check, X, Clock, Mail
+    Settings, Check, X, Clock, Mail, Zap, Save
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,15 +40,55 @@ const TODAS_PAGINAS = [
     { id: "Backup", nome: "Backup e Restauração" }
 ];
 
+// Páginas padrão para aprovação automática
+const PAGINAS_PADRAO_USUARIO = [
+    "Home", "ComprovantesInternos", "NotaDeposito", "ColetasDiarias", 
+    "OrdensColeta", "AdicionarColetaDiaria", "Clientes"
+];
+
 export default function AprovacaoUsuarios() {
     const [search, setSearch] = useState("");
     const [selectedUser, setSelectedUser] = useState(null);
     const [showPermissions, setShowPermissions] = useState(false);
+    const [showAutoConfig, setShowAutoConfig] = useState(false);
+    const [autoApprovalConfig, setAutoApprovalConfig] = useState({
+        enabled: false,
+        dominios_permitidos: "",
+        paginas_padrao: PAGINAS_PADRAO_USUARIO
+    });
     const queryClient = useQueryClient();
 
     const { data: usuarios = [], isLoading } = useQuery({
         queryKey: ["usuarios"],
         queryFn: () => base44.entities.User.list("-created_date")
+    });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    // Carregar config de aprovação automática
+    React.useEffect(() => {
+        if (configs[0]?.auto_approval_config) {
+            setAutoApprovalConfig(configs[0].auto_approval_config);
+        }
+    }, [configs]);
+
+    const saveAutoConfigMutation = useMutation({
+        mutationFn: async (config) => {
+            const existing = configs[0];
+            if (existing) {
+                return base44.entities.Configuracoes.update(existing.id, { auto_approval_config: config });
+            } else {
+                return base44.entities.Configuracoes.create({ auto_approval_config: config });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
+            toast.success("Configuração de aprovação automática salva!");
+            setShowAutoConfig(false);
+        }
     });
 
     const updateMutation = useMutation({
@@ -267,9 +307,13 @@ export default function AprovacaoUsuarios() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-800">Gerenciar Usuários</h1>
-                                            <p className="text-slate-500">Gerencie acessos, permissões e administradores</p>
+                            <p className="text-slate-500">Gerencie acessos, permissões e administradores</p>
                         </div>
                     </div>
+                    <Button onClick={() => setShowAutoConfig(true)} className="bg-gradient-to-r from-amber-500 to-orange-600">
+                        <Zap className="w-4 h-4 mr-2" />
+                        Aprovação Automática
+                    </Button>
                 </div>
 
                 {/* Stats */}
@@ -381,6 +425,90 @@ export default function AprovacaoUsuarios() {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Auto Approval Config Dialog */}
+            <Dialog open={showAutoConfig} onOpenChange={setShowAutoConfig}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Zap className="w-5 h-5 text-amber-600" />
+                            Configurar Aprovação Automática
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                        <div className="flex items-center justify-between p-4 bg-amber-50 rounded-xl border border-amber-200">
+                            <div>
+                                <Label className="font-semibold text-amber-800">Ativar Aprovação Automática</Label>
+                                <p className="text-sm text-amber-600">Novos usuários serão aprovados automaticamente</p>
+                            </div>
+                            <Switch
+                                checked={autoApprovalConfig.enabled}
+                                onCheckedChange={(v) => setAutoApprovalConfig({ ...autoApprovalConfig, enabled: v })}
+                            />
+                        </div>
+
+                        {autoApprovalConfig.enabled && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label>Domínios Permitidos (opcional)</Label>
+                                    <Input
+                                        value={autoApprovalConfig.dominios_permitidos}
+                                        onChange={(e) => setAutoApprovalConfig({ ...autoApprovalConfig, dominios_permitidos: e.target.value })}
+                                        placeholder="Ex: empresa.com, parceiro.com (deixe vazio para todos)"
+                                    />
+                                    <p className="text-xs text-slate-500">Separe por vírgula. Deixe vazio para aprovar qualquer domínio.</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label className="font-semibold">Páginas Padrão para Novos Usuários</Label>
+                                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                                        {TODAS_PAGINAS.map(pagina => (
+                                            <div 
+                                                key={pagina.id}
+                                                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                                    autoApprovalConfig.paginas_padrao?.includes(pagina.id)
+                                                        ? "bg-amber-50 border-amber-300 text-amber-800"
+                                                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                                                }`}
+                                                onClick={() => {
+                                                    const atuais = autoApprovalConfig.paginas_padrao || [];
+                                                    const novas = atuais.includes(pagina.id)
+                                                        ? atuais.filter(p => p !== pagina.id)
+                                                        : [...atuais, pagina.id];
+                                                    setAutoApprovalConfig({ ...autoApprovalConfig, paginas_padrao: novas });
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                                        autoApprovalConfig.paginas_padrao?.includes(pagina.id)
+                                                            ? "bg-amber-500 border-amber-500"
+                                                            : "border-slate-300"
+                                                    }`}>
+                                                        {autoApprovalConfig.paginas_padrao?.includes(pagina.id) && (
+                                                            <Check className="w-3 h-3 text-white" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm">{pagina.nome}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-4 border-t">
+                            <Button variant="outline" onClick={() => setShowAutoConfig(false)}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={() => saveAutoConfigMutation.mutate(autoApprovalConfig)} className="bg-amber-600 hover:bg-amber-700">
+                                <Save className="w-4 h-4 mr-2" />
+                                Salvar Configuração
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Permissions Dialog */}
             <Dialog open={showPermissions} onOpenChange={setShowPermissions}>

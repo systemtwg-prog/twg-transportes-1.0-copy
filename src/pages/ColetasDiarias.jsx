@@ -92,6 +92,12 @@ export default function ColetasDiarias() {
         const coletasParaImprimir = activeTab === "pendentes" ? coletasPendentes : coletasRealizadas;
         const winPrint = window.open('', '_blank', 'width=900,height=650');
         
+        // Calcular linhas em branco para preencher a página
+        const linhasUsadas = coletasParaImprimir.length;
+        const linhasPorPagina = 18; // Aproximadamente 18 linhas por página A4
+        const linhasRestantes = linhasPorPagina - (linhasUsadas % linhasPorPagina);
+        const linhasEmBranco = linhasRestantes === linhasPorPagina ? 0 : linhasRestantes;
+
         winPrint.document.write(`
             <html>
             <head>
@@ -100,53 +106,47 @@ export default function ColetasDiarias() {
                 <title>Coletas Diárias - ${formatDate(dataFiltro)}</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4; }
+                        @page { margin: 5mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        .print-btn { display: none; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-                    .print-btn { display: block; width: 100%; max-width: 300px; margin: 0 auto 20px; padding: 15px 30px; font-size: 18px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; }
-                    .print-btn:hover { background: #0284c7; }
-                    .header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0ea5e9; }
-                    .logo { max-height: 80px; max-width: 200px; }
+                    body { font-family: Arial, sans-serif; margin: 5px; font-size: 10px; }
+                    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #0ea5e9; }
+                    .logo { max-height: 40px; max-width: 100px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 20px; font-weight: bold; color: #0369a1; margin: 0; }
-                    .company-details { font-size: 11px; color: #64748b; margin: 3px 0; }
-                    .title { font-size: 18px; font-weight: bold; text-align: center; margin: 15px 0; color: #0369a1; }
-                    .date-info { text-align: right; font-size: 12px; color: #64748b; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th { background: #0ea5e9; color: white; padding: 10px; text-align: left; border: 1px solid #0284c7; font-weight: bold; }
-                    td { padding: 8px; border: 1px solid #e2e8f0; vertical-align: top; }
-                    .num { width: 40px; text-align: center; font-weight: bold; background: #f0f9ff; }
-                    .status { text-align: center; }
-                    .carga { text-align: center; }
-                    .empty-row { height: 60px; }
+                    .company-name { font-size: 12px; font-weight: bold; color: #0369a1; margin: 0; }
+                    .company-details { font-size: 8px; color: #64748b; margin: 1px 0; }
+                    .title { font-size: 12px; font-weight: bold; text-align: center; margin: 5px 0; color: #0369a1; }
+                    .date-info { text-align: right; font-size: 9px; color: #64748b; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+                    th { background: #0ea5e9; color: white; padding: 4px; text-align: left; border: 1px solid #0284c7; font-weight: bold; font-size: 9px; }
+                    td { padding: 4px; border: 1px solid #e2e8f0; vertical-align: top; font-size: 9px; }
+                    .num { width: 25px; text-align: center; font-weight: bold; background: #f0f9ff; }
+                    .status { text-align: center; width: 60px; }
+                    .carga { text-align: center; width: 70px; }
+                    .empty-row { height: 35px; }
                     tr:nth-child(even) { background: #f8fafc; }
                 </style>
             </head>
             <body>
-                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar como PDF</button>
                 <div class="header">
                     ${config.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
                     <div class="company-info">
                         <p class="company-name">${config.nome_empresa || "Controle TWG"}</p>
-                        ${config.endereco ? `<p class="company-details">${config.endereco}</p>` : ''}
-                        ${config.telefone ? `<p class="company-details">Tel: ${config.telefone}</p>` : ''}
-                        ${config.cnpj ? `<p class="company-details">CNPJ: ${config.cnpj}</p>` : ''}
+                        ${config.telefone ? `<span class="company-details">Tel: ${config.telefone}</span>` : ''}
                     </div>
                     <div class="date-info">
-                        <p><strong>DATA:</strong> ${formatDate(dataFiltro) || formatDate(new Date().toISOString().split("T")[0])}</p>
-                        <p>${coletasParaImprimir.length} coleta(s)</p>
+                        <strong>DATA:</strong> ${formatDate(dataFiltro) || formatDate(new Date().toISOString().split("T")[0])}<br>
+                        ${coletasParaImprimir.length} coleta(s)
                     </div>
                 </div>
-                <div class="title">COLETAS DIÁRIAS - ${activeTab === "pendentes" ? "PENDENTES" : "REALIZADAS"}</div>
+                <div class="title">COLETAS - ${activeTab === "pendentes" ? "PENDENTES" : "REALIZADAS"}</div>
                 <table>
                     <thead>
                         <tr>
                             <th class="num">Nº</th>
-                            <th style="width: 45%">DADOS FORNECEDOR/CLIENTE</th>
-                            <th style="width: 20%" class="carga">DADOS CARGA</th>
-                            <th style="width: 20%" class="status">STATUS</th>
+                            <th>FORNECEDOR/CLIENTE</th>
+                            <th class="carga">CARGA</th>
+                            <th class="status">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -157,23 +157,15 @@ export default function ColetasDiarias() {
                                     <td class="num">${idx + 1}</td>
                                     <td>
                                         <strong>${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}</strong><br>
-                                        ${endereco}<br>
-                                        ${c.remetente_telefone || "-"}<br>
-                                        HORARIO: ${c.remetente_horario || "-"}${c.remetente_intervalo ? ` - INTERVALO ${c.remetente_intervalo}` : ""}
-                                        ${c.recado ? `<br><strong>RECADO:</strong> ${c.recado}` : ""}
+                                        ${endereco ? endereco + "<br>" : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "- " + c.remetente_horario : ""}
+                                        ${c.recado ? `<br><em>${c.recado}</em>` : ""}
                                     </td>
-                                    <td class="carga">
-                                        ${c.volume || "-"} / ${c.peso || "-"}<br>
-                                        NFE${c.nfe || "-"}
-                                    </td>
-                                    <td class="status">${c.status === 'realizado' ? '✓ Realizado' : c.status === 'cancelado' ? '✗ Cancelado' : '○ Pendente'}</td>
+                                    <td class="carga">${c.volume || "-"}/${c.peso || "-"}<br>NF${c.nfe || "-"}</td>
+                                    <td class="status">${c.status === 'realizado' ? '✓' : c.status === 'cancelado' ? '✗' : '○'}</td>
                                 </tr>
                             `;
                         }).join("")}
-                        ${coletasParaImprimir.length < 8 ? 
-                            Array(8 - coletasParaImprimir.length).fill('<tr class="empty-row"><td class="num"></td><td></td><td></td><td></td></tr>').join("") 
-                            : ""
-                        }
+                        ${Array(Math.max(linhasEmBranco, 5)).fill('<tr class="empty-row"><td class="num"></td><td></td><td></td><td></td></tr>').join("")}
                     </tbody>
                 </table>
             </body>

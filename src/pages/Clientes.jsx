@@ -54,39 +54,51 @@ export default function Clientes() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clientes"] })
     });
 
-    const handleImportExcel = async (e) => {
+    const [importing, setImporting] = useState(false);
+
+    const handleImportFile = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setImporting(true);
+        
         try {
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
             
             const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
                 file_url,
                 json_schema: {
-                    type: "array",
-                    items: {
-                        type: "object",
-                        properties: {
-                            codigo: { type: "string" },
-                            razao_social: { type: "string" },
-                            cnpj_cpf: { type: "string" },
-                            tipo: { type: "string" },
-                            contato: { type: "string" },
-                            telefone: { type: "string" },
-                            email: { type: "string" },
-                            cep: { type: "string" },
-                            endereco: { type: "string" },
-                            bairro: { type: "string" },
-                            cidade: { type: "string" },
-                            uf: { type: "string" }
+                    type: "object",
+                    properties: {
+                        clientes: {
+                            type: "array",
+                            description: "Lista de clientes extraídos do documento",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    codigo: { type: "string", description: "Código do cliente" },
+                                    razao_social: { type: "string", description: "Razão social ou nome do cliente" },
+                                    nome_fantasia: { type: "string", description: "Nome fantasia" },
+                                    cnpj_cpf: { type: "string", description: "CNPJ ou CPF" },
+                                    tipo: { type: "string", description: "Tipo: remetente, destinatario ou ambos" },
+                                    contato: { type: "string", description: "Nome do contato" },
+                                    telefone: { type: "string", description: "Telefone" },
+                                    email: { type: "string", description: "Email" },
+                                    cep: { type: "string", description: "CEP" },
+                                    endereco: { type: "string", description: "Endereço completo" },
+                                    bairro: { type: "string", description: "Bairro" },
+                                    cidade: { type: "string", description: "Cidade" },
+                                    uf: { type: "string", description: "Estado/UF" }
+                                }
+                            }
                         }
                     }
                 }
             });
 
             if (result.status === "success" && result.output) {
-                const clientesImport = Array.isArray(result.output) ? result.output : [result.output];
+                const clientesImport = result.output.clientes || (Array.isArray(result.output) ? result.output : [result.output]);
+                let importados = 0;
                 
                 for (const cliente of clientesImport) {
                     if (cliente.razao_social) {
@@ -94,18 +106,21 @@ export default function Clientes() {
                             ...cliente,
                             tipo: cliente.tipo?.toLowerCase() || "remetente"
                         });
+                        importados++;
                     }
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["clientes"] });
-                toast.success(`${clientesImport.length} cliente(s) importado(s) com sucesso!`);
+                toast.success(`✅ Importado com sucesso! ${importados} cliente(s) adicionado(s).`);
             } else {
-                toast.error("Erro ao processar arquivo");
+                toast.error("Erro ao processar arquivo. Verifique o formato.");
             }
         } catch (error) {
-            toast.error("Erro ao importar arquivo");
+            console.error("Erro na importação:", error);
+            toast.error("Erro ao importar arquivo. Tente novamente.");
         }
         
+        setImporting(false);
         e.target.value = "";
     };
 

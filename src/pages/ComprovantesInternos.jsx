@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import AudioRecorder from "@/components/shared/AudioRecorder";
+import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -490,14 +490,11 @@ export default function ComprovantesInternos() {
                                 rows={3}
                                 placeholder="Digite suas observações ou grave um áudio..."
                             />
-                            <AudioRecorder 
-                                onRecordingComplete={async (blob, url) => {
-                                    // Upload do áudio
-                                    const file = new File([blob], "audio_observacao.webm", { type: "audio/webm" });
-                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                            <AudioRecorderWithTranscription 
+                                onRecordingComplete={(audioUrl, transcricao) => {
                                     setForm(prev => ({
                                         ...prev,
-                                        observacoes: (prev.observacoes || "") + "\n[Áudio: " + file_url + "]"
+                                        observacoes: (prev.observacoes || "") + (transcricao ? `\n${transcricao}` : "") + `\n[Áudio: ${audioUrl}]`
                                     }));
                                 }}
                             />

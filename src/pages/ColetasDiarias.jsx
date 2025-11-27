@@ -62,7 +62,9 @@ export default function ColetasDiarias() {
         coletasFiltradas = coletasFiltradas.filter(c => c.motorista_id === motoristaFiltro);
     }
 
-    const coletasPendentes = coletasFiltradas.filter(c => c.status === "pendente" || !c.status);
+    const coletasPendentes = coletasFiltradas
+        .filter(c => c.status === "pendente" || !c.status)
+        .sort((a, b) => (b.prioridade ? 1 : 0) - (a.prioridade ? 1 : 0));
     const coletasRealizadas = coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado");
 
     const statusColors = {
@@ -190,11 +192,16 @@ export default function ColetasDiarias() {
         ].filter(Boolean).join(" - ");
 
         return (
-            <tr key={coleta.id} className="border-b hover:bg-sky-50/50">
+            <tr key={coleta.id} className={`border-b hover:bg-sky-50/50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}
                 <td className="p-3 text-center">
-                    <span className="w-8 h-8 bg-sky-100 text-sky-700 rounded-full flex items-center justify-center font-bold text-sm mx-auto">
-                        {index + 1}
-                    </span>
+                    <div className="flex flex-col items-center gap-1">
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${coleta.prioridade ? "bg-yellow-400 text-yellow-900" : "bg-sky-100 text-sky-700"}`}>
+                            {index + 1}
+                        </span>
+                        {coleta.prioridade && (
+                            <Badge className="bg-yellow-400 text-yellow-900 text-xs">PRIORIDADE</Badge>
+                        )}
+                    </div>
                 </td>
                 <td className="p-3">
                     <div className="space-y-0.5 text-sm">

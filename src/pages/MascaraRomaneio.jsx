@@ -66,7 +66,7 @@ export default function MascaraRomaneio() {
         const matchSearch = n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
             n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
             n.transportadora?.toLowerCase().includes(search.toLowerCase());
-        const matchPlaca = !filterPlaca || n.placa === filterPlaca;
+        const matchPlaca = !filterPlaca || filterPlaca === "all" || n.placa === filterPlaca;
         return matchSearch && matchPlaca;
     });
 

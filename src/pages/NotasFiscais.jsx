@@ -16,6 +16,9 @@ import { ptBR } from "date-fns/locale";
 
 export default function NotasFiscais() {
     const [showForm, setShowForm] = useState(false);
+    const [showPasteForm, setShowPasteForm] = useState(false);
+    const [pasteText, setPasteText] = useState("");
+    const [processingPaste, setProcessingPaste] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
     const [importing, setImporting] = useState(false);

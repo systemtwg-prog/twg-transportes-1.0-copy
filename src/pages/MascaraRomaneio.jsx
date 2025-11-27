@@ -427,6 +427,50 @@ export default function MascaraRomaneio() {
         
         winPrint.document.close();
         setTimeout(() => winPrint.print(), 500);
+
+        // Salvar romaneio gerado para cada placa
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            // Calcular notas por transportadora
+            const notasPorTransp = {};
+            notasPlaca.forEach(nota => {
+                const transp = nota.transportadora || "Sem transportadora";
+                if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
+                notasPorTransp[transp]++;
+            });
+
+            const notasPorTransportadora = Object.entries(notasPorTransp).map(([t, q]) => ({
+                transportadora: t,
+                quantidade: q
+            }));
+
+            // Calcular peso total
+            const pesoTotal = notasPlaca.reduce((acc, nota) => {
+                const pesoStr = nota.peso || "";
+                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                return acc + pesoNum;
+            }, 0);
+
+            // Lista de destinatários únicos
+            const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
+
+            // Contar entregas (transportadoras únicas)
+            const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
+
+            createRomaneioMutation.mutate({
+                nome: `Romaneio ${placa !== "SEM_PLACA" ? placa : ""} - ${formatDate(dataRomaneio)}`,
+                placa: placa !== "SEM_PLACA" ? placa : "",
+                data: dataRomaneio,
+                motorista_id: motorista || "",
+                motorista_nome: motoristaObj?.nome || "",
+                total_notas: notasPlaca.length,
+                total_entregas: transportadorasUnicas.size || notasPlaca.length,
+                peso_total: pesoTotal,
+                notas_por_transportadora: notasPorTransportadora,
+                notas_ids: notasPlaca.map(n => n.id),
+                destinatarios: destinatarios,
+                status: "gerado"
+            });
+        });
     };
 
     return (

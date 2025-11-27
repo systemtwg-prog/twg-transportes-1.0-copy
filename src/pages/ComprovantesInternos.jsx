@@ -113,6 +113,9 @@ export default function ComprovantesInternos() {
     const [filterEmpresa, setFilterEmpresa] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [showEditEmpresa, setShowEditEmpresa] = useState(false);
+    const [empresaEmMassa, setEmpresaEmMassa] = useState("");
+    const [selecionados, setSelecionados] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -122,7 +125,6 @@ export default function ComprovantesInternos() {
 
     const [form, setForm] = useState({
         nota_fiscal: "",
-        empresa: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         texto_extraido: "",
@@ -132,6 +134,34 @@ export default function ComprovantesInternos() {
 
     // Lista de empresas únicas
     const empresasUnicas = [...new Set(comprovantes.map(c => c.empresa).filter(Boolean))];
+
+    const updateEmpresaMutation = useMutation({
+        mutationFn: async ({ ids, empresa }) => {
+            for (const id of ids) {
+                await base44.entities.ComprovanteInterno.update(id, { empresa });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+            setShowEditEmpresa(false);
+            setSelecionados([]);
+            setEmpresaEmMassa("");
+        }
+    });
+
+    const toggleSelecionado = (id) => {
+        setSelecionados(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selecionarTodos = () => {
+        if (selecionados.length === filtered.length) {
+            setSelecionados([]);
+        } else {
+            setSelecionados(filtered.map(c => c.id));
+        }
+    };
 
 
 
@@ -161,7 +191,6 @@ export default function ComprovantesInternos() {
     const resetForm = () => {
         setForm({
             nota_fiscal: "",
-            empresa: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             texto_extraido: "",
@@ -269,13 +298,25 @@ export default function ComprovantesInternos() {
                             <p className="text-slate-500">Gerencie documentos e comprovantes</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { resetForm(); setShowForm(true); }}
-                        className="bg-gradient-to-r from-sky-500 to-cyan-600"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Novo Comprovante
-                    </Button>
+                    <div className="flex gap-2">
+                        {selecionados.length > 0 && (
+                            <Button 
+                                onClick={() => setShowEditEmpresa(true)}
+                                variant="outline"
+                                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                            >
+                                <Building2 className="w-4 h-4 mr-2" />
+                                Editar Empresa ({selecionados.length})
+                            </Button>
+                        )}
+                        <Button 
+                            onClick={() => { resetForm(); setShowForm(true); }}
+                            className="bg-gradient-to-r from-sky-500 to-cyan-600"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Novo Comprovante
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Filtros */}
@@ -348,6 +389,22 @@ export default function ComprovantesInternos() {
                     </CardContent>
                 </Card>
 
+                {/* Seleção em massa */}
+                {filtered.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={selecionarTodos}
+                        >
+                            {selecionados.length === filtered.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        </Button>
+                        {selecionados.length > 0 && (
+                            <span className="text-sm text-slate-500">{selecionados.length} selecionado(s)</span>
+                        )}
+                    </div>
+                )}
+
                 {/* Lista */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {isLoading ? (
@@ -361,15 +418,28 @@ export default function ComprovantesInternos() {
                         </div>
                     ) : (
                         filtered.map((comprovante) => (
-                            <Card key={comprovante.id} className="bg-white/90 border-0 shadow-md hover:shadow-lg transition-shadow">
+                            <Card 
+                                key={comprovante.id} 
+                                className={`bg-white/90 border-2 shadow-md hover:shadow-lg transition-shadow cursor-pointer ${selecionados.includes(comprovante.id) ? "border-sky-500 bg-sky-50" : "border-transparent"}`}
+                                onClick={() => toggleSelecionado(comprovante.id)}
+                            >
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between mb-3">
-                                        <div>
-                                            <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
-                                            {comprovante.empresa && (
-                                                <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
-                                            )}
-                                            <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
+                                        <div className="flex items-start gap-2">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selecionados.includes(comprovante.id)}
+                                                onChange={() => toggleSelecionado(comprovante.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="mt-1 w-4 h-4"
+                                            />
+                                            <div>
+                                                <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                                {comprovante.empresa && (
+                                                    <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                )}
+                                                <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
+                                            </div>
                                         </div>
                                         <Badge variant="outline">
                                             {comprovante.arquivos?.length || 0} arquivo(s)
@@ -441,6 +511,49 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
+            {/* Dialog Editar Empresa em Massa */}
+            <Dialog open={showEditEmpresa} onOpenChange={setShowEditEmpresa}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-orange-600" />
+                            Editar Empresa em Massa
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Alterar a empresa de <strong>{selecionados.length}</strong> comprovante(s) selecionado(s).
+                        </p>
+                        <div className="space-y-2">
+                            <Label>Nova Empresa</Label>
+                            <Input
+                                value={empresaEmMassa}
+                                onChange={(e) => setEmpresaEmMassa(e.target.value)}
+                                placeholder="Digite o nome da empresa"
+                                list="empresas-massa-list"
+                            />
+                            <datalist id="empresas-massa-list">
+                                {empresasUnicas.map(emp => (
+                                    <option key={emp} value={emp} />
+                                ))}
+                            </datalist>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditEmpresa(false)}>
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={() => updateEmpresaMutation.mutate({ ids: selecionados, empresa: empresaEmMassa })}
+                                disabled={updateEmpresaMutation.isPending}
+                                className="bg-orange-500 hover:bg-orange-600"
+                            >
+                                {updateEmpresaMutation.isPending ? "Salvando..." : "Salvar"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -462,28 +575,14 @@ export default function ComprovantesInternos() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Empresa</Label>
+                                <Label>Data *</Label>
                                 <Input
-                                    value={form.empresa}
-                                    onChange={(e) => setForm({ ...form, empresa: e.target.value })}
-                                    placeholder="Nome da empresa"
-                                    list="empresas-list"
+                                    type="date"
+                                    value={form.data}
+                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
+                                    required
                                 />
-                                <datalist id="empresas-list">
-                                    {empresasUnicas.map(emp => (
-                                        <option key={emp} value={emp} />
-                                    ))}
-                                </datalist>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Data *</Label>
-                            <Input
-                                type="date"
-                                value={form.data}
-                                onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                required
-                            />
                         </div>
 
                         {/* Upload de arquivos */}

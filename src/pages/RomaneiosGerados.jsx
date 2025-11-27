@@ -282,7 +282,7 @@ export default function RomaneiosGerados() {
                     </Card>
                 )}
 
-                {/* Lista de Notas do Período */}
+                {/* Lista de Notas do Período por Placa */}
                 {notasDosFiltrados.length > 0 && (
                     <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
                         <CardHeader className="pb-2">
@@ -292,14 +292,34 @@ export default function RomaneiosGerados() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 pt-2">
-                            <div className="bg-white rounded-xl p-4 max-h-64 overflow-y-auto">
-                                <div className="flex flex-wrap gap-2">
-                                    {notasDosFiltrados.map(nota => (
-                                        <Badge key={nota.id} className="bg-blue-100 text-blue-700 text-sm">
-                                            {nota.numero_nf}
-                                        </Badge>
-                                    ))}
-                                </div>
+                            <div className="space-y-4 max-h-96 overflow-y-auto">
+                                {Object.entries(
+                                    notasDosFiltrados.reduce((acc, nota) => {
+                                        const placa = nota.placa || "SEM_PLACA";
+                                        if (!acc[placa]) acc[placa] = [];
+                                        acc[placa].push(nota);
+                                        return acc;
+                                    }, {})
+                                ).map(([placa, notas]) => (
+                                    <div key={placa} className="bg-white rounded-xl p-4 border-l-4 border-indigo-500">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Car className="w-5 h-5 text-indigo-600" />
+                                            <span className="font-bold text-indigo-700">
+                                                {placa === "SEM_PLACA" ? "Sem Placa" : placa}
+                                            </span>
+                                            <Badge className="bg-indigo-100 text-indigo-700 ml-auto">
+                                                {notas.length} nota{notas.length > 1 ? "s" : ""}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {notas.map(nota => (
+                                                <Badge key={nota.id} className="bg-blue-100 text-blue-700 text-sm">
+                                                    {nota.numero_nf}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>

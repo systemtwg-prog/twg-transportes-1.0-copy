@@ -35,7 +35,9 @@ export default function Layout({ children, currentPageName }) {
         { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
         { name: "Backup", href: "Backup", icon: LayoutGrid },
         { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
-        { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText }
+        { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
+        { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
+        { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText }
     ];
 
     const NavLinks = ({ onClick }) => (

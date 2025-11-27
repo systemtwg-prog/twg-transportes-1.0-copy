@@ -21,6 +21,8 @@ import RotasGPS from './pages/RotasGPS';
 import Backup from './pages/Backup';
 import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
 import Transportadoras from './pages/Transportadoras';
+import NotasFiscais from './pages/NotasFiscais';
+import MascaraRomaneio from './pages/MascaraRomaneio';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +50,8 @@ export const PAGES = {
     "Backup": Backup,
     "ImportacaoDocumentos": ImportacaoDocumentos,
     "Transportadoras": Transportadoras,
+    "NotasFiscais": NotasFiscais,
+    "MascaraRomaneio": MascaraRomaneio,
 }
 
 export const pagesConfig = {

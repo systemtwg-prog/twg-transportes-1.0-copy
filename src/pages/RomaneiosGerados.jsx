@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,6 +21,7 @@ export default function RomaneiosGerados() {
     const [filterDataFim, setFilterDataFim] = useState("");
     const [filterDestinatario, setFilterDestinatario] = useState("");
     const [filterPlaca, setFilterPlaca] = useState("");
+    const [expandedRomaneio, setExpandedRomaneio] = useState(null);
     const [showEdit, setShowEdit] = useState(false);
     const [editingRomaneio, setEditingRomaneio] = useState(null);
     const [editForm, setEditForm] = useState({ nome: "", placa: "", data: "", observacoes: "" });
@@ -29,6 +30,11 @@ export default function RomaneiosGerados() {
     const { data: romaneios = [], isLoading } = useQuery({
         queryKey: ["romaneios-gerados"],
         queryFn: () => base44.entities.RomaneioGerado.list("-created_date")
+    });
+
+    const { data: notasFiscais = [] } = useQuery({
+        queryKey: ["notas-fiscais-romaneios"],
+        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
     });
 
     const updateMutation = useMutation({
@@ -46,16 +52,29 @@ export default function RomaneiosGerados() {
     });
 
     // Filtrar romaneios
-    const filtered = useMemo(() => {
-        return romaneios.filter(r => {
-            const matchDataInicio = !filterData || r.data >= filterData;
-            const matchDataFim = !filterDataFim || r.data <= filterDataFim;
-            const matchDestinatario = !filterDestinatario || 
-                r.destinatarios?.some(d => d.toLowerCase().includes(filterDestinatario.toLowerCase()));
-            const matchPlaca = !filterPlaca || filterPlaca === "all" || r.placa === filterPlaca;
-            return matchDataInicio && matchDataFim && matchDestinatario && matchPlaca;
-        });
-    }, [romaneios, filterData, filterDataFim, filterDestinatario, filterPlaca]);
+        const filtered = useMemo(() => {
+            return romaneios.filter(r => {
+                const matchDataInicio = !filterData || r.data >= filterData;
+                const matchDataFim = !filterDataFim || r.data <= filterDataFim;
+                const matchDestinatario = !filterDestinatario || 
+                    r.destinatarios?.some(d => d.toLowerCase().includes(filterDestinatario.toLowerCase()));
+                const matchPlaca = !filterPlaca || filterPlaca === "all" || r.placa === filterPlaca;
+                return matchDataInicio && matchDataFim && matchDestinatario && matchPlaca;
+            });
+        }, [romaneios, filterData, filterDataFim, filterDestinatario, filterPlaca]);
+
+        // Todas as notas dos romaneios filtrados
+        const todasNotasIds = useMemo(() => {
+            const ids = new Set();
+            filtered.forEach(r => {
+                (r.notas_ids || []).forEach(id => ids.add(id));
+            });
+            return ids;
+        }, [filtered]);
+
+        const notasDosFiltrados = useMemo(() => {
+            return notasFiscais.filter(n => todasNotasIds.has(n.id));
+        }, [notasFiscais, todasNotasIds]);
 
     // Dashboard geral
     const dashboard = useMemo(() => {
@@ -263,6 +282,29 @@ export default function RomaneiosGerados() {
                     </Card>
                 )}
 
+                {/* Lista de Notas do Período */}
+                {notasDosFiltrados.length > 0 && (
+                    <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Notas Fiscais do Período ({notasDosFiltrados.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-2">
+                            <div className="bg-white rounded-xl p-4 max-h-64 overflow-y-auto">
+                                <div className="flex flex-wrap gap-2">
+                                    {notasDosFiltrados.map(nota => (
+                                        <Badge key={nota.id} className="bg-blue-100 text-blue-700 text-sm">
+                                            {nota.numero_nf}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Dashboard por Placa */}
                 {Object.keys(dashboard.porPlaca).length > 0 && (
                     <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 border-0 shadow-lg">
@@ -364,18 +406,51 @@ export default function RomaneiosGerados() {
                                                     </Select>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-1">
-                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(romaneio)}>
-                                                            <Pencil className="w-4 h-4 text-blue-600" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => {
-                                                            if (confirm("Excluir este romaneio?")) deleteMutation.mutate(romaneio.id);
-                                                        }}>
-                                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
+                                                                                                        <div className="flex justify-end gap-1">
+                                                                                                            <Button 
+                                                                                                                variant="ghost" 
+                                                                                                                size="icon" 
+                                                                                                                onClick={() => setExpandedRomaneio(expandedRomaneio === romaneio.id ? null : romaneio.id)}
+                                                                                                            >
+                                                                                                                {expandedRomaneio === romaneio.id ? (
+                                                                                                                    <ChevronUp className="w-4 h-4 text-slate-600" />
+                                                                                                                ) : (
+                                                                                                                    <ChevronDown className="w-4 h-4 text-slate-600" />
+                                                                                                                )}
+                                                                                                            </Button>
+                                                                                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(romaneio)}>
+                                                                                                                <Pencil className="w-4 h-4 text-blue-600" />
+                                                                                                            </Button>
+                                                                                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                                                                                if (confirm("Excluir este romaneio?")) deleteMutation.mutate(romaneio.id);
+                                                                                                            }}>
+                                                                                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                                                                                            </Button>
+                                                                                                        </div>
+                                                                                                    </TableCell>
+                                                                                                </TableRow>
+                                                                                                {expandedRomaneio === romaneio.id && (
+                                                                                                    <TableRow>
+                                                                                                        <TableCell colSpan={9} className="bg-slate-50 p-4">
+                                                                                                            <div className="space-y-2">
+                                                                                                                <p className="text-sm font-medium text-slate-600">Notas Fiscais:</p>
+                                                                                                                <div className="flex flex-wrap gap-2">
+                                                                                                                    {(romaneio.notas_ids || []).map(id => {
+                                                                                                                        const nota = notasFiscais.find(n => n.id === id);
+                                                                                                                        return nota ? (
+                                                                                                                            <Badge key={id} className="bg-blue-100 text-blue-700">
+                                                                                                                                {nota.numero_nf} - {nota.destinatario}
+                                                                                                                            </Badge>
+                                                                                                                        ) : null;
+                                                                                                                    })}
+                                                                                                                    {(!romaneio.notas_ids || romaneio.notas_ids.length === 0) && (
+                                                                                                                        <span className="text-slate-400 text-sm">Nenhuma nota vinculada</span>
+                                                                                                                    )}
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        </TableCell>
+                                                                                                    </TableRow>
+                                                                                                )}
                                         ))
                                     )}
                                 </TableBody>

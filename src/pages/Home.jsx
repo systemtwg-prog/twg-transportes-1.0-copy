@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import LocationPermission from "@/components/auth/LocationPermission";
 import AccessCheck from "@/components/auth/AccessCheck";
+import WeatherClock from "@/components/shared/WeatherClock";
 
 export default function Home() {
     const [locationGranted, setLocationGranted] = useState(false);
@@ -106,7 +107,7 @@ export default function Home() {
 
     const menuItems = [
         {
-            title: "Comprovantes Internos",
+            title: "Comprovantes de Entrega",
             description: "Gerenciar comprovantes",
             icon: FileText,
             href: "ComprovantesInternos",
@@ -161,14 +162,14 @@ export default function Home() {
                             <img 
                                 src={config.logo_url} 
                                 alt="Logo" 
-                                className="h-24 md:h-32 object-contain bg-white/20 p-3 rounded-2xl backdrop-blur-sm" 
+                                className="h-32 md:h-40 object-contain bg-white/20 p-4 rounded-2xl backdrop-blur-sm" 
                             />
                         ) : (
                             <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl">
-                                <Truck className="w-16 h-16" />
+                                <Truck className="w-20 h-20" />
                             </div>
                         )}
-                        <div className="text-center md:text-left">
+                        <div className="text-center md:text-left flex-1">
                             <h1 className="text-2xl md:text-3xl font-bold">
                                 {config.nome_empresa || "Controle TWG"}
                             </h1>
@@ -187,6 +188,7 @@ export default function Home() {
                                 )}
                             </div>
                         </div>
+                        <WeatherClock />
                     </div>
                 </div>
             </div>
@@ -264,13 +266,13 @@ export default function Home() {
                 </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Comprovantes Internos */}
+                    {/* Comprovantes de Entrega */}
                     <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                         <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2 text-lg">
                                     <FileText className="w-5 h-5 text-sky-600" />
-                                    Comprovantes Internos
+                                    Comprovantes de Entrega
                                 </CardTitle>
                                 <Link to={createPageUrl("ComprovantesInternos")} className="text-sky-600 hover:text-sky-700 text-sm flex items-center gap-1">
                                     Ver todos <ArrowRight className="w-4 h-4" />

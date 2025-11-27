@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AudioRecorder from "@/components/shared/AudioRecorder";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -126,10 +126,7 @@ export default function ComprovantesInternos() {
         observacoes: ""
     });
 
-    const { data: romaneios = [] } = useQuery({
-        queryKey: ["romaneios"],
-        queryFn: () => base44.entities.Romaneio.list("-created_date")
-    });
+
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.ComprovanteInterno.create(data),
@@ -254,17 +251,17 @@ export default function ComprovantesInternos() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl shadow-lg">
+                        <div className="p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl shadow-lg">
                             <FileText className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Comprovantes Internos</h1>
+                            <h1 className="text-3xl font-bold text-slate-800">Comprovantes de Entrega</h1>
                             <p className="text-slate-500">Gerencie documentos e comprovantes</p>
                         </div>
                     </div>
                     <Button 
                         onClick={() => { resetForm(); setShowForm(true); }}
-                        className="bg-gradient-to-r from-teal-500 to-cyan-600"
+                        className="bg-gradient-to-r from-sky-500 to-cyan-600"
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Novo Comprovante
@@ -290,7 +287,7 @@ export default function ComprovantesInternos() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {isLoading ? (
                         <div className="col-span-full text-center py-12">
-                            <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto" />
+                            <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
                         </div>
                     ) : filtered.length === 0 ? (
                         <div className="col-span-full text-center py-12 text-slate-500">
@@ -367,7 +364,7 @@ export default function ComprovantesInternos() {
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-teal-600" />
+                            <FileText className="w-5 h-5 text-sky-600" />
                             {editing ? "Editar Comprovante" : "Novo Comprovante"}
                         </DialogTitle>
                     </DialogHeader>
@@ -393,31 +390,11 @@ export default function ComprovantesInternos() {
                             </div>
                         </div>
 
-                        {/* Vincular a Romaneio */}
-                        {romaneios.length > 0 && (
-                            <div className="space-y-2">
-                                <Label>Vincular a Romaneio (opcional)</Label>
-                                <Select value={form.romaneio_id} onValueChange={(v) => setForm({ ...form, romaneio_id: v })}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um romaneio..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={null}>Nenhum</SelectItem>
-                                        {romaneios.map(r => (
-                                            <SelectItem key={r.id} value={r.id}>
-                                                {formatDate(r.data)} - {r.motorista_nome} ({r.notas_fiscais?.length || 0} NFs)
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-
                         {/* Upload de arquivos */}
                         <div className="space-y-2">
                             <Label>Arquivos</Label>
                             <div className="flex gap-2">
-                                <div className="flex-1 border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
+                                <div className="flex-1 border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors">
                                     <input
                                         type="file"
                                         multiple
@@ -429,7 +406,7 @@ export default function ComprovantesInternos() {
                                     <label htmlFor="file-upload" className="cursor-pointer">
                                         <div className="flex flex-col items-center gap-2">
                                             {uploading ? (
-                                                <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
+                                                <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full" />
                                             ) : (
                                                 <>
                                                     <Upload className="w-8 h-8 text-slate-400" />
@@ -439,7 +416,7 @@ export default function ComprovantesInternos() {
                                         </div>
                                     </label>
                                 </div>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors">
+                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -497,15 +474,25 @@ export default function ComprovantesInternos() {
                                 value={form.observacoes}
                                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
                                 rows={3}
+                                placeholder="Digite suas observações ou grave um áudio..."
+                            />
+                            <AudioRecorder 
+                                onRecordingComplete={async (blob, url) => {
+                                    // Upload do áudio
+                                    const file = new File([blob], "audio_observacao.webm", { type: "audio/webm" });
+                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                    setForm(prev => ({
+                                        ...prev,
+                                        observacoes: (prev.observacoes || "") + "\n[Áudio: " + file_url + "]"
+                                    }));
+                                }}
                             />
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t">
-                            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
-                            <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
-                                {editing ? "Salvar" : "Criar Comprovante"}
-                            </Button>
-                        </div>
+                        <Button type="submit" className="w-full h-14 text-lg bg-sky-600 hover:bg-sky-700">
+                            <Save className="w-6 h-6 mr-2" />
+                            {editing ? "Salvar Comprovante" : "Gravar Comprovante"}
+                        </Button>
                     </form>
                 </DialogContent>
             </Dialog>

@@ -10,7 +10,7 @@ import {
 
 const menuItems = [
     { name: "Home", href: "Home", icon: Home },
-    { name: "Comprovantes Internos", href: "ComprovantesInternos", icon: FileText },
+    { name: "Comprovantes de Entrega", href: "ComprovantesInternos", icon: FileText },
     { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
     { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },

@@ -19,6 +19,7 @@ import ComprovantesInternos from './pages/ComprovantesInternos';
 import NotaDeposito from './pages/NotaDeposito';
 import RotasGPS from './pages/RotasGPS';
 import Backup from './pages/Backup';
+import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "NotaDeposito": NotaDeposito,
     "RotasGPS": RotasGPS,
     "Backup": Backup,
+    "ImportacaoDocumentos": ImportacaoDocumentos,
 }
 
 export const pagesConfig = {

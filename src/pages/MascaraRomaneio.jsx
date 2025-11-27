@@ -58,6 +58,11 @@ export default function MascaraRomaneio() {
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-romaneio"],
+        queryFn: () => base44.entities.Veiculo.list()
+    });
+
     const config = configs[0] || {};
 
     // Dashboard por placa

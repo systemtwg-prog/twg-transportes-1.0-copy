@@ -427,12 +427,12 @@ export default function MascaraRomaneio() {
                                     <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
                                 </Label>
                                 <div className="flex gap-1">
-                                    <Select value={remetenteSelecionado} onValueChange={setRemetenteSelecionado}>
+                                    <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
                                         <SelectTrigger className="bg-white flex-1">
                                             <SelectValue placeholder="Selecione..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value={null}>Usar individual</SelectItem>
+                                            <SelectItem value="individual">Usar individual</SelectItem>
                                             {empresasRemetentes.map(emp => (
                                                 <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
                                             ))}

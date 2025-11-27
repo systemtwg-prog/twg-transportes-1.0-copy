@@ -277,27 +277,34 @@ export default function ComprovantesInternos() {
                 tipo: file.type
             });
 
-            // Tentar extrair texto de PDFs
-            if (file.type === "application/pdf") {
-                try {
-                    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-                        file_url,
-                        json_schema: {
-                            type: "object",
-                            properties: {
-                                texto_completo: { type: "string" }
-                            }
+            // Tentar extrair número da nota fiscal da imagem ou PDF
+            try {
+                const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+                    file_url,
+                    json_schema: {
+                        type: "object",
+                        properties: {
+                            numero_nota_fiscal: { type: "string", description: "Número da nota fiscal encontrado no documento" },
+                            texto_completo: { type: "string" }
                         }
-                    });
-                    if (result.status === "success" && result.output?.texto_completo) {
+                    }
+                });
+                if (result.status === "success") {
+                    if (result.output?.numero_nota_fiscal && !form.nota_fiscal) {
+                        setForm(prev => ({
+                            ...prev,
+                            nota_fiscal: result.output.numero_nota_fiscal
+                        }));
+                    }
+                    if (result.output?.texto_completo) {
                         setForm(prev => ({
                             ...prev,
                             texto_extraido: (prev.texto_extraido || "") + "\n" + result.output.texto_completo
                         }));
                     }
-                } catch (err) {
-                    console.log("Erro ao extrair texto do PDF:", err);
                 }
+            } catch (err) {
+                console.log("Erro ao extrair dados do arquivo:", err);
             }
         }
 

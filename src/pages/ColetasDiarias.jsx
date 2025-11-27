@@ -214,27 +214,25 @@ export default function ColetasDiarias() {
                         <Badge className={statusColors[coleta.status || "pendente"]}>
                             {statusLabels[coleta.status || "pendente"]}
                         </Badge>
-                        {activeTab === "pendentes" && (
-                            <Select 
-                                value={coleta.status || "pendente"} 
-                                onValueChange={(v) => updateStatusMutation.mutate({ id: coleta.id, status: v })}
-                            >
-                                <SelectTrigger className="w-28 h-7 text-xs">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="pendente">
-                                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pendente</span>
-                                    </SelectItem>
-                                    <SelectItem value="realizado">
-                                        <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Realizado</span>
-                                    </SelectItem>
-                                    <SelectItem value="cancelado">
-                                        <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Cancelado</span>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )}
+                        <Select 
+                                          value={coleta.status || "pendente"} 
+                                          onValueChange={(v) => updateStatusMutation.mutate({ id: coleta.id, status: v })}
+                                      >
+                                          <SelectTrigger className="w-28 h-7 text-xs">
+                                              <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                              <SelectItem value="pendente">
+                                                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pendente</span>
+                                              </SelectItem>
+                                              <SelectItem value="realizado">
+                                                  <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Realizado</span>
+                                              </SelectItem>
+                                              <SelectItem value="cancelado">
+                                                  <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Cancelado</span>
+                                              </SelectItem>
+                                          </SelectContent>
+                                      </Select>
                     </div>
                 </td>
             </tr>
@@ -294,14 +292,14 @@ export default function ColetasDiarias() {
 
                 {/* Tabs */}
                 <Tabs defaultValue="pendentes" value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="bg-white/80 backdrop-blur shadow-md p-1">
-                        <TabsTrigger value="pendentes" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
-                            Pendentes ({coletasPendentes.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="realizadas" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
-                            Realizadas ({coletasRealizadas.length})
-                        </TabsTrigger>
-                    </TabsList>
+                                <TabsList className="bg-white/80 backdrop-blur shadow-md p-1">
+                                    <TabsTrigger value="pendentes" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
+                                        Pendentes ({coletasPendentes.length})
+                                    </TabsTrigger>
+                                    <TabsTrigger value="realizadas" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+                                        Realizadas/Canceladas ({coletasRealizadas.length})
+                                    </TabsTrigger>
+                                </TabsList>
 
                     <TabsContent value="pendentes">
                         <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm" ref={printRef}>

@@ -31,7 +31,7 @@ export default function Layout({ children, currentPageName }) {
         { name: "Relatórios", href: "Relatorios", icon: FileText },
         { name: "Performance", href: "RelatorioMotoristas", icon: Award },
         { name: "Configurações", href: "Configuracoes", icon: Settings },
-        { name: "Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
+        { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
         { name: "Backup", href: "Backup", icon: LayoutGrid },
         { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid }
     ];

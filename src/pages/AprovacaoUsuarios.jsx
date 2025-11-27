@@ -19,23 +19,23 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const TODAS_PAGINAS = [
     { id: "Home", nome: "Home" },
+    { id: "ComprovantesInternos", nome: "Comprovantes de Entrega" },
+    { id: "NotaDeposito", nome: "Nota Depósito" },
+    { id: "ColetasDiarias", nome: "Coletas Diárias" },
     { id: "OrdensColeta", nome: "Ordens de Coleta" },
     { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas" },
-    { id: "ColetasDiarias", nome: "Coletas Diárias" },
     { id: "Romaneios", nome: "Romaneios/Entregas" },
     { id: "RotasGPS", nome: "Rotas GPS" },
-    { id: "NotaDeposito", nome: "Nota Depósito" },
     { id: "Clientes", nome: "Clientes" },
     { id: "Motoristas", nome: "Colaboradores" },
     { id: "Veiculos", nome: "Veículos" },
     { id: "Rastreamento", nome: "Rastreamento" },
     { id: "Comprovantes", nome: "Comprovantes" },
-    { id: "ComprovantesInternos", nome: "Comprovantes Internos" },
     { id: "Avisos", nome: "Avisos" },
     { id: "Relatorios", nome: "Relatórios" },
     { id: "RelatorioMotoristas", nome: "Performance" },
     { id: "Configuracoes", nome: "Configurações" },
-    { id: "AprovacaoUsuarios", nome: "Aprovação de Usuários" },
+    { id: "AprovacaoUsuarios", nome: "Gerenciar Usuários" },
     { id: "PersonalizarHome", nome: "Personalizar Home" },
     { id: "Backup", nome: "Backup e Restauração" }
 ];
@@ -67,9 +67,35 @@ export default function AprovacaoUsuarios() {
                 status: "aprovado",
                 paginas_permitidas: user.paginas_permitidas?.length > 0 
                     ? user.paginas_permitidas 
-                    : ["Home", "OrdensColeta", "Clientes"]
+                    : ["Home", "ComprovantesInternos", "NotaDeposito", "ColetasDiarias", "OrdensColeta", "Clientes"]
             }
         });
+    };
+
+    const handlePromoverAdmin = (user) => {
+        if (confirm(`Deseja promover ${user.full_name} como ADMINISTRADOR? Terá acesso total ao sistema.`)) {
+            updateMutation.mutate({
+                id: user.id,
+                data: { 
+                    tipo_usuario: "admin",
+                    role: "admin",
+                    status: "aprovado",
+                    paginas_permitidas: TODAS_PAGINAS.map(p => p.id)
+                }
+            });
+        }
+    };
+
+    const handleRemoverAdmin = (user) => {
+        if (confirm(`Deseja remover ${user.full_name} como administrador?`)) {
+            updateMutation.mutate({
+                id: user.id,
+                data: { 
+                    tipo_usuario: "usuario",
+                    role: "user"
+                }
+            });
+        }
     };
 
     const handleRejeitar = (user) => {
@@ -182,15 +208,37 @@ export default function AprovacaoUsuarios() {
                                 </>
                             )}
                             {user.status === "aprovado" && (
-                                <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => { setSelectedUser(user); setShowPermissions(true); }}
-                                >
-                                    <Settings className="w-4 h-4 mr-1" />
-                                    Permissões
-                                </Button>
-                            )}
+                                  <div className="flex flex-col gap-2">
+                                      <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => { setSelectedUser(user); setShowPermissions(true); }}
+                                      >
+                                          <Settings className="w-4 h-4 mr-1" />
+                                          Permissões
+                                      </Button>
+                                      {(user.tipo_usuario === "admin" || user.role === "admin") ? (
+                                          <Button 
+                                              size="sm" 
+                                              variant="outline"
+                                              onClick={() => handleRemoverAdmin(user)}
+                                              className="border-red-300 text-red-600 hover:bg-red-50"
+                                          >
+                                              <Shield className="w-4 h-4 mr-1" />
+                                              Remover Admin
+                                          </Button>
+                                      ) : (
+                                          <Button 
+                                              size="sm" 
+                                              onClick={() => handlePromoverAdmin(user)}
+                                              className="bg-purple-600 hover:bg-purple-700"
+                                          >
+                                              <Shield className="w-4 h-4 mr-1" />
+                                              Tornar Admin
+                                          </Button>
+                                      )}
+                                  </div>
+                              )}
                             {user.status === "rejeitado" && (
                                 <Button 
                                     size="sm" 
@@ -218,8 +266,8 @@ export default function AprovacaoUsuarios() {
                             <UserCheck className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Aprovação de Usuários</h1>
-                            <p className="text-slate-500">Gerencie acessos e permissões</p>
+                            <h1 className="text-3xl font-bold text-slate-800">Gerenciar Usuários</h1>
+                                            <p className="text-slate-500">Gerencie acessos, permissões e administradores</p>
                         </div>
                     </div>
                 </div>

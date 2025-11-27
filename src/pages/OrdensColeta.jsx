@@ -491,8 +491,30 @@ Horário: ${ordem.horario || "-"}
                                                     exit={{ opacity: 0 }}
                                                     className="hover:bg-slate-50 transition-colors"
                                                 >
-                                                    <TableCell className="font-bold text-blue-600">
-                                                        #{ordem.numero}
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <span className="font-bold text-blue-600 text-lg">#{ordem.numero}</span>
+                                                            <div className="flex gap-1">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => { setSelectedOrdem(ordem); setShowPrint(true); }}
+                                                                    className="h-7 px-2 hover:bg-slate-100"
+                                                                >
+                                                                    <Eye className="w-3 h-3 mr-1" />
+                                                                    Ver
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handlePrint(ordem)}
+                                                                    className="h-7 px-2 hover:bg-blue-100"
+                                                                >
+                                                                    <Printer className="w-3 h-3 mr-1" />
+                                                                    PDF
+                                                                </Button>
+                                                            </div>
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="text-slate-600">
                                                         {formatDate(ordem.data_ordem)}
@@ -535,22 +557,6 @@ Horário: ${ordem.horario || "-"}
                                                                 title="Enviar WhatsApp"
                                                             >
                                                                 <Share2 className="w-4 h-4 text-green-600" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => { setSelectedOrdem(ordem); setShowPrint(true); }}
-                                                                className="hover:bg-slate-100"
-                                                            >
-                                                                <Eye className="w-4 h-4 text-slate-600" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => handlePrint(ordem)}
-                                                                className="hover:bg-blue-100"
-                                                            >
-                                                                <Printer className="w-4 h-4 text-blue-600" />
                                                             </Button>
                                                             <Button
                                                                 variant="ghost"

@@ -525,7 +525,7 @@ export default function AdicionarColetaDiaria() {
                                     </TableRow>
                                 ) : (
                                     filtered.map((coleta) => (
-                                        <TableRow key={coleta.id} className={`hover:bg-slate-50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}
+                                        <TableRow key={coleta.id} className={`hover:bg-slate-50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">
                                                     {coleta.prioridade && (

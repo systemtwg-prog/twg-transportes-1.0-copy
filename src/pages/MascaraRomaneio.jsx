@@ -213,7 +213,7 @@ export default function MascaraRomaneio() {
                     <div class="page">
                         <div class="header">
                             <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" />` : '<div class="logo-placeholder">TWG</div>'}
+                                ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div class="logo-placeholder">TWG</div>'}
                             </div>
                             <div class="company-info">
                                 <p class="company-name">${config.nome_empresa || "TWG TRANSPORTES"}</p>

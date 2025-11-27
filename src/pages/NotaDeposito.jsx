@@ -181,9 +181,9 @@ export default function NotaDeposito() {
                     </div>
                     <Button 
                         onClick={() => { resetForm(); setShowForm(true); }}
-                        className="bg-gradient-to-r from-violet-500 to-purple-600"
+                        className="bg-gradient-to-r from-violet-500 to-purple-600 h-14 px-8 text-lg"
                     >
-                        <Plus className="w-5 h-5 mr-2" />
+                        <Plus className="w-6 h-6 mr-2" />
                         Nova Nota
                     </Button>
                 </div>

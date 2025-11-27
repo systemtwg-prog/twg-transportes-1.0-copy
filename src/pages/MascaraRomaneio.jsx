@@ -221,10 +221,12 @@ export default function MascaraRomaneio() {
             return;
         }
 
-        // Agrupar notas por placa
+        // Agrupar notas por placa (usar veículo selecionado se houver)
         const notasPorPlaca = {};
+        const placaParaUsar = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
+        
         notasParaImprimir.forEach(nota => {
-            const placa = nota.placa || "SEM_PLACA";
+            const placa = placaParaUsar || nota.placa || "SEM_PLACA";
             if (!notasPorPlaca[placa]) {
                 notasPorPlaca[placa] = [];
             }

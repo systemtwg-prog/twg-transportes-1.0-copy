@@ -254,7 +254,7 @@ Extraia as seguintes informações de cada nota fiscal encontrada:
                             <p className="text-slate-500">Gerencie notas fiscais para romaneios</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                         <label className="cursor-pointer">
                             <input
                                 type="file"
@@ -274,6 +274,14 @@ Extraia as seguintes informações de cada nota fiscal encontrada:
                                 </span>
                             </Button>
                         </label>
+                        <Button 
+                            onClick={() => setShowPasteForm(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                        >
+                            <ClipboardPaste className="w-4 h-4 mr-2" />
+                            Colar Texto
+                        </Button>
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-blue-500 to-indigo-600 h-14 px-8 text-lg"

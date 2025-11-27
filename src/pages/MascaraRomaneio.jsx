@@ -427,11 +427,17 @@ export default function MascaraRomaneio() {
                         color: #333;
                     }
                     .transportadora-row .volume { 
-                        text-align: center; 
-                        font-size: 16px; 
-                        font-weight: bold; 
-                    }
-                </style>
+                                                text-align: center; 
+                                                font-size: 16px; 
+                                                font-weight: bold; 
+                                            }
+
+                                            /* Linhas vazias sem bordas */
+                                            .nota-row.vazia td,
+                                            .transportadora-row.vazia td {
+                                                border: none !important;
+                                            }
+                                        </style>
             </head>
             <body>
                 ${pagesHtml}

@@ -102,11 +102,15 @@ export default function ImportacaoDocumentos() {
         }
         createClienteMutation.mutate({
             razao_social: cliente.nome || cliente.destinatario || cliente.remetente,
+            nome_fantasia: cliente.nome_fantasia || cliente.destinatario_fantasia || cliente.remetente_fantasia || "",
             cnpj_cpf: cnpj,
             endereco: cliente.endereco || cliente.destinatario_endereco || cliente.remetente_endereco || "",
+            bairro: cliente.bairro || cliente.destinatario_bairro || cliente.remetente_bairro || "",
             cidade: cliente.cidade || cliente.destinatario_cidade || cliente.remetente_cidade || "",
             uf: cliente.uf || cliente.destinatario_uf || cliente.remetente_uf || "",
+            cep: cliente.cep || cliente.destinatario_cep || cliente.remetente_cep || "",
             telefone: cliente.telefone || cliente.destinatario_telefone || cliente.remetente_telefone || "",
+            email: cliente.email || cliente.destinatario_email || cliente.remetente_email || "",
             tipo: tipo
         });
     };
@@ -142,11 +146,15 @@ export default function ImportacaoDocumentos() {
             if (nf.destinatario && (!cnpjDest || !clienteCnpjExiste(cnpjDest))) {
                 createClienteMutation.mutate({
                     razao_social: nf.destinatario,
+                    nome_fantasia: nf.destinatario_fantasia || "",
                     cnpj_cpf: cnpjDest,
                     endereco: nf.destinatario_endereco || nf.endereco || "",
+                    bairro: nf.destinatario_bairro || "",
                     cidade: nf.destinatario_cidade || nf.cidade || "",
                     uf: nf.destinatario_uf || "",
+                    cep: nf.destinatario_cep || "",
                     telefone: nf.destinatario_telefone || "",
+                    email: nf.destinatario_email || "",
                     tipo: "ambos"
                 });
                 cadastrados++;
@@ -159,10 +167,15 @@ export default function ImportacaoDocumentos() {
             if (nf.remetente && (!cnpjRem || !clienteCnpjExiste(cnpjRem))) {
                 createClienteMutation.mutate({
                     razao_social: nf.remetente,
+                    nome_fantasia: nf.remetente_fantasia || "",
                     cnpj_cpf: cnpjRem,
                     endereco: nf.remetente_endereco || "",
+                    bairro: nf.remetente_bairro || "",
                     cidade: nf.remetente_cidade || "",
                     uf: nf.remetente_uf || "",
+                    cep: nf.remetente_cep || "",
+                    telefone: nf.remetente_telefone || "",
+                    email: nf.remetente_email || "",
                     tipo: "ambos"
                 });
                 cadastrados++;
@@ -200,16 +213,25 @@ export default function ImportacaoDocumentos() {
                                 properties: {
                                     numero_nf: { type: "string" },
                                     destinatario: { type: "string" },
+                                    destinatario_fantasia: { type: "string" },
                                     destinatario_cnpj: { type: "string" },
                                     destinatario_endereco: { type: "string" },
+                                    destinatario_bairro: { type: "string" },
                                     destinatario_cidade: { type: "string" },
                                     destinatario_uf: { type: "string" },
+                                    destinatario_cep: { type: "string" },
                                     destinatario_telefone: { type: "string" },
+                                    destinatario_email: { type: "string" },
                                     remetente: { type: "string" },
+                                    remetente_fantasia: { type: "string" },
                                     remetente_cnpj: { type: "string" },
                                     remetente_endereco: { type: "string" },
+                                    remetente_bairro: { type: "string" },
                                     remetente_cidade: { type: "string" },
                                     remetente_uf: { type: "string" },
+                                    remetente_cep: { type: "string" },
+                                    remetente_telefone: { type: "string" },
+                                    remetente_email: { type: "string" },
                                     volume: { type: "string" },
                                     endereco: { type: "string" },
                                     cidade: { type: "string" },
@@ -634,11 +656,15 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                                                 className={`h-7 px-2 text-xs ${clienteCnpjExiste(nf.destinatario_cnpj) ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                                                                 onClick={() => handleCadastrarCliente({
                                                                     nome: nf.destinatario,
+                                                                    nome_fantasia: nf.destinatario_fantasia,
                                                                     cnpj: nf.destinatario_cnpj,
                                                                     endereco: nf.destinatario_endereco || nf.endereco,
+                                                                    bairro: nf.destinatario_bairro,
                                                                     cidade: nf.destinatario_cidade || nf.cidade,
                                                                     uf: nf.destinatario_uf,
-                                                                    telefone: nf.destinatario_telefone
+                                                                    cep: nf.destinatario_cep,
+                                                                    telefone: nf.destinatario_telefone,
+                                                                    email: nf.destinatario_email
                                                                 }, "ambos")}
                                                                 disabled={createClienteMutation.isPending || clienteCnpjExiste(nf.destinatario_cnpj)}
                                                             >
@@ -653,10 +679,15 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                                                 className={`h-7 px-2 text-xs ${clienteCnpjExiste(nf.remetente_cnpj) ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                                                                 onClick={() => handleCadastrarCliente({
                                                                     nome: nf.remetente,
+                                                                    nome_fantasia: nf.remetente_fantasia,
                                                                     cnpj: nf.remetente_cnpj,
                                                                     endereco: nf.remetente_endereco,
+                                                                    bairro: nf.remetente_bairro,
                                                                     cidade: nf.remetente_cidade,
-                                                                    uf: nf.remetente_uf
+                                                                    uf: nf.remetente_uf,
+                                                                    cep: nf.remetente_cep,
+                                                                    telefone: nf.remetente_telefone,
+                                                                    email: nf.remetente_email
                                                                 }, "ambos")}
                                                                 disabled={createClienteMutation.isPending || clienteCnpjExiste(nf.remetente_cnpj)}
                                                             >

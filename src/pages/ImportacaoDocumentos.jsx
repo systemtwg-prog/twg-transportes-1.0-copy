@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
     Upload, FileText, FileCode, Package, Loader2, Check, Navigation, 
-    Route, Trash2, Eye, Plus, MapPin
+    Route, Trash2, Eye, Plus, MapPin, Users, Building2, UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -55,6 +56,50 @@ export default function ImportacaoDocumentos() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["romaneios-importados"] })
     });
 
+    const createClienteMutation = useMutation({
+        mutationFn: (data) => base44.entities.Cliente.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["clientes"] });
+            toast.success("Cliente cadastrado!");
+        }
+    });
+
+    const createTransportadoraMutation = useMutation({
+        mutationFn: (data) => base44.entities.Transportadora.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
+            toast.success("Transportadora cadastrada!");
+        }
+    });
+
+    const handleCadastrarCliente = (cliente, tipo) => {
+        createClienteMutation.mutate({
+            razao_social: cliente.nome || cliente.destinatario || cliente.remetente,
+            cnpj_cpf: cliente.cnpj || cliente.destinatario_cnpj || cliente.remetente_cnpj || "",
+            endereco: cliente.endereco || cliente.destinatario_endereco || cliente.remetente_endereco || "",
+            cidade: cliente.cidade || cliente.destinatario_cidade || cliente.remetente_cidade || "",
+            uf: cliente.uf || cliente.destinatario_uf || cliente.remetente_uf || "",
+            telefone: cliente.telefone || cliente.destinatario_telefone || cliente.remetente_telefone || "",
+            tipo: tipo
+        });
+    };
+
+    const handleCadastrarTransportadora = () => {
+        if (!extractedData?.transportadora_principal) {
+            toast.error("Nenhuma transportadora encontrada");
+            return;
+        }
+        createTransportadoraMutation.mutate({
+            razao_social: extractedData.transportadora_principal,
+            cnpj: extractedData.transportadora_cnpj || "",
+            endereco: extractedData.transportadora_endereco || extractedData.endereco_transportadora || "",
+            cidade: extractedData.transportadora_cidade || "",
+            uf: extractedData.transportadora_uf || "",
+            telefone: extractedData.transportadora_telefone || "",
+            status: "ativo"
+        });
+    };
+
     const handleFileUpload = async (e, tipo) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -76,6 +121,16 @@ export default function ImportacaoDocumentos() {
                                 properties: {
                                     numero_nf: { type: "string" },
                                     destinatario: { type: "string" },
+                                    destinatario_cnpj: { type: "string" },
+                                    destinatario_endereco: { type: "string" },
+                                    destinatario_cidade: { type: "string" },
+                                    destinatario_uf: { type: "string" },
+                                    destinatario_telefone: { type: "string" },
+                                    remetente: { type: "string" },
+                                    remetente_cnpj: { type: "string" },
+                                    remetente_endereco: { type: "string" },
+                                    remetente_cidade: { type: "string" },
+                                    remetente_uf: { type: "string" },
                                     volume: { type: "string" },
                                     endereco: { type: "string" },
                                     cidade: { type: "string" },
@@ -85,6 +140,11 @@ export default function ImportacaoDocumentos() {
                             }
                         },
                         transportadora_principal: { type: "string" },
+                        transportadora_cnpj: { type: "string" },
+                        transportadora_endereco: { type: "string" },
+                        transportadora_cidade: { type: "string" },
+                        transportadora_uf: { type: "string" },
+                        transportadora_telefone: { type: "string" },
                         endereco_transportadora: { type: "string" }
                     }
                 }
@@ -428,10 +488,26 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                             {extractedData.transportadora_principal && (
                                 <Card className="bg-blue-50 border-blue-200">
                                     <CardContent className="p-4">
-                                        <p className="font-semibold text-blue-800">Transportadora: {extractedData.transportadora_principal}</p>
-                                        {extractedData.endereco_transportadora && (
-                                            <p className="text-sm text-blue-600">{extractedData.endereco_transportadora}</p>
-                                        )}
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="font-semibold text-blue-800">Transportadora: {extractedData.transportadora_principal}</p>
+                                                {extractedData.transportadora_cnpj && (
+                                                    <p className="text-sm text-blue-600">CNPJ: {extractedData.transportadora_cnpj}</p>
+                                                )}
+                                                {(extractedData.endereco_transportadora || extractedData.transportadora_endereco) && (
+                                                    <p className="text-sm text-blue-600">{extractedData.transportadora_endereco || extractedData.endereco_transportadora}</p>
+                                                )}
+                                            </div>
+                                            <Button 
+                                                size="sm" 
+                                                onClick={handleCadastrarTransportadora}
+                                                className="bg-blue-600 hover:bg-blue-700"
+                                                disabled={createTransportadoraMutation.isPending}
+                                            >
+                                                <Building2 className="w-4 h-4 mr-1" />
+                                                Cadastrar
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             )}
@@ -446,19 +522,71 @@ Retorne a ordem otimizada dos índices (começando em 0) e uma breve explicaçã
                                         <TableRow>
                                             <TableHead>NF</TableHead>
                                             <TableHead>Destinatário</TableHead>
+                                            <TableHead>Remetente</TableHead>
                                             <TableHead>Volume</TableHead>
-                                            <TableHead>Endereço</TableHead>
                                             <TableHead>Cidade</TableHead>
+                                            <TableHead>Ações</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {extractedData.notas_fiscais?.map((nf, i) => (
                                             <TableRow key={i}>
                                                 <TableCell className="font-mono">{nf.numero_nf}</TableCell>
-                                                <TableCell>{nf.destinatario}</TableCell>
+                                                <TableCell>
+                                                    <div className="text-sm">
+                                                        <p className="font-medium">{nf.destinatario}</p>
+                                                        {nf.destinatario_cnpj && <p className="text-xs text-slate-500">{nf.destinatario_cnpj}</p>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-sm">
+                                                        <p className="font-medium">{nf.remetente || "-"}</p>
+                                                        {nf.remetente_cnpj && <p className="text-xs text-slate-500">{nf.remetente_cnpj}</p>}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>{nf.volume}</TableCell>
-                                                <TableCell>{nf.endereco}</TableCell>
-                                                <TableCell>{nf.cidade}</TableCell>
+                                                <TableCell>{nf.destinatario_cidade || nf.cidade}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-1">
+                                                        {nf.destinatario && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 px-2 text-xs"
+                                                                onClick={() => handleCadastrarCliente({
+                                                                    nome: nf.destinatario,
+                                                                    cnpj: nf.destinatario_cnpj,
+                                                                    endereco: nf.destinatario_endereco || nf.endereco,
+                                                                    cidade: nf.destinatario_cidade || nf.cidade,
+                                                                    uf: nf.destinatario_uf,
+                                                                    telefone: nf.destinatario_telefone
+                                                                }, "destinatario")}
+                                                                disabled={createClienteMutation.isPending}
+                                                            >
+                                                                <UserPlus className="w-3 h-3 mr-1" />
+                                                                Dest.
+                                                            </Button>
+                                                        )}
+                                                        {nf.remetente && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 px-2 text-xs"
+                                                                onClick={() => handleCadastrarCliente({
+                                                                    nome: nf.remetente,
+                                                                    cnpj: nf.remetente_cnpj,
+                                                                    endereco: nf.remetente_endereco,
+                                                                    cidade: nf.remetente_cidade,
+                                                                    uf: nf.remetente_uf
+                                                                }, "remetente")}
+                                                                disabled={createClienteMutation.isPending}
+                                                            >
+                                                                <UserPlus className="w-3 h-3 mr-1" />
+                                                                Rem.
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

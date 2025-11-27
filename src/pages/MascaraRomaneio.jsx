@@ -202,7 +202,10 @@ export default function MascaraRomaneio() {
         return matchSearch && matchPlaca;
     });
 
-    const notasParaImprimir = notasFiscais.filter(n => notasSelecionadas.includes(n.id));
+    // Mantém a ordem de seleção das notas
+    const notasParaImprimir = notasSelecionadas
+        .map(id => notasFiscais.find(n => n.id === id))
+        .filter(Boolean);
     const motoristaObj = motoristas.find(m => m.id === motorista);
 
     const formatDate = (dateStr) => {

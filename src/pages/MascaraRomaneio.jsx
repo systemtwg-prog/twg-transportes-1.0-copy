@@ -270,33 +270,33 @@ export default function MascaraRomaneio() {
                         border-bottom: 3px solid #000; 
                         padding-bottom: 8px; 
                     }
-                    .logo { width: 100px; margin-right: 15px; }
-                    .logo img { max-width: 100%; max-height: 60px; object-fit: contain; }
+                    .logo { width: 120px; margin-right: 20px; }
+                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
                     .logo-placeholder { 
-                        width: 80px; height: 50px; background: #0ea5e9; 
+                        width: 100px; height: 60px; background: #0ea5e9; 
                         display: flex; align-items: center; justify-content: center; 
-                        color: white; font-weight: bold; font-size: 18px; 
+                        color: white; font-weight: bold; font-size: 20px; 
                     }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 18px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 10px; color: #333; margin: 2px 0; }
+                    .company-name { font-size: 22px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 12px; color: #333; margin: 3px 0; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: 16px; font-weight: bold; margin: 0; }
-                    .motorista-label { font-size: 13px; font-weight: bold; margin: 4px 0; }
-                    .placa-label { font-size: 13px; font-weight: bold; margin: 4px 0; color: #0ea5e9; }
-                    .date { font-size: 18px; font-weight: bold; }
+                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
+                    .motorista-label { font-size: 16px; font-weight: bold; margin: 5px 0; }
+                    .placa-label { font-size: 16px; font-weight: bold; margin: 5px 0; color: #0ea5e9; }
+                    .date { font-size: 22px; font-weight: bold; }
                     
                     table { width: 100%; border-collapse: collapse; flex: 1; }
                     th { 
                         background: #d0d0d0; 
-                        padding: 8px; 
+                        padding: 10px; 
                         text-align: left; 
                         border: 2px solid #000; 
-                        font-size: 14px; 
+                        font-size: 16px; 
                     }
                     td { 
                         border: 2px solid #000; 
-                        font-size: 12px; 
+                        font-size: 14px; 
                         vertical-align: top;
                     }
                     
@@ -306,38 +306,39 @@ export default function MascaraRomaneio() {
                     .col-carimbo { width: 25%; }
                     
                     .nota-row .remetente { 
-                        padding: 8px; 
-                        height: 35px;
-                        font-size: 11px;
+                        padding: 10px; 
+                        height: 40px;
+                        font-size: 14px;
+                        font-weight: bold;
                     }
                     .nota-row .destinatario { 
                         text-align: center; 
                         font-weight: bold; 
-                        font-size: 14px; 
-                        padding: 8px;
+                        font-size: 18px; 
+                        padding: 10px;
                     }
                     .nota-row .nfe { 
                         text-align: center; 
                         font-weight: bold; 
-                        font-size: 18px; 
-                        padding: 8px;
+                        font-size: 22px; 
+                        padding: 10px;
                     }
                     .nota-row .carimbo { 
-                        min-height: 70px;
-                        padding: 5px;
+                        min-height: 80px;
+                        padding: 8px;
                     }
                     
                     .transportadora-row td { 
                         border-top: none; 
-                        padding: 2px 8px 10px 8px; 
+                        padding: 3px 10px 12px 10px; 
                     }
                     .transportadora-row .transportadora-nome { 
-                        font-size: 9px; 
-                        line-height: 1.0; 
+                        font-size: 11px; 
+                        line-height: 1.1; 
                     }
                     .transportadora-row .volume { 
                         text-align: center; 
-                        font-size: 14px; 
+                        font-size: 16px; 
                         font-weight: bold; 
                     }
                 </style>

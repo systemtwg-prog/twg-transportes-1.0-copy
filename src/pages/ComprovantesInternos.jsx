@@ -116,12 +116,68 @@ export default function ComprovantesInternos() {
     const [showEditEmpresa, setShowEditEmpresa] = useState(false);
     const [empresaEmMassa, setEmpresaEmMassa] = useState("");
     const [selecionados, setSelecionados] = useState([]);
+    const [showCadastroEmpresa, setShowCadastroEmpresa] = useState(false);
+    const [empresaForm, setEmpresaForm] = useState({ nome: "", logo_url: "" });
+    const [editingEmpresa, setEditingEmpresa] = useState(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
         queryKey: ["comprovantes-internos"],
         queryFn: () => base44.entities.ComprovanteInterno.list("-created_date")
     });
+
+    const { data: empresasCadastradas = [] } = useQuery({
+        queryKey: ["empresas-comprovante"],
+        queryFn: () => base44.entities.EmpresaComprovante.list()
+    });
+
+    const createEmpresaMutation = useMutation({
+        mutationFn: (data) => base44.entities.EmpresaComprovante.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["empresas-comprovante"] });
+            setShowCadastroEmpresa(false);
+            setEmpresaForm({ nome: "", logo_url: "" });
+            setEditingEmpresa(null);
+        }
+    });
+
+    const updateEmpresaCadMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.EmpresaComprovante.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["empresas-comprovante"] });
+            setShowCadastroEmpresa(false);
+            setEmpresaForm({ nome: "", logo_url: "" });
+            setEditingEmpresa(null);
+        }
+    });
+
+    const deleteEmpresaMutation = useMutation({
+        mutationFn: (id) => base44.entities.EmpresaComprovante.delete(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["empresas-comprovante"] })
+    });
+
+    const handleUploadLogo = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingLogo(true);
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setEmpresaForm(prev => ({ ...prev, logo_url: file_url }));
+        setUploadingLogo(false);
+    };
+
+    const handleSaveEmpresa = () => {
+        if (editingEmpresa) {
+            updateEmpresaCadMutation.mutate({ id: editingEmpresa.id, data: empresaForm });
+        } else {
+            createEmpresaMutation.mutate(empresaForm);
+        }
+    };
+
+    const getEmpresaLogo = (nomeEmpresa) => {
+        const empresa = empresasCadastradas.find(e => e.nome === nomeEmpresa);
+        return empresa?.logo_url;
+    };
 
     const [form, setForm] = useState({
         nota_fiscal: "",
@@ -298,7 +354,15 @@ export default function ComprovantesInternos() {
                             <p className="text-slate-500">Gerencie documentos e comprovantes</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                        <Button 
+                            onClick={() => { setEmpresaForm({ nome: "", logo_url: "" }); setEditingEmpresa(null); setShowCadastroEmpresa(true); }}
+                            variant="outline"
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                        >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Cadastro Empresas
+                        </Button>
                         {selecionados.length > 0 && (
                             <Button 
                                 onClick={() => setShowEditEmpresa(true)}
@@ -436,7 +500,16 @@ export default function ComprovantesInternos() {
                                             <div>
                                                 <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
                                                 {comprovante.empresa && (
-                                                    <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {getEmpresaLogo(comprovante.empresa) && (
+                                                            <img 
+                                                                src={getEmpresaLogo(comprovante.empresa)} 
+                                                                alt="" 
+                                                                className="w-5 h-5 object-contain rounded"
+                                                            />
+                                                        )}
+                                                        <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                    </div>
                                                 )}
                                                 <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
                                             </div>
@@ -510,6 +583,126 @@ export default function ComprovantesInternos() {
             {viewFiles && (
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
+
+            {/* Dialog Cadastro de Empresas */}
+            <Dialog open={showCadastroEmpresa} onOpenChange={setShowCadastroEmpresa}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-purple-600" />
+                            Cadastro de Empresas
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {/* Lista de empresas cadastradas */}
+                        {empresasCadastradas.length > 0 && !editingEmpresa && (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                <Label className="text-xs text-slate-500">Empresas Cadastradas</Label>
+                                {empresasCadastradas.map(emp => (
+                                    <div key={emp.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            {emp.logo_url ? (
+                                                <img src={emp.logo_url} alt="" className="w-8 h-8 object-contain rounded" />
+                                            ) : (
+                                                <div className="w-8 h-8 bg-slate-200 rounded flex items-center justify-center">
+                                                    <Building2 className="w-4 h-4 text-slate-400" />
+                                                </div>
+                                            )}
+                                            <span className="font-medium">{emp.nome}</span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { setEmpresaForm({ nome: emp.nome, logo_url: emp.logo_url || "" }); setEditingEmpresa(emp); }}
+                                            >
+                                                <Pencil className="w-3 h-3" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { if(confirm("Excluir esta empresa?")) deleteEmpresaMutation.mutate(emp.id); }}
+                                            >
+                                                <Trash2 className="w-3 h-3 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Formulário */}
+                        <div className="border-t pt-4 space-y-4">
+                            <h4 className="font-medium text-sm">{editingEmpresa ? "Editar Empresa" : "Nova Empresa"}</h4>
+                            <div className="space-y-2">
+                                <Label>Nome da Empresa *</Label>
+                                <Input
+                                    value={empresaForm.nome}
+                                    onChange={(e) => setEmpresaForm({ ...empresaForm, nome: e.target.value })}
+                                    placeholder="Nome da empresa"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Logotipo</Label>
+                                <div className="flex items-center gap-3">
+                                    {empresaForm.logo_url ? (
+                                        <div className="relative">
+                                            <img src={empresaForm.logo_url} alt="" className="w-16 h-16 object-contain border rounded-lg" />
+                                            <Button 
+                                                type="button" 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="absolute -top-2 -right-2 h-5 w-5 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                                onClick={() => setEmpresaForm({ ...empresaForm, logo_url: "" })}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
+                                            <Building2 className="w-6 h-6 text-slate-300" />
+                                        </div>
+                                    )}
+                                    <div>
+                                        <input type="file" accept="image/*" onChange={handleUploadLogo} className="hidden" id="logo-upload" />
+                                        <label htmlFor="logo-upload">
+                                            <Button type="button" variant="outline" size="sm" asChild>
+                                                <span className="cursor-pointer">
+                                                    {uploadingLogo ? (
+                                                        <div className="animate-spin w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full" />
+                                                    ) : (
+                                                        <>
+                                                            <Upload className="w-4 h-4 mr-1" />
+                                                            {empresaForm.logo_url ? "Trocar" : "Adicionar"}
+                                                        </>
+                                                    )}
+                                                </span>
+                                            </Button>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                {editingEmpresa && (
+                                    <Button variant="ghost" onClick={() => { setEditingEmpresa(null); setEmpresaForm({ nome: "", logo_url: "" }); }}>
+                                        Cancelar
+                                    </Button>
+                                )}
+                                <Button 
+                                    onClick={handleSaveEmpresa}
+                                    disabled={!empresaForm.nome || createEmpresaMutation.isPending || updateEmpresaCadMutation.isPending}
+                                    className="bg-purple-500 hover:bg-purple-600"
+                                >
+                                    <Save className="w-4 h-4 mr-1" />
+                                    {editingEmpresa ? "Atualizar" : "Cadastrar"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Editar Empresa em Massa */}
             <Dialog open={showEditEmpresa} onOpenChange={setShowEditEmpresa}>

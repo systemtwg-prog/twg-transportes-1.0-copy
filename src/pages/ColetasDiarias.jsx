@@ -181,24 +181,24 @@ export default function ColetasDiarias() {
                         @page { margin: 5mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 8px; font-size: 14px; }
-                    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #0ea5e9; }
+                    body { font-family: Arial, sans-serif; margin: 8px; font-size: 14px; font-weight: 500; }
+                    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 3px solid #0ea5e9; }
                     .logo { max-height: 60px; max-width: 120px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 18px; font-weight: bold; color: #0369a1; margin: 0; }
-                    .company-details { font-size: 12px; color: #64748b; margin: 2px 0; }
-                    .title { font-size: 18px; font-weight: bold; text-align: center; margin: 10px 0; color: #0369a1; }
-                    .date-info { text-align: right; font-size: 14px; color: #64748b; }
+                    .company-name { font-size: 18px; font-weight: 800; color: #0369a1; margin: 0; }
+                    .company-details { font-size: 12px; color: #64748b; margin: 2px 0; font-weight: 600; }
+                    .title { font-size: 20px; font-weight: 800; text-align: center; margin: 10px 0; color: #0369a1; }
+                    .date-info { text-align: right; font-size: 14px; color: #64748b; font-weight: 600; }
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th { background: #0ea5e9; color: white; padding: 8px; text-align: left; border: 1px solid #0284c7; font-weight: bold; font-size: 14px; }
-                    td { padding: 8px; border: 1px solid #e2e8f0; vertical-align: top; font-size: 14px; line-height: 1.4; }
-                    .num { width: 40px; text-align: center; font-weight: bold; background: #f0f9ff; font-size: 16px; }
-                    .status { text-align: center; width: 80px; font-size: 18px; }
-                    .carga { text-align: center; width: 100px; }
+                    th { background: #0ea5e9; color: white; padding: 8px; text-align: left; border: 2px solid #0284c7; font-weight: 800; font-size: 14px; }
+                    td { padding: 8px; border: 2px solid #cbd5e1; vertical-align: top; font-size: 14px; line-height: 1.5; font-weight: 600; }
+                    .num { width: 40px; text-align: center; font-weight: 900; background: #f0f9ff; font-size: 18px; }
+                    .status { text-align: center; width: 80px; font-size: 20px; }
+                    .carga { text-align: center; width: 100px; font-weight: 700; }
                     .empty-row { height: 45px; }
                     tr:nth-child(even) { background: #f8fafc; }
                     .priority { background: #fef3c7 !important; }
-                    strong { font-size: 15px; }
+                    strong { font-size: 16px; font-weight: 800; }
                 </style>
             </head>
             <body>

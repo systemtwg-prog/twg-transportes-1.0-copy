@@ -37,7 +37,8 @@ export default function Layout({ children, currentPageName }) {
         { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
         { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
         { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
-        { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText }
+        { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
+        { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Truck }
     ];
 
     const NavLinks = ({ onClick }) => (

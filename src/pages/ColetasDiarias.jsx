@@ -16,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 export default function ColetasDiarias() {
     const [dataFiltro, setDataFiltro] = useState("");
     const [searchFiltro, setSearchFiltro] = useState("");
+    const [motoristaFiltro, setMotoristaFiltro] = useState("");
     const [activeTab, setActiveTab] = useState("pendentes");
     const printRef = useRef();
     const queryClient = useQueryClient();
@@ -23,6 +24,11 @@ export default function ColetasDiarias() {
     const { data: coletas = [], isLoading } = useQuery({
         queryKey: ["coletas-diarias"],
         queryFn: () => base44.entities.ColetaDiaria.list("-created_date")
+    });
+
+    const { data: motoristas = [] } = useQuery({
+        queryKey: ["motoristas"],
+        queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
     });
 
     const { data: configs = [] } = useQuery({
@@ -50,6 +56,10 @@ export default function ColetasDiarias() {
             c.remetente_nome?.toLowerCase().includes(search) ||
             c.destinatario_nome?.toLowerCase().includes(search)
         );
+    }
+
+    if (motoristaFiltro) {
+        coletasFiltradas = coletasFiltradas.filter(c => c.motorista_id === motoristaFiltro);
     }
 
     const coletasPendentes = coletasFiltradas.filter(c => c.status === "pendente" || !c.status);
@@ -266,7 +276,7 @@ export default function ColetasDiarias() {
 
                 {/* Filtros */}
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 space-y-4">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -291,6 +301,24 @@ export default function ColetasDiarias() {
                                     </Button>
                                 )}
                             </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Select value={motoristaFiltro} onValueChange={setMotoristaFiltro}>
+                                <SelectTrigger className="w-full md:w-64 bg-white">
+                                    <SelectValue placeholder="Filtrar por motorista..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Todos os motoristas</SelectItem>
+                                    {motoristas.map(m => (
+                                        <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {motoristaFiltro && (
+                                <Button variant="ghost" size="icon" onClick={() => setMotoristaFiltro("")}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

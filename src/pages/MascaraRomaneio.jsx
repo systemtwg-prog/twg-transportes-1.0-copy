@@ -135,6 +135,14 @@ export default function MascaraRomaneio() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] })
     });
 
+    // Mutation para salvar romaneio gerado
+    const createRomaneioMutation = useMutation({
+        mutationFn: (data) => base44.entities.RomaneioGerado.create(data),
+        onSuccess: () => {
+            toast.success("Romaneio salvo com sucesso!");
+        }
+    });
+
     // Obter placas únicas das notas fiscais
     const placasUnicas = [...new Set(notasFiscais.map(n => n.placa).filter(Boolean))];
 

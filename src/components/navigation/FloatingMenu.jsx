@@ -45,7 +45,7 @@ export default function FloatingMenu({ currentPage }) {
                         <Menu className="w-6 h-6 text-white" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-0 p-0">
+                <SheetContent side="right" className="w-72 bg-gradient-to-b from-sky-900 to-sky-800 border-0 p-0">
                     <div className="p-6 border-b border-white/10">
                         <h2 className="font-bold text-xl text-white">Menu</h2>
                         <p className="text-sm text-slate-400">Navegação rápida</p>

@@ -27,6 +27,15 @@ export default function MascaraRomaneio() {
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
     const [remetenteForm, setRemetenteForm] = useState({ nome: "", cnpj: "", endereco: "", telefone: "" });
     const [editingRemetente, setEditingRemetente] = useState(null);
+    
+    // Configurações de layout personalizáveis
+    const [layoutConfig, setLayoutConfig] = useState({
+        colRemetente: 18,
+        colDestinatario: 42,
+        colNfe: 15,
+        colCarimbo: 25,
+        alturaLinha: 45
+    });
     const queryClient = useQueryClient();
 
     const { data: notasFiscais = [], isLoading } = useQuery({

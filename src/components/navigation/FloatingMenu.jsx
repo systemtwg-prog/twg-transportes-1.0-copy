@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft
+    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut
 } from "lucide-react";
 
 const menuItems = [
@@ -40,6 +41,12 @@ export default function FloatingMenu({ currentPage }) {
             window.history.back();
         } else {
             window.location.href = createPageUrl("Home");
+        }
+    };
+
+    const handleLogout = () => {
+        if (confirm("Deseja realmente sair do sistema?")) {
+            base44.auth.logout();
         }
     };
 
@@ -81,12 +88,19 @@ export default function FloatingMenu({ currentPage }) {
                                 }`}
                             >
                                 <item.icon className="w-5 h-5" />
-                                <span className="font-medium">{item.name}</span>
-                            </Link>
-                        ))}
-                    </nav>
-                </SheetContent>
-            </Sheet>
+                                        <span className="font-medium">{item.name}</span>
+                                    </Link>
+                                ))}
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full mt-4 border-t border-white/10 pt-4"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    <span className="font-medium">Sair do Sistema</span>
+                                </button>
+                                </nav>
+                                </SheetContent>
+                                </Sheet>
         </div>
     );
 }

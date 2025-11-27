@@ -172,18 +172,21 @@ export default function MascaraRomaneio() {
                 let rowsHtml = "";
                 notasDaPagina.forEach((nota) => {
                     const remetenteNota = remetenteSelecionado || nota.remetente || "";
-                    rowsHtml += `
-                        <tr class="nota-row">
-                            <td class="remetente">${remetenteNota}</td>
-                            <td class="destinatario">${nota.destinatario || ""}</td>
-                            <td class="nfe">${nota.numero_nf || ""}</td>
-                            <td class="carimbo" rowspan="2"></td>
-                        </tr>
-                        <tr class="transportadora-row">
-                            <td class="transportadora-nome" colspan="2">${nota.transportadora || ""}</td>
-                            <td class="volume">${nota.volume || ""} vol</td>
-                        </tr>
-                    `;
+                    const destinatarioNota = nota.destinatario || "";
+                    const numeroNf = nota.numero_nf || "";
+                    const transportadoraNota = nota.transportadora || "";
+                    const volumeNota = nota.volume ? nota.volume + " vol" : "";
+                    
+                    rowsHtml += '<tr class="nota-row">';
+                    rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+                    rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+                    rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+                    rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+                    rowsHtml += '</tr>';
+                    rowsHtml += '<tr class="transportadora-row">';
+                    rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+                    rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+                    rowsHtml += '</tr>';
                 });
 
                 // Adicionar linhas em branco para completar 6 notas

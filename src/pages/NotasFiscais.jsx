@@ -370,6 +370,55 @@ Extraia as seguintes informações de cada nota fiscal encontrada:
                 </Card>
             </div>
 
+            {/* Paste Dialog */}
+            <Dialog open={showPasteForm} onOpenChange={setShowPasteForm}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-purple-600" />
+                            Colar Informações
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole abaixo as informações de notas fiscais. O sistema irá identificar e organizar automaticamente os dados.
+                        </p>
+                        <Textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder="Cole aqui as informações das notas fiscais...
+
+Exemplo:
+NF 123456 - Destinatário ABC LTDA - 5 volumes - Transportadora XYZ
+NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
+                            rows={10}
+                            className="font-mono text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleProcessPaste}
+                                disabled={processingPaste || !pasteText.trim()}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {processingPaste ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" /> Processar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg">

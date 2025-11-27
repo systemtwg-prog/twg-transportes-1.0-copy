@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,6 +43,20 @@ export default function ColetasDiarias() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
     });
 
+    const updateOrdemMutation = useMutation({
+        mutationFn: ({ id, ordem }) => base44.entities.ColetaDiaria.update(id, { ordem }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
+    });
+
+    const moverParaFinal = (coleta) => {
+        const maxOrdem = Math.max(...coletasPendentes.map(c => c.ordem || 0), 0);
+        updateOrdemMutation.mutate({ id: coleta.id, ordem: maxOrdem + 1000 });
+    };
+
+    const moverParaInicio = (coleta) => {
+        updateOrdemMutation.mutate({ id: coleta.id, ordem: 0 });
+    };
+
     // Separar coletas por status
     let coletasFiltradas = coletas;
     
@@ -64,7 +78,12 @@ export default function ColetasDiarias() {
 
     const coletasPendentes = coletasFiltradas
         .filter(c => c.status === "pendente" || !c.status)
-        .sort((a, b) => (b.prioridade ? 1 : 0) - (a.prioridade ? 1 : 0));
+        .sort((a, b) => {
+            // Primeiro por prioridade (prioritários primeiro)
+            if (b.prioridade !== a.prioridade) return (b.prioridade ? 1 : 0) - (a.prioridade ? 1 : 0);
+            // Depois por ordem (menor ordem primeiro)
+            return (a.ordem || 0) - (b.ordem || 0);
+        });
     const coletasRealizadas = coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado");
 
     const statusColors = {
@@ -251,8 +270,28 @@ export default function ColetasDiarias() {
                                               </SelectItem>
                                           </SelectContent>
                                       </Select>
+                        <div className="flex gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => moverParaInicio(coleta)}
+                                title="Mover para início"
+                            >
+                                <ArrowUp className="w-3 h-3 text-blue-600" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => moverParaFinal(coleta)}
+                                title="Mover para final"
+                            >
+                                <ArrowDown className="w-3 h-3 text-orange-600" />
+                            </Button>
+                        </div>
                     </div>
-                </td>
+                    </td>
             </tr>
         );
     };

@@ -19,6 +19,7 @@ const menuItems = [
     { name: "Romaneios/Entregas", href: "Romaneios", icon: Package },
     { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
     { name: "Clientes", href: "Clientes", icon: Users },
+    { name: "Transportadoras", href: "Transportadoras", icon: Package },
     { name: "Colaboradores", href: "Motoristas", icon: User },
     { name: "Veículos", href: "Veiculos", icon: Car },
     { name: "Rastreamento", href: "Rastreamento", icon: Navigation },

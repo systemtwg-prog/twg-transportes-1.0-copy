@@ -20,6 +20,7 @@ import NotaDeposito from './pages/NotaDeposito';
 import RotasGPS from './pages/RotasGPS';
 import Backup from './pages/Backup';
 import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
+import Transportadoras from './pages/Transportadoras';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "RotasGPS": RotasGPS,
     "Backup": Backup,
     "ImportacaoDocumentos": ImportacaoDocumentos,
+    "Transportadoras": Transportadoras,
 }
 
 export const pagesConfig = {

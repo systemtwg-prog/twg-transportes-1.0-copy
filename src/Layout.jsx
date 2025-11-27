@@ -15,24 +15,25 @@ export default function Layout({ children, currentPageName }) {
 
     const navItems = [
         { name: "Home", href: "Home", icon: Home },
+        { name: "Comprovantes Internos", href: "ComprovantesInternos", icon: FileText },
+        { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
+        { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
         { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
         { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
-        { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
         { name: "Romaneios/Entregas", href: "Romaneios", icon: Truck },
         { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
-        { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
         { name: "Clientes", href: "Clientes", icon: Users },
         { name: "Colaboradores", href: "Motoristas", icon: User },
         { name: "Veículos", href: "Veiculos", icon: Car },
         { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
         { name: "Comprovantes", href: "Comprovantes", icon: FileText },
-        { name: "Comprovantes Internos", href: "ComprovantesInternos", icon: FileText },
         { name: "Avisos", href: "Avisos", icon: Package },
         { name: "Relatórios", href: "Relatorios", icon: FileText },
         { name: "Performance", href: "RelatorioMotoristas", icon: Award },
         { name: "Configurações", href: "Configuracoes", icon: Settings },
         { name: "Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
-        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid }
+        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
+        { name: "Backup", href: "Backup", icon: FileText }
     ];
 
     const NavLinks = ({ onClick }) => (

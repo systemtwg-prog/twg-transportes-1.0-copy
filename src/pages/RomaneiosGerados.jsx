@@ -379,78 +379,80 @@ export default function RomaneiosGerados() {
                                         </TableRow>
                                     ) : (
                                         filtered.map((romaneio) => (
-                                            <TableRow key={romaneio.id} className="hover:bg-slate-50">
-                                                <TableCell className="font-medium">{formatDate(romaneio.data)}</TableCell>
-                                                <TableCell>{romaneio.nome || "-"}</TableCell>
-                                                <TableCell className="font-bold text-indigo-600">{romaneio.placa || "-"}</TableCell>
-                                                <TableCell>{romaneio.motorista_nome || "-"}</TableCell>
-                                                <TableCell className="text-center">{romaneio.total_notas || 0}</TableCell>
-                                                <TableCell className="text-center">{romaneio.total_entregas || 0}</TableCell>
-                                                <TableCell className="text-center">{(romaneio.peso_total || 0).toFixed(1)}kg</TableCell>
-                                                <TableCell>
-                                                    <Select 
-                                                        value={romaneio.status || "gerado"}
-                                                        onValueChange={(v) => updateMutation.mutate({ id: romaneio.id, data: { status: v } })}
-                                                    >
-                                                        <SelectTrigger className="w-32 h-8">
-                                                            <Badge className={statusColors[romaneio.status || "gerado"]}>
-                                                                {statusLabels[romaneio.status || "gerado"]}
-                                                            </Badge>
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="gerado">Gerado</SelectItem>
-                                                            <SelectItem value="em_transito">Em Trânsito</SelectItem>
-                                                            <SelectItem value="entregue">Entregue</SelectItem>
-                                                            <SelectItem value="cancelado">Cancelado</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                                                                        <div className="flex justify-end gap-1">
-                                                                                                            <Button 
-                                                                                                                variant="ghost" 
-                                                                                                                size="icon" 
-                                                                                                                onClick={() => setExpandedRomaneio(expandedRomaneio === romaneio.id ? null : romaneio.id)}
-                                                                                                            >
-                                                                                                                {expandedRomaneio === romaneio.id ? (
-                                                                                                                    <ChevronUp className="w-4 h-4 text-slate-600" />
-                                                                                                                ) : (
-                                                                                                                    <ChevronDown className="w-4 h-4 text-slate-600" />
-                                                                                                                )}
-                                                                                                            </Button>
-                                                                                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(romaneio)}>
-                                                                                                                <Pencil className="w-4 h-4 text-blue-600" />
-                                                                                                            </Button>
-                                                                                                            <Button variant="ghost" size="icon" onClick={() => {
-                                                                                                                if (confirm("Excluir este romaneio?")) deleteMutation.mutate(romaneio.id);
-                                                                                                            }}>
-                                                                                                                <Trash2 className="w-4 h-4 text-red-600" />
-                                                                                                            </Button>
-                                                                                                        </div>
-                                                                                                    </TableCell>
-                                                                                                </TableRow>
-                                                                                                {expandedRomaneio === romaneio.id && (
-                                                                                                    <TableRow>
-                                                                                                        <TableCell colSpan={9} className="bg-slate-50 p-4">
-                                                                                                            <div className="space-y-2">
-                                                                                                                <p className="text-sm font-medium text-slate-600">Notas Fiscais:</p>
-                                                                                                                <div className="flex flex-wrap gap-2">
-                                                                                                                    {(romaneio.notas_ids || []).map(id => {
-                                                                                                                        const nota = notasFiscais.find(n => n.id === id);
-                                                                                                                        return nota ? (
-                                                                                                                            <Badge key={id} className="bg-blue-100 text-blue-700">
-                                                                                                                                {nota.numero_nf} - {nota.destinatario}
-                                                                                                                            </Badge>
-                                                                                                                        ) : null;
-                                                                                                                    })}
-                                                                                                                    {(!romaneio.notas_ids || romaneio.notas_ids.length === 0) && (
-                                                                                                                        <span className="text-slate-400 text-sm">Nenhuma nota vinculada</span>
-                                                                                                                    )}
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                        </TableCell>
-                                                                                                    </TableRow>
-                                                                                                )}
+                                            <React.Fragment key={romaneio.id}>
+                                                <TableRow className="hover:bg-slate-50">
+                                                    <TableCell className="font-medium">{formatDate(romaneio.data)}</TableCell>
+                                                    <TableCell>{romaneio.nome || "-"}</TableCell>
+                                                    <TableCell className="font-bold text-indigo-600">{romaneio.placa || "-"}</TableCell>
+                                                    <TableCell>{romaneio.motorista_nome || "-"}</TableCell>
+                                                    <TableCell className="text-center">{romaneio.total_notas || 0}</TableCell>
+                                                    <TableCell className="text-center">{romaneio.total_entregas || 0}</TableCell>
+                                                    <TableCell className="text-center">{(romaneio.peso_total || 0).toFixed(1)}kg</TableCell>
+                                                    <TableCell>
+                                                        <Select 
+                                                            value={romaneio.status || "gerado"}
+                                                            onValueChange={(v) => updateMutation.mutate({ id: romaneio.id, data: { status: v } })}
+                                                        >
+                                                            <SelectTrigger className="w-32 h-8">
+                                                                <Badge className={statusColors[romaneio.status || "gerado"]}>
+                                                                    {statusLabels[romaneio.status || "gerado"]}
+                                                                </Badge>
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="gerado">Gerado</SelectItem>
+                                                                <SelectItem value="em_transito">Em Trânsito</SelectItem>
+                                                                <SelectItem value="entregue">Entregue</SelectItem>
+                                                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                onClick={() => setExpandedRomaneio(expandedRomaneio === romaneio.id ? null : romaneio.id)}
+                                                            >
+                                                                {expandedRomaneio === romaneio.id ? (
+                                                                    <ChevronUp className="w-4 h-4 text-slate-600" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-4 h-4 text-slate-600" />
+                                                                )}
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(romaneio)}>
+                                                                <Pencil className="w-4 h-4 text-blue-600" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => {
+                                                                if (confirm("Excluir este romaneio?")) deleteMutation.mutate(romaneio.id);
+                                                            }}>
+                                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                                {expandedRomaneio === romaneio.id && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={9} className="bg-slate-50 p-4">
+                                                            <div className="space-y-2">
+                                                                <p className="text-sm font-medium text-slate-600">Notas Fiscais:</p>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {(romaneio.notas_ids || []).map(id => {
+                                                                        const nota = notasFiscais.find(n => n.id === id);
+                                                                        return nota ? (
+                                                                            <Badge key={id} className="bg-blue-100 text-blue-700">
+                                                                                {nota.numero_nf} - {nota.destinatario}
+                                                                            </Badge>
+                                                                        ) : null;
+                                                                    })}
+                                                                    {(!romaneio.notas_ids || romaneio.notas_ids.length === 0) && (
+                                                                        <span className="text-slate-400 text-sm">Nenhuma nota vinculada</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </React.Fragment>
                                         ))
                                     )}
                                 </TableBody>

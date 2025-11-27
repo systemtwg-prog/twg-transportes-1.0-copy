@@ -49,11 +49,18 @@ export default function FlipbookViewer({ files, onClose, title }) {
             {/* Content */}
             <div className="flex-1 flex items-center justify-center overflow-auto p-4">
                 {isPdf ? (
-                    <iframe 
-                        src={currentFile?.url} 
-                        className="w-full h-full bg-white rounded-lg"
-                        style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
-                    />
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                        <iframe 
+                            src={`${currentFile?.url}#toolbar=1&navpanes=1&scrollbar=1`} 
+                            className="w-full h-full bg-white rounded-lg border-0"
+                            style={{ 
+                                minWidth: "90vw", 
+                                minHeight: "85vh",
+                                transform: `scale(${zoom})`, 
+                                transformOrigin: "center" 
+                            }}
+                        />
+                    </div>
                 ) : (
                     <img 
                         src={currentFile?.url} 

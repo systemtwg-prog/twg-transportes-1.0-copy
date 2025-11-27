@@ -606,7 +606,61 @@ export default function Veiculos() {
             </Dialog>
 
             {viewDocsModal && (
-                <FlipbookViewer files={viewDocsModal} onClose={() => setViewDocsModal(null)} title="Documentos do Veículo" />
+                <Dialog open={!!viewDocsModal} onOpenChange={() => setViewDocsModal(null)}>
+                    <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-black/95">
+                        <div className="relative w-full h-full flex flex-col">
+                            <div className="flex items-center justify-between p-4 bg-black/50 text-white">
+                                <span className="font-medium">Documentos do Veículo</span>
+                                <Button variant="ghost" size="icon" onClick={() => setViewDocsModal(null)} className="text-white hover:bg-white/20">
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            <div className="flex-1 overflow-auto p-4">
+                                {viewDocsModal.length === 1 ? (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        {viewDocsModal[0]?.tipo?.includes("pdf") || viewDocsModal[0]?.url?.endsWith(".pdf") ? (
+                                            <iframe 
+                                                src={`${viewDocsModal[0]?.url}#toolbar=1&navpanes=1`}
+                                                className="w-full h-full min-h-[80vh] bg-white rounded-lg"
+                                            />
+                                        ) : (
+                                            <img 
+                                                src={viewDocsModal[0]?.url} 
+                                                alt={viewDocsModal[0]?.nome}
+                                                className="max-w-full max-h-full object-contain rounded-lg"
+                                            />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {viewDocsModal.map((doc, i) => (
+                                            <div key={i} className="bg-white rounded-lg overflow-hidden">
+                                                <div className="p-2 bg-slate-100 text-sm font-medium text-slate-700 flex items-center justify-between">
+                                                    <span>{doc.nome}</span>
+                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
+                                                        Abrir
+                                                    </a>
+                                                </div>
+                                                {doc.tipo?.includes("pdf") || doc.url?.endsWith(".pdf") ? (
+                                                    <iframe 
+                                                        src={`${doc.url}#toolbar=0`}
+                                                        className="w-full h-[400px] border-0"
+                                                    />
+                                                ) : (
+                                                    <img 
+                                                        src={doc.url} 
+                                                        alt={doc.nome}
+                                                        className="w-full h-[400px] object-contain bg-slate-50"
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );

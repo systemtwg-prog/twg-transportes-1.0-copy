@@ -346,8 +346,8 @@ export default function MascaraRomaneio() {
                         color: white; font-weight: bold; font-size: 20px; 
                     }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 22px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 12px; color: #333; margin: 3px 0; }
+                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
                     .romaneio-info { text-align: right; }
                     .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
                     .motorista-label { font-size: 16px; font-weight: bold; margin: 5px 0; }

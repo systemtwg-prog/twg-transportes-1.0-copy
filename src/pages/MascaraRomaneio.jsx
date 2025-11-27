@@ -208,7 +208,9 @@ export default function MascaraRomaneio() {
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
         try {
-            return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+            // Adiciona horário para evitar problemas de fuso horário
+            const [year, month, day] = dateStr.split("-");
+            return `${day}/${month}/${year}`;
         } catch {
             return dateStr;
         }

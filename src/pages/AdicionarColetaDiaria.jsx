@@ -30,6 +30,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
         data_coleta: coleta?.data_coleta || format(new Date(), "yyyy-MM-dd"),
         remetente_id: coleta?.remetente_id || "",
         remetente_nome: coleta?.remetente_nome || "",
+        remetente_fantasia: coleta?.remetente_fantasia || "",
         remetente_endereco: coleta?.remetente_endereco || "",
         remetente_bairro: coleta?.remetente_bairro || "",
         remetente_cidade: coleta?.remetente_cidade || "",
@@ -39,6 +40,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
         remetente_intervalo: coleta?.remetente_intervalo || "",
         destinatario_id: coleta?.destinatario_id || "",
         destinatario_nome: coleta?.destinatario_nome || "",
+        destinatario_fantasia: coleta?.destinatario_fantasia || "",
         volume: coleta?.volume || "",
         peso: coleta?.peso || "",
         nfe: coleta?.nfe || "",
@@ -84,6 +86,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                 ...prev,
                 remetente_id: cliente.id,
                 remetente_nome: cliente.razao_social,
+                remetente_fantasia: cliente.nome_fantasia || "",
                 remetente_endereco: cliente.endereco || "",
                 remetente_bairro: cliente.bairro || "",
                 remetente_cidade: `${cliente.cidade || ""}${cliente.uf ? "/" + cliente.uf : ""}`,
@@ -101,7 +104,8 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
             setForm(prev => ({
                 ...prev,
                 destinatario_id: cliente.id,
-                destinatario_nome: cliente.razao_social
+                destinatario_nome: cliente.razao_social,
+                destinatario_fantasia: cliente.nome_fantasia || ""
             }));
         }
     };

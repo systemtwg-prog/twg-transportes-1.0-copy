@@ -194,7 +194,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                                 </div>
                                                 {remetentesFavoritos.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        ⭐ {c.razao_social}
+                                                        ⭐ {c.nome_fantasia || c.razao_social}
                                                     </SelectItem>
                                                 ))}
                                                 <div className="border-t my-1" />
@@ -202,7 +202,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                         )}
                                         {filteredRemetentes.filter(c => !c.favorito || searchRemetente).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
+                                                {c.nome_fantasia || c.razao_social}
                                             </SelectItem>
                                         ))}
                                         {filteredRemetentes.length === 0 && (
@@ -297,7 +297,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                                 </div>
                                                 {destinatariosFavoritos.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        ⭐ {c.razao_social}
+                                                        ⭐ {c.nome_fantasia || c.razao_social}
                                                     </SelectItem>
                                                 ))}
                                                 <div className="border-t my-1" />
@@ -305,7 +305,7 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
                                         )}
                                         {filteredDestinatarios.filter(c => !c.favorito || searchDestinatario).map(c => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.razao_social} {c.cnpj_cpf ? `(${c.cnpj_cpf})` : ""}
+                                                {c.nome_fantasia || c.razao_social}
                                             </SelectItem>
                                         ))}
                                         {filteredDestinatarios.length === 0 && (

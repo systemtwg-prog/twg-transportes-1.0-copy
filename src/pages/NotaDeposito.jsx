@@ -40,7 +40,7 @@ export default function NotaDeposito() {
     const [form, setForm] = useState({
         titulo: "",
         data: format(new Date(), "yyyy-MM-dd"),
-        foto_url: "",
+        fotos: [],
         status: "pendente",
         observacoes: ""
     });
@@ -72,7 +72,7 @@ export default function NotaDeposito() {
         setForm({
             titulo: "",
             data: format(new Date(), "yyyy-MM-dd"),
-            foto_url: "",
+            fotos: [],
             status: "pendente",
             observacoes: ""
         });
@@ -80,18 +80,29 @@ export default function NotaDeposito() {
     };
 
     const handleEdit = (nota) => {
-        setForm(nota);
+        setForm({
+            ...nota,
+            fotos: nota.fotos || (nota.foto_url ? [{ url: nota.foto_url, nome: "foto" }] : [])
+        });
         setEditing(nota);
         setShowForm(true);
     };
 
-    const handleUploadFoto = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleUploadFotos = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
         setUploading(true);
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        setForm({ ...form, foto_url: file_url });
+        const novasFotos = [];
+        for (const file of files) {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            novasFotos.push({ url: file_url, nome: file.name, tipo: file.type });
+        }
+        setForm({ ...form, fotos: [...(form.fotos || []), ...novasFotos] });
         setUploading(false);
+    };
+
+    const removeFoto = (index) => {
+        setForm({ ...form, fotos: form.fotos.filter((_, i) => i !== index) });
     };
 
     const handleSubmit = (e) => {
@@ -178,12 +189,17 @@ export default function NotaDeposito() {
                     ) : (
                         filtered.map((nota) => (
                             <Card key={nota.id} className="bg-white/90 border-0 shadow-md hover:shadow-lg transition-shadow overflow-hidden">
-                                {nota.foto_url && (
+                                {(nota.fotos?.length > 0 || nota.foto_url) && (
                                     <div 
-                                        className="h-40 bg-slate-100 cursor-pointer"
-                                        onClick={() => setViewImage(nota.foto_url)}
+                                        className="h-40 bg-slate-100 cursor-pointer relative"
+                                        onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}
                                     >
-                                        <img src={nota.foto_url} alt="" className="w-full h-full object-cover" />
+                                        <img src={nota.fotos?.[0]?.url || nota.foto_url} alt="" className="w-full h-full object-cover" />
+                                        {nota.fotos?.length > 1 && (
+                                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                                +{nota.fotos.length - 1} fotos
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 <CardContent className="p-4">
@@ -223,8 +239,8 @@ export default function NotaDeposito() {
                                     )}
 
                                     <div className="flex justify-end gap-2 mt-3">
-                                        {nota.foto_url && (
-                                            <Button variant="ghost" size="sm" onClick={() => setViewImage(nota.foto_url)}>
+                                        {(nota.fotos?.length > 0 || nota.foto_url) && (
+                                            <Button variant="ghost" size="sm" onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}>
                                                 <Eye className="w-4 h-4" />
                                             </Button>
                                         )}
@@ -286,16 +302,16 @@ export default function NotaDeposito() {
                             />
                         </div>
 
-                        {/* Foto */}
+                        {/* Fotos */}
                         <div className="space-y-2">
-                            <Label>Foto do Comprovante</Label>
+                            <Label>Fotos do Comprovante</Label>
                             <div className="flex gap-2">
-                                <input type="file" accept="image/*" onChange={handleUploadFoto} className="hidden" id="foto-nota" />
+                                <input type="file" accept="image/*" multiple onChange={handleUploadFotos} className="hidden" id="foto-nota" />
                                 <label htmlFor="foto-nota" className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
                                     <Upload className="w-5 h-5 text-slate-400" />
-                                    <span className="text-sm text-slate-600">Escolher arquivo</span>
+                                    <span className="text-sm text-slate-600">Escolher arquivos</span>
                                 </label>
-                                <input type="file" accept="image/*" capture="environment" onChange={handleUploadFoto} className="hidden" id="camera-nota" />
+                                <input type="file" accept="image/*" capture="environment" onChange={handleUploadFotos} className="hidden" id="camera-nota" />
                                 <label htmlFor="camera-nota" className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
                                     <Camera className="w-5 h-5 text-slate-400" />
                                     <span className="text-sm text-slate-600">Tirar Foto</span>
@@ -307,18 +323,22 @@ export default function NotaDeposito() {
                                     <span className="text-sm">Enviando...</span>
                                 </div>
                             )}
-                            {form.foto_url && (
-                                <div className="relative">
-                                    <img src={form.foto_url} alt="" className="w-full h-40 object-cover rounded-lg border" />
-                                    <Button 
-                                        type="button" 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-                                        onClick={() => setViewImage(form.foto_url)}
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </Button>
+                            {form.fotos?.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {form.fotos.map((foto, i) => (
+                                        <div key={i} className="relative">
+                                            <img src={foto.url} alt="" className="w-full h-20 object-cover rounded-lg border" />
+                                            <Button 
+                                                type="button" 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="absolute top-1 right-1 h-6 w-6 bg-red-500 hover:bg-red-600 text-white"
+                                                onClick={() => removeFoto(i)}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -345,7 +365,7 @@ export default function NotaDeposito() {
 
                         <Button type="submit" className="w-full h-14 text-lg bg-violet-600 hover:bg-violet-700">
                             <Save className="w-6 h-6 mr-2" />
-                            {editing ? "Salvar Nota" : "Salvar Depósito"}
+                            Salvar Notas
                         </Button>
                     </form>
                 </DialogContent>

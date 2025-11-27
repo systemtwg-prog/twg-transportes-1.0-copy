@@ -504,16 +504,21 @@ export default function Veiculos() {
                                                 <div className="space-y-1">
                                                     <span className="font-bold text-sky-600">{vei.placa}</span>
                                                     <div className="flex gap-1">
-                                                        {(vei.documentos_veiculo?.length > 0 || vei.documentos_carroceria?.length > 0) && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 px-2 hover:bg-sky-100"
-                                                                onClick={() => setViewDocsModal([...(vei.documentos_veiculo || []), ...(vei.documentos_carroceria || [])])}
-                                                            >
-                                                                <Eye className="w-3 h-3 mr-1" /> Ver
-                                                            </Button>
-                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 px-2 hover:bg-sky-100"
+                                                            onClick={() => {
+                                                                const docs = [...(vei.documentos_veiculo || []), ...(vei.documentos_carroceria || [])];
+                                                                if (docs.length > 0) {
+                                                                    setViewDocsModal(docs);
+                                                                } else {
+                                                                    alert("Nenhum documento anexado");
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Eye className="w-3 h-3 mr-1" /> Ver Docs
+                                                        </Button>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"

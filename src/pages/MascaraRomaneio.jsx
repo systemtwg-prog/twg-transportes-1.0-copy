@@ -298,9 +298,9 @@ export default function MascaraRomaneio() {
                                 <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
                             </div>
                             <div class="romaneio-info">
-                                <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
-                                <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
                                 <p class="date">${formatDate(dataRomaneio)}</p>
+                                                                        <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
+                                                                        <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
                             </div>
                         </div>
                         

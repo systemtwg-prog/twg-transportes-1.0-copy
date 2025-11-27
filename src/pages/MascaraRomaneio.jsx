@@ -262,17 +262,17 @@ export default function MascaraRomaneio() {
                     rowsHtml += '</tr>';
                 });
 
-                // Adicionar linhas em branco para completar 6 notas
+                // Adicionar linhas em branco para completar 6 notas (sem bordas)
                 const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
                 for (let i = 0; i < linhasRestantes; i++) {
                     rowsHtml += `
-                        <tr class="nota-row">
+                        <tr class="nota-row vazia">
                             <td class="remetente"></td>
                             <td class="destinatario"></td>
                             <td class="nfe"></td>
                             <td class="carimbo" rowspan="2"></td>
                         </tr>
-                        <tr class="transportadora-row">
+                        <tr class="transportadora-row vazia">
                             <td class="transportadora-nome" colspan="2"></td>
                             <td class="volume"></td>
                         </tr>

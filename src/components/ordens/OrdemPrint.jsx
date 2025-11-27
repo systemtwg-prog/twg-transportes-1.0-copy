@@ -93,25 +93,11 @@ ${config.telefone || ""}`;
                     .signatures { padding: 20px; display: flex; justify-content: space-around; margin-top: 30px; }
                     .signature { text-align: center; width: 200px; }
                     .signature-line { border-top: 1px solid #000; padding-top: 5px; }
-                    .print-btn { 
-                        display: block; 
-                        width: 100%; 
-                        max-width: 300px; 
-                        margin: 20px auto; 
-                        padding: 15px 30px; 
-                        font-size: 18px; 
-                        background: #0ea5e9; 
-                        color: white; 
-                        border: none; 
-                        border-radius: 8px; 
-                        cursor: pointer;
-                    }
-                    .print-btn:hover { background: #0284c7; }
-                    @media print { .print-btn { display: none; } }
+
                 </style>
             </head>
             <body>
-                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar como PDF</button>
+
                 
                 <div class="container">
                     <div class="header">

@@ -332,15 +332,17 @@ export default function Veiculos() {
 
     const handlePrintVeiculo = (vei) => {
         const winPrint = window.open('', '_blank', 'width=800,height=600');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
         winPrint.document.write(`
             <html>
             <head>
                 <meta charset="UTF-8">
                 <title>Veículo - ${vei.placa}</title>
                 <style>
-                    @media print { .print-btn { display: none; } }
                     body { font-family: Arial, sans-serif; margin: 30px; }
-                    .print-btn { display: block; width: 100%; max-width: 300px; margin: 0 auto 20px; padding: 15px; font-size: 18px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; }
                     .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0ea5e9; }
                     .title { font-size: 24px; font-weight: bold; color: #0369a1; }
                     .section { margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 8px; }
@@ -349,7 +351,7 @@ export default function Veiculos() {
                 </style>
             </head>
             <body>
-                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar PDF</button>
+
                 <div class="header">
                     <div class="title">CADASTRO DE VEÍCULO</div>
                     <h2>${vei.placa}</h2>
@@ -373,7 +375,16 @@ export default function Veiculos() {
     };
 
     const handleShareVeiculoWhatsApp = (vei) => {
-        const texto = `*VEÍCULO: ${vei.placa}*\nModelo: ${vei.modelo}\nMarca: ${vei.marca || "-"}\nAno: ${vei.ano || "-"}\nTipo: ${vei.tipo}\nCapacidade: ${vei.capacidade_kg || "-"} KG`;
+        const docs = [...(vei.documentos_veiculo || []), ...(vei.documentos_carroceria || [])];
+        let texto = `*VEÍCULO: ${vei.placa}*\nModelo: ${vei.modelo}\nMarca: ${vei.marca || "-"}\nAno: ${vei.ano || "-"}\nTipo: ${vei.tipo}\nCapacidade: ${vei.capacidade_kg || "-"} KG`;
+        
+        if (docs.length > 0) {
+            texto += `\n\n*DOCUMENTOS:*`;
+            docs.forEach(doc => {
+                texto += `\n📄 ${doc.nome}: ${doc.url}`;
+            });
+        }
+        
         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
     };
 

@@ -222,8 +222,8 @@ export default function MascaraRomaneio() {
                             </div>
                             <div class="romaneio-info">
                                 <p class="romaneio-title">ROMANEIO DE ENTREGAS${paginaInfo}</p>
-                                <p class="motorista-label">Motorista: ${motoristaObj?.nome || motorista || "_________________"}</p>
-                                ${placaDisplay ? `<p class="placa-label">Placa: ${placaDisplay}</p>` : ""}
+                                <p class="motorista-label">Motorista: ${motoristaObj ? motoristaObj.nome : (motorista || "_________________")}</p>
+                                ${placaDisplay ? '<p class="placa-label">Placa: ' + placaDisplay + '</p>' : ""}
                                 <p class="date">${formatDate(dataRomaneio)}</p>
                             </div>
                         </div>

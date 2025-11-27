@@ -1,11 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck
+    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft
 } from "lucide-react";
 
 const menuItems = [
@@ -34,8 +34,25 @@ const menuItems = [
 export default function FloatingMenu({ currentPage }) {
     const [open, setOpen] = React.useState(false);
 
+    const handleBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = createPageUrl("Home");
+        }
+    };
+
     return (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
+            {currentPage !== "Home" && (
+                <Button 
+                    size="icon" 
+                    onClick={handleBack}
+                    className="w-12 h-12 rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
+                >
+                    <ArrowLeft className="w-6 h-6 text-white" />
+                </Button>
+            )}
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
                     <Button 

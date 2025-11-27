@@ -191,13 +191,13 @@ export default function Home() {
                         </div>
                         <WeatherClock />
                     </div>
-                </div>
-            </div>
+                    </div>
+                    </div>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-6 pb-12">
-                {/* Avisos Ativos */}
-                {avisosAtivos.length > 0 && (
-                    <div className="space-y-3 mb-6">
+                    {/* Avisos Ativos - Abaixo do Header */}
+                    {avisosAtivos.length > 0 && (
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-3">
+                    <div className="space-y-2">
                         {avisosAtivos.map(aviso => (
                             <Card key={aviso.id} className={`border-l-4 shadow-lg ${
                                 aviso.tipo === "urgente" ? "bg-red-50 border-l-red-500" :
@@ -230,8 +230,10 @@ export default function Home() {
                             </Card>
                         ))}
                     </div>
-                )}
+                    </div>
+                    )}
 
+            <div className="max-w-7xl mx-auto px-4 md:px-8 mt-4 pb-12">
                 {/* Menu Principal - Nova Ordem */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {menuItems.map((item, index) => (

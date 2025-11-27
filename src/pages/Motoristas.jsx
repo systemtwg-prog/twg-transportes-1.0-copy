@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2
+    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, MessageCircle
 } from "lucide-react";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
 import { toast } from "sonner";
@@ -482,9 +482,8 @@ export default function Motoristas() {
                                 <TableRow className="bg-slate-50">
                                     <TableHead>Nome</TableHead>
                                     <TableHead>CPF</TableHead>
-                                    <TableHead>CNH</TableHead>
-                                    <TableHead>Categoria</TableHead>
-                                    <TableHead>Telefone</TableHead>
+                                                        <TableHead>CNH</TableHead>
+                                                        <TableHead>Categoria</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
@@ -515,11 +514,23 @@ export default function Motoristas() {
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p>{mot.nome}</p>
-                                                        {mot.tipo_vinculo && (
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {mot.tipo_vinculo === "funcionario" ? "Funcionário" : "Agregado"}
-                                                            </Badge>
+                                                        <p className="font-semibold">{mot.nome}</p>
+                                                        {mot.telefone && (
+                                                            <div className="flex items-center gap-1 text-sm text-slate-500">
+                                                                <Phone className="w-3 h-3" />
+                                                                {mot.telefone}
+                                                            </div>
+                                                        )}
+                                                        {mot.telefone && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-2 mt-1 bg-green-50 hover:bg-green-100 text-green-700"
+                                                                onClick={() => window.open(`https://wa.me/55${mot.telefone.replace(/\D/g, '')}`, "_blank")}
+                                                            >
+                                                                <MessageCircle className="w-3 h-3 mr-1" />
+                                                                WhatsApp
+                                                            </Button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -529,7 +540,6 @@ export default function Motoristas() {
                                             <TableCell>
                                                 <Badge variant="outline">{mot.categoria_cnh}</Badge>
                                             </TableCell>
-                                            <TableCell>{mot.telefone || "-"}</TableCell>
                                             <TableCell>
                                                 <Badge className={statusColors[mot.status]}>
                                                     {mot.status}

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Plus, Search, Pencil, Trash2, Truck, X, Save, Upload, Camera, FileText, Eye, Share2
+    Plus, Search, Pencil, Trash2, Truck, X, Save, Upload, Camera, FileText, Eye, Share2, Printer
 } from "lucide-react";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
 
@@ -327,7 +327,55 @@ export default function Veiculos() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [viewDocsModal, setViewDocsModal] = useState(null);
     const queryClient = useQueryClient();
+
+    const handlePrintVeiculo = (vei) => {
+        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Veículo - ${vei.placa}</title>
+                <style>
+                    @media print { .print-btn { display: none; } }
+                    body { font-family: Arial, sans-serif; margin: 30px; }
+                    .print-btn { display: block; width: 100%; max-width: 300px; margin: 0 auto 20px; padding: 15px; font-size: 18px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; }
+                    .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0ea5e9; }
+                    .title { font-size: 24px; font-weight: bold; color: #0369a1; }
+                    .section { margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 8px; }
+                    .row { display: flex; margin: 5px 0; }
+                    .label { font-weight: bold; width: 120px; color: #64748b; }
+                </style>
+            </head>
+            <body>
+                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar PDF</button>
+                <div class="header">
+                    <div class="title">CADASTRO DE VEÍCULO</div>
+                    <h2>${vei.placa}</h2>
+                </div>
+                <div class="section">
+                    <div class="row"><span class="label">Modelo:</span> ${vei.modelo}</div>
+                    <div class="row"><span class="label">Marca:</span> ${vei.marca || "-"}</div>
+                    <div class="row"><span class="label">Ano:</span> ${vei.ano || "-"}</div>
+                    <div class="row"><span class="label">Cor:</span> ${vei.cor || "-"}</div>
+                    <div class="row"><span class="label">Tipo:</span> ${vei.tipo}</div>
+                    <div class="row"><span class="label">Capacidade:</span> ${vei.capacidade_kg || "-"} KG / ${vei.capacidade_m3 || "-"} M³</div>
+                    <div class="row"><span class="label">RENAVAM:</span> ${vei.renavam || "-"}</div>
+                    <div class="row"><span class="label">Chassi:</span> ${vei.chassi || "-"}</div>
+                    <div class="row"><span class="label">KM Atual:</span> ${vei.km_atual || "-"}</div>
+                    <div class="row"><span class="label">Status:</span> ${vei.status}</div>
+                </div>
+            </body>
+            </html>
+        `);
+        winPrint.document.close();
+    };
+
+    const handleShareVeiculoWhatsApp = (vei) => {
+        const texto = `*VEÍCULO: ${vei.placa}*\nModelo: ${vei.modelo}\nMarca: ${vei.marca || "-"}\nAno: ${vei.ano || "-"}\nTipo: ${vei.tipo}\nCapacidade: ${vei.capacidade_kg || "-"} KG`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    };
 
     const { data: veiculos = [], isLoading } = useQuery({
         queryKey: ["veiculos"],
@@ -452,7 +500,39 @@ export default function Veiculos() {
                                 ) : (
                                     filtered.map((vei) => (
                                         <TableRow key={vei.id} className="hover:bg-slate-50">
-                                            <TableCell className="font-bold text-sky-600">{vei.placa}</TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1">
+                                                    <span className="font-bold text-sky-600">{vei.placa}</span>
+                                                    <div className="flex gap-1">
+                                                        {(vei.documentos_veiculo?.length > 0 || vei.documentos_carroceria?.length > 0) && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 px-2 hover:bg-sky-100"
+                                                                onClick={() => setViewDocsModal([...(vei.documentos_veiculo || []), ...(vei.documentos_carroceria || [])])}
+                                                            >
+                                                                <Eye className="w-3 h-3 mr-1" /> Ver
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 px-2 hover:bg-blue-100"
+                                                            onClick={() => handlePrintVeiculo(vei)}
+                                                        >
+                                                            <Printer className="w-3 h-3 mr-1" /> PDF
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 px-2 hover:bg-green-100"
+                                                            onClick={() => handleShareVeiculoWhatsApp(vei)}
+                                                        >
+                                                            <Share2 className="w-3 h-3" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="font-medium">{vei.modelo}</TableCell>
                                             <TableCell>{vei.marca || "-"}</TableCell>
                                             <TableCell>
@@ -508,6 +588,10 @@ export default function Veiculos() {
                     />
                 </DialogContent>
             </Dialog>
+
+            {viewDocsModal && (
+                <FlipbookViewer files={viewDocsModal} onClose={() => setViewDocsModal(null)} title="Documentos do Veículo" />
+            )}
         </div>
     );
 }

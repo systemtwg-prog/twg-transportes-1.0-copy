@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -308,22 +308,23 @@ export default function ComprovantesInternos() {
                                         </Badge>
                                     </div>
 
-                                    {/* Preview dos arquivos */}
+                                    {/* Preview dos arquivos - maior */}
                                     {comprovante.arquivos?.length > 0 && (
-                                        <div className="flex gap-2 mb-3 overflow-x-auto">
-                                            {comprovante.arquivos.slice(0, 3).map((arq, i) => (
-                                                <div key={i} className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
-                                                    {arq.tipo?.startsWith("image/") ? (
-                                                        <img src={arq.url} alt="" className="w-full h-full object-cover rounded-lg" />
-                                                    ) : (
-                                                        <File className="w-6 h-6 text-slate-400" />
-                                                    )}
-                                                </div>
-                                            ))}
-                                            {comprovante.arquivos.length > 3 && (
-                                                <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center shrink-0 text-slate-600 font-medium">
-                                                    +{comprovante.arquivos.length - 3}
-                                                </div>
+                                        <div className="mb-3">
+                                            <div 
+                                                className="w-full h-40 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
+                                                onClick={() => setViewFiles(comprovante.arquivos)}
+                                            >
+                                                {comprovante.arquivos[0]?.tipo?.startsWith("image/") ? (
+                                                    <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <File className="w-12 h-12 text-slate-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {comprovante.arquivos.length > 1 && (
+                                                <p className="text-xs text-slate-500 mt-1 text-center">+ {comprovante.arquivos.length - 1} arquivo(s)</p>
                                             )}
                                         </div>
                                     )}
@@ -332,20 +333,33 @@ export default function ComprovantesInternos() {
                                         <p className="text-sm text-slate-600 line-clamp-2 mb-3">{comprovante.observacoes}</p>
                                     )}
 
-                                    <div className="flex justify-end gap-2">
-                                        {comprovante.arquivos?.length > 0 && (
-                                            <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)}>
-                                                <Eye className="w-4 h-4 mr-1" /> Ver
+                                    <div className="flex justify-between">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="text-green-600 hover:bg-green-50"
+                                            onClick={() => {
+                                                const texto = `*COMPROVANTE DE ENTREGA*\nNF: ${comprovante.nota_fiscal}\nData: ${formatDate(comprovante.data)}\n${comprovante.observacoes ? `Obs: ${comprovante.observacoes}` : ""}\n${comprovante.arquivos?.[0]?.url || ""}`;
+                                                window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+                                            }}
+                                        >
+                                            <Share2 className="w-4 h-4 mr-1" /> Compartilhar
+                                        </Button>
+                                        <div className="flex gap-1">
+                                            {comprovante.arquivos?.length > 0 && (
+                                                <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)}>
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)}>
+                                                <Pencil className="w-4 h-4" />
                                             </Button>
-                                        )}
-                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)}>
-                                            <Pencil className="w-4 h-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="sm" onClick={() => {
-                                            if (confirm("Excluir este comprovante?")) deleteMutation.mutate(comprovante.id);
-                                        }}>
-                                            <Trash2 className="w-4 h-4 text-red-600" />
-                                        </Button>
+                                            <Button variant="ghost" size="sm" onClick={() => {
+                                                if (confirm("Excluir este comprovante?")) deleteMutation.mutate(comprovante.id);
+                                            }}>
+                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

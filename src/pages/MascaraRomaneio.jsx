@@ -175,13 +175,13 @@ export default function MascaraRomaneio() {
                     rowsHtml += `
                         <tr class="nota-row">
                             <td class="remetente">${remetenteNota}</td>
-                            <td class="destinatario">${nota.destinatario || "-"}</td>
-                            <td class="nfe">${nota.numero_nf || "-"}</td>
+                            <td class="destinatario">${nota.destinatario || ""}</td>
+                            <td class="nfe">${nota.numero_nf || ""}</td>
                             <td class="carimbo" rowspan="2"></td>
                         </tr>
                         <tr class="transportadora-row">
                             <td class="transportadora-nome" colspan="2">${nota.transportadora || ""}</td>
-                            <td class="volume">${nota.volume || "-"} vol</td>
+                            <td class="volume">${nota.volume || ""} vol</td>
                         </tr>
                     `;
                 });

@@ -51,6 +51,53 @@ export default function MascaraRomaneio() {
 
     const config = configs[0] || {};
 
+    // Dashboard por placa
+    const dashboardPorPlaca = useMemo(() => {
+        const notasSelecionadasData = notasFiscais.filter(n => notasSelecionadas.includes(n.id));
+        
+        // Agrupar por placa
+        const porPlaca = {};
+        let pesoGeral = 0;
+        let totalNotas = 0;
+        let totalEntregasGeral = 0;
+        
+        notasSelecionadasData.forEach(nota => {
+            const placa = nota.placa || "SEM_PLACA";
+            if (!porPlaca[placa]) {
+                porPlaca[placa] = {
+                    notas: [],
+                    transportadoras: new Set(),
+                    pesoTotal: 0
+                };
+            }
+            porPlaca[placa].notas.push(nota);
+            totalNotas++;
+            
+            // Adicionar transportadora (para contar entregas únicas)
+            if (nota.transportadora) {
+                porPlaca[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
+            }
+            
+            // Somar peso
+            const pesoStr = nota.peso || "";
+            const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+            porPlaca[placa].pesoTotal += pesoNum;
+            pesoGeral += pesoNum;
+        });
+        
+        // Calcular total de entregas
+        Object.values(porPlaca).forEach(dados => {
+            totalEntregasGeral += dados.transportadoras.size || dados.notas.length;
+        });
+        
+        return {
+            porPlaca,
+            pesoGeral,
+            totalNotas,
+            totalEntregasGeral
+        };
+    }, [notasFiscais, notasSelecionadas]);
+
     // Mutations para empresas remetentes
     const createRemetenteMutation = useMutation({
         mutationFn: (data) => base44.entities.EmpresaRemetente.create(data),

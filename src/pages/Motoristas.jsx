@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, Printer
+    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2
 } from "lucide-react";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
 import { toast } from "sonner";
@@ -63,62 +63,59 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
     };
 
-    const handlePrintCadastro = () => {
+    const handlePrintColaborador = () => {
         const winPrint = window.open('', '', 'width=800,height=600');
         winPrint.document.write(`
             <html>
             <head>
-                <title>Cadastro - ${form.nome}</title>
+                <title>Ficha do Colaborador - ${form.nome}</title>
                 <style>
                     body { font-family: Arial, sans-serif; margin: 30px; }
                     .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; }
-                    .title { font-size: 24px; font-weight: bold; color: #0369a1; }
-                    .photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 15px auto; display: block; border: 3px solid #0ea5e9; }
-                    .section { margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; }
-                    .section-title { font-weight: bold; color: #0369a1; margin-bottom: 10px; font-size: 16px; }
-                    .field { margin: 8px 0; }
-                    .label { font-weight: bold; color: #64748b; }
-                    .value { color: #1e293b; }
-                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                    .photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #0ea5e9; }
+                    .title { font-size: 24px; font-weight: bold; color: #0369a1; margin: 15px 0 5px; }
+                    .section { margin: 20px 0; }
+                    .section-title { font-size: 16px; font-weight: bold; color: #0ea5e9; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; }
+                    .row { display: flex; margin: 8px 0; }
+                    .label { font-weight: bold; width: 150px; color: #64748b; }
+                    .value { flex: 1; color: #1e293b; }
+                    .docs { margin-top: 20px; }
+                    .doc-list { display: flex; flex-wrap: wrap; gap: 10px; }
+                    .doc-item { padding: 8px 15px; background: #f0f9ff; border-radius: 5px; font-size: 12px; }
                 </style>
             </head>
             <body>
                 <div class="header">
-                    <div class="title">CADASTRO DE COLABORADOR</div>
-                    ${form.foto_url ? `<img src="${form.foto_url}" class="photo" />` : ""}
-                    <h2 style="margin: 10px 0;">${form.nome}</h2>
+                    ${form.foto_url ? `<img src="${form.foto_url}" class="photo" />` : '<div class="photo" style="background:#e2e8f0;display:flex;align-items:center;justify-content:center;margin:0 auto;">Sem foto</div>'}
+                    <div class="title">${form.nome}</div>
+                    <div style="color:#64748b">${form.tipo_vinculo === "funcionario" ? "Funcionário" : "Agregado"}</div>
                 </div>
                 <div class="section">
-                    <div class="section-title">DADOS PESSOAIS</div>
-                    <div class="grid">
-                        <div class="field"><span class="label">CPF:</span> <span class="value">${form.cpf}</span></div>
-                        <div class="field"><span class="label">Telefone:</span> <span class="value">${form.telefone || "-"}</span></div>
-                        <div class="field"><span class="label">Email:</span> <span class="value">${form.email || "-"}</span></div>
-                        <div class="field"><span class="label">Endereço:</span> <span class="value">${form.endereco || "-"}</span></div>
+                    <div class="section-title">Dados Pessoais</div>
+                    <div class="row"><span class="label">CPF:</span><span class="value">${form.cpf}</span></div>
+                    <div class="row"><span class="label">Telefone:</span><span class="value">${form.telefone || "-"}</span></div>
+                    <div class="row"><span class="label">Email:</span><span class="value">${form.email || "-"}</span></div>
+                    <div class="row"><span class="label">Endereço:</span><span class="value">${form.endereco || "-"}</span></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">Dados da CNH</div>
+                    <div class="row"><span class="label">Número CNH:</span><span class="value">${form.cnh}</span></div>
+                    <div class="row"><span class="label">Categoria:</span><span class="value">${form.categoria_cnh}</span></div>
+                    <div class="row"><span class="label">Validade:</span><span class="value">${form.validade_cnh || "-"}</span></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">Dados Profissionais</div>
+                    <div class="row"><span class="label">Data Admissão:</span><span class="value">${form.data_admissao || "-"}</span></div>
+                    <div class="row"><span class="label">Status:</span><span class="value">${form.status}</span></div>
+                </div>
+                ${form.documentos_cnh?.length > 0 ? `
+                <div class="section docs">
+                    <div class="section-title">Documentos Anexados (${form.documentos_cnh.length})</div>
+                    <div class="doc-list">
+                        ${form.documentos_cnh.map(d => `<span class="doc-item">${d.nome}</span>`).join("")}
                     </div>
                 </div>
-                <div class="section">
-                    <div class="section-title">DADOS CNH</div>
-                    <div class="grid">
-                        <div class="field"><span class="label">Número CNH:</span> <span class="value">${form.cnh}</span></div>
-                        <div class="field"><span class="label">Categoria:</span> <span class="value">${form.categoria_cnh}</span></div>
-                        <div class="field"><span class="label">Validade:</span> <span class="value">${form.validade_cnh || "-"}</span></div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-title">DADOS PROFISSIONAIS</div>
-                    <div class="grid">
-                        <div class="field"><span class="label">Tipo Vínculo:</span> <span class="value">${form.tipo_vinculo === "funcionario" ? "Funcionário" : "Agregado"}</span></div>
-                        <div class="field"><span class="label">Data Admissão:</span> <span class="value">${form.data_admissao || "-"}</span></div>
-                        <div class="field"><span class="label">Status:</span> <span class="value">${form.status}</span></div>
-                    </div>
-                </div>
-                ${form.observacoes ? `
-                <div class="section">
-                    <div class="section-title">OBSERVAÇÕES</div>
-                    <p>${form.observacoes}</p>
-                </div>
-                ` : ""}
+                ` : ''}
             </body>
             </html>
         `);
@@ -144,7 +141,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
 
     return (
         <Card className="border-0 shadow-xl">
-            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
+            <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-amber-50">
                 <CardTitle className="flex items-center justify-between">
                     <span>{motorista ? "Editar Colaborador" : "Novo Colaborador"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -164,7 +161,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                                     <Camera className="w-8 h-8 text-slate-400" />
                                 )}
                             </div>
-                            <label className="absolute -bottom-1 -right-1 p-2 bg-sky-500 rounded-full cursor-pointer hover:bg-sky-600 transition-colors">
+                            <label className="absolute -bottom-1 -right-1 p-2 bg-orange-500 rounded-full cursor-pointer hover:bg-orange-600 transition-colors">
                                 <Upload className="w-4 h-4 text-white" />
                                 <input
                                     type="file"
@@ -178,7 +175,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-700">Foto do Colaborador</h3>
                             <p className="text-sm text-slate-500">Clique no ícone para enviar uma foto</p>
-                            {uploading && <p className="text-sm text-sky-600">Enviando...</p>}
+                            {uploading && <p className="text-sm text-orange-600">Enviando...</p>}
                         </div>
                     </div>
 
@@ -355,8 +352,8 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={handlePrintCadastro}>
-                            <Printer className="w-4 h-4 mr-2" />
+                        <Button type="button" variant="outline" onClick={() => handlePrintColaborador()}>
+                            <FileText className="w-4 h-4 mr-2" />
                             Imprimir
                         </Button>
                         <Button type="button" variant="outline" onClick={handleShareWhatsApp}>
@@ -364,7 +361,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                             WhatsApp
                         </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit" className="bg-sky-600 hover:bg-sky-700">
+                        <Button type="submit" className="bg-sky-500 hover:bg-sky-600">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                         </Button>
@@ -447,7 +444,7 @@ export default function Motoristas() {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl shadow-lg">
+                        <div className="p-3 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl shadow-lg">
                             <Users className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -457,7 +454,7 @@ export default function Motoristas() {
                     </div>
                     <Button 
                         onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-sky-500 to-cyan-600"
+                        className="bg-gradient-to-r from-sky-400 to-cyan-500"
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Novo Colaborador
@@ -496,7 +493,7 @@ export default function Motoristas() {
                                 {isLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12">
-                                            <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
+                                            <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (

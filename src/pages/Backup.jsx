@@ -5,10 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { 
-    Download, Upload, Database, FileJson, CheckCircle, 
-    AlertTriangle, Loader2, HardDrive
+    Download, Upload, Database, AlertTriangle, CheckCircle,
+    FileJson, Clock, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,7 +29,7 @@ const ENTITIES = [
 export default function Backup() {
     const [exporting, setExporting] = useState(false);
     const [importing, setImporting] = useState(false);
-    const [importResult, setImportResult] = useState(null);
+    const [importFile, setImportFile] = useState(null);
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user"],
@@ -43,8 +42,8 @@ export default function Backup() {
         setExporting(true);
         try {
             const backup = {
-                version: "1.0",
                 date: new Date().toISOString(),
+                version: "1.0",
                 data: {}
             };
 
@@ -53,6 +52,7 @@ export default function Backup() {
                     const data = await base44.entities[entity.name].list();
                     backup.data[entity.name] = data;
                 } catch (e) {
+                    console.warn(`Erro ao exportar ${entity.name}:`, e);
                     backup.data[entity.name] = [];
                 }
             }
@@ -62,76 +62,75 @@ export default function Backup() {
             const a = document.createElement("a");
             a.href = url;
             a.download = `backup_${format(new Date(), "yyyy-MM-dd_HH-mm")}.json`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
             toast.success("Backup exportado com sucesso!");
         } catch (error) {
             toast.error("Erro ao exportar backup");
+            console.error(error);
         }
         setExporting(false);
     };
 
-    const handleImportBackup = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleImportBackup = async () => {
+        if (!importFile) {
+            toast.error("Selecione um arquivo de backup");
+            return;
+        }
+
+        if (!confirm("ATENÇÃO: Isso irá adicionar todos os dados do backup ao sistema. Deseja continuar?")) {
+            return;
+        }
 
         setImporting(true);
-        setImportResult(null);
-
         try {
-            const text = await file.text();
+            const text = await importFile.text();
             const backup = JSON.parse(text);
 
-            if (!backup.version || !backup.data) {
+            if (!backup.data) {
                 throw new Error("Arquivo de backup inválido");
             }
 
-            const results = { success: [], errors: [] };
+            let totalImported = 0;
 
             for (const entity of ENTITIES) {
                 const entityData = backup.data[entity.name];
-                if (!entityData || entityData.length === 0) continue;
-
-                try {
-                    // Para cada registro, remover campos de sistema e criar novo
-                    for (const record of entityData) {
-                        const cleanRecord = { ...record };
-                        delete cleanRecord.id;
-                        delete cleanRecord.created_date;
-                        delete cleanRecord.updated_date;
-                        delete cleanRecord.created_by;
-
-                        await base44.entities[entity.name].create(cleanRecord);
+                if (entityData && Array.isArray(entityData) && entityData.length > 0) {
+                    for (const item of entityData) {
+                        try {
+                            // Remover campos do sistema
+                            const { id, created_date, updated_date, created_by, ...cleanData } = item;
+                            await base44.entities[entity.name].create(cleanData);
+                            totalImported++;
+                        } catch (e) {
+                            console.warn(`Erro ao importar item de ${entity.name}:`, e);
+                        }
                     }
-                    results.success.push({ entity: entity.label, count: entityData.length });
-                } catch (err) {
-                    results.errors.push({ entity: entity.label, error: err.message });
                 }
             }
 
-            setImportResult(results);
-            toast.success("Backup restaurado!");
+            toast.success(`Backup restaurado! ${totalImported} registros importados.`);
+            setImportFile(null);
         } catch (error) {
             toast.error("Erro ao importar backup: " + error.message);
+            console.error(error);
         }
-
         setImporting(false);
-        e.target.value = "";
     };
 
     if (!isAdmin) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
-                <div className="max-w-4xl mx-auto">
-                    <Card className="bg-white/80 border-0 shadow-lg">
-                        <CardContent className="p-12 text-center">
-                            <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-                            <h2 className="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
-                            <p className="text-slate-600">Apenas administradores podem acessar o backup.</p>
-                        </CardContent>
-                    </Card>
-                </div>
+            <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8 flex items-center justify-center">
+                <Card className="max-w-md bg-white/90 border-0 shadow-xl">
+                    <CardContent className="p-8 text-center">
+                        <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
+                        <p className="text-slate-500">Apenas administradores podem acessar o backup.</p>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
@@ -141,124 +140,133 @@ export default function Backup() {
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl shadow-lg">
+                    <div className="p-3 bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl shadow-lg">
                         <Database className="w-8 h-8 text-white" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold text-slate-800">Backup e Restauração</h1>
-                        <p className="text-slate-500">Exporte e importe dados do sistema</p>
+                        <p className="text-slate-500">Exporte ou restaure seus dados</p>
                     </div>
                 </div>
 
-                {/* Export */}
-                <Card className="bg-white/80 border-0 shadow-lg">
-                    <CardHeader className="border-b">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Download className="w-5 h-5 text-sky-600" />
-                            Exportar Backup
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <p className="text-slate-600 mb-4">
-                            Exporte todos os dados do sistema em um arquivo JSON. Este backup pode ser usado para restaurar os dados posteriormente.
-                        </p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {ENTITIES.map(e => (
-                                <Badge key={e.name} variant="outline" className="bg-sky-50 text-sky-700">
-                                    {e.label}
-                                </Badge>
-                            ))}
+                {/* Aviso */}
+                <Card className="bg-amber-50 border-amber-200 shadow-lg">
+                    <CardContent className="p-4 flex items-start gap-3">
+                        <AlertTriangle className="w-6 h-6 text-amber-600 mt-0.5" />
+                        <div>
+                            <p className="font-semibold text-amber-800">Importante</p>
+                            <p className="text-sm text-amber-700">
+                                Faça backups regularmente para evitar perda de dados. 
+                                A restauração irá ADICIONAR dados, não substituir os existentes.
+                            </p>
                         </div>
-                        <Button 
-                            onClick={handleExportBackup} 
-                            disabled={exporting}
-                            className="bg-sky-600 hover:bg-sky-700"
-                        >
-                            {exporting ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                                <Download className="w-4 h-4 mr-2" />
-                            )}
-                            {exporting ? "Exportando..." : "Exportar Backup"}
-                        </Button>
                     </CardContent>
                 </Card>
 
-                {/* Import */}
-                <Card className="bg-white/80 border-0 shadow-lg">
-                    <CardHeader className="border-b">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Upload className="w-5 h-5 text-emerald-600" />
-                            Restaurar Backup
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
-                                <div>
-                                    <p className="font-semibold text-amber-800">Atenção!</p>
-                                    <p className="text-sm text-amber-700">
-                                        A restauração irá adicionar os dados do backup ao sistema existente. 
-                                        Registros duplicados podem ser criados.
-                                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Exportar Backup */}
+                    <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+                        <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
+                            <CardTitle className="flex items-center gap-2">
+                                <Download className="w-5 h-5 text-sky-600" />
+                                Exportar Backup
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            <p className="text-slate-600 text-sm">
+                                Baixe uma cópia de todos os seus dados em formato JSON.
+                            </p>
+                            <div className="p-4 bg-sky-50 rounded-xl">
+                                <p className="font-medium text-sky-800 mb-2">Dados incluídos:</p>
+                                <div className="grid grid-cols-2 gap-1 text-sm text-sky-700">
+                                    {ENTITIES.map(e => (
+                                        <div key={e.name} className="flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" />
+                                            {e.label}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
+                            <Button 
+                                onClick={handleExportBackup}
+                                disabled={exporting}
+                                className="w-full bg-sky-500 hover:bg-sky-600"
+                            >
+                                {exporting ? (
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Download className="w-4 h-4 mr-2" />
+                                )}
+                                {exporting ? "Exportando..." : "Exportar Backup"}
+                            </Button>
+                        </CardContent>
+                    </Card>
 
-                        <div className="space-y-4">
-                            <div>
-                                <Label>Selecione o arquivo de backup</Label>
+                    {/* Restaurar Backup */}
+                    <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+                        <CardHeader className="border-b bg-gradient-to-r from-emerald-50 to-teal-50">
+                            <CardTitle className="flex items-center gap-2">
+                                <Upload className="w-5 h-5 text-emerald-600" />
+                                Restaurar Backup
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            <p className="text-slate-600 text-sm">
+                                Importe um arquivo de backup JSON para restaurar seus dados.
+                            </p>
+                            <div className="space-y-2">
+                                <Label>Selecionar arquivo de backup</Label>
                                 <Input
                                     type="file"
                                     accept=".json"
-                                    onChange={handleImportBackup}
-                                    disabled={importing}
-                                    className="mt-2"
+                                    onChange={(e) => setImportFile(e.target.files[0])}
                                 />
+                                {importFile && (
+                                    <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg text-sm">
+                                        <FileJson className="w-4 h-4 text-emerald-600" />
+                                        <span className="text-emerald-700">{importFile.name}</span>
+                                    </div>
+                                )}
                             </div>
+                            <Button 
+                                onClick={handleImportBackup}
+                                disabled={importing || !importFile}
+                                variant="outline"
+                                className="w-full border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                            >
+                                {importing ? (
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Upload className="w-4 h-4 mr-2" />
+                                )}
+                                {importing ? "Restaurando..." : "Restaurar Backup"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                            {importing && (
-                                <div className="flex items-center gap-2 text-sky-600">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>Restaurando backup...</span>
-                                </div>
-                            )}
-
-                            {importResult && (
-                                <div className="space-y-3">
-                                    {importResult.success.length > 0 && (
-                                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                                            <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-2">
-                                                <CheckCircle className="w-4 h-4" />
-                                                Restaurados com sucesso:
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {importResult.success.map((s, i) => (
-                                                    <Badge key={i} className="bg-emerald-100 text-emerald-700">
-                                                        {s.entity}: {s.count}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {importResult.errors.length > 0 && (
-                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                            <div className="flex items-center gap-2 text-red-700 font-semibold mb-2">
-                                                <AlertTriangle className="w-4 h-4" />
-                                                Erros:
-                                            </div>
-                                            <div className="space-y-1">
-                                                {importResult.errors.map((e, i) => (
-                                                    <p key={i} className="text-sm text-red-600">
-                                                        {e.entity}: {e.error}
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                {/* Dicas */}
+                <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Dicas de Backup</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-4 bg-sky-50 rounded-xl">
+                                <Clock className="w-8 h-8 text-sky-600 mb-2" />
+                                <h3 className="font-semibold text-sky-800">Faça backup semanal</h3>
+                                <p className="text-sm text-sky-600">Mantenha backups regulares para segurança.</p>
+                            </div>
+                            <div className="p-4 bg-emerald-50 rounded-xl">
+                                <Download className="w-8 h-8 text-emerald-600 mb-2" />
+                                <h3 className="font-semibold text-emerald-800">Guarde em local seguro</h3>
+                                <p className="text-sm text-emerald-600">Salve os backups em nuvem ou HD externo.</p>
+                            </div>
+                            <div className="p-4 bg-violet-50 rounded-xl">
+                                <Database className="w-8 h-8 text-violet-600 mb-2" />
+                                <h3 className="font-semibold text-violet-800">Teste a restauração</h3>
+                                <p className="text-sm text-violet-600">Verifique se os backups funcionam.</p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

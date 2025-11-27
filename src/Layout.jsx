@@ -32,8 +32,8 @@ export default function Layout({ children, currentPageName }) {
         { name: "Performance", href: "RelatorioMotoristas", icon: Award },
         { name: "Configurações", href: "Configuracoes", icon: Settings },
         { name: "Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
-        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
-        { name: "Backup", href: "Backup", icon: FileText }
+        { name: "Backup", href: "Backup", icon: LayoutGrid },
+        { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid }
     ];
 
     const NavLinks = ({ onClick }) => (
@@ -70,7 +70,7 @@ export default function Layout({ children, currentPageName }) {
     return (
         <div className="min-h-screen bg-slate-100">
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-sky-900 via-sky-800 to-sky-900 shadow-xl z-40">
+            <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-sky-600 via-sky-700 to-sky-800 shadow-xl z-40">
                 <div className="p-6 border-b border-white/10">
                     <Link to={createPageUrl("Home")} className="flex items-center gap-3">
                         <div className="p-2 bg-blue-600 rounded-xl">
@@ -88,7 +88,7 @@ export default function Layout({ children, currentPageName }) {
             </aside>
 
             {/* Mobile Header */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-sky-900 to-sky-800 shadow-lg z-40 flex items-center justify-between px-4">
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-sky-600 to-sky-700 shadow-lg z-40 flex items-center justify-between px-4">
                 <Link to={createPageUrl("Home")} className="flex items-center gap-2">
                     <div className="p-1.5 bg-blue-600 rounded-lg">
                         <Truck className="w-5 h-5 text-white" />
@@ -101,7 +101,7 @@ export default function Layout({ children, currentPageName }) {
                             <Menu className="w-6 h-6" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-72 bg-gradient-to-b from-sky-900 to-sky-800 border-0 p-0">
+                    <SheetContent side="left" className="w-72 bg-gradient-to-b from-sky-600 to-sky-800 border-0 p-0">
                         <div className="p-6 border-b border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-blue-600 rounded-xl">

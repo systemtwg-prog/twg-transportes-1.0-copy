@@ -98,6 +98,72 @@ export default function NotasFiscais() {
         }
     };
 
+    const handleProcessPaste = async () => {
+        if (!pasteText.trim()) return;
+        
+        setProcessingPaste(true);
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise o texto abaixo e extraia as informações de notas fiscais. 
+                
+Texto colado:
+${pasteText}
+
+Extraia as seguintes informações de cada nota fiscal encontrada:
+- numero_nf: número da nota fiscal
+- remetente: nome do remetente
+- destinatario: nome do destinatário  
+- peso: peso da carga
+- volume: quantidade de volumes
+- transportadora: nome da transportadora`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        notas: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    numero_nf: { type: "string" },
+                                    remetente: { type: "string" },
+                                    destinatario: { type: "string" },
+                                    peso: { type: "string" },
+                                    volume: { type: "string" },
+                                    transportadora: { type: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (result?.notas && result.notas.length > 0) {
+                let importados = 0;
+                for (const nota of result.notas) {
+                    if (nota.numero_nf || nota.destinatario) {
+                        await base44.entities.NotaFiscal.create({
+                            ...nota,
+                            data: format(new Date(), "yyyy-MM-dd")
+                        });
+                        importados++;
+                    }
+                }
+                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+                toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s) com sucesso!`);
+                setShowPasteForm(false);
+                setPasteText("");
+            } else {
+                toast.error("Não foi possível identificar notas fiscais no texto.");
+            }
+        } catch (error) {
+            console.error("Erro ao processar texto:", error);
+            toast.error("Erro ao processar texto. Tente novamente.");
+        }
+        
+        setProcessingPaste(false);
+    };
+
     const handleImportFile = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;

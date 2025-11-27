@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
@@ -107,7 +108,9 @@ function FlipbookViewer({ files, onClose }) {
 export default function ComprovantesInternos() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [search, setSearch] = useState("");
+    const [filterData, setFilterData] = useState("");
+    const [filterNF, setFilterNF] = useState("");
+    const [filterEmpresa, setFilterEmpresa] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
@@ -119,12 +122,16 @@ export default function ComprovantesInternos() {
 
     const [form, setForm] = useState({
         nota_fiscal: "",
+        empresa: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         texto_extraido: "",
         romaneio_id: "",
         observacoes: ""
     });
+
+    // Lista de empresas únicas
+    const empresasUnicas = [...new Set(comprovantes.map(c => c.empresa).filter(Boolean))];
 
 
 
@@ -154,6 +161,7 @@ export default function ComprovantesInternos() {
     const resetForm = () => {
         setForm({
             nota_fiscal: "",
+            empresa: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             texto_extraido: "",
@@ -240,10 +248,12 @@ export default function ComprovantesInternos() {
         }
     };
 
-    const filtered = comprovantes.filter(c =>
-        c.nota_fiscal?.toLowerCase().includes(search.toLowerCase()) ||
-        c.texto_extraido?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = comprovantes.filter(c => {
+        const matchData = !filterData || c.data === filterData;
+        const matchNF = !filterNF || c.nota_fiscal?.toLowerCase().includes(filterNF.toLowerCase());
+        const matchEmpresa = !filterEmpresa || c.empresa === filterEmpresa;
+        return matchData && matchNF && matchEmpresa;
+    });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
@@ -268,17 +278,72 @@ export default function ComprovantesInternos() {
                     </Button>
                 </div>
 
-                {/* Search */}
+                {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <Input
-                                placeholder="Buscar por nota fiscal..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 bg-white"
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" /> Filtrar por Data
+                                </Label>
+                                <div className="flex gap-1">
+                                    <Input
+                                        type="date"
+                                        value={filterData}
+                                        onChange={(e) => setFilterData(e.target.value)}
+                                        className="bg-white"
+                                    />
+                                    {filterData && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterData("")}>
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <FileText className="w-3 h-3" /> Filtrar por Nota Fiscal
+                                </Label>
+                                <div className="flex gap-1">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input
+                                            placeholder="Número da NF..."
+                                            value={filterNF}
+                                            onChange={(e) => setFilterNF(e.target.value)}
+                                            className="pl-9 bg-white"
+                                        />
+                                    </div>
+                                    {filterNF && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterNF("")}>
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3" /> Filtrar por Empresa
+                                </Label>
+                                <div className="flex gap-1">
+                                    <Select value={filterEmpresa} onValueChange={setFilterEmpresa}>
+                                        <SelectTrigger className="bg-white">
+                                            <SelectValue placeholder="Todas as empresas" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={null}>Todas as empresas</SelectItem>
+                                            {empresasUnicas.map(emp => (
+                                                <SelectItem key={emp} value={emp}>{emp}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {filterEmpresa && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterEmpresa("")}>
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -301,6 +366,9 @@ export default function ComprovantesInternos() {
                                     <div className="flex items-start justify-between mb-3">
                                         <div>
                                             <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                            {comprovante.empresa && (
+                                                <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                            )}
                                             <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
                                         </div>
                                         <Badge variant="outline">
@@ -394,14 +462,28 @@ export default function ComprovantesInternos() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Data *</Label>
+                                <Label>Empresa</Label>
                                 <Input
-                                    type="date"
-                                    value={form.data}
-                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                    required
+                                    value={form.empresa}
+                                    onChange={(e) => setForm({ ...form, empresa: e.target.value })}
+                                    placeholder="Nome da empresa"
+                                    list="empresas-list"
                                 />
+                                <datalist id="empresas-list">
+                                    {empresasUnicas.map(emp => (
+                                        <option key={emp} value={emp} />
+                                    ))}
+                                </datalist>
                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Data *</Label>
+                            <Input
+                                type="date"
+                                value={form.data}
+                                onChange={(e) => setForm({ ...form, data: e.target.value })}
+                                required
+                            />
                         </div>
 
                         {/* Upload de arquivos */}

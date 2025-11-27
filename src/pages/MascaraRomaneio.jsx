@@ -609,6 +609,105 @@ export default function MascaraRomaneio() {
                     </CardContent>
                 </Card>
 
+                {/* Dashboard por Placa */}
+                {notasSelecionadas.length > 0 && (
+                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                                Dashboard por Placa
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-2">
+                            {/* Resumo Geral */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                                        <FileText className="w-4 h-4" />
+                                        Total Notas
+                                    </div>
+                                    <p className="text-2xl font-bold text-indigo-600">{dashboardPorPlaca.totalNotas}</p>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                                        <Package className="w-4 h-4" />
+                                        Total Entregas
+                                    </div>
+                                    <p className="text-2xl font-bold text-emerald-600">{dashboardPorPlaca.totalEntregasGeral}</p>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                                        <Scale className="w-4 h-4" />
+                                        Peso Total
+                                    </div>
+                                    <p className="text-2xl font-bold text-orange-600">{dashboardPorPlaca.pesoGeral.toFixed(2)} kg</p>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                                        <Car className="w-4 h-4" />
+                                        Veículos
+                                    </div>
+                                    <p className="text-2xl font-bold text-purple-600">{Object.keys(dashboardPorPlaca.porPlaca).length}</p>
+                                </div>
+                            </div>
+
+                            {/* Detalhamento por Placa */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {Object.entries(dashboardPorPlaca.porPlaca).map(([placa, dados]) => (
+                                    <div key={placa} className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Car className="w-5 h-5 text-indigo-600" />
+                                                <span className="font-bold text-lg text-indigo-700">
+                                                    {placa === "SEM_PLACA" ? "Sem Placa" : placa}
+                                                </span>
+                                            </div>
+                                            <Badge className="bg-indigo-100 text-indigo-700">
+                                                {dados.notas.length} NF{dados.notas.length > 1 ? "s" : ""}
+                                            </Badge>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-500 flex items-center gap-1">
+                                                    <Package className="w-3 h-3" /> Entregas
+                                                </span>
+                                                <span className="font-semibold text-emerald-600">
+                                                    {dados.transportadoras.size || dados.notas.length}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-500 flex items-center gap-1">
+                                                    <Scale className="w-3 h-3" /> Peso
+                                                </span>
+                                                <span className="font-semibold text-orange-600">
+                                                    {dados.pesoTotal.toFixed(2)} kg
+                                                </span>
+                                            </div>
+                                            {dados.transportadoras.size > 0 && (
+                                                <div className="pt-2 border-t">
+                                                    <span className="text-xs text-slate-400">Transportadoras:</span>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {Array.from(dados.transportadoras).slice(0, 3).map((transp, i) => (
+                                                            <Badge key={i} variant="outline" className="text-xs truncate max-w-[100px]">
+                                                                {transp}
+                                                            </Badge>
+                                                        ))}
+                                                        {dados.transportadoras.size > 3 && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                +{dados.transportadoras.size - 3}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Preview */}
                 {notasSelecionadas.length > 0 && (
                     <Card className="bg-white/80 border-0 shadow-lg">

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -132,22 +132,24 @@ export default function ColetasDiarias() {
                         @page { margin: 5mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 5px; font-size: 10px; }
-                    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #0ea5e9; }
-                    .logo { max-height: 40px; max-width: 100px; }
+                    body { font-family: Arial, sans-serif; margin: 8px; font-size: 14px; }
+                    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #0ea5e9; }
+                    .logo { max-height: 60px; max-width: 120px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 12px; font-weight: bold; color: #0369a1; margin: 0; }
-                    .company-details { font-size: 8px; color: #64748b; margin: 1px 0; }
-                    .title { font-size: 12px; font-weight: bold; text-align: center; margin: 5px 0; color: #0369a1; }
-                    .date-info { text-align: right; font-size: 9px; color: #64748b; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-                    th { background: #0ea5e9; color: white; padding: 4px; text-align: left; border: 1px solid #0284c7; font-weight: bold; font-size: 9px; }
-                    td { padding: 4px; border: 1px solid #e2e8f0; vertical-align: top; font-size: 9px; }
-                    .num { width: 25px; text-align: center; font-weight: bold; background: #f0f9ff; }
-                    .status { text-align: center; width: 60px; }
-                    .carga { text-align: center; width: 70px; }
-                    .empty-row { height: 35px; }
+                    .company-name { font-size: 18px; font-weight: bold; color: #0369a1; margin: 0; }
+                    .company-details { font-size: 12px; color: #64748b; margin: 2px 0; }
+                    .title { font-size: 18px; font-weight: bold; text-align: center; margin: 10px 0; color: #0369a1; }
+                    .date-info { text-align: right; font-size: 14px; color: #64748b; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th { background: #0ea5e9; color: white; padding: 8px; text-align: left; border: 1px solid #0284c7; font-weight: bold; font-size: 14px; }
+                    td { padding: 8px; border: 1px solid #e2e8f0; vertical-align: top; font-size: 14px; line-height: 1.4; }
+                    .num { width: 40px; text-align: center; font-weight: bold; background: #f0f9ff; font-size: 16px; }
+                    .status { text-align: center; width: 80px; font-size: 18px; }
+                    .carga { text-align: center; width: 100px; }
+                    .empty-row { height: 45px; }
                     tr:nth-child(even) { background: #f8fafc; }
+                    .priority { background: #fef3c7 !important; }
+                    strong { font-size: 15px; }
                 </style>
             </head>
             <body>
@@ -176,15 +178,15 @@ export default function ColetasDiarias() {
                         ${coletasParaImprimir.map((c, idx) => {
                             const endereco = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
                             return `
-                                <tr>
+                                <tr class="${c.prioridade ? 'priority' : ''}">
                                     <td class="num">${idx + 1}</td>
                                     <td>
-                                        <strong>${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}</strong><br>
+                                        <strong>${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}</strong>${c.prioridade ? ' ⚡' : ''}<br>
                                         ${endereco ? endereco + "<br>" : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "- " + c.remetente_horario : ""}
-                                        ${c.recado ? `<br><em>${c.recado}</em>` : ""}
+                                        ${c.recado ? `<br><em>📝 ${c.recado}</em>` : ""}
                                     </td>
-                                    <td class="carga">${c.volume || "-"}/${c.peso || "-"}<br>NF${c.nfe || "-"}</td>
-                                    <td class="status">${c.status === 'realizado' ? '✓' : c.status === 'cancelado' ? '✗' : '○'}</td>
+                                    <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
+                                    <td class="status">${c.status === 'realizado' ? '✅' : c.status === 'cancelado' ? '❌' : '⬚'}</td>
                                 </tr>
                             `;
                         }).join("")}
@@ -196,7 +198,32 @@ export default function ColetasDiarias() {
         `);
         
         winPrint.document.close();
-        };
+    };
+
+    const handleShare = () => {
+        const coletasParaCompartilhar = activeTab === "pendentes" ? coletasPendentes : coletasRealizadas;
+        const dataLabel = dataFiltro ? formatDate(dataFiltro) : "Todas as datas";
+        
+        let texto = `*${config.nome_empresa || "COLETAS"}*\n`;
+        texto += `📅 ${dataLabel}\n`;
+        texto += `📦 ${coletasParaCompartilhar.length} coleta(s) ${activeTab === "pendentes" ? "pendentes" : "realizadas"}\n\n`;
+        
+        coletasParaCompartilhar.forEach((c, idx) => {
+            const endereco = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
+            texto += `*${idx + 1}.* ${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}${c.prioridade ? ' ⚡' : ''}\n`;
+            if (endereco) texto += `📍 ${endereco}\n`;
+            if (c.remetente_telefone) texto += `📞 ${c.remetente_telefone}`;
+            if (c.remetente_horario) texto += ` - ⏰ ${c.remetente_horario}`;
+            texto += `\n`;
+            if (c.volume || c.peso) texto += `📦 ${c.volume || "-"} / ${c.peso || "-"}`;
+            if (c.nfe) texto += ` | NF: ${c.nfe}`;
+            texto += `\n`;
+            if (c.recado) texto += `📝 ${c.recado}\n`;
+            texto += `\n`;
+        });
+        
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    };
 
     const renderColetaRow = (coleta, index) => {
         const endereco = [
@@ -310,10 +337,16 @@ export default function ColetasDiarias() {
                             <p className="text-slate-500">Visualize coletas por data</p>
                         </div>
                     </div>
-                    <Button onClick={handlePrint} className="bg-sky-500 hover:bg-sky-600">
-                        <Printer className="w-4 h-4 mr-2" />
-                        Imprimir
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={handleShare} variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Compartilhar
+                        </Button>
+                        <Button onClick={handlePrint} className="bg-sky-500 hover:bg-sky-600">
+                            <Printer className="w-4 h-4 mr-2" />
+                            Imprimir
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Filtros */}

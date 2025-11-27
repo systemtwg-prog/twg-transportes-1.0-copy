@@ -91,6 +91,10 @@ export default function ColetasDiarias() {
     const handlePrint = () => {
         const coletasParaImprimir = activeTab === "pendentes" ? coletasPendentes : coletasRealizadas;
         const winPrint = window.open('', '_blank', 'width=900,height=650');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
         
         // Calcular linhas em branco para preencher a página
         const linhasUsadas = coletasParaImprimir.length;

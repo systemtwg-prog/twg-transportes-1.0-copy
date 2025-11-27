@@ -14,6 +14,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
         codigo: "",
         tipo: "remetente",
         razao_social: "",
+        nome_fantasia: "",
         cnpj_cpf: "",
         contato: "",
         telefone: "",
@@ -37,6 +38,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                 codigo: cliente.codigo || "",
                 tipo: cliente.tipo || "remetente",
                 razao_social: cliente.razao_social || "",
+                nome_fantasia: cliente.nome_fantasia || "",
                 cnpj_cpf: cliente.cnpj_cpf || "",
                 contato: cliente.contato || "",
                 telefone: cliente.telefone || "",
@@ -115,14 +117,24 @@ export default function ClienteForm({ cliente, onSubmit, onCancel }) {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Razão Social / Nome *</Label>
-                        <Input
-                            value={form.razao_social}
-                            onChange={(e) => setForm({ ...form, razao_social: e.target.value })}
-                            placeholder="Nome completo ou razão social"
-                            required
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Razão Social / Nome *</Label>
+                            <Input
+                                value={form.razao_social}
+                                onChange={(e) => setForm({ ...form, razao_social: e.target.value })}
+                                placeholder="Nome completo ou razão social"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Nome Fantasia</Label>
+                            <Input
+                                value={form.nome_fantasia}
+                                onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })}
+                                placeholder="Nome fantasia"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

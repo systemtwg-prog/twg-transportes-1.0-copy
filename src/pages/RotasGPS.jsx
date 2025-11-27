@@ -1,19 +1,24 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Navigation, MapPin, Truck, Package, ExternalLink, 
-    Clock, CheckCircle, Route
+    Trash2, Plus, Route
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function RotasGPS() {
     const [selectedRomaneio, setSelectedRomaneio] = useState(null);
+    const [showAddDestino, setShowAddDestino] = useState(false);
+    const [sourceType, setSourceType] = useState("coleta");
+    const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user"],
@@ -42,6 +47,28 @@ export default function RotasGPS() {
         queryFn: () => base44.entities.Cliente.list()
     });
 
+    const { data: coletasDiarias = [] } = useQuery({
+        queryKey: ["coletas-diarias-rotas"],
+        queryFn: () => base44.entities.ColetaDiaria.filter({ status: "pendente" })
+    });
+
+    const deleteRomaneioMutation = useMutation({
+        mutationFn: (id) => base44.entities.Romaneio.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["romaneios-rotas"] });
+            setSelectedRomaneio(null);
+            toast.success("Romaneio excluído");
+        }
+    });
+
+    const updateRomaneioMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Romaneio.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["romaneios-rotas"] });
+            toast.success("Destino adicionado");
+        }
+    });
+
     // Filtrar romaneios para o colaborador
     let romaneiosFiltrados = romaneios;
     if (!isAdmin && colaboradorVinculado) {
@@ -67,7 +94,6 @@ export default function RotasGPS() {
         if (!romaneio?.notas_fiscais) return [];
         
         return romaneio.notas_fiscais.map(nf => {
-            // Tentar encontrar o cliente pelo nome
             const cliente = clientes.find(c => 
                 c.razao_social?.toLowerCase().includes(nf.destinatario?.toLowerCase()) ||
                 nf.destinatario?.toLowerCase().includes(c.razao_social?.toLowerCase())
@@ -75,42 +101,37 @@ export default function RotasGPS() {
             
             return {
                 ...nf,
-                endereco: cliente?.endereco || "",
-                cidade: cliente?.cidade || "",
+                endereco: nf.endereco || cliente?.endereco || "",
+                cidade: nf.cidade || cliente?.cidade || "",
                 bairro: cliente?.bairro || "",
                 cep: cliente?.cep || ""
             };
         });
     };
 
-    // Gerar link para Waze com múltiplos destinos
     const abrirRotaWaze = (destinos) => {
         if (destinos.length === 0) return;
         
-        // Pegar o primeiro destino com endereço
         const destinoComEndereco = destinos.find(d => d.endereco || d.cidade);
         if (destinoComEndereco) {
             const enderecoCompleto = [
                 destinoComEndereco.endereco,
                 destinoComEndereco.bairro,
-                destinoComEndereco.cidade,
-                destinoComEndereco.cep
+                destinoComEndereco.cidade
             ].filter(Boolean).join(", ");
             
             window.open(`https://waze.com/ul?q=${encodeURIComponent(enderecoCompleto)}&navigate=yes`, "_blank");
         }
     };
 
-    // Gerar link para Google Maps com múltiplos destinos
     const abrirRotaGoogleMaps = (destinos) => {
         if (destinos.length === 0) return;
         
         const destinosComEndereco = destinos.filter(d => d.endereco || d.cidade);
         if (destinosComEndereco.length === 0) return;
 
-        // Google Maps aceita múltiplos waypoints
         const enderecos = destinosComEndereco.map(d => 
-            encodeURIComponent([d.endereco, d.bairro, d.cidade, d.cep].filter(Boolean).join(", "))
+            encodeURIComponent([d.endereco, d.bairro, d.cidade].filter(Boolean).join(", "))
         );
 
         if (enderecos.length === 1) {
@@ -120,6 +141,50 @@ export default function RotasGPS() {
             const waypoints = enderecos.join("|");
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${destino}&waypoints=${waypoints}`, "_blank");
         }
+    };
+
+    const handleDeleteRomaneio = (romaneio) => {
+        if (confirm(`Excluir romaneio de ${formatDate(romaneio.data)}?`)) {
+            deleteRomaneioMutation.mutate(romaneio.id);
+        }
+    };
+
+    const handleAddDestino = (item) => {
+        if (!selectedRomaneio) return;
+
+        let novaNotaFiscal;
+        if (sourceType === "coleta") {
+            novaNotaFiscal = {
+                numero_nf: item.nfe || "",
+                destinatario: item.destinatario_nome || "",
+                volume: item.volume || "",
+                endereco: item.remetente_endereco || "",
+                cidade: item.remetente_cidade || ""
+            };
+        } else {
+            // Do romaneio
+            novaNotaFiscal = {
+                numero_nf: item.numero_nf || "",
+                destinatario: item.destinatario || "",
+                volume: item.volume || "",
+                endereco: item.endereco || "",
+                cidade: item.cidade || ""
+            };
+        }
+
+        const notasAtuais = selectedRomaneio.notas_fiscais || [];
+        updateRomaneioMutation.mutate({
+            id: selectedRomaneio.id,
+            data: { notas_fiscais: [...notasAtuais, novaNotaFiscal] }
+        });
+
+        // Atualizar estado local
+        setSelectedRomaneio({
+            ...selectedRomaneio,
+            notas_fiscais: [...notasAtuais, novaNotaFiscal]
+        });
+        
+        setShowAddDestino(false);
     };
 
     const statusColors = {
@@ -187,13 +252,22 @@ export default function RotasGPS() {
                                     </CardTitle>
                                     <p className="text-sm text-slate-500 mt-1">
                                         {selectedRomaneio.motorista_nome} • {selectedRomaneio.placa}
-                                        {selectedRomaneio.transportadora && ` • ${selectedRomaneio.transportadora}`}
                                     </p>
                                 </div>
-                                <Badge className={statusColors[selectedRomaneio.status]}>
-                                    {selectedRomaneio.status === "pendente" ? "Pendente" : 
-                                     selectedRomaneio.status === "coletado" ? "Coletado" : "Entregue"}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                    <Badge className={statusColors[selectedRomaneio.status]}>
+                                        {selectedRomaneio.status === "pendente" ? "Pendente" : 
+                                         selectedRomaneio.status === "coletado" ? "Coletado" : "Entregue"}
+                                    </Badge>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteRomaneio(selectedRomaneio)}
+                                        className="text-red-600 hover:bg-red-50"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -217,6 +291,16 @@ export default function RotasGPS() {
                                     <ExternalLink className="w-4 h-4 ml-2" />
                                 </Button>
                             </div>
+
+                            {/* Adicionar Destino */}
+                            <Button 
+                                onClick={() => setShowAddDestino(true)}
+                                variant="outline"
+                                className="w-full mb-4 border-dashed border-green-400 text-green-600 hover:bg-green-50"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Adicionar Endereço
+                            </Button>
 
                             {/* Lista de Destinos */}
                             <div className="space-y-3">
@@ -250,7 +334,7 @@ export default function RotasGPS() {
                                                     size="sm" 
                                                     variant="ghost"
                                                     onClick={() => {
-                                                        const endereco = [dest.endereco, dest.bairro, dest.cidade, dest.cep].filter(Boolean).join(", ");
+                                                        const endereco = [dest.endereco, dest.bairro, dest.cidade].filter(Boolean).join(", ");
                                                         window.open(`https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`, "_blank");
                                                     }}
                                                 >
@@ -293,11 +377,10 @@ export default function RotasGPS() {
                                     {romaneiosAtivos.map((r) => (
                                         <div 
                                             key={r.id}
-                                            onClick={() => setSelectedRomaneio(r)}
                                             className="p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:border-green-500 hover:shadow-md transition-all"
                                         >
                                             <div className="flex items-center justify-between">
-                                                <div>
+                                                <div onClick={() => setSelectedRomaneio(r)} className="flex-1">
                                                     <p className="font-medium text-slate-800">{formatDate(r.data)}</p>
                                                     <p className="text-sm text-slate-500">
                                                         {r.motorista_nome} • {r.placa}
@@ -310,6 +393,17 @@ export default function RotasGPS() {
                                                     <Badge className={statusColors[r.status]}>
                                                         {r.status === "pendente" ? "Pendente" : "Coletado"}
                                                     </Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteRomaneio(r);
+                                                        }}
+                                                        className="text-red-600 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -320,6 +414,73 @@ export default function RotasGPS() {
                     </Card>
                 )}
             </div>
+
+            {/* Dialog para adicionar destino */}
+            <Dialog open={showAddDestino} onOpenChange={setShowAddDestino}>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Adicionar Endereço</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="flex gap-2">
+                            <Button
+                                variant={sourceType === "coleta" ? "default" : "outline"}
+                                onClick={() => setSourceType("coleta")}
+                                className="flex-1"
+                            >
+                                Coletas Ativas
+                            </Button>
+                            <Button
+                                variant={sourceType === "romaneio" ? "default" : "outline"}
+                                onClick={() => setSourceType("romaneio")}
+                                className="flex-1"
+                            >
+                                Romaneios
+                            </Button>
+                        </div>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {sourceType === "coleta" ? (
+                                coletasDiarias.length === 0 ? (
+                                    <p className="text-center text-slate-500 py-4">Nenhuma coleta ativa</p>
+                                ) : (
+                                    coletasDiarias.map((coleta) => (
+                                        <div
+                                            key={coleta.id}
+                                            onClick={() => handleAddDestino(coleta)}
+                                            className="p-3 bg-slate-50 rounded-lg border hover:border-green-500 cursor-pointer"
+                                        >
+                                            <p className="font-medium">{coleta.remetente_nome}</p>
+                                            <p className="text-sm text-slate-500">
+                                                {coleta.remetente_endereco} - {coleta.remetente_cidade}
+                                            </p>
+                                        </div>
+                                    ))
+                                )
+                            ) : (
+                                romaneios.flatMap(r => r.notas_fiscais || []).length === 0 ? (
+                                    <p className="text-center text-slate-500 py-4">Nenhuma nota fiscal</p>
+                                ) : (
+                                    romaneios.flatMap((r, ri) => 
+                                        (r.notas_fiscais || []).map((nf, ni) => (
+                                            <div
+                                                key={`${ri}-${ni}`}
+                                                onClick={() => handleAddDestino(nf)}
+                                                className="p-3 bg-slate-50 rounded-lg border hover:border-green-500 cursor-pointer"
+                                            >
+                                                <p className="font-medium">{nf.destinatario}</p>
+                                                <p className="text-sm text-slate-500">
+                                                    NF: {nf.numero_nf} - {nf.endereco || nf.cidade}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )
+                                )
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -329,7 +329,12 @@ export default function Clientes() {
                                                         {cliente.codigo || "-"}
                                                     </TableCell>
                                                     <TableCell className="font-medium text-slate-800">
-                                                        {cliente.razao_social}
+                                                        <div>
+                                                            <p>{cliente.razao_social}</p>
+                                                            {cliente.nome_fantasia && (
+                                                                <p className="text-xs text-slate-500">{cliente.nome_fantasia}</p>
+                                                            )}
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="text-slate-600 font-mono text-sm">
                                                         {cliente.cnpj_cpf || "-"}

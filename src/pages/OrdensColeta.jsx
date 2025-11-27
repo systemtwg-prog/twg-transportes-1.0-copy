@@ -248,7 +248,7 @@ Horário: ${ordem.horario || "-"}
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8 print:p-0 print:bg-white">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 md:p-8 print:p-0 print:bg-white">
             <div className="max-w-7xl mx-auto space-y-6 print:hidden">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -263,7 +263,7 @@ Horário: ${ordem.horario || "-"}
                     </div>
                     <Button 
                         onClick={() => { setEditingOrdem(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-lg"
+                        className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg"
                     >
                         <Plus className="w-5 h-5 mr-2" />
                         Nova Ordem

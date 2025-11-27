@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Receipt, Camera, Trash2, Pencil, Eye, 
-    Upload, Search, CheckCircle, Clock
+    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AudioRecorder from "@/components/shared/AudioRecorder";
 
 export default function NotaDeposito() {
     const [showForm, setShowForm] = useState(false);
@@ -245,8 +246,23 @@ export default function NotaDeposito() {
 
             {/* View Image */}
             {viewImage && (
-                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setViewImage(null)}>
-                    <img src={viewImage} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+                <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
+                    <div className="flex items-center justify-between p-4 bg-black/50">
+                        <span className="text-white font-medium">Visualização</span>
+                        <div className="flex items-center gap-2">
+                            <a href={viewImage} download target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                                    <Download className="w-5 h-5" />
+                                </Button>
+                            </a>
+                            <Button variant="ghost" size="icon" onClick={() => setViewImage(null)} className="text-white hover:bg-white/20">
+                                <X className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center p-4" onClick={() => setViewImage(null)}>
+                        <img src={viewImage} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+                    </div>
                 </div>
             )}
 
@@ -260,15 +276,6 @@ export default function NotaDeposito() {
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Título</Label>
-                            <Input
-                                value={form.titulo}
-                                onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                                placeholder="Descrição da nota"
-                            />
-                        </div>
-
                         <div className="space-y-2">
                             <Label>Data *</Label>
                             <Input
@@ -301,7 +308,18 @@ export default function NotaDeposito() {
                                 </div>
                             )}
                             {form.foto_url && (
-                                <img src={form.foto_url} alt="" className="w-full h-40 object-cover rounded-lg border" />
+                                <div className="relative">
+                                    <img src={form.foto_url} alt="" className="w-full h-40 object-cover rounded-lg border" />
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                                        onClick={() => setViewImage(form.foto_url)}
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             )}
                         </div>
 
@@ -311,15 +329,24 @@ export default function NotaDeposito() {
                                 value={form.observacoes}
                                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
                                 rows={3}
+                                placeholder="Digite suas observações ou grave um áudio..."
+                            />
+                            <AudioRecorder 
+                                onRecordingComplete={async (blob, url) => {
+                                    const file = new File([blob], "audio_deposito.webm", { type: "audio/webm" });
+                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                    setForm(prev => ({
+                                        ...prev,
+                                        observacoes: (prev.observacoes || "") + "\n[Áudio: " + file_url + "]"
+                                    }));
+                                }}
                             />
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t">
-                            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
-                            <Button type="submit" className="bg-violet-600 hover:bg-violet-700">
-                                {editing ? "Salvar" : "Criar Nota"}
-                            </Button>
-                        </div>
+                        <Button type="submit" className="w-full h-14 text-lg bg-violet-600 hover:bg-violet-700">
+                            <Save className="w-6 h-6 mr-2" />
+                            {editing ? "Salvar Nota" : "Salvar Depósito"}
+                        </Button>
                     </form>
                 </DialogContent>
             </Dialog>

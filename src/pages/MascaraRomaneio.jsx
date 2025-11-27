@@ -541,16 +541,18 @@ export default function MascaraRomaneio() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
-                                    <Car className="w-4 h-4" /> Filtrar por Placa
+                                    <Car className="w-4 h-4" /> Veículo (aplica em todos)
                                 </Label>
-                                <Select value={filterPlaca} onValueChange={setFilterPlaca}>
+                                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
                                     <SelectTrigger className="bg-white">
-                                        <SelectValue placeholder="Todas as placas" />
+                                        <SelectValue placeholder="Selecione o veículo..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Todas as placas</SelectItem>
-                                        {placasUnicas.map(placa => (
-                                            <SelectItem key={placa} value={placa}>{placa}</SelectItem>
+                                        <SelectItem value="individual">Usar individual da nota</SelectItem>
+                                        {veiculos.map(v => (
+                                            <SelectItem key={v.id} value={v.placa}>
+                                                {v.modelo} - {v.placa}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

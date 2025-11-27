@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy
 } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
@@ -50,6 +51,21 @@ export default function ColetasDiarias() {
     const updateOrdemMutation = useMutation({
         mutationFn: ({ id, ordem }) => base44.entities.ColetaDiaria.update(id, { ordem }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
+    });
+
+    const clonarColetaMutation = useMutation({
+        mutationFn: async (coleta) => {
+            const { id, created_date, updated_date, created_by, ...dadosColeta } = coleta;
+            return base44.entities.ColetaDiaria.create({
+                ...dadosColeta,
+                status: "pendente",
+                data_coleta: new Date().toISOString().split("T")[0]
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
+            toast.success("Coleta clonada com sucesso!");
+        }
     });
 
     const moverParaFinal = (coleta) => {
@@ -378,6 +394,16 @@ export default function ColetasDiarias() {
                                 ) : (
                                     <FileText className="w-3 h-3 text-indigo-600" />
                                 )}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => clonarColetaMutation.mutate(coleta)}
+                                disabled={clonarColetaMutation.isPending}
+                                title="Clonar Coleta"
+                            >
+                                <Copy className="w-3 h-3 text-purple-600" />
                             </Button>
                         </div>
                     </div>

@@ -25,6 +25,7 @@ export default function MascaraRomaneio() {
     const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
     const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
     const [notasDigitadas, setNotasDigitadas] = useState("");
+    const [notasNaoEncontradas, setNotasNaoEncontradas] = useState([]);
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
     const [remetenteForm, setRemetenteForm] = useState({ nome: "", cnpj: "", endereco: "", telefone: "" });
     const [editingRemetente, setEditingRemetente] = useState(null);
@@ -179,19 +180,30 @@ export default function MascaraRomaneio() {
         
         // Buscar na ordem em que foram digitadas
         const notasOrdenadas = [];
+        const naoEncontradas = [];
+        
         numerosDigitados.forEach(num => {
             const notaEncontrada = notasFiscais.find(n => 
                 n.numero_nf?.toLowerCase().includes(num.toLowerCase())
             );
             if (notaEncontrada && !notasOrdenadas.find(n => n.id === notaEncontrada.id)) {
                 notasOrdenadas.push(notaEncontrada);
+            } else if (!notaEncontrada) {
+                naoEncontradas.push(num);
             }
         });
+        
+        // Atualiza notas não encontradas
+        setNotasNaoEncontradas(naoEncontradas);
         
         if (notasOrdenadas.length > 0) {
             // Substitui as selecionadas pela nova ordem
             setNotasSelecionadas(notasOrdenadas.map(n => n.id));
-            toast.success(`${notasOrdenadas.length} nota(s) encontrada(s) e selecionada(s)`);
+            if (naoEncontradas.length > 0) {
+                toast.warning(`${notasOrdenadas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+            } else {
+                toast.success(`${notasOrdenadas.length} nota(s) encontrada(s) e selecionada(s)`);
+            }
         } else {
             toast.error("Nenhuma nota encontrada com os números informados");
         }
@@ -693,6 +705,20 @@ export default function MascaraRomaneio() {
                                 Buscar e Selecionar
                             </Button>
                         </div>
+                        {notasNaoEncontradas.length > 0 && (
+                            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-sm font-medium text-red-700 mb-2">
+                                    ⚠️ Notas não encontradas ({notasNaoEncontradas.length}):
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {notasNaoEncontradas.map((num, idx) => (
+                                        <Badge key={idx} className="bg-red-100 text-red-700">
+                                            {num}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

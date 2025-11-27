@@ -168,7 +168,7 @@ export default function MascaraRomaneio() {
         }
     };
 
-    // Buscar notas digitadas manualmente
+    // Buscar notas digitadas manualmente - mantendo a ordem digitada
     const buscarNotasDigitadas = () => {
         if (!notasDigitadas.trim()) return;
         
@@ -177,18 +177,21 @@ export default function MascaraRomaneio() {
             .map(n => n.trim())
             .filter(Boolean);
         
-        const notasEncontradas = notasFiscais.filter(n => 
-            numerosDigitados.some(num => 
+        // Buscar na ordem em que foram digitadas
+        const notasOrdenadas = [];
+        numerosDigitados.forEach(num => {
+            const notaEncontrada = notasFiscais.find(n => 
                 n.numero_nf?.toLowerCase().includes(num.toLowerCase())
-            )
-        );
+            );
+            if (notaEncontrada && !notasOrdenadas.find(n => n.id === notaEncontrada.id)) {
+                notasOrdenadas.push(notaEncontrada);
+            }
+        });
         
-        if (notasEncontradas.length > 0) {
-            setNotasSelecionadas(prev => {
-                const novos = notasEncontradas.map(n => n.id).filter(id => !prev.includes(id));
-                return [...prev, ...novos];
-            });
-            toast.success(`${notasEncontradas.length} nota(s) encontrada(s) e selecionada(s)`);
+        if (notasOrdenadas.length > 0) {
+            // Substitui as selecionadas pela nova ordem
+            setNotasSelecionadas(notasOrdenadas.map(n => n.id));
+            toast.success(`${notasOrdenadas.length} nota(s) encontrada(s) e selecionada(s)`);
         } else {
             toast.error("Nenhuma nota encontrada com os números informados");
         }

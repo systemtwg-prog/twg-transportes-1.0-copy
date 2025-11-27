@@ -156,10 +156,9 @@ export default function ColetasDiarias() {
                                 <tr>
                                     <td class="num">${idx + 1}</td>
                                     <td>
-                                        <strong>REMETENTE:</strong> ${c.remetente_nome}<br>
-                                        <strong>DESTINATARIO:</strong> ${c.destinatario_nome}<br>
+                                        <strong>${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}</strong><br>
                                         ${endereco}<br>
-                                        CEP ${c.remetente_cep || "-"} - ${c.remetente_telefone || "-"}<br>
+                                        ${c.remetente_telefone || "-"}<br>
                                         HORARIO: ${c.remetente_horario || "-"}${c.remetente_intervalo ? ` - INTERVALO ${c.remetente_intervalo}` : ""}
                                         ${c.recado ? `<br><strong>RECADO:</strong> ${c.recado}` : ""}
                                     </td>

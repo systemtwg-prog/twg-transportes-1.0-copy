@@ -116,10 +116,17 @@ export default function NotaDeposito() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const dataFormatada = form.data ? format(new Date(form.data), "dd/MM/yyyy", { locale: ptBR }) : "";
+        const tituloFinal = form.titulo || `Depósito ${dataFormatada}`;
+        const dadosParaSalvar = {
+            ...form,
+            titulo: tituloFinal,
+            usuario_foto: currentUser?.full_name || currentUser?.email || ""
+        };
         if (editing) {
-            updateMutation.mutate({ id: editing.id, data: form });
+            updateMutation.mutate({ id: editing.id, data: dadosParaSalvar });
         } else {
-            createMutation.mutate(form);
+            createMutation.mutate(dadosParaSalvar);
         }
     };
 
@@ -216,6 +223,9 @@ export default function NotaDeposito() {
                                         <div>
                                             <h3 className="font-semibold text-slate-800">{nota.titulo || "Sem título"}</h3>
                                             <p className="text-sm text-slate-500">{formatDate(nota.data)}</p>
+                                            {nota.usuario_foto && (
+                                                <p className="text-xs text-violet-600">📷 {nota.usuario_foto}</p>
+                                            )}
                                         </div>
                                         {isAdmin ? (
                                             <Select 

@@ -718,18 +718,32 @@ export default function ComprovantesInternos() {
                             Alterar a empresa de <strong>{selecionados.length}</strong> comprovante(s) selecionado(s).
                         </p>
                         <div className="space-y-2">
-                            <Label>Nova Empresa</Label>
-                            <Input
-                                value={empresaEmMassa}
-                                onChange={(e) => setEmpresaEmMassa(e.target.value)}
-                                placeholder="Digite o nome da empresa"
-                                list="empresas-massa-list"
-                            />
-                            <datalist id="empresas-massa-list">
-                                {empresasUnicas.map(emp => (
-                                    <option key={emp} value={emp} />
-                                ))}
-                            </datalist>
+                            <Label>Selecione a Empresa</Label>
+                            <Select value={empresaEmMassa} onValueChange={setEmpresaEmMassa}>
+                                <SelectTrigger className="bg-white">
+                                    <SelectValue placeholder="Selecione uma empresa..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {empresasCadastradas.map(emp => (
+                                        <SelectItem key={emp.id} value={emp.nome}>
+                                            <div className="flex items-center gap-2">
+                                                {emp.logo_url ? (
+                                                    <img src={emp.logo_url} alt="" className="w-5 h-5 object-contain rounded" />
+                                                ) : (
+                                                    <Building2 className="w-5 h-5 text-slate-400" />
+                                                )}
+                                                <span>{emp.nome}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {empresaEmMassa && getEmpresaLogo(empresaEmMassa) && (
+                                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+                                    <img src={getEmpresaLogo(empresaEmMassa)} alt="" className="w-10 h-10 object-contain rounded" />
+                                    <span className="font-medium">{empresaEmMassa}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setShowEditEmpresa(false)}>
@@ -737,7 +751,7 @@ export default function ComprovantesInternos() {
                             </Button>
                             <Button 
                                 onClick={() => updateEmpresaMutation.mutate({ ids: selecionados, empresa: empresaEmMassa })}
-                                disabled={updateEmpresaMutation.isPending}
+                                disabled={updateEmpresaMutation.isPending || !empresaEmMassa}
                                 className="bg-orange-500 hover:bg-orange-600"
                             >
                                 {updateEmpresaMutation.isPending ? "Salvando..." : "Salvar"}

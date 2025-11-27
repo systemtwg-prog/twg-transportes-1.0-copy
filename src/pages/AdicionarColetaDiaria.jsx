@@ -511,19 +511,20 @@ export default function AdicionarColetaDiaria() {
                                     <TableHead>Destinatário</TableHead>
                                     <TableHead>Carga</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Prioridade</TableHead>
                                     <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-12">
+                                        <TableCell colSpan={7} className="text-center py-12">
                                             <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                                        <TableCell colSpan={7} className="text-center py-12 text-slate-500">
                                             Nenhuma coleta encontrada
                                         </TableCell>
                                     </TableRow>
@@ -550,6 +551,12 @@ export default function AdicionarColetaDiaria() {
                                                 <Badge className={statusColors[coleta.status]}>
                                                     {statusLabels[coleta.status]}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Switch
+                                                    checked={coleta.prioridade || false}
+                                                    onCheckedChange={(v) => updateMutation.mutate({ id: coleta.id, data: { prioridade: v } })}
+                                                />
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">

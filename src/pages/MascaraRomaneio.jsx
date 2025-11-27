@@ -374,27 +374,28 @@ export default function MascaraRomaneio() {
                     .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
                     
                     .nota-row .remetente { 
-                        padding: 8px; 
-                        height: ${layoutConfig.alturaLinha}px;
-                        font-size: 13px;
+                        padding: 6px 8px; 
+                        font-size: 12px;
                         font-weight: bold;
                         text-align: center;
                         vertical-align: middle;
+                        border-bottom: 1px dashed #999;
                     }
                     .nota-row .destinatario { 
                         text-align: center; 
                         font-weight: bold; 
-                        font-size: 20px; 
-                        padding: 8px;
-                        height: ${layoutConfig.alturaLinha}px;
+                        font-size: 18px; 
+                        padding: 6px 8px;
                         vertical-align: middle;
+                        border-bottom: 1px dashed #999;
                     }
                     .nota-row .nfe { 
                         text-align: center; 
                         font-weight: bold; 
-                        font-size: 22px; 
-                        padding: 8px;
+                        font-size: 20px; 
+                        padding: 6px 8px;
                         vertical-align: middle;
+                        border-bottom: 1px dashed #999;
                     }
                     .nota-row .carimbo { 
                         min-height: ${layoutConfig.alturaLinha * 2}px;
@@ -404,17 +405,20 @@ export default function MascaraRomaneio() {
 
                     .transportadora-row td { 
                         border-top: none; 
-                        padding: 2px 8px 6px 8px; 
+                        padding: 8px; 
                         text-align: center;
+                        vertical-align: middle;
                     }
                     .transportadora-row .transportadora-nome { 
-                        font-size: 13px; 
+                        font-size: 16px; 
                         font-weight: bold;
-                        line-height: 1.2; 
+                        line-height: 1.3;
+                        text-transform: uppercase;
+                        color: #333;
                     }
                     .transportadora-row .volume { 
                         text-align: center; 
-                        font-size: 14px; 
+                        font-size: 16px; 
                         font-weight: bold; 
                     }
                 </style>

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Receipt, Camera, Trash2, Pencil, Eye, 
-    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine, CheckSquare, Square
+    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine, CheckSquare, Square, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +25,8 @@ export default function NotaDeposito() {
     const [uploading, setUploading] = useState(false);
     const [viewImage, setViewImage] = useState(null);
     const [showScanner, setShowScanner] = useState(false);
+    const [carouselImages, setCarouselImages] = useState(null);
+    const [carouselIndex, setCarouselIndex] = useState(0);
     const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
@@ -218,7 +220,11 @@ export default function NotaDeposito() {
                                 {(nota.fotos?.length > 0 || nota.foto_url) && (
                                     <div 
                                         className="h-40 bg-slate-100 cursor-pointer relative"
-                                        onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}
+                                        onClick={() => {
+                                            const fotos = nota.fotos?.length > 0 ? nota.fotos : [{ url: nota.foto_url }];
+                                            setCarouselImages(fotos);
+                                            setCarouselIndex(0);
+                                        }}
                                     >
                                         <img src={nota.fotos?.[0]?.url || nota.foto_url} alt="" className="w-full h-full object-cover" />
                                         {nota.fotos?.length > 1 && (
@@ -282,7 +288,11 @@ export default function NotaDeposito() {
                                         </Button>
                                         <div className="flex gap-1">
                                             {(nota.fotos?.length > 0 || nota.foto_url) && (
-                                                <Button variant="ghost" size="sm" onClick={() => setViewImage(nota.fotos?.[0]?.url || nota.foto_url)}>
+                                                <Button variant="ghost" size="sm" onClick={() => {
+                                                    const fotos = nota.fotos?.length > 0 ? nota.fotos : [{ url: nota.foto_url }];
+                                                    setCarouselImages(fotos);
+                                                    setCarouselIndex(0);
+                                                }}>
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                             )}
@@ -303,25 +313,62 @@ export default function NotaDeposito() {
                 </div>
             </div>
 
-            {/* View Image */}
-            {viewImage && (
-                <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
+            {/* Carousel Viewer */}
+            {carouselImages && (
+                <div className="fixed inset-0 bg-black/95 z-50 flex flex-col">
                     <div className="flex items-center justify-between p-4 bg-black/50">
-                        <span className="text-white font-medium">Visualização</span>
+                        <span className="text-white font-medium">
+                            {carouselIndex + 1} de {carouselImages.length}
+                        </span>
                         <div className="flex items-center gap-2">
-                            <a href={viewImage} download target="_blank" rel="noopener noreferrer">
+                            <a href={carouselImages[carouselIndex]?.url} download target="_blank" rel="noopener noreferrer">
                                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
                                     <Download className="w-5 h-5" />
                                 </Button>
                             </a>
-                            <Button variant="ghost" size="icon" onClick={() => setViewImage(null)} className="text-white hover:bg-white/20">
+                            <Button variant="ghost" size="icon" onClick={() => setCarouselImages(null)} className="text-white hover:bg-white/20">
                                 <X className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>
-                    <div className="flex-1 flex items-center justify-center p-4" onClick={() => setViewImage(null)}>
-                        <img src={viewImage} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+                    <div className="flex-1 flex items-center justify-center p-4 relative">
+                        {carouselImages.length > 1 && (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute left-4 text-white hover:bg-white/20 h-12 w-12"
+                                onClick={() => setCarouselIndex(i => (i - 1 + carouselImages.length) % carouselImages.length)}
+                            >
+                                <ChevronLeft className="w-8 h-8" />
+                            </Button>
+                        )}
+                        <img 
+                            src={carouselImages[carouselIndex]?.url} 
+                            alt="" 
+                            className="max-w-full max-h-full object-contain rounded-lg" 
+                        />
+                        {carouselImages.length > 1 && (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute right-4 text-white hover:bg-white/20 h-12 w-12"
+                                onClick={() => setCarouselIndex(i => (i + 1) % carouselImages.length)}
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </Button>
+                        )}
                     </div>
+                    {carouselImages.length > 1 && (
+                        <div className="flex justify-center gap-2 p-4">
+                            {carouselImages.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setCarouselIndex(i)}
+                                    className={`w-3 h-3 rounded-full transition-colors ${i === carouselIndex ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

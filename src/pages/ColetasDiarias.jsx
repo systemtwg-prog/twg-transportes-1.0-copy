@@ -205,11 +205,12 @@ export default function ColetasDiarias() {
                 </td>
                 <td className="p-3">
                     <div className="space-y-0.5 text-sm">
-                        <p><strong>REMETENTE:</strong> {coleta.remetente_nome}</p>
-                        <p><strong>DESTINATARIO:</strong> {coleta.destinatario_nome}</p>
+                        <p className="font-semibold text-slate-800">
+                            {coleta.remetente_fantasia || coleta.remetente_nome} / {coleta.destinatario_fantasia || coleta.destinatario_nome}
+                        </p>
                         {endereco && (
                             <a 
-                                href={`https://waze.com/ul?q=${encodeURIComponent(endereco + " " + (coleta.remetente_cep || ""))}`}
+                                href={`https://waze.com/ul?q=${encodeURIComponent(endereco)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 text-sky-600 hover:text-sky-800 hover:underline"
@@ -218,7 +219,7 @@ export default function ColetasDiarias() {
                                 {endereco}
                             </a>
                         )}
-                        <p>CEP {coleta.remetente_cep || "-"} - {coleta.remetente_telefone || "-"}</p>
+                        <p>{coleta.remetente_telefone || "-"}</p>
                         <p>HORARIO: {coleta.remetente_horario || "-"}{coleta.remetente_intervalo ? ` - INTERVALO ${coleta.remetente_intervalo}` : ""}</p>
                         {coleta.recado && (
                             <p className="text-sky-600"><strong>RECADO:</strong> {coleta.recado}</p>

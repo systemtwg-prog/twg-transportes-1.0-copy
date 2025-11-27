@@ -480,10 +480,7 @@ export default function Motoristas() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-slate-50">
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>CPF</TableHead>
-                                                        <TableHead>CNH</TableHead>
-                                                        <TableHead>Categoria</TableHead>
+                                    <TableHead>Colaborador</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
@@ -491,13 +488,13 @@ export default function Motoristas() {
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12">
+                                        <TableCell colSpan={3} className="text-center py-12">
                                             <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                        <TableCell colSpan={3} className="text-center py-12 text-slate-500">
                                             Nenhum colaborador encontrado
                                         </TableCell>
                                     </TableRow>
@@ -519,26 +516,18 @@ export default function Motoristas() {
                                                             <div className="flex items-center gap-1 text-sm text-slate-500">
                                                                 <Phone className="w-3 h-3" />
                                                                 {mot.telefone}
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-5 px-1 ml-1 bg-green-50 hover:bg-green-100 text-green-700"
+                                                                    onClick={() => window.open(`https://wa.me/55${mot.telefone.replace(/\D/g, '')}`, "_blank")}
+                                                                >
+                                                                    <MessageCircle className="w-3 h-3" />
+                                                                </Button>
                                                             </div>
-                                                        )}
-                                                        {mot.telefone && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 px-2 mt-1 bg-green-50 hover:bg-green-100 text-green-700"
-                                                                onClick={() => window.open(`https://wa.me/55${mot.telefone.replace(/\D/g, '')}`, "_blank")}
-                                                            >
-                                                                <MessageCircle className="w-3 h-3 mr-1" />
-                                                                WhatsApp
-                                                            </Button>
                                                         )}
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="font-mono text-sm">{mot.cpf}</TableCell>
-                                            <TableCell className="font-mono text-sm">{mot.cnh}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{mot.categoria_cnh}</Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className={statusColors[mot.status]}>

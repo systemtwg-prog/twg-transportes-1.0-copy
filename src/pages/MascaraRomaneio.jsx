@@ -519,46 +519,46 @@ export default function MascaraRomaneio() {
                             Configurações do Romaneio
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="space-y-2">
-                                <Label>Motorista</Label>
-                                <Select value={motorista} onValueChange={setMotorista}>
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue placeholder="Selecione o motorista..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {motoristas.map(m => (
-                                            <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Data do Romaneio</Label>
-                                <Input
-                                    type="date"
-                                    value={dataRomaneio}
-                                    onChange={(e) => setDataRomaneio(e.target.value)}
-                                    className="bg-white"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Car className="w-4 h-4" /> Veículo (aplica em todos)
-                                </Label>
-                                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue placeholder="Selecione o veículo..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="individual">Usar individual da nota</SelectItem>
-                                        {veiculos.map(v => (
-                                            <SelectItem key={v.id} value={v.placa}>
-                                                {v.modelo} - {v.placa}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Data do Romaneio</Label>
+                                                            <Input
+                                                                type="date"
+                                                                value={dataRomaneio}
+                                                                onChange={(e) => setDataRomaneio(e.target.value)}
+                                                                className="bg-white"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Motorista</Label>
+                                                            <Select value={motorista} onValueChange={setMotorista}>
+                                                                <SelectTrigger className="bg-white">
+                                                                    <SelectValue placeholder="Selecione o motorista..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {motoristas.map(m => (
+                                                                        <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="flex items-center gap-2">
+                                                                <Car className="w-4 h-4" /> Veículo (aplica em todos)
+                                                            </Label>
+                                                            <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                                                                <SelectTrigger className="bg-white">
+                                                                    <SelectValue placeholder="Selecione o veículo..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="individual">Usar individual da nota</SelectItem>
+                                                                    {veiculos.map(v => (
+                                                                        <SelectItem key={v.id} value={v.placa}>
+                                                                            {v.modelo} - {v.placa}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4" /> Remetente (aplica em todas)

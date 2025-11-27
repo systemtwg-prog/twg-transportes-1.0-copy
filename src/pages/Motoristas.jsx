@@ -141,7 +141,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
 
     return (
         <Card className="border-0 shadow-xl">
-            <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-amber-50">
+            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
                 <CardTitle className="flex items-center justify-between">
                     <span>{motorista ? "Editar Colaborador" : "Novo Colaborador"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -493,7 +493,7 @@ export default function Motoristas() {
                                 {isLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12">
-                                            <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto" />
+                                            <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (

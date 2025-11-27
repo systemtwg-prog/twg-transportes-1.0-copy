@@ -96,7 +96,7 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
 
     return (
         <Card className="border-0 shadow-xl">
-            <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-cyan-50">
+            <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-cyan-50">
                 <CardTitle className="flex items-center justify-between">
                     <span>{veiculo ? "Editar Veículo" : "Novo Veículo"}</span>
                     <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -304,7 +304,7 @@ function VeiculoForm({ veiculo, onSubmit, onCancel }) {
                             WhatsApp
                         </Button>
                         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
+                        <Button type="submit" className="bg-sky-500 hover:bg-sky-600">
                             <Save className="w-4 h-4 mr-2" />
                             Salvar
                         </Button>
@@ -440,7 +440,7 @@ export default function Veiculos() {
                                 {isLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12">
-                                            <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto" />
+                                            <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
                                         </TableCell>
                                     </TableRow>
                                 ) : filtered.length === 0 ? (
@@ -452,7 +452,7 @@ export default function Veiculos() {
                                 ) : (
                                     filtered.map((vei) => (
                                         <TableRow key={vei.id} className="hover:bg-slate-50">
-                                            <TableCell className="font-bold text-teal-600">{vei.placa}</TableCell>
+                                            <TableCell className="font-bold text-sky-600">{vei.placa}</TableCell>
                                             <TableCell className="font-medium">{vei.modelo}</TableCell>
                                             <TableCell>{vei.marca || "-"}</TableCell>
                                             <TableCell>

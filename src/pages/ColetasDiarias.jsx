@@ -78,14 +78,23 @@ export default function ColetasDiarias() {
 
     const handlePrint = () => {
         const coletasParaImprimir = activeTab === "pendentes" ? coletasPendentes : coletasRealizadas;
-        const winPrint = window.open('', '', 'width=900,height=650');
+        const winPrint = window.open('', '_blank', 'width=900,height=650');
         
         winPrint.document.write(`
             <html>
             <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Coletas Diárias - ${formatDate(dataFiltro)}</title>
                 <style>
+                    @media print {
+                        @page { margin: 10mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .print-btn { display: none; }
+                    }
                     body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+                    .print-btn { display: block; width: 100%; max-width: 300px; margin: 0 auto 20px; padding: 15px 30px; font-size: 18px; background: #0ea5e9; color: white; border: none; border-radius: 8px; cursor: pointer; }
+                    .print-btn:hover { background: #0284c7; }
                     .header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #0ea5e9; }
                     .logo { max-height: 80px; max-width: 200px; }
                     .company-info { flex: 1; }
@@ -104,6 +113,7 @@ export default function ColetasDiarias() {
                 </style>
             </head>
             <body>
+                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar como PDF</button>
                 <div class="header">
                     ${config.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
                     <div class="company-info">
@@ -160,12 +170,7 @@ export default function ColetasDiarias() {
         `);
         
         winPrint.document.close();
-        winPrint.focus();
-        setTimeout(() => {
-            winPrint.print();
-            winPrint.close();
-        }, 250);
-    };
+        };
 
     const renderColetaRow = (coleta, index) => {
         const endereco = [

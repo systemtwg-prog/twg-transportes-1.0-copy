@@ -57,24 +57,24 @@ ${config.telefone || ""}`;
     };
 
     const handlePrint = () => {
-        // Criar iframe oculto para impressão
-        const printFrame = document.createElement('iframe');
-        printFrame.style.position = 'absolute';
-        printFrame.style.top = '-10000px';
-        printFrame.style.left = '-10000px';
-        document.body.appendChild(printFrame);
-
+        // Abrir nova janela para impressão (melhor compatibilidade com mobile)
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        
         const printContent = `
             <!DOCTYPE html>
             <html>
             <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Ordem de Coleta ${ordem.numero}</title>
                 <style>
                     @media print {
                         @page { margin: 10mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .container { border: 2px solid #000; }
+                    * { box-sizing: border-box; }
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 11px; }
+                    .container { border: 2px solid #000; max-width: 800px; margin: 0 auto; }
                     .header { display: flex; border-bottom: 2px solid #000; }
                     .logo { width: 120px; border-right: 2px solid #000; padding: 10px; display: flex; align-items: center; justify-content: center; }
                     .logo img { max-width: 100%; max-height: 50px; }
@@ -93,9 +93,26 @@ ${config.telefone || ""}`;
                     .signatures { padding: 20px; display: flex; justify-content: space-around; margin-top: 30px; }
                     .signature { text-align: center; width: 200px; }
                     .signature-line { border-top: 1px solid #000; padding-top: 5px; }
+                    .print-btn { 
+                        display: block; 
+                        width: 100%; 
+                        max-width: 300px; 
+                        margin: 20px auto; 
+                        padding: 15px 30px; 
+                        font-size: 18px; 
+                        background: #0ea5e9; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 8px; 
+                        cursor: pointer;
+                    }
+                    .print-btn:hover { background: #0284c7; }
+                    @media print { .print-btn { display: none; } }
                 </style>
             </head>
             <body>
+                <button class="print-btn" onclick="window.print()">📄 Imprimir / Salvar como PDF</button>
+                
                 <div class="container">
                     <div class="header">
                         <div class="logo">
@@ -156,30 +173,8 @@ ${config.telefone || ""}`;
             </html>
         `;
 
-        printFrame.contentDocument.write(printContent);
-        printFrame.contentDocument.close();
-
-        // Aguardar imagem carregar se houver
-        const checkAndPrint = () => {
-            printFrame.contentWindow.focus();
-            printFrame.contentWindow.print();
-            setTimeout(() => {
-                document.body.removeChild(printFrame);
-            }, 1000);
-        };
-
-        if (config.logo_url) {
-            const img = printFrame.contentDocument.querySelector('img');
-            if (img) {
-                img.onload = checkAndPrint;
-                img.onerror = checkAndPrint;
-                setTimeout(checkAndPrint, 2000); // Fallback
-            } else {
-                setTimeout(checkAndPrint, 500);
-            }
-        } else {
-            setTimeout(checkAndPrint, 500);
-        }
+        printWindow.document.write(printContent);
+        printWindow.document.close();
     };
 
     return (

@@ -23,6 +23,7 @@ import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
 import Transportadoras from './pages/Transportadoras';
 import NotasFiscais from './pages/NotasFiscais';
 import MascaraRomaneio from './pages/MascaraRomaneio';
+import RomaneiosGerados from './pages/RomaneiosGerados';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "NotasFiscais": NotasFiscais,
     "MascaraRomaneio": MascaraRomaneio,
+    "RomaneiosGerados": RomaneiosGerados,
 }
 
 export const pagesConfig = {

@@ -379,7 +379,7 @@ export default function MascaraRomaneio() {
                         font-weight: bold;
                         text-align: center;
                         vertical-align: middle;
-                        border-bottom: 1px dashed #999;
+                        border-bottom: 2px solid #000;
                     }
                     .nota-row .destinatario { 
                         text-align: center; 
@@ -387,7 +387,7 @@ export default function MascaraRomaneio() {
                         font-size: 18px; 
                         padding: 6px 8px;
                         vertical-align: middle;
-                        border-bottom: 1px dashed #999;
+                        border-bottom: 2px solid #000;
                     }
                     .nota-row .nfe { 
                         text-align: center; 
@@ -395,7 +395,7 @@ export default function MascaraRomaneio() {
                         font-size: 20px; 
                         padding: 6px 8px;
                         vertical-align: middle;
-                        border-bottom: 1px dashed #999;
+                        border-bottom: 2px solid #000;
                     }
                     .nota-row .carimbo { 
                         min-height: ${layoutConfig.alturaLinha * 2}px;

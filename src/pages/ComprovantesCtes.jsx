@@ -321,20 +321,24 @@ export default function ComprovantesCtes() {
         setExtracting(true);
 
         try {
+            console.log("Texto colado:", pasteText);
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Extraia os dados de CTEs/Notas Fiscais do texto abaixo. O texto pode conter múltiplos registros.
+                prompt: `Extraia os dados de CTEs/Notas Fiscais do texto abaixo. O texto pode conter múltiplos registros em formato de tabela ou lista.
                 
-Para cada registro encontrado, extraia:
-- numero_cte: Número do CTE
+O texto pode estar no formato:
+DATA | FORNECEDOR | CLIENTE | NFE | CTE | VALOR NF | VOL | PESO | VALOR COBRADO | MDFE
+
+Para cada linha/registro encontrado, extraia:
+- data: Data (formato DD/MM ou DD/MMM)
+- numero_cte: Número do CTE 
 - remetente: Nome do remetente/fornecedor
 - destinatario: Nome do destinatário/cliente
 - nfe: Número da NFe
 - volume: Quantidade de volumes (VOL)
 - peso: Peso em KG
-- valor_nf: Valor da Nota Fiscal
-- valor_cobrado: Valor cobrado pelo frete
+- valor_nf: Valor da Nota Fiscal (sem R$)
+- valor_cobrado: Valor cobrado pelo frete (sem R$)
 - mdfe: Número do MDFE
-- status: Status (pendente, finalizado)
 
 Texto:
 ${pasteText}`,
@@ -346,6 +350,7 @@ ${pasteText}`,
                             items: {
                                 type: "object",
                                 properties: {
+                                    data: { type: "string" },
                                     numero_cte: { type: "string" },
                                     remetente: { type: "string" },
                                     destinatario: { type: "string" },
@@ -354,8 +359,7 @@ ${pasteText}`,
                                     peso: { type: "string" },
                                     valor_nf: { type: "string" },
                                     valor_cobrado: { type: "string" },
-                                    mdfe: { type: "string" },
-                                    status: { type: "string" }
+                                    mdfe: { type: "string" }
                                 }
                             }
                         }
@@ -363,6 +367,7 @@ ${pasteText}`,
                 }
             });
 
+            console.log("Resultado LLM:", result);
             if (result?.registros && result.registros.length > 0) {
                 setExtractedCTEs(result.registros.map((r, i) => ({ ...r, id: Date.now() + i, selected: true })));
                 toast.success(`${result.registros.length} CTE(s) encontrado(s)!`);
@@ -385,30 +390,36 @@ ${pasteText}`,
         }
 
         setExtracting(true);
-        for (const cte of ctesToSave) {
-            await base44.entities.ComprovanteInterno.create({
-                nota_fiscal: cte.numero_cte || "",
-                remetente: cte.remetente || "",
-                destinatario: cte.destinatario || "",
-                nfe: cte.nfe || "",
-                volume: cte.volume || "",
-                peso: cte.peso || "",
-                valor_nf: cte.valor_nf || "",
-                valor_cobrado: cte.valor_cobrado || "",
-                mdfe: cte.mdfe || "",
-                data: format(new Date(), "yyyy-MM-dd"),
-                status: cte.status || "pendente",
-                tipo_comprovante: "cte",
-                arquivos: []
-            });
-        }
+        try {
+            for (const cte of ctesToSave) {
+                console.log("Salvando CTE:", cte);
+                await base44.entities.ComprovanteInterno.create({
+                    nota_fiscal: cte.numero_cte || "",
+                    remetente: cte.remetente || "",
+                    destinatario: cte.destinatario || "",
+                    nfe: cte.nfe || "",
+                    volume: cte.volume || "",
+                    peso: cte.peso || "",
+                    valor_nf: cte.valor_nf || "",
+                    valor_cobrado: cte.valor_cobrado || "",
+                    mdfe: cte.mdfe || "",
+                    data: format(new Date(), "yyyy-MM-dd"),
+                    status: "pendente",
+                    tipo_comprovante: "cte",
+                    arquivos: []
+                });
+            }
 
-        queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
-        setShowPasteDialog(false);
-        setPasteText("");
-        setExtractedCTEs([]);
+            await queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
+            toast.success(`${ctesToSave.length} CTE(s) cadastrado(s)!`);
+            setShowPasteDialog(false);
+            setPasteText("");
+            setExtractedCTEs([]);
+        } catch (error) {
+            console.error("Erro ao salvar CTEs:", error);
+            toast.error("Erro ao salvar CTEs");
+        }
         setExtracting(false);
-        toast.success(`${ctesToSave.length} CTE(s) cadastrado(s)!`);
     };
 
     const formatDate = (dateStr) => {

@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-    Plus, Search, Pencil, Trash2, Truck, X, Save, Building2, Phone, Mail, MapPin
+    Plus, Search, Pencil, Trash2, Truck, X, Save, Building2, Phone, Mail, MapPin, ClipboardPaste, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -216,12 +216,117 @@ export default function Transportadoras() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [showPasteForm, setShowPasteForm] = useState(false);
+    const [pasteText, setPasteText] = useState("");
+    const [processingPaste, setProcessingPaste] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: transportadoras = [], isLoading } = useQuery({
         queryKey: ["transportadoras"],
         queryFn: () => base44.entities.Transportadora.list("-created_date")
     });
+
+    // Função para verificar CNPJ duplicado
+    const cnpjJaCadastrado = (cnpj) => {
+        if (!cnpj) return false;
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        return transportadoras.some(t => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
+    };
+
+    const handleProcessPaste = async () => {
+        if (!pasteText.trim()) return;
+        
+        setProcessingPaste(true);
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise o texto abaixo e extraia as informações de transportadoras/empresas de transporte. 
+                
+Texto colado:
+${pasteText}
+
+Extraia as seguintes informações de cada transportadora encontrada:
+- razao_social: razão social da empresa
+- nome_fantasia: nome fantasia
+- cnpj: CNPJ
+- inscricao_estadual: inscrição estadual
+- telefone: telefone
+- email: email
+- cep: CEP
+- endereco: endereço (rua, número)
+- bairro: bairro
+- cidade: cidade
+- uf: estado (sigla)
+- contato: nome do contato
+- observacoes: outras informações relevantes`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        transportadoras: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    razao_social: { type: "string" },
+                                    nome_fantasia: { type: "string" },
+                                    cnpj: { type: "string" },
+                                    inscricao_estadual: { type: "string" },
+                                    telefone: { type: "string" },
+                                    email: { type: "string" },
+                                    cep: { type: "string" },
+                                    endereco: { type: "string" },
+                                    bairro: { type: "string" },
+                                    cidade: { type: "string" },
+                                    uf: { type: "string" },
+                                    contato: { type: "string" },
+                                    observacoes: { type: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (result?.transportadoras && result.transportadoras.length > 0) {
+                let importados = 0;
+                let duplicados = 0;
+                
+                for (const transp of result.transportadoras) {
+                    if (transp.razao_social) {
+                        // Verificar CNPJ duplicado
+                        if (transp.cnpj && cnpjJaCadastrado(transp.cnpj)) {
+                            duplicados++;
+                            continue;
+                        }
+                        
+                        await base44.entities.Transportadora.create({
+                            ...transp,
+                            status: "ativo"
+                        });
+                        importados++;
+                    }
+                }
+                
+                queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
+                
+                if (duplicados > 0) {
+                    toast.warning(`${importados} transportadora(s) criada(s). ${duplicados} ignorada(s) por CNPJ duplicado.`);
+                } else {
+                    toast.success(`✅ ${importados} transportadora(s) criada(s) com sucesso!`);
+                }
+                
+                setShowPasteForm(false);
+                setPasteText("");
+            } else {
+                toast.error("Não foi possível identificar transportadoras no texto.");
+            }
+        } catch (error) {
+            console.error("Erro ao processar texto:", error);
+            toast.error("Erro ao processar texto. Tente novamente.");
+        }
+        
+        setProcessingPaste(false);
+    };
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Transportadora.create(data),
@@ -277,13 +382,23 @@ export default function Transportadoras() {
                             <p className="text-slate-500">Gerencie transportadoras parceiras</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-violet-500 to-purple-600"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Nova Transportadora
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={() => setShowPasteForm(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                        >
+                            <ClipboardPaste className="w-4 h-4 mr-2" />
+                            Colar Texto
+                        </Button>
+                        <Button 
+                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            className="bg-gradient-to-r from-violet-500 to-purple-600"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Nova Transportadora
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -393,6 +508,59 @@ export default function Transportadoras() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Paste Dialog */}
+            <Dialog open={showPasteForm} onOpenChange={setShowPasteForm}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-purple-600" />
+                            Colar Informações de Transportadoras
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole abaixo as informações de transportadoras. O sistema irá identificar e organizar automaticamente os dados.
+                            <strong className="block mt-1 text-orange-600">Obs: CNPJs já cadastrados serão ignorados para evitar duplicidade.</strong>
+                        </p>
+                        <Textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder="Cole aqui as informações das transportadoras...
+
+Exemplo:
+Transportadora ABC Ltda
+CNPJ: 12.345.678/0001-00
+Endereço: Rua das Flores, 123 - Centro
+Cidade: São Paulo - SP
+Telefone: (11) 99999-9999"
+                            rows={12}
+                            className="font-mono text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleProcessPaste}
+                                disabled={processingPaste || !pasteText.trim()}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {processingPaste ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" /> Processar e Cadastrar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-transparent border-0">

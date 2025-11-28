@@ -130,6 +130,10 @@ export default function ComprovantesInternos() {
     const [empresaForm, setEmpresaForm] = useState({ nome: "", logo_url: "" });
     const [editingEmpresa, setEditingEmpresa] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [showFormMassa, setShowFormMassa] = useState(false);
+    const [itensMassa, setItensMassa] = useState([]);
+    const [uploadingMassa, setUploadingMassa] = useState(false);
+    const [salvandoMassa, setSalvandoMassa] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -362,6 +366,14 @@ export default function ComprovantesInternos() {
                                 Editar Empresa ({selecionados.length})
                             </Button>
                         )}
+                        <Button 
+                            onClick={() => { setItensMassa([]); setShowFormMassa(true); }}
+                            variant="outline"
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Em Massa
+                        </Button>
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-sky-500 to-cyan-600"
@@ -746,6 +758,171 @@ export default function ComprovantesInternos() {
                                 {updateEmpresaMutation.isPending ? "Salvando..." : "Salvar"}
                             </Button>
                         </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Form Massa Dialog */}
+            <Dialog open={showFormMassa} onOpenChange={setShowFormMassa}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-purple-600" />
+                            Novo Comprovante em Massa
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {/* Upload de fotos */}
+                        <div className="flex gap-2">
+                            <div className="flex-1 border-2 border-dashed border-purple-300 rounded-lg p-4 text-center hover:border-purple-500 transition-colors">
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                        const files = Array.from(e.target.files);
+                                        if (files.length === 0) return;
+                                        setUploadingMassa(true);
+                                        const novosItens = [];
+                                        for (const file of files) {
+                                            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                            novosItens.push({
+                                                id: Date.now() + Math.random(),
+                                                nota_fiscal: "",
+                                                url: file_url,
+                                                nome: file.name,
+                                                tipo: file.type
+                                            });
+                                        }
+                                        setItensMassa(prev => [...prev, ...novosItens]);
+                                        setUploadingMassa(false);
+                                    }}
+                                    className="hidden"
+                                    id="massa-upload"
+                                />
+                                <label htmlFor="massa-upload" className="cursor-pointer">
+                                    <div className="flex flex-col items-center gap-2">
+                                        {uploadingMassa ? (
+                                            <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
+                                        ) : (
+                                            <>
+                                                <Upload className="w-8 h-8 text-purple-400" />
+                                                <span className="text-sm text-purple-600">Adicionar Fotos</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </label>
+                            </div>
+                            <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 text-center hover:border-purple-500 transition-colors">
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={async (e) => {
+                                        const files = Array.from(e.target.files);
+                                        if (files.length === 0) return;
+                                        setUploadingMassa(true);
+                                        for (const file of files) {
+                                            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                            setItensMassa(prev => [...prev, {
+                                                id: Date.now() + Math.random(),
+                                                nota_fiscal: "",
+                                                url: file_url,
+                                                nome: file.name,
+                                                tipo: file.type
+                                            }]);
+                                        }
+                                        setUploadingMassa(false);
+                                    }}
+                                    className="hidden"
+                                    id="massa-camera"
+                                />
+                                <label htmlFor="massa-camera" className="cursor-pointer">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Camera className="w-8 h-8 text-purple-400" />
+                                        <span className="text-sm text-purple-600">Câmera</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Grid de fotos com campos de NF */}
+                        {itensMassa.length > 0 && (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {itensMassa.map((item, index) => (
+                                    <div key={item.id} className="relative border rounded-lg overflow-hidden bg-slate-50">
+                                        <div className="p-2 bg-white border-b">
+                                            <Input
+                                                placeholder="Nº Nota Fiscal"
+                                                value={item.nota_fiscal}
+                                                onChange={(e) => {
+                                                    const novosItens = [...itensMassa];
+                                                    novosItens[index].nota_fiscal = e.target.value;
+                                                    setItensMassa(novosItens);
+                                                }}
+                                                className="text-sm h-8"
+                                            />
+                                        </div>
+                                        <div className="relative aspect-square">
+                                            <img 
+                                                src={item.url} 
+                                                alt={item.nome} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute top-1 right-1 h-6 w-6 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                                onClick={() => setItensMassa(prev => prev.filter(i => i.id !== item.id))}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {itensMassa.length === 0 && (
+                            <div className="text-center py-8 text-slate-500">
+                                <Camera className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                Adicione fotos para criar comprovantes
+                            </div>
+                        )}
+
+                        <Button 
+                            onClick={async () => {
+                                if (itensMassa.length === 0) return;
+                                setSalvandoMassa(true);
+                                for (const item of itensMassa) {
+                                    await base44.entities.ComprovanteInterno.create({
+                                        nota_fiscal: item.nota_fiscal || "SEM NF",
+                                        data: format(new Date(), "yyyy-MM-dd"),
+                                        arquivos: [{ nome: item.nome, url: item.url, tipo: item.tipo }]
+                                    });
+                                }
+                                queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+                                setSalvandoMassa(false);
+                                setShowFormMassa(false);
+                                setItensMassa([]);
+                            }}
+                            disabled={itensMassa.length === 0 || salvandoMassa}
+                            className="w-full h-12 bg-purple-600 hover:bg-purple-700"
+                        >
+                            {salvandoMassa ? (
+                                <>
+                                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                    Salvando {itensMassa.length} comprovante(s)...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-5 h-5 mr-2" />
+                                    Salvar {itensMassa.length} Comprovante(s)
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -43,6 +43,7 @@ export default function NotasFiscais() {
         peso: "",
         volume: "",
         transportadora: "",
+        filial: "",
         placa: "",
         data: format(new Date(), "yyyy-MM-dd"),
         observacoes: ""
@@ -204,6 +205,7 @@ Se não encontrar algum dado, deixe em branco.`,
             peso: "",
             volume: "",
             transportadora: "",
+            filial: "",
             placa: "",
             data: format(new Date(), "yyyy-MM-dd"),
             observacoes: ""
@@ -601,6 +603,7 @@ IMPORTANTE:
                                         <TableHead>Peso</TableHead>
                                         <TableHead>Volume</TableHead>
                                         <TableHead>Transportadora</TableHead>
+                                        <TableHead>Filial</TableHead>
                                         <TableHead>Placa</TableHead>
                                         <TableHead>Data</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
@@ -609,13 +612,13 @@ IMPORTANTE:
                                 <TableBody>
                                     {isLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="text-center py-12">
+                                            <TableCell colSpan={11} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
                                             </TableCell>
                                         </TableRow>
                                     ) : filtered.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="text-center py-12 text-slate-500">
+                                            <TableCell colSpan={11} className="text-center py-12 text-slate-500">
                                                 <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 Nenhuma nota fiscal encontrada
                                             </TableCell>
@@ -634,6 +637,7 @@ IMPORTANTE:
                                                 <TableCell>{nota.peso || "-"}</TableCell>
                                                 <TableCell>{nota.volume || "-"}</TableCell>
                                                 <TableCell>{nota.transportadora || "-"}</TableCell>
+                                                <TableCell className="font-medium text-purple-600">{nota.filial || "-"}</TableCell>
                                                 <TableCell className="font-medium text-emerald-600">{nota.placa || "-"}</TableCell>
                                                 <TableCell>{formatDate(nota.data)}</TableCell>
                                                 <TableCell className="text-right">
@@ -946,13 +950,25 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Transportadora</Label>
-                            <Input
-                                value={form.transportadora}
-                                onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
-                                placeholder="Nome da transportadora"
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Transportadora</Label>
+                                <Input
+                                    value={form.transportadora}
+                                    onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
+                                    placeholder="Nome da transportadora"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4" /> Filial
+                                </Label>
+                                <Input
+                                    value={form.filial}
+                                    onChange={(e) => setForm({ ...form, filial: e.target.value })}
+                                    placeholder="Ex: SP, RJ, MG..."
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2">

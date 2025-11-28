@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Package, FileText, TrendingUp, 
     Clock, Truck, CheckCircle, ArrowRight,
@@ -19,6 +22,9 @@ import WeatherClock from "@/components/shared/WeatherClock";
 
 export default function Home() {
     const [locationGranted, setLocationGranted] = useState(false);
+    const [showVeiculoDialog, setShowVeiculoDialog] = useState(false);
+    const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+    const queryClient = useQueryClient();
 
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],
@@ -68,10 +74,37 @@ export default function Home() {
         }
     });
 
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-home"],
+        queryFn: () => base44.entities.Veiculo.filter({ status: "disponivel" })
+    });
+
+    // Verificar se o usuário já tem veículo selecionado
+    useEffect(() => {
+        if (currentUser && !currentUser.veiculo_atual && !showVeiculoDialog && locationGranted) {
+            setShowVeiculoDialog(true);
+        }
+        if (currentUser?.veiculo_atual) {
+            setVeiculoSelecionado(currentUser.veiculo_atual);
+        }
+    }, [currentUser, locationGranted]);
+
     const handleLocationGranted = async (location) => {
         setLocationGranted(true);
         if (currentUser) {
             await base44.auth.updateMe({ ultima_localizacao: location });
+            // Mostrar dialog de veículo após permissão de localização
+            if (!currentUser.veiculo_atual) {
+                setShowVeiculoDialog(true);
+            }
+        }
+    };
+
+    const handleSelecionarVeiculo = async () => {
+        if (veiculoSelecionado) {
+            await base44.auth.updateMe({ veiculo_atual: veiculoSelecionado });
+            queryClient.invalidateQueries({ queryKey: ["current-user"] });
+            setShowVeiculoDialog(false);
         }
     };
 
@@ -431,6 +464,51 @@ export default function Home() {
                     </Card>
                 </div>
             </div>
+
+            {/* Dialog Seleção de Veículo */}
+            <Dialog open={showVeiculoDialog} onOpenChange={setShowVeiculoDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Car className="w-5 h-5 text-blue-600" />
+                            Qual veículo você está utilizando?
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-500">
+                            Selecione o veículo que você está operando hoje para melhor controle das rotas e entregas.
+                        </p>
+                        <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione o veículo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {veiculos.map(v => (
+                                    <SelectItem key={v.id} value={v.id}>
+                                        {v.modelo} - {v.placa}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setShowVeiculoDialog(false)}
+                            >
+                                Pular
+                            </Button>
+                            <Button 
+                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                onClick={handleSelecionarVeiculo}
+                                disabled={!veiculoSelecionado}
+                            >
+                                Confirmar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

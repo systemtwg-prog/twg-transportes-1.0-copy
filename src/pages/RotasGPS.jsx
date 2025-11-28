@@ -30,6 +30,7 @@ export default function RotasGPS() {
     const [otimizandoRota, setOtimizandoRota] = useState(false);
     const [notaExtraidaFoto, setNotaExtraidaFoto] = useState(null);
     const [showNotaExtraida, setShowNotaExtraida] = useState(false);
+    const [rotasAdicionadas, setRotasAdicionadas] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
@@ -306,14 +307,19 @@ export default function RotasGPS() {
             }
 
             if (extractedData) {
-                setNotaExtraidaFoto({
+                const novaRota = {
                     ...extractedData,
-                    enderecoCompleto: enderecoFinal
-                });
-                setShowNotaExtraida(true);
+                    enderecoCompleto: enderecoFinal,
+                    id: Date.now()
+                };
+                setNotaExtraidaFoto(novaRota);
+                
+                // Adiciona automaticamente à lista de rotas
                 if (enderecoFinal) {
-                    toast.success("Endereço extraído com sucesso!");
+                    setRotasAdicionadas(prev => [...prev, novaRota]);
+                    toast.success("Rota adicionada! Clique no endereço para navegar.");
                 } else {
+                    setShowNotaExtraida(true);
                     toast.warning("Dados extraídos, mas endereço incompleto");
                 }
             } else {
@@ -325,6 +331,12 @@ export default function RotasGPS() {
         }
 
         setProcessandoFoto(false);
+    };
+
+    // Remover rota da lista
+    const removerRotaAdicionada = (id) => {
+        setRotasAdicionadas(prev => prev.filter(r => r.id !== id));
+        toast.success("Rota removida");
     };
 
     // Adicionar nota extraída da foto
@@ -550,6 +562,78 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                         </Button>
                     </CardContent>
                 </Card>
+
+                {/* Rotas Adicionadas por Foto */}
+                {rotasAdicionadas.length > 0 && (
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <MapPin className="w-5 h-5 text-green-600" />
+                                Rotas Escaneadas ({rotasAdicionadas.length})
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {rotasAdicionadas.map((rota, index) => (
+                                <div 
+                                    key={rota.id}
+                                    className="p-4 bg-white rounded-xl border-2 border-green-200 shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-start gap-3 flex-1">
+                                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-slate-800">
+                                                    {rota.destinatario || rota.transportadora || "Destino"}
+                                                </p>
+                                                {rota.numero_nf && (
+                                                    <p className="text-sm text-slate-500">NF: {rota.numero_nf}</p>
+                                                )}
+                                                {rota.enderecoCompleto && (
+                                                    <button
+                                                        onClick={() => abrirRotaWaze(rota.enderecoCompleto)}
+                                                        className="text-blue-600 hover:text-blue-800 hover:underline mt-1 text-sm flex items-center gap-1"
+                                                    >
+                                                        <MapPin className="w-3 h-3" />
+                                                        {rota.enderecoCompleto}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <Button 
+                                                size="sm"
+                                                onClick={() => abrirRotaWaze(rota.enderecoCompleto)}
+                                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                                            >
+                                                <Navigation className="w-4 h-4 mr-1" />
+                                                Waze
+                                            </Button>
+                                            <Button 
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => abrirRotaGoogleMaps(rota.enderecoCompleto)}
+                                                className="border-green-500 text-green-600"
+                                            >
+                                                <MapPin className="w-4 h-4 mr-1" />
+                                                Maps
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => removerRotaAdicionada(rota.id)}
+                                                className="text-red-600 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Seletor de Romaneio Gerado */}
                 <Card className="bg-white/80 border-0 shadow-lg">

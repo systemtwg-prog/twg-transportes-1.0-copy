@@ -24,6 +24,7 @@ export default function Home() {
     const [locationGranted, setLocationGranted] = useState(false);
     const [showVeiculoDialog, setShowVeiculoDialog] = useState(false);
     const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+    const [showNotasVeiculo, setShowNotasVeiculo] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: configs = [] } = useQuery({
@@ -53,7 +54,8 @@ export default function Home() {
         queryFn: async () => {
             const hoje = new Date().toISOString().split("T")[0];
             return base44.entities.ColetaDiaria.filter({ data_coleta: hoje });
-        }
+        },
+        refetchInterval: 30000 // Atualiza a cada 30 segundos
     });
 
     const { data: ordensColeta = [] } = useQuery({
@@ -81,12 +83,14 @@ export default function Home() {
 
     const { data: romaneiosGerados = [] } = useQuery({
         queryKey: ["romaneios-gerados-home"],
-        queryFn: () => base44.entities.RomaneioGerado.list("-created_date")
+        queryFn: () => base44.entities.RomaneioGerado.list("-created_date"),
+        refetchInterval: 30000
     });
 
     const { data: notasFiscais = [] } = useQuery({
         queryKey: ["notas-fiscais-home"],
-        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
+        queryFn: () => base44.entities.NotaFiscal.list("-created_date"),
+        refetchInterval: 30000
     });
 
     // Dashboard por veículo
@@ -360,7 +364,8 @@ export default function Home() {
                                     return (
                                         <div 
                                             key={placa}
-                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm"
+                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm cursor-pointer hover:shadow-md hover:bg-indigo-50 transition-all"
+                                            onClick={() => setShowNotasVeiculo({ placa, dados })}
                                         >
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Car className="w-4 h-4 text-indigo-600" />
@@ -558,6 +563,58 @@ export default function Home() {
                     </Card>
                 </div>
             </div>
+
+            {/* Dialog Notas do Veículo */}
+            <Dialog open={!!showNotasVeiculo} onOpenChange={() => setShowNotasVeiculo(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Car className="w-5 h-5 text-indigo-600" />
+                            {showNotasVeiculo?.placa === "COLETAS" ? "Coletas Pendentes" : `Notas - ${showNotasVeiculo?.placa}`}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        {showNotasVeiculo?.placa === "COLETAS" ? (
+                            coletasDiarias.filter(c => c.status === "pendente").length === 0 ? (
+                                <p className="text-center text-slate-500 py-4">Nenhuma coleta pendente</p>
+                            ) : (
+                                coletasDiarias.filter(c => c.status === "pendente").map((coleta, idx) => (
+                                    <div key={coleta.id} className="p-3 bg-slate-50 rounded-lg border">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold">
+                                                {idx + 1}
+                                            </span>
+                                            <span className="font-semibold text-slate-800">{coleta.remetente_nome}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 ml-8">→ {coleta.destinatario_nome}</p>
+                                        {coleta.volume && <p className="text-xs text-slate-500 ml-8">Vol: {coleta.volume} | Peso: {coleta.peso}</p>}
+                                        {coleta.recado && <p className="text-xs text-amber-600 ml-8 mt-1">📝 {coleta.recado}</p>}
+                                    </div>
+                                ))
+                            )
+                        ) : (
+                            showNotasVeiculo?.dados?.notas?.length === 0 ? (
+                                <p className="text-center text-slate-500 py-4">Nenhuma nota encontrada</p>
+                            ) : (
+                                showNotasVeiculo?.dados?.notas?.map((nota, idx) => (
+                                    <div key={nota.id || idx} className="p-3 bg-slate-50 rounded-lg border">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="font-semibold text-indigo-700">NF: {nota.numero_nf}</span>
+                                            <Badge className="bg-orange-100 text-orange-700">Pendente</Badge>
+                                        </div>
+                                        <p className="text-sm text-slate-600">{nota.destinatario}</p>
+                                        <div className="flex gap-4 text-xs text-slate-500 mt-1">
+                                            {nota.volume && <span>Vol: {nota.volume}</span>}
+                                            {nota.peso && <span>Peso: {nota.peso}</span>}
+                                            {nota.transportadora && <span>Transp: {nota.transportadora}</span>}
+                                        </div>
+                                    </div>
+                                ))
+                            )
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Seleção de Veículo */}
             <Dialog open={showVeiculoDialog} onOpenChange={setShowVeiculoDialog}>

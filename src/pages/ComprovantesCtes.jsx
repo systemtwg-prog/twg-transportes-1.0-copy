@@ -610,121 +610,118 @@ ${pasteText}`,
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-slate-800 hover:bg-slate-800">
-                                        <TableHead className="w-10">
+                                    <TableRow className="bg-slate-700 hover:bg-slate-700">
+                                        <TableHead className="w-10 text-white">
                                             <Checkbox 
                                                 checked={selecionados.length === filtered.length && filtered.length > 0}
                                                 onCheckedChange={selecionarTodos}
                                             />
                                         </TableHead>
-                                        <TableHead className="text-white font-bold">DADOS FORNECEDOR/CLIENTE</TableHead>
-                                        <TableHead className="text-white font-bold text-center">DADOS CARGA</TableHead>
+                                        <TableHead className="text-white font-bold">DATA</TableHead>
+                                        <TableHead className="text-white font-bold">FORNECEDOR</TableHead>
+                                        <TableHead className="text-white font-bold">CLIENTE</TableHead>
+                                        <TableHead className="text-white font-bold text-center">NFE</TableHead>
+                                        <TableHead className="text-white font-bold text-center">CTE</TableHead>
+                                        <TableHead className="text-white font-bold text-center">VALOR NF</TableHead>
+                                        <TableHead className="text-white font-bold text-center">VOL</TableHead>
+                                        <TableHead className="text-white font-bold text-center">PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">VALOR COBRADO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">MDFE</TableHead>
                                         <TableHead className="text-white font-bold text-center">STATUS</TableHead>
-                                        <TableHead className="text-white font-bold text-center w-40">AÇÕES</TableHead>
+                                        <TableHead className="text-white font-bold text-center w-32">AÇÕES</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-12">
+                                            <TableCell colSpan={13} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full mx-auto" />
                                             </TableCell>
                                         </TableRow>
                                     ) : filtered.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                                            <TableCell colSpan={13} className="text-center py-12 text-slate-500">
                                                 <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 Nenhum CTE encontrado
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         filtered.map((cte) => (
-                                            <TableRow key={cte.id} className="border-b-2 border-slate-200 hover:bg-slate-50">
+                                            <TableRow key={cte.id} className="border-b border-slate-200 hover:bg-slate-50">
                                                 <TableCell>
                                                     <Checkbox 
                                                         checked={selecionados.includes(cte.id)}
                                                         onCheckedChange={() => toggleSelecionado(cte.id)}
                                                     />
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <p className="font-semibold text-slate-800">
-                                                            REMETENTE: {cte.remetente || cte.empresa || "-"}
-                                                        </p>
-                                                        <p className="text-slate-600">
-                                                            DESTINATÁRIO: {cte.destinatario || "-"}
-                                                        </p>
-                                                        {cte.endereco && (
-                                                            <p className="text-sm text-slate-500">{cte.endereco}</p>
-                                                        )}
-                                                        {(cte.cep || cte.telefone) && (
-                                                            <p className="text-sm text-slate-500">
-                                                                {cte.cep && `CEP ${cte.cep}`} {cte.telefone && `- ${cte.telefone}`}
-                                                            </p>
-                                                        )}
-                                                        {(cte.horario || cte.intervalo) && (
-                                                            <p className="text-sm text-slate-500">
-                                                                {cte.horario && `HORÁRIO: ${cte.horario}`} {cte.intervalo && `- INTERVALO ${cte.intervalo}`}
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                <TableCell className="whitespace-nowrap text-sm">
+                                                    {formatDate(cte.data)}
+                                                </TableCell>
+                                                <TableCell className="font-medium text-slate-800">
+                                                    {cte.remetente || cte.empresa || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-slate-600">
+                                                    {cte.destinatario || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.nfe || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center font-medium text-amber-600">
+                                                    {cte.nota_fiscal || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.valor_nf ? `R$ ${cte.valor_nf}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.volume || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.peso || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm font-medium text-green-600">
+                                                    {cte.valor_cobrado ? `R$ ${cte.valor_cobrado}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.mdfe || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    <div className="space-y-1">
-                                                        {(cte.volume || cte.peso) && (
-                                                            <p className="font-semibold text-slate-700">
-                                                                {cte.volume && `${cte.volume} VOL`} {cte.peso && `/ ${cte.peso} KG`}
-                                                            </p>
-                                                        )}
-                                                        {(cte.nfe || cte.nota_fiscal) && (
-                                                            <p className="text-amber-600 font-medium">
-                                                                {cte.nfe ? `NFE${cte.nfe}` : `CTE: ${cte.nota_fiscal}`}
-                                                            </p>
-                                                        )}
-                                                        <p className="text-xs text-slate-400">{formatDate(cte.data)}</p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Badge className={statusColors[cte.status] || statusColors.pendente}>
-                                                        {cte.status === "finalizado" ? "Finalizado" : "Pendente"}
+                                                    <Badge className={`${statusColors[cte.status] || statusColors.pendente} text-xs`}>
+                                                        {cte.status === "finalizado" ? "OK" : "Pend"}
                                                     </Badge>
                                                     {cte.arquivos && cte.arquivos.length > 0 && (
-                                                        <div className="mt-1">
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {cte.arquivos.length} arquivo(s)
-                                                            </Badge>
-                                                        </div>
+                                                        <span className="ml-1 text-xs text-slate-400">📎</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex justify-center gap-1 flex-wrap">
+                                                    <div className="flex justify-center gap-1">
                                                         <Button 
                                                             variant="outline" 
-                                                            size="sm"
-                                                            className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                                                            size="icon"
+                                                            className="h-7 w-7 border-amber-500 text-amber-600 hover:bg-amber-50"
                                                             onClick={() => {
                                                                 setUploadingCTE(cte);
                                                                 setShowUploadDialog(true);
                                                             }}
                                                         >
-                                                            <Upload className="w-4 h-4" />
+                                                            <Upload className="w-3 h-3" />
                                                         </Button>
                                                         {cte.arquivos?.length > 0 && (
                                                             <Button 
                                                                 variant="ghost" 
-                                                                size="sm" 
+                                                                size="icon"
+                                                                className="h-7 w-7"
                                                                 onClick={() => setViewFiles(cte.arquivos)}
                                                             >
-                                                                <Eye className="w-4 h-4" />
+                                                                <Eye className="w-3 h-3" />
                                                             </Button>
                                                         )}
-                                                        <Button variant="ghost" size="sm" onClick={() => handleEdit(cte)}>
-                                                            <Pencil className="w-4 h-4" />
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(cte)}>
+                                                            <Pencil className="w-3 h-3" />
                                                         </Button>
-                                                        <Button variant="ghost" size="sm" onClick={() => {
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                                                             if (confirm("Excluir este CTE?")) deleteMutation.mutate(cte.id);
                                                         }}>
-                                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                                            <Trash2 className="w-3 h-3 text-red-600" />
                                                         </Button>
                                                     </div>
                                                 </TableCell>

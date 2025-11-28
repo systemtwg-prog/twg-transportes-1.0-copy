@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar, RotateCw, RefreshCw
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Package, Truck, Car, BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -156,6 +156,49 @@ export default function ComprovantesInternos() {
         queryKey: ["romaneios-gerados-comprovantes"],
         queryFn: () => base44.entities.RomaneioGerado.list()
     });
+
+    const { data: coletasDiarias = [] } = useQuery({
+        queryKey: ["coletas-diarias-comprovantes"],
+        queryFn: () => base44.entities.ColetaDiaria.filter({ status: "pendente" })
+    });
+
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-comprovantes"],
+        queryFn: () => base44.entities.Veiculo.list()
+    });
+
+    // Dashboard por veículo
+    const dashboardPorVeiculo = React.useMemo(() => {
+        const porVeiculo = {};
+
+        // Contar entregas pendentes dos romaneios gerados
+        romaneiosGerados.forEach(r => {
+            if (r.status === "gerado" || r.status === "em_transito") {
+                const placa = r.placa || "SEM_PLACA";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
+                (r.notas_ids || []).forEach(id => {
+                    const nota = notasFiscais.find(n => n.id === id);
+                    if (nota) porVeiculo[placa].notas.push(nota);
+                });
+            }
+        });
+
+        // Contar coletas pendentes
+        coletasDiarias.forEach(c => {
+            if (c.status === "pendente") {
+                const placa = "COLETAS";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].coletas++;
+            }
+        });
+
+        return porVeiculo;
+    }, [romaneiosGerados, notasFiscais, coletasDiarias]);
 
     // Função para marcar nota fiscal como entregue
     const marcarNotaEntregue = async (numeroNF) => {
@@ -460,6 +503,57 @@ export default function ComprovantesInternos() {
                         </Button>
                     </div>
                 </div>
+
+                {/* Dashboard por Veículo */}
+                {Object.keys(dashboardPorVeiculo).length > 0 && (
+                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                                Pendências por Veículo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {Object.entries(dashboardPorVeiculo).map(([placa, dados]) => {
+                                    const veiculo = veiculos.find(v => v.placa === placa);
+                                    return (
+                                        <div 
+                                            key={placa}
+                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Car className="w-4 h-4 text-indigo-600" />
+                                                <span className="font-bold text-sm text-indigo-700">
+                                                    {placa === "COLETAS" ? "Coletas" : placa}
+                                                </span>
+                                            </div>
+                                            {veiculo && (
+                                                <p className="text-xs text-slate-500 mb-1">{veiculo.modelo}</p>
+                                            )}
+                                            <div className="flex gap-3 text-sm">
+                                                {dados.entregas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Package className="w-3 h-3 text-orange-500" />
+                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
+                                                        <span className="text-xs text-slate-400">entregas</span>
+                                                    </div>
+                                                )}
+                                                {dados.coletas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Truck className="w-3 h-3 text-blue-500" />
+                                                        <span className="font-semibold text-blue-600">{dados.coletas}</span>
+                                                        <span className="text-xs text-slate-400">coletas</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">

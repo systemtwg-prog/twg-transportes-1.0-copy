@@ -136,33 +136,23 @@ export default function ComprovantesCtes() {
 
     const { data: comprovantes = [], isLoading } = useQuery({
         queryKey: ["comprovantes-ctes"],
-        queryFn: async () => {
-            const all = await base44.entities.ComprovanteInterno.list("-created_date");
-            return all.filter(c => c.tipo_comprovante === "cte");
-        }
+        queryFn: () => base44.entities.ComprovanteCTE.list("-created_date")
     });
 
     const [form, setForm] = useState({
-        nota_fiscal: "",
-        empresa: "",
+        numero_cte: "",
         remetente: "",
         destinatario: "",
-        endereco: "",
-        cep: "",
-        telefone: "",
-        horario: "",
-        intervalo: "",
-        volume: "",
-        peso: "",
         nfe: "",
         valor_nf: "",
+        volume: "",
+        peso: "",
         valor_cobrado: "",
         mdfe: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         observacoes: "",
-        status: "pendente",
-        tipo_comprovante: "cte"
+        status: "pendente"
     });
 
     // Dashboard de pendências
@@ -179,7 +169,7 @@ export default function ComprovantesCtes() {
     const empresasUnicas = [...new Set(comprovantes.map(c => c.empresa).filter(Boolean))];
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.ComprovanteInterno.create({ ...data, tipo_comprovante: "cte" }),
+        mutationFn: (data) => base44.entities.ComprovanteCTE.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
             setShowForm(false);
@@ -189,7 +179,7 @@ export default function ComprovantesCtes() {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.ComprovanteInterno.update(id, data),
+        mutationFn: ({ id, data }) => base44.entities.ComprovanteCTE.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
             setShowForm(false);
@@ -199,7 +189,7 @@ export default function ComprovantesCtes() {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.ComprovanteInterno.delete(id),
+        mutationFn: (id) => base44.entities.ComprovanteCTE.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
             toast.success("CTE excluído!");
@@ -209,7 +199,7 @@ export default function ComprovantesCtes() {
     const bulkDeleteMutation = useMutation({
         mutationFn: async (ids) => {
             for (const id of ids) {
-                await base44.entities.ComprovanteInterno.delete(id);
+                await base44.entities.ComprovanteCTE.delete(id);
             }
         },
         onSuccess: () => {
@@ -221,26 +211,19 @@ export default function ComprovantesCtes() {
 
     const resetForm = () => {
         setForm({
-            nota_fiscal: "",
-            empresa: "",
+            numero_cte: "",
             remetente: "",
             destinatario: "",
-            endereco: "",
-            cep: "",
-            telefone: "",
-            horario: "",
-            intervalo: "",
-            volume: "",
-            peso: "",
             nfe: "",
             valor_nf: "",
+            volume: "",
+            peso: "",
             valor_cobrado: "",
             mdfe: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             observacoes: "",
-            status: "pendente",
-            tipo_comprovante: "cte"
+            status: "pendente"
         });
         setEditing(null);
     };
@@ -393,8 +376,8 @@ ${pasteText}`,
         try {
             for (const cte of ctesToSave) {
                 console.log("Salvando CTE:", cte);
-                await base44.entities.ComprovanteInterno.create({
-                    nota_fiscal: cte.numero_cte || "",
+                await base44.entities.ComprovanteCTE.create({
+                    numero_cte: cte.numero_cte || "",
                     remetente: cte.remetente || "",
                     destinatario: cte.destinatario || "",
                     nfe: cte.nfe || "",
@@ -405,7 +388,6 @@ ${pasteText}`,
                     mdfe: cte.mdfe || "",
                     data: format(new Date(), "yyyy-MM-dd"),
                     status: "pendente",
-                    tipo_comprovante: "cte",
                     arquivos: []
                 });
             }
@@ -448,9 +430,10 @@ ${pasteText}`,
     const filtered = comprovantes.filter(c => {
         const matchData = !filterData || c.data === filterData;
         const matchCTE = !filterCTE || 
-            c.nota_fiscal?.toLowerCase().includes(filterCTE.toLowerCase()) ||
+            c.numero_cte?.toLowerCase().includes(filterCTE.toLowerCase()) ||
             c.remetente?.toLowerCase().includes(filterCTE.toLowerCase()) ||
-            c.destinatario?.toLowerCase().includes(filterCTE.toLowerCase());
+            c.destinatario?.toLowerCase().includes(filterCTE.toLowerCase()) ||
+            c.nfe?.toLowerCase().includes(filterCTE.toLowerCase());
         const matchStatus = !filterStatus || filterStatus === "all" || 
             (filterStatus === "pendente" && (!c.status || c.status === "pendente")) ||
             (filterStatus === "finalizado" && c.status === "finalizado") ||
@@ -678,7 +661,7 @@ ${pasteText}`,
                                                     {cte.nfe || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center font-medium text-amber-600">
-                                                    {cte.nota_fiscal || "-"}
+                                                    {cte.numero_cte || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
                                                     {cte.valor_nf ? `R$ ${cte.valor_nf}` : "-"}
@@ -762,7 +745,7 @@ ${pasteText}`,
                     {uploadingCTE && (
                         <div className="space-y-4">
                             <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                <p className="font-semibold text-amber-800">CTE: {uploadingCTE.nota_fiscal || uploadingCTE.nfe}</p>
+                                <p className="font-semibold text-amber-800">CTE: {uploadingCTE.numero_cte || uploadingCTE.nfe}</p>
                                 <p className="text-sm text-amber-600">{uploadingCTE.remetente} → {uploadingCTE.destinatario}</p>
                             </div>
 
@@ -924,15 +907,7 @@ ${pasteText}`,
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Número CTE</Label>
-                                <Input
-                                    value={form.nota_fiscal}
-                                    onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
-                                    placeholder="Número do CTE"
-                                />
-                            </div>
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label>Data</Label>
                                 <Input
@@ -941,97 +916,39 @@ ${pasteText}`,
                                     onChange={(e) => setForm({ ...form, data: e.target.value })}
                                 />
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Remetente</Label>
+                                <Label>Fornecedor</Label>
                                 <Input
                                     value={form.remetente}
                                     onChange={(e) => setForm({ ...form, remetente: e.target.value })}
-                                    placeholder="Nome do remetente"
+                                    placeholder="Nome do fornecedor"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Destinatário</Label>
+                                <Label>Cliente</Label>
                                 <Input
                                     value={form.destinatario}
                                     onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
-                                    placeholder="Nome do destinatário"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Endereço</Label>
-                            <Input
-                                value={form.endereco}
-                                onChange={(e) => setForm({ ...form, endereco: e.target.value })}
-                                placeholder="Endereço completo"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label>CEP</Label>
-                                <Input
-                                    value={form.cep}
-                                    onChange={(e) => setForm({ ...form, cep: e.target.value })}
-                                    placeholder="CEP"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Telefone</Label>
-                                <Input
-                                    value={form.telefone}
-                                    onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                                    placeholder="Telefone"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>NFe</Label>
-                                <Input
-                                    value={form.nfe}
-                                    onChange={(e) => setForm({ ...form, nfe: e.target.value })}
-                                    placeholder="Número NFe"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Horário Funcionamento</Label>
-                                <Input
-                                    value={form.horario}
-                                    onChange={(e) => setForm({ ...form, horario: e.target.value })}
-                                    placeholder="Ex: 08 AS 17H"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Intervalo</Label>
-                                <Input
-                                    value={form.intervalo}
-                                    onChange={(e) => setForm({ ...form, intervalo: e.target.value })}
-                                    placeholder="Ex: 11:00 AS 12:00"
+                                    placeholder="Nome do cliente"
                                 />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-4 gap-4">
                             <div className="space-y-2">
-                                <Label>Volume</Label>
+                                <Label>NFE</Label>
                                 <Input
-                                    value={form.volume}
-                                    onChange={(e) => setForm({ ...form, volume: e.target.value })}
-                                    placeholder="Volumes"
+                                    value={form.nfe}
+                                    onChange={(e) => setForm({ ...form, nfe: e.target.value })}
+                                    placeholder="Número NFe"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Peso (KG)</Label>
+                                <Label>CTE</Label>
                                 <Input
-                                    value={form.peso}
-                                    onChange={(e) => setForm({ ...form, peso: e.target.value })}
-                                    placeholder="Peso em KG"
+                                    value={form.numero_cte}
+                                    onChange={(e) => setForm({ ...form, numero_cte: e.target.value })}
+                                    placeholder="Número do CTE"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -1043,6 +960,25 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
+                                <Label>VOL</Label>
+                                <Input
+                                    value={form.volume}
+                                    onChange={(e) => setForm({ ...form, volume: e.target.value })}
+                                    placeholder="Volumes"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label>Peso (KG)</Label>
+                                <Input
+                                    value={form.peso}
+                                    onChange={(e) => setForm({ ...form, peso: e.target.value })}
+                                    placeholder="Peso em KG"
+                                />
+                            </div>
+                            <div className="space-y-2">
                                 <Label>Valor Cobrado (R$)</Label>
                                 <Input
                                     value={form.valor_cobrado}
@@ -1050,9 +986,6 @@ ${pasteText}`,
                                     placeholder="0,00"
                                 />
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label>MDFE</Label>
                                 <Input

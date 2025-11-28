@@ -298,7 +298,7 @@ export default function ColetasDiarias() {
         ].filter(Boolean).join(" - ");
 
         return (
-            <tr key={coleta.id} className={`border-b hover:bg-sky-50/50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
+            <tr key={coleta.id} className={`border-b-4 border-slate-400 hover:bg-sky-50/50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
                 <td className="p-3 text-center">
                     <div className="flex flex-col items-center gap-1">
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${coleta.prioridade ? "bg-yellow-400 text-yellow-900" : "bg-sky-100 text-sky-700"}`}>

@@ -14,7 +14,7 @@ import {
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
     Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, 
     Save, Share2, Building2, Calendar, RotateCw, ClipboardPaste, AlertTriangle,
-    CheckCircle, Package, Loader2
+    CheckCircle, Package, Loader2, Printer, Car
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -137,12 +137,22 @@ export default function ComprovantesCtes() {
     const [showStatusDialog, setShowStatusDialog] = useState(false);
     const [statusForm, setStatusForm] = useState({ nome: "", cor: "bg-gray-100 text-gray-700", ordem: 0 });
     const [editingStatus, setEditingStatus] = useState(null);
+    const [showEditMassa, setShowEditMassa] = useState(false);
+    const [editMassaField, setEditMassaField] = useState("");
+    const [editMassaValue, setEditMassaValue] = useState("");
+    const [showVeiculoNotas, setShowVeiculoNotas] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
         queryKey: ["comprovantes-ctes"],
         queryFn: () => base44.entities.ComprovanteCTE.list("-created_date")
     });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+    const config = configs[0] || {};
 
     const { data: statusList = [] } = useQuery({
         queryKey: ["status-cte"],
@@ -191,10 +201,10 @@ export default function ComprovantesCtes() {
         volume: "",
         peso: "",
         frete_peso: "",
+        coleta: "",
         seguro: "",
         pedagio: "",
         outros: "",
-        total: "",
         valor_cobrado: "",
         porcentagem: "",
         mdfe: "",
@@ -268,10 +278,10 @@ export default function ComprovantesCtes() {
             volume: "",
             peso: "",
             frete_peso: "",
+            coleta: "",
             seguro: "",
             pedagio: "",
             outros: "",
-            total: "",
             valor_cobrado: "",
             porcentagem: "",
             mdfe: "",
@@ -281,6 +291,108 @@ export default function ComprovantesCtes() {
             status: "pendente"
         });
         setEditing(null);
+    };
+
+    const bulkEditMutation = useMutation({
+        mutationFn: async ({ ids, field, value }) => {
+            for (const id of ids) {
+                await base44.entities.ComprovanteCTE.update(id, { [field]: value });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
+            setSelecionados([]);
+            setShowEditMassa(false);
+            setEditMassaField("");
+            setEditMassaValue("");
+            toast.success("CTEs atualizados!");
+        }
+    });
+
+    const handlePrint = () => {
+        const selectedCTEs = comprovantes.filter(c => selecionados.includes(c.id));
+        if (selectedCTEs.length === 0) return;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Comprovantes CTEs</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+                    .logo { max-height: 80px; margin-bottom: 10px; }
+                    .company-name { font-size: 24px; font-weight: bold; }
+                    .company-info { font-size: 12px; color: #666; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+                    th { background: #333; color: white; }
+                    tr:nth-child(even) { background: #f9f9f9; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    @media print { body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    ${config.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
+                    <div class="company-name">${config.nome_empresa || 'Empresa'}</div>
+                    <div class="company-info">
+                        ${config.endereco || ''}<br/>
+                        ${config.telefone ? `Tel: ${config.telefone}` : ''} ${config.email ? `| ${config.email}` : ''}
+                        ${config.cnpj ? `<br/>CNPJ: ${config.cnpj}` : ''}
+                    </div>
+                </div>
+                <h2 style="text-align:center;">Relatório de CTEs</h2>
+                <p style="text-align:center; color:#666;">Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Fornecedor</th>
+                            <th>Cliente</th>
+                            <th class="text-center">NFE</th>
+                            <th class="text-center">CTE</th>
+                            <th class="text-center">Vol</th>
+                            <th class="text-center">Peso</th>
+                            <th class="text-right">Frete Peso</th>
+                            <th class="text-right">Coleta</th>
+                            <th class="text-right">Seguro</th>
+                            <th class="text-right">Pedágio</th>
+                            <th class="text-right">Outros</th>
+                            <th class="text-right">Vl Cobrado</th>
+                            <th class="text-center">%</th>
+                            <th class="text-center">MDFE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${selectedCTEs.map(cte => `
+                            <tr>
+                                <td>${cte.data ? format(new Date(cte.data), "dd/MM/yy") : '-'}</td>
+                                <td>${cte.remetente || '-'}</td>
+                                <td>${cte.destinatario || '-'}</td>
+                                <td class="text-center">${cte.nfe || '-'}</td>
+                                <td class="text-center">${cte.numero_cte || '-'}</td>
+                                <td class="text-center">${cte.volume || '-'}</td>
+                                <td class="text-center">${cte.peso || '-'}</td>
+                                <td class="text-right">${cte.frete_peso || '-'}</td>
+                                <td class="text-right">${cte.coleta || '-'}</td>
+                                <td class="text-right">${cte.seguro || '-'}</td>
+                                <td class="text-right">${cte.pedagio || '-'}</td>
+                                <td class="text-right">${cte.outros || '-'}</td>
+                                <td class="text-right">${cte.valor_cobrado || '-'}</td>
+                                <td class="text-center">${cte.porcentagem ? cte.porcentagem + '%' : '-'}</td>
+                                <td class="text-center">${cte.mdfe || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p style="margin-top:20px; font-size:12px;">Total de registros: ${selectedCTEs.length}</p>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
     };
 
     const handleEdit = (comprovante) => {
@@ -662,20 +774,41 @@ ${pasteText}`,
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="flex items-end gap-2">
+                            <div className="flex items-end gap-2 flex-wrap">
+                                <Button variant="outline" size="sm" onClick={selecionarTodos}>
+                                    {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar" : "Selecionar Tudo"}
+                                </Button>
                                 {selecionados.length > 0 && (
-                                    <Button 
-                                        variant="destructive" 
-                                        onClick={() => {
-                                            if (confirm(`Excluir ${selecionados.length} CTE(s)?`)) {
-                                                bulkDeleteMutation.mutate(selecionados);
-                                            }
-                                        }}
-                                        disabled={bulkDeleteMutation.isPending}
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        Excluir ({selecionados.length})
-                                    </Button>
+                                    <>
+                                        <Button 
+                                            variant="outline"
+                                            className="border-blue-500 text-blue-600"
+                                            onClick={handlePrint}
+                                        >
+                                            <Printer className="w-4 h-4 mr-1" />
+                                            Imprimir ({selecionados.length})
+                                        </Button>
+                                        <Button 
+                                            variant="outline"
+                                            className="border-orange-500 text-orange-600"
+                                            onClick={() => setShowEditMassa(true)}
+                                        >
+                                            <Pencil className="w-4 h-4 mr-1" />
+                                            Editar em Massa
+                                        </Button>
+                                        <Button 
+                                            variant="destructive" 
+                                            onClick={() => {
+                                                if (confirm(`Excluir ${selecionados.length} CTE(s)?`)) {
+                                                    bulkDeleteMutation.mutate(selecionados);
+                                                }
+                                            }}
+                                            disabled={bulkDeleteMutation.isPending}
+                                        >
+                                            <Trash2 className="w-4 h-4 mr-1" />
+                                            Excluir ({selecionados.length})
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -704,10 +837,10 @@ ${pasteText}`,
                                         <TableHead className="text-white font-bold text-center">VOL</TableHead>
                                         <TableHead className="text-white font-bold text-center">PESO</TableHead>
                                         <TableHead className="text-white font-bold text-center">FRETE PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">COLETA</TableHead>
                                         <TableHead className="text-white font-bold text-center">SEGURO</TableHead>
                                         <TableHead className="text-white font-bold text-center">PEDÁGIO</TableHead>
                                         <TableHead className="text-white font-bold text-center">OUTROS</TableHead>
-                                        <TableHead className="text-white font-bold text-center">TOTAL</TableHead>
                                         <TableHead className="text-white font-bold text-center">VALOR COBRADO</TableHead>
                                         <TableHead className="text-white font-bold text-center">%</TableHead>
                                         <TableHead className="text-white font-bold text-center">MDFE</TableHead>
@@ -724,7 +857,7 @@ ${pasteText}`,
                                         </TableRow>
                                     ) : filtered.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={13} className="text-center py-12 text-slate-500">
+                                            <TableCell colSpan={18} className="text-center py-12 text-slate-500">
                                                 <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 Nenhum CTE encontrado
                                             </TableCell>
@@ -763,22 +896,22 @@ ${pasteText}`,
                                                     {cte.peso || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
-                                                    {cte.frete_peso ? `R$ ${cte.frete_peso}` : "-"}
+                                                    {cte.frete_peso || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
-                                                    {cte.seguro ? `R$ ${cte.seguro}` : "-"}
+                                                    {cte.coleta || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
-                                                    {cte.pedagio ? `R$ ${cte.pedagio}` : "-"}
+                                                    {cte.seguro || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
-                                                    {cte.outros ? `R$ ${cte.outros}` : "-"}
+                                                    {cte.pedagio || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm font-medium">
-                                                    {cte.total ? `R$ ${cte.total}` : "-"}
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.outros || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm font-medium text-green-600">
-                                                    {cte.valor_cobrado ? `R$ ${cte.valor_cobrado}` : "-"}
+                                                    {cte.valor_cobrado || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
                                                     {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
@@ -1147,6 +1280,83 @@ ${pasteText}`,
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog Editar em Massa */}
+            <Dialog open={showEditMassa} onOpenChange={setShowEditMassa}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="w-5 h-5 text-orange-600" />
+                            Editar em Massa ({selecionados.length} selecionados)
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Campo a Editar</Label>
+                            <Select value={editMassaField} onValueChange={setEditMassaField}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o campo..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="remetente">Fornecedor</SelectItem>
+                                    <SelectItem value="destinatario">Cliente</SelectItem>
+                                    <SelectItem value="frete_peso">Frete Peso</SelectItem>
+                                    <SelectItem value="coleta">Coleta</SelectItem>
+                                    <SelectItem value="seguro">Seguro</SelectItem>
+                                    <SelectItem value="pedagio">Pedágio</SelectItem>
+                                    <SelectItem value="outros">Outros</SelectItem>
+                                    <SelectItem value="valor_cobrado">Valor Cobrado</SelectItem>
+                                    <SelectItem value="porcentagem">Porcentagem</SelectItem>
+                                    <SelectItem value="mdfe">MDFE</SelectItem>
+                                    <SelectItem value="status">Status</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {editMassaField && (
+                            <div className="space-y-2">
+                                <Label>Novo Valor</Label>
+                                {editMassaField === "status" ? (
+                                    <Select value={editMassaValue} onValueChange={setEditMassaValue}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {statusList.length > 0 ? (
+                                                statusList.map(s => (
+                                                    <SelectItem key={s.id} value={s.nome}>{s.nome}</SelectItem>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                                                </>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        value={editMassaValue}
+                                        onChange={(e) => setEditMassaValue(e.target.value)}
+                                        placeholder="Digite o valor..."
+                                    />
+                                )}
+                            </div>
+                        )}
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditMassa(false)}>
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={() => bulkEditMutation.mutate({ ids: selecionados, field: editMassaField, value: editMassaValue })}
+                                disabled={!editMassaField || !editMassaValue || bulkEditMutation.isPending}
+                                className="bg-orange-500 hover:bg-orange-600"
+                            >
+                                {bulkEditMutation.isPending ? "Salvando..." : "Aplicar"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1219,7 +1429,7 @@ ${pasteText}`,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-5 gap-4">
                             <div className="space-y-2">
                                 <Label>Peso (KG)</Label>
                                 <Input
@@ -1229,7 +1439,7 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Frete Peso (R$)</Label>
+                                <Label>Frete Peso</Label>
                                 <Input
                                     value={form.frete_peso}
                                     onChange={(e) => setForm({ ...form, frete_peso: e.target.value })}
@@ -1237,7 +1447,15 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Seguro (R$)</Label>
+                                <Label>Coleta</Label>
+                                <Input
+                                    value={form.coleta}
+                                    onChange={(e) => setForm({ ...form, coleta: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Seguro</Label>
                                 <Input
                                     value={form.seguro}
                                     onChange={(e) => setForm({ ...form, seguro: e.target.value })}
@@ -1245,7 +1463,7 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Pedágio (R$)</Label>
+                                <Label>Pedágio</Label>
                                 <Input
                                     value={form.pedagio}
                                     onChange={(e) => setForm({ ...form, pedagio: e.target.value })}
@@ -1254,9 +1472,9 @@ ${pasteText}`,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-5 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                             <div className="space-y-2">
-                                <Label>Outros (R$)</Label>
+                                <Label>Outros</Label>
                                 <Input
                                     value={form.outros}
                                     onChange={(e) => setForm({ ...form, outros: e.target.value })}
@@ -1264,15 +1482,7 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Total (R$)</Label>
-                                <Input
-                                    value={form.total}
-                                    onChange={(e) => setForm({ ...form, total: e.target.value })}
-                                    placeholder="0,00"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Valor Cobrado (R$)</Label>
+                                <Label>Valor Cobrado</Label>
                                 <Input
                                     value={form.valor_cobrado}
                                     onChange={(e) => setForm({ ...form, valor_cobrado: e.target.value })}

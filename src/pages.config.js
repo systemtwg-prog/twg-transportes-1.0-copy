@@ -20,6 +20,8 @@ import NotasFiscais from './pages/NotasFiscais';
 import MascaraRomaneio from './pages/MascaraRomaneio';
 import RomaneiosGerados from './pages/RomaneiosGerados';
 import ComprovantesCtes from './pages/ComprovantesCtes';
+import RotasGPS from './pages/RotasGPS';
+import ComprovantesInternos from './pages/ComprovantesInternos';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +48,8 @@ export const PAGES = {
     "MascaraRomaneio": MascaraRomaneio,
     "RomaneiosGerados": RomaneiosGerados,
     "ComprovantesCtes": ComprovantesCtes,
+    "RotasGPS": RotasGPS,
+    "ComprovantesInternos": ComprovantesInternos,
 }
 
 export const pagesConfig = {

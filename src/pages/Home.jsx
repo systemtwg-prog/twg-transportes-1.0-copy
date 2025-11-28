@@ -66,6 +66,15 @@ export default function Home() {
 
     const isAdmin = currentUser?.role === "admin";
 
+    // Cores do tema
+    const corPrimaria = config.cor_primaria || "sky";
+    const corBotoes = config.cor_botoes || "blue";
+    const temaEscuro = config.tema_escuro || false;
+
+    const bgGradient = temaEscuro 
+        ? `from-${corPrimaria}-900 via-${corPrimaria}-800 to-slate-900`
+        : `from-${corPrimaria}-400 via-${corPrimaria}-500 to-${corPrimaria}-600`;
+
     // Dashboard por veículo
     const dashboardPorVeiculo = useMemo(() => {
         const porVeiculo = {};
@@ -130,10 +139,10 @@ export default function Home() {
     };
 
     const mainButtons = [
-        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 to-blue-700" },
-        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-blue-500 to-cyan-600" },
-        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-sky-500 to-blue-600" },
-        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-indigo-500 to-blue-600" },
+        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: `from-${corBotoes}-600 to-${corBotoes}-700` },
+        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: `from-${corBotoes}-500 to-cyan-600` },
+        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: `from-${corBotoes}-500 to-${corBotoes}-600` },
+        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: `from-indigo-500 to-${corBotoes}-600` },
     ];
 
     const quickButtons = [
@@ -157,7 +166,7 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 p-4 md:p-6">
+        <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6`}>
             <div className="max-w-6xl mx-auto space-y-5">
                 {/* Header */}
                 <div className="flex items-center justify-between">

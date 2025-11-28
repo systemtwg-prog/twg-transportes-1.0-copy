@@ -192,12 +192,6 @@ export default function ColetasDiarias() {
             alert("Por favor, permita pop-ups para imprimir.");
             return;
         }
-        
-        // Calcular linhas em branco para preencher a página
-        const linhasUsadas = coletasParaImprimir.length;
-        const linhasPorPagina = 18; // Aproximadamente 18 linhas por página A4
-        const linhasRestantes = linhasPorPagina - (linhasUsadas % linhasPorPagina);
-        const linhasEmBranco = linhasRestantes === linhasPorPagina ? 0 : linhasRestantes;
 
         winPrint.document.write(`
             <html>
@@ -207,88 +201,83 @@ export default function ColetasDiarias() {
                 <title>Coletas Diárias - ${formatDate(dataFiltro)}</title>
                 <style>
                     @media print {
-                        @page { margin: 5mm; size: A4; }
+                        @page { margin: 3mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
-                    body { font-family: Arial, sans-serif; margin: 8px; font-size: 14px; font-weight: 500; }
-                    .header { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 3px solid #0ea5e9; }
-                    .logo { max-height: 60px; max-width: 120px; }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; font-size: 9px; }
+                    .page { height: 287mm; padding: 3mm; display: flex; flex-direction: column; }
+                    .header { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; border-bottom: 2px solid #0ea5e9; }
+                    .logo { max-height: 35px; max-width: 80px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 18px; font-weight: 800; color: #0369a1; margin: 0; }
-                    .company-details { font-size: 12px; color: #64748b; margin: 2px 0; font-weight: 600; }
-                    .title { font-size: 20px; font-weight: 800; text-align: center; margin: 10px 0; color: #0369a1; }
-                    .date-info { text-align: right; font-size: 14px; color: #64748b; font-weight: 600; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th { background: #0ea5e9; color: white; padding: 8px; text-align: left; border: 2px solid #0284c7; font-weight: 800; font-size: 14px; }
-                    td { padding: 8px; border: 2px solid #cbd5e1; vertical-align: top; font-size: 14px; line-height: 1.5; font-weight: 600; }
-                    .num { width: 40px; text-align: center; font-weight: 900; background: #f0f9ff; font-size: 18px; }
-                    .status { text-align: center; width: 80px; font-size: 20px; }
-                    .carga { text-align: center; width: 100px; font-weight: 700; }
-                    .empty-row { height: 65px; }
+                    .company-name { font-size: 12px; font-weight: 800; color: #0369a1; }
+                    .title { font-size: 11px; font-weight: 800; text-align: center; margin: 4px 0; color: #0369a1; }
+                    .date-info { text-align: right; font-size: 10px; color: #64748b; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    th { background: #0ea5e9; color: white; padding: 3px 4px; text-align: left; border: 1px solid #0284c7; font-weight: 700; font-size: 8px; }
+                    td { padding: 2px 4px; border: 1px solid #cbd5e1; vertical-align: top; font-size: 8px; line-height: 1.2; }
+                    .num { width: 20px; text-align: center; font-weight: 800; background: #f0f9ff; font-size: 9px; }
+                    .status { text-align: center; width: 35px; font-size: 12px; }
+                    .carga { text-align: center; width: 60px; font-size: 7px; }
                     tr:nth-child(even) { background: #f8fafc; }
                     .priority { background: #fef3c7 !important; }
-                    strong { font-size: 16px; font-weight: 800; }
+                    strong { font-size: 9px; font-weight: 700; }
+                    .avisos { margin-top: 4px; padding: 4px; border: 1px solid #f59e0b; background: #fef3c7; font-size: 7px; }
+                    .avisos h3 { font-size: 8px; margin-bottom: 3px; }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    ${config.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
-                    <div class="company-info">
-                        <p class="company-name">${config.nome_empresa || "Controle TWG"}</p>
-                        ${config.telefone ? `<span class="company-details">Tel: ${config.telefone}</span>` : ''}
+                <div class="page">
+                    <div class="header">
+                        ${config.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
+                        <div class="company-info">
+                            <p class="company-name">${config.nome_empresa || "Controle TWG"}</p>
+                        </div>
+                        <div class="date-info">
+                            <strong>DATA:</strong> ${formatDate(dataFiltro) || formatDate(new Date().toISOString().split("T")[0])} | ${coletasParaImprimir.length} coleta(s)
+                        </div>
                     </div>
-                    <div class="date-info">
-                        <strong>DATA:</strong> ${formatDate(dataFiltro) || formatDate(new Date().toISOString().split("T")[0])}<br>
-                        ${coletasParaImprimir.length} coleta(s)
-                    </div>
+                    <div class="title">COLETAS - ${activeTab === "pendentes" ? "PENDENTES" : "REALIZADAS"}</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="num">Nº</th>
+                                <th>FORNECEDOR/CLIENTE</th>
+                                <th class="carga">CARGA</th>
+                                <th class="status">✓</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${coletasParaImprimir.map((c, idx) => {
+                                const endereco = [c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
+                                return `
+                                    <tr class="${c.prioridade ? 'priority' : ''}">
+                                        <td class="num">${idx + 1}</td>
+                                        <td>
+                                            <strong>${(c.remetente_fantasia || c.remetente_nome || "").substring(0, 25)} / ${(c.destinatario_fantasia || c.destinatario_nome || "").substring(0, 25)}</strong>${c.prioridade ? ' ⚡' : ''}<br>
+                                            ${endereco ? endereco + " | " : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "| " + c.remetente_horario : ""}
+                                            ${c.recado ? ` | 📝 ${c.recado.substring(0, 30)}` : ""}
+                                        </td>
+                                        <td class="carga">${c.volume || "-"}/${c.peso || "-"}<br>NF:${c.nfe || "-"}</td>
+                                        <td class="status">${c.status === 'realizado' ? '✅' : c.status === 'cancelado' ? '❌' : '⬜'}</td>
+                                    </tr>
+                                `;
+                            }).join("")}
+                        </tbody>
+                    </table>
+                    ${avisosAtivos.length > 0 ? `
+                        <div class="avisos">
+                            <h3>📢 AVISOS</h3>
+                            ${avisosAtivos.map(aviso => `<strong>${aviso.titulo}:</strong> ${aviso.mensagem} `).join(' | ')}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="title">COLETAS - ${activeTab === "pendentes" ? "PENDENTES" : "REALIZADAS"}</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="num">Nº</th>
-                            <th>FORNECEDOR/CLIENTE</th>
-                            <th class="carga">CARGA</th>
-                            <th class="status">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${coletasParaImprimir.map((c, idx) => {
-                            const endereco = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
-                            return `
-                                <tr class="${c.prioridade ? 'priority' : ''}">
-                                    <td class="num">${idx + 1}</td>
-                                    <td>
-                                        <strong>${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}</strong>${c.prioridade ? ' ⚡' : ''}<br>
-                                        ${endereco ? endereco + "<br>" : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "- " + c.remetente_horario : ""}
-                                        ${c.recado ? `<br><em>📝 ${c.recado}</em>` : ""}
-                                    </td>
-                                    <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
-                                    <td class="status">${c.status === 'realizado' ? '✅' : c.status === 'cancelado' ? '❌' : '⬚'}</td>
-                                </tr>
-                            `;
-                        }).join("")}
-                        ${Array(Math.max(linhasEmBranco, 5)).fill('<tr class="empty-row"><td class="num"></td><td></td><td></td><td></td></tr>').join("")}
-                    </tbody>
-                </table>
-                ${avisosAtivos.length > 0 ? `
-                    <div style="margin-top: 20px; padding: 15px; border: 2px solid #f59e0b; border-radius: 8px; background: #fef3c7;">
-                        <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 800; color: #b45309;">📢 AVISOS IMPORTANTES</h3>
-                        ${avisosAtivos.map(aviso => `
-                            <div style="padding: 8px 0; border-bottom: 1px dashed #fcd34d;">
-                                <strong style="color: ${aviso.tipo === 'urgente' ? '#dc2626' : aviso.tipo === 'alerta' ? '#d97706' : '#0284c7'};">
-                                    ${aviso.tipo === 'urgente' ? '🚨' : aviso.tipo === 'alerta' ? '⚠️' : 'ℹ️'} ${aviso.titulo}
-                                </strong>
-                                <p style="margin: 4px 0 0 0; font-size: 13px; color: #374151;">${aviso.mensagem}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
             </body>
             </html>
         `);
         
         winPrint.document.close();
+        setTimeout(() => winPrint.print(), 300);
     };
 
     const handleShare = () => {

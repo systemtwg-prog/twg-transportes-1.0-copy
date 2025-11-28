@@ -290,29 +290,27 @@ export default function ComprovantesInternos() {
             // Tentar extrair número da nota fiscal usando LLM
             try {
                 const result = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analise esta imagem de uma nota fiscal, DANFE, canhoto ou comprovante de entrega.
+                    prompt: `Analise esta imagem de uma DANFE (Documento Auxiliar da Nota Fiscal Eletrônica).
 
-IMPORTANTE: Procure pelo NÚMERO DA NOTA FISCAL. Ele pode aparecer como:
-- "NF-e Nº" ou "NF-e:" seguido de números
-- "DANFE" com número abaixo
-- "Nota Fiscal Eletrônica" com número
-- "NF:" ou "NFe:" seguido de números
-- Número de 6 a 9 dígitos em destaque no documento
-- Campo "NÚMERO" ou "Nº" no cabeçalho
+LOCALIZAÇÃO EXATA DO NÚMERO DA NOTA FISCAL:
+- Está no TOPO DIREITO do documento
+- Fica DENTRO do quadrado/box onde aparece a palavra "DANFE"
+- Logo abaixo de "DANFE" aparece "Documento Auxiliar da Nota Fiscal Eletrônica"
+- O campo "NF-e" ou "Nº" está nesse mesmo quadrado
+- O número tem geralmente 6 a 9 dígitos (exemplo: 000.123.456 ou 123456)
 
-O número da nota fiscal geralmente é um número de 6 a 9 dígitos.
-NÃO confunda com:
-- Chave de acesso (44 dígitos)
-- Código de barras
+IGNORE COMPLETAMENTE:
+- A chave de acesso (são 44 dígitos, muito longa)
+- Códigos de barras
 - CNPJ
-- Série (geralmente 1-3 dígitos)
+- Número de série
 
-Retorne APENAS os dígitos do número da nota fiscal, sem pontos ou formatação.`,
+Retorne SOMENTE o número da nota fiscal encontrado no quadrado DANFE no topo direito. Remove pontos e retorne apenas os dígitos.`,
                     file_urls: [file_url],
                     response_json_schema: {
                         type: "object",
                         properties: {
-                            numero_nota_fiscal: { type: "string", description: "Apenas os dígitos do número da nota fiscal (ex: 123456)" },
+                            numero_nota_fiscal: { type: "string", description: "Apenas os dígitos do número da NF (ex: 123456)" },
                             empresa: { type: "string", description: "Nome da empresa/destinatário se visível" }
                         }
                     }

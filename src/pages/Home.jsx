@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -12,7 +12,7 @@ import {
     Package, FileText, TrendingUp, 
     Clock, Truck, CheckCircle, ArrowRight,
     Calendar, Settings, User, Navigation, Car, Award, Bell, AlertTriangle,
-    Receipt, Users, Phone, MapPin
+    Receipt, Users, Phone, MapPin, BarChart3
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -78,6 +78,49 @@ export default function Home() {
         queryKey: ["veiculos-home"],
         queryFn: () => base44.entities.Veiculo.filter({ status: "disponivel" })
     });
+
+    const { data: romaneiosGerados = [] } = useQuery({
+        queryKey: ["romaneios-gerados-home"],
+        queryFn: () => base44.entities.RomaneioGerado.list("-created_date")
+    });
+
+    const { data: notasFiscais = [] } = useQuery({
+        queryKey: ["notas-fiscais-home"],
+        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
+    });
+
+    // Dashboard por veículo
+    const dashboardPorVeiculo = useMemo(() => {
+        const porVeiculo = {};
+
+        // Contar entregas pendentes dos romaneios gerados
+        romaneiosGerados.forEach(r => {
+            if (r.status === "gerado" || r.status === "em_transito") {
+                const placa = r.placa || "SEM_PLACA";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
+                (r.notas_ids || []).forEach(id => {
+                    const nota = notasFiscais.find(n => n.id === id);
+                    if (nota) porVeiculo[placa].notas.push(nota);
+                });
+            }
+        });
+
+        // Contar coletas pendentes
+        coletasDiarias.forEach(c => {
+            if (c.status === "pendente") {
+                const placa = "COLETAS";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].coletas++;
+            }
+        });
+
+        return porVeiculo;
+    }, [romaneiosGerados, notasFiscais, coletasDiarias]);
 
     // Verificar se o usuário já tem veículo selecionado
     useEffect(() => {
@@ -300,6 +343,57 @@ export default function Home() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Dashboard por Veículo */}
+                {Object.keys(dashboardPorVeiculo).length > 0 && (
+                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg mb-8">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                                Pendências por Veículo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {Object.entries(dashboardPorVeiculo).map(([placa, dados]) => {
+                                    const veiculo = veiculos.find(v => v.placa === placa);
+                                    return (
+                                        <div 
+                                            key={placa}
+                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Car className="w-4 h-4 text-indigo-600" />
+                                                <span className="font-bold text-sm text-indigo-700">
+                                                    {placa === "COLETAS" ? "Coletas" : placa}
+                                                </span>
+                                            </div>
+                                            {veiculo && (
+                                                <p className="text-xs text-slate-500 mb-1">{veiculo.modelo}</p>
+                                            )}
+                                            <div className="flex gap-3 text-sm">
+                                                {dados.entregas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Package className="w-3 h-3 text-orange-500" />
+                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
+                                                        <span className="text-xs text-slate-400">entregas</span>
+                                                    </div>
+                                                )}
+                                                {dados.coletas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Truck className="w-3 h-3 text-blue-500" />
+                                                        <span className="font-semibold text-blue-600">{dados.coletas}</span>
+                                                        <span className="text-xs text-slate-400">coletas</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Comprovantes de Entrega */}

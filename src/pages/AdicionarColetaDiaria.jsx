@@ -8,17 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy, AlertTriangle
+    X, Save, Star, Copy, AlertTriangle, UserPlus
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-function ColetaForm({ coleta, onSubmit, onCancel }) {
+function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente }) {
     const { data: clientes = [] } = useQuery({
         queryKey: ["clientes"],
         queryFn: () => base44.entities.Cliente.list()
@@ -169,7 +170,19 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
 
                     {/* Remetente */}
                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-                        <h3 className="font-semibold text-amber-800 mb-4">REMETENTE</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-amber-800">REMETENTE</h3>
+                            <Button 
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenCadastroCliente("remetente")}
+                                className="border-amber-500 text-amber-700 hover:bg-amber-100"
+                            >
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Cadastrar Cliente
+                            </Button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
                                 <Label>Selecionar Cliente</Label>
@@ -272,7 +285,19 @@ function ColetaForm({ coleta, onSubmit, onCancel }) {
 
                     {/* Destinatário */}
                     <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <h3 className="font-semibold text-emerald-800 mb-4">DESTINATÁRIO</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-emerald-800">DESTINATÁRIO</h3>
+                            <Button 
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenCadastroCliente("destinatario")}
+                                className="border-emerald-500 text-emerald-700 hover:bg-emerald-100"
+                            >
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Cadastrar Cliente
+                            </Button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Selecionar Cliente</Label>
@@ -384,7 +409,48 @@ export default function AdicionarColetaDiaria() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [showCadastroCliente, setShowCadastroCliente] = useState(false);
+    const [tipoClienteCadastro, setTipoClienteCadastro] = useState("remetente");
+    const [clienteForm, setClienteForm] = useState({
+        razao_social: "",
+        nome_fantasia: "",
+        cnpj_cpf: "",
+        tipo: "remetente",
+        telefone: "",
+        endereco: "",
+        bairro: "",
+        cidade: "",
+        uf: "",
+        cep: ""
+    });
     const queryClient = useQueryClient();
+
+    const createClienteMutation = useMutation({
+        mutationFn: (data) => base44.entities.Cliente.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["clientes"] });
+            setShowCadastroCliente(false);
+            setClienteForm({
+                razao_social: "",
+                nome_fantasia: "",
+                cnpj_cpf: "",
+                tipo: "remetente",
+                telefone: "",
+                endereco: "",
+                bairro: "",
+                cidade: "",
+                uf: "",
+                cep: ""
+            });
+            toast.success("Cliente cadastrado com sucesso!");
+        }
+    });
+
+    const handleOpenCadastroCliente = (tipo) => {
+        setTipoClienteCadastro(tipo);
+        setClienteForm(prev => ({ ...prev, tipo: tipo === "destinatario" ? "destinatario" : "remetente" }));
+        setShowCadastroCliente(true);
+    };
 
     const { data: coletas = [], isLoading } = useQuery({
         queryKey: ["coletas-diarias"],
@@ -603,7 +669,103 @@ export default function AdicionarColetaDiaria() {
                         coleta={editing}
                         onSubmit={handleSubmit}
                         onCancel={() => { setShowForm(false); setEditing(null); }}
+                        onOpenCadastroCliente={handleOpenCadastroCliente}
                     />
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Cadastrar Cliente */}
+            <Dialog open={showCadastroCliente} onOpenChange={setShowCadastroCliente}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-indigo-600" />
+                            Cadastrar {tipoClienteCadastro === "destinatario" ? "Destinatário" : "Remetente"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Razão Social *</Label>
+                                <Input
+                                    value={clienteForm.razao_social}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, razao_social: e.target.value })}
+                                    placeholder="Nome da empresa"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Nome Fantasia</Label>
+                                <Input
+                                    value={clienteForm.nome_fantasia}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, nome_fantasia: e.target.value })}
+                                    placeholder="Nome fantasia"
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>CNPJ/CPF</Label>
+                                <Input
+                                    value={clienteForm.cnpj_cpf}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, cnpj_cpf: e.target.value })}
+                                    placeholder="00.000.000/0001-00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Telefone</Label>
+                                <Input
+                                    value={clienteForm.telefone}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, telefone: e.target.value })}
+                                    placeholder="(00) 0000-0000"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Endereço</Label>
+                            <Input
+                                value={clienteForm.endereco}
+                                onChange={(e) => setClienteForm({ ...clienteForm, endereco: e.target.value })}
+                                placeholder="Rua, número"
+                            />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Bairro</Label>
+                                <Input
+                                    value={clienteForm.bairro}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, bairro: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cidade</Label>
+                                <Input
+                                    value={clienteForm.cidade}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, cidade: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>UF</Label>
+                                <Input
+                                    value={clienteForm.uf}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, uf: e.target.value })}
+                                    maxLength={2}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => setShowCadastroCliente(false)}>
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={() => createClienteMutation.mutate(clienteForm)}
+                                disabled={!clienteForm.razao_social || createClienteMutation.isPending}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                <Save className="w-4 h-4 mr-1" />
+                                Cadastrar
+                            </Button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

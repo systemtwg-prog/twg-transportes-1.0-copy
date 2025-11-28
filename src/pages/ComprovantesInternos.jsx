@@ -290,18 +290,29 @@ export default function ComprovantesInternos() {
             // Tentar extrair número da nota fiscal usando LLM
             try {
                 const result = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analise esta imagem de uma nota fiscal ou comprovante de entrega.
-                    
-Extraia APENAS o número da nota fiscal (NF-e, NF, Nota Fiscal, NFe).
-O número geralmente aparece como: NF 12345, NFe: 12345, Nota Fiscal nº 12345, etc.
+                    prompt: `Analise esta imagem de uma nota fiscal, DANFE, canhoto ou comprovante de entrega.
 
-Se houver múltiplos números, extraia o principal (o maior ou mais destacado).
-Se não encontrar, retorne vazio.`,
+IMPORTANTE: Procure pelo NÚMERO DA NOTA FISCAL. Ele pode aparecer como:
+- "NF-e Nº" ou "NF-e:" seguido de números
+- "DANFE" com número abaixo
+- "Nota Fiscal Eletrônica" com número
+- "NF:" ou "NFe:" seguido de números
+- Número de 6 a 9 dígitos em destaque no documento
+- Campo "NÚMERO" ou "Nº" no cabeçalho
+
+O número da nota fiscal geralmente é um número de 6 a 9 dígitos.
+NÃO confunda com:
+- Chave de acesso (44 dígitos)
+- Código de barras
+- CNPJ
+- Série (geralmente 1-3 dígitos)
+
+Retorne APENAS os dígitos do número da nota fiscal, sem pontos ou formatação.`,
                     file_urls: [file_url],
                     response_json_schema: {
                         type: "object",
                         properties: {
-                            numero_nota_fiscal: { type: "string", description: "Apenas o número da nota fiscal, sem texto adicional" },
+                            numero_nota_fiscal: { type: "string", description: "Apenas os dígitos do número da nota fiscal (ex: 123456)" },
                             empresa: { type: "string", description: "Nome da empresa/destinatário se visível" }
                         }
                     }

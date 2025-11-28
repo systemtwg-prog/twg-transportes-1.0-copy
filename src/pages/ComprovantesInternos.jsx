@@ -1132,28 +1132,36 @@ export default function ComprovantesInternos() {
 
             {/* Scanner Camera */}
             {showScanner && (
-                <ScannerCamera
-                    onCapture={async (file) => {
-                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                        if (scannerTarget === 'form') {
-                            setForm(prev => ({
-                                ...prev,
-                                arquivos: [...prev.arquivos, { nome: file.name, url: file_url, tipo: file.type }]
-                            }));
-                        } else if (scannerTarget === 'massa') {
-                            setItensMassa(prev => [...prev, {
-                                id: Date.now() + Math.random(),
-                                nota_fiscal: "",
-                                url: file_url,
-                                nome: file.name,
-                                tipo: file.type
-                            }]);
-                        }
-                        setShowScanner(false);
-                        toast.success("Foto capturada!");
-                    }}
-                    onClose={() => setShowScanner(false)}
-                />
+                <div className="fixed inset-0 z-[100]">
+                    <ScannerCamera
+                        onCapture={async (file) => {
+                            try {
+                                const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                if (scannerTarget === 'form') {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
+                                    }));
+                                    toast.success("Foto adicionada ao formulário!");
+                                } else if (scannerTarget === 'massa') {
+                                    setItensMassa(prev => [...prev, {
+                                        id: Date.now() + Math.random(),
+                                        nota_fiscal: "",
+                                        url: file_url,
+                                        nome: file.name,
+                                        tipo: file.type
+                                    }]);
+                                    toast.success("Foto adicionada à lista!");
+                                }
+                            } catch (error) {
+                                console.error("Erro ao fazer upload:", error);
+                                toast.error("Erro ao salvar foto");
+                            }
+                            setShowScanner(false);
+                        }}
+                        onClose={() => setShowScanner(false)}
+                    />
+                </div>
             )}
 
             {/* Form Dialog */}

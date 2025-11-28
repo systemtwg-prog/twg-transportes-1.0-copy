@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import AudioRecorder from "@/components/shared/AudioRecorder";
 import ScannerCamera from "@/components/shared/ScannerCamera";
+import { Mic, MicOff } from "lucide-react";
 
 export default function RotasGPS() {
     const [selectedRomaneio, setSelectedRomaneio] = useState(null);
@@ -96,6 +97,14 @@ export default function RotasGPS() {
     const [showEditObs, setShowEditObs] = useState(false);
     const [editingNotaObs, setEditingNotaObs] = useState(null);
     const [obsTexto, setObsTexto] = useState("");
+    
+    // Estados para comando de voz
+    const [gravandoVoz, setGravandoVoz] = useState(false);
+    const [transcricaoVoz, setTranscricaoVoz] = useState("");
+    const [showVozDialog, setShowVozDialog] = useState(false);
+    const [processandoVoz, setProcessandoVoz] = useState(false);
+    const [mediaRecorderVoz, setMediaRecorderVoz] = useState(null);
+    const [audioChunks, setAudioChunks] = useState([]);
 
     // Dashboard por veículo
     const dashboardPorVeiculo = useMemo(() => {
@@ -730,6 +739,94 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
         toast.success("Destino removido");
     };
 
+    // Funções de comando de voz
+    const iniciarGravacaoVoz = async () => {
+        if (gravandoVoz) {
+            // Parar gravação
+            if (mediaRecorderVoz) {
+                mediaRecorderVoz.stop();
+            }
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(track => track.stop());
+                setGravandoVoz(false);
+                setProcessandoVoz(true);
+
+                const audioBlob = new Blob(chunks, { type: "audio/webm" });
+                const file = new File([audioBlob], "comando_voz.webm", { type: "audio/webm" });
+
+                try {
+                    // Upload do áudio
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+                    // Transcrever e buscar endereço
+                    const resultado = await base44.integrations.Core.InvokeLLM({
+                        prompt: `Transcreva este áudio e extraia o endereço mencionado.
+O usuário está ditando um endereço para navegação GPS.
+Retorne o endereço completo formatado para usar no Waze/Google Maps.`,
+                        file_urls: [file_url],
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                transcricao: { type: "string", description: "Texto transcrito do áudio" },
+                                endereco: { type: "string", description: "Endereço extraído formatado" },
+                                cidade: { type: "string", description: "Cidade identificada" },
+                                estado: { type: "string", description: "Estado identificado" }
+                            }
+                        }
+                    });
+
+                    if (resultado?.transcricao) {
+                        const enderecoCompleto = [resultado.endereco, resultado.cidade, resultado.estado].filter(Boolean).join(", ");
+                        setTranscricaoVoz(resultado.transcricao);
+                        
+                        // Adicionar rota
+                        const novaRota = {
+                            id: Date.now(),
+                            destinatario: resultado.endereco || resultado.transcricao,
+                            enderecoCompleto: enderecoCompleto || resultado.transcricao,
+                            cidade: resultado.cidade,
+                            estado: resultado.estado
+                        };
+                        
+                        setRotasAdicionadas(prev => [...prev, novaRota]);
+                        setShowVozDialog(true);
+                        toast.success("Endereço reconhecido!");
+                    } else {
+                        toast.error("Não foi possível entender o áudio");
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar voz:", error);
+                    toast.error("Erro ao processar comando de voz");
+                }
+
+                setProcessandoVoz(false);
+            };
+
+            mediaRecorder.start();
+            setMediaRecorderVoz(mediaRecorder);
+            setGravandoVoz(true);
+            toast.info("Fale o endereço...");
+
+        } catch (error) {
+            console.error("Erro ao acessar microfone:", error);
+            toast.error("Permita o acesso ao microfone");
+        }
+    };
+
     const statusColors = {
         pendente: "bg-yellow-100 text-yellow-800",
         coletado: "bg-purple-100 text-purple-800",
@@ -819,23 +916,47 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                         <p className="text-sm text-slate-500 mb-4">
                             Tire uma foto do endereço da nota fiscal para adicionar automaticamente como rota.
                         </p>
-                        <Button 
-                            onClick={() => setShowCamera(true)}
-                            className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700"
-                            disabled={processandoFoto}
-                        >
-                            {processandoFoto ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                    Processando Foto...
-                                </>
-                            ) : (
-                                <>
-                                    <Camera className="w-5 h-5 mr-2" />
-                                    Tirar Foto da Nota Fiscal
-                                </>
-                            )}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={() => setShowCamera(true)}
+                                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700"
+                                disabled={processandoFoto}
+                            >
+                                {processandoFoto ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Camera className="w-5 h-5 mr-2" />
+                                        Foto da Nota
+                                    </>
+                                )}
+                            </Button>
+                            <Button 
+                                onClick={iniciarGravacaoVoz}
+                                className={`flex-1 ${gravandoVoz ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"}`}
+                                disabled={processandoVoz}
+                            >
+                                {processandoVoz ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : gravandoVoz ? (
+                                    <>
+                                        <MicOff className="w-5 h-5 mr-2" />
+                                        Parar
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mic className="w-5 h-5 mr-2" />
+                                        Voz
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -1724,6 +1845,67 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                             </Button>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Comando de Voz */}
+            <Dialog open={showVozDialog} onOpenChange={setShowVozDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Mic className="w-5 h-5 text-purple-600" />
+                            Endereço Reconhecido
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                            <p className="text-sm text-slate-500 mb-1">Você disse:</p>
+                            <p className="font-medium text-purple-800">{transcricaoVoz}</p>
+                        </div>
+
+                        {rotasAdicionadas.length > 0 && (
+                            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                <p className="text-sm text-slate-500 mb-1">Endereço para navegação:</p>
+                                <p className="font-medium text-green-800">
+                                    {rotasAdicionadas[rotasAdicionadas.length - 1]?.enderecoCompleto}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={() => {
+                                    const endereco = rotasAdicionadas[rotasAdicionadas.length - 1]?.enderecoCompleto;
+                                    if (endereco) abrirRotaWaze(endereco);
+                                    setShowVozDialog(false);
+                                }}
+                                className="flex-1 bg-blue-500 hover:bg-blue-600"
+                            >
+                                <Navigation className="w-5 h-5 mr-2" />
+                                Abrir no Waze
+                            </Button>
+                            <Button 
+                                onClick={() => {
+                                    const endereco = rotasAdicionadas[rotasAdicionadas.length - 1]?.enderecoCompleto;
+                                    if (endereco) abrirRotaGoogleMaps(endereco);
+                                    setShowVozDialog(false);
+                                }}
+                                variant="outline"
+                                className="flex-1 border-green-500 text-green-600"
+                            >
+                                <MapPin className="w-5 h-5 mr-2" />
+                                Google Maps
+                            </Button>
+                        </div>
+
+                        <Button 
+                            variant="outline"
+                            onClick={() => setShowVozDialog(false)}
+                            className="w-full"
+                        >
+                            Fechar
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 

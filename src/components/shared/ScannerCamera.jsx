@@ -134,9 +134,9 @@ export default function ScannerCamera({ onCapture, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 bg-black/80">
+            <div className="flex items-center justify-between p-4 bg-black/80 relative z-10">
                 <div className="flex items-center gap-2 text-white">
                     <ScanLine className="w-5 h-5 text-green-400" />
                     <span className="font-medium">Scanner de Documentos</span>

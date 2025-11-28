@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import AudioRecorder from "@/components/shared/AudioRecorder";
+import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -893,7 +893,15 @@ Se não encontrar, retorne vazio.`,
                                 value={form.observacoes}
                                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
                                 rows={3}
-                                placeholder="Digite suas observações..."
+                                placeholder="Digite suas observações ou grave um áudio..."
+                            />
+                            <AudioRecorderWithTranscription 
+                                onRecordingComplete={(audioUrl, transcricao) => {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        observacoes: (prev.observacoes || "") + (transcricao ? `\n${transcricao}` : "") + `\n[Áudio: ${audioUrl}]`
+                                    }));
+                                }}
                             />
                         </div>
 

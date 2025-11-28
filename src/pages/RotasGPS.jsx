@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Navigation, MapPin, Truck, Package, ExternalLink, 
     Trash2, Plus, Route, CheckCircle, Camera, Sparkles, 
-    ArrowUp, ArrowDown, GripVertical, Loader2
+    ArrowUp, ArrowDown, GripVertical, Loader2, Car, FileText,
+    Upload, Pencil, MessageSquare, BarChart3
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -73,6 +75,78 @@ export default function RotasGPS() {
     const { data: coletasDiarias = [] } = useQuery({
         queryKey: ["coletas-diarias-rotas"],
         queryFn: () => base44.entities.ColetaDiaria.filter({ status: "pendente" })
+    });
+
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-rotas"],
+        queryFn: () => base44.entities.Veiculo.list()
+    });
+
+    const { data: comprovantesInternos = [] } = useQuery({
+        queryKey: ["comprovantes-internos-rotas"],
+        queryFn: () => base44.entities.ComprovanteInterno.list("-created_date")
+    });
+
+    // Estados para adicionar comprovante
+    const [showAddComprovante, setShowAddComprovante] = useState(false);
+    const [comprovanteNota, setComprovanteNota] = useState(null);
+    const [comprovanteArquivos, setComprovanteArquivos] = useState([]);
+    const [comprovanteObs, setComprovanteObs] = useState("");
+    const [uploadingComprovante, setUploadingComprovante] = useState(false);
+    const [showEditObs, setShowEditObs] = useState(false);
+    const [editingNotaObs, setEditingNotaObs] = useState(null);
+    const [obsTexto, setObsTexto] = useState("");
+
+    // Dashboard por veículo
+    const dashboardPorVeiculo = useMemo(() => {
+        const hoje = format(new Date(), "yyyy-MM-dd");
+        const porVeiculo = {};
+
+        // Contar entregas pendentes dos romaneios gerados
+        romaneiosGerados.forEach(r => {
+            if (r.status === "gerado" || r.status === "em_transito") {
+                const placa = r.placa || "SEM_PLACA";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
+                (r.notas_ids || []).forEach(id => {
+                    const nota = notasFiscais.find(n => n.id === id);
+                    if (nota) porVeiculo[placa].notas.push(nota);
+                });
+            }
+        });
+
+        // Contar coletas pendentes
+        coletasDiarias.forEach(c => {
+            if (c.status === "pendente") {
+                // Tentar associar coleta a um veículo (se tiver motorista vinculado)
+                const placa = "COLETAS";
+                if (!porVeiculo[placa]) {
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                }
+                porVeiculo[placa].coletas++;
+            }
+        });
+
+        return porVeiculo;
+    }, [romaneiosGerados, notasFiscais, coletasDiarias]);
+
+    // Mutation para criar comprovante
+    const createComprovanteMutation = useMutation({
+        mutationFn: (data) => base44.entities.ComprovanteInterno.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos-rotas"] });
+            toast.success("Comprovante adicionado!");
+        }
+    });
+
+    // Mutation para atualizar nota fiscal
+    const updateNotaFiscalMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.NotaFiscal.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notas-fiscais-rotas"] });
+        }
     });
 
     const deleteRomaneioMutation = useMutation({
@@ -531,6 +605,57 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                     </div>
                 </div>
 
+                {/* Dashboard por Veículo */}
+                {Object.keys(dashboardPorVeiculo).length > 0 && (
+                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                                Pendências por Veículo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {Object.entries(dashboardPorVeiculo).map(([placa, dados]) => {
+                                    const veiculo = veiculos.find(v => v.placa === placa);
+                                    return (
+                                        <div 
+                                            key={placa}
+                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Car className="w-4 h-4 text-indigo-600" />
+                                                <span className="font-bold text-sm text-indigo-700">
+                                                    {placa === "COLETAS" ? "Coletas" : placa}
+                                                </span>
+                                            </div>
+                                            {veiculo && (
+                                                <p className="text-xs text-slate-500 mb-1">{veiculo.modelo}</p>
+                                            )}
+                                            <div className="flex gap-3 text-sm">
+                                                {dados.entregas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Package className="w-3 h-3 text-orange-500" />
+                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
+                                                        <span className="text-xs text-slate-400">entregas</span>
+                                                    </div>
+                                                )}
+                                                {dados.coletas > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Truck className="w-3 h-3 text-blue-500" />
+                                                        <span className="font-semibold text-blue-600">{dados.coletas}</span>
+                                                        <span className="text-xs text-slate-400">coletas</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Ações Rápidas - Sempre visíveis */}
                 <Card className="bg-white/80 border-0 shadow-lg">
                     <CardHeader>
@@ -904,6 +1029,9 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                                                                 {enderecoCompleto}
                                                             </button>
                                                         )}
+                                                        {dest.observacoes && (
+                                                            <p className="text-xs text-slate-500 mt-1 italic">📝 {dest.observacoes}</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
@@ -927,6 +1055,33 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                                                             </Button>
                                                         </>
                                                     )}
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setEditingNotaObs(dest);
+                                                            setObsTexto(dest.observacoes || "");
+                                                            setShowEditObs(true);
+                                                        }}
+                                                        className="text-purple-600 hover:bg-purple-50"
+                                                        title="Editar/Adicionar observação"
+                                                    >
+                                                        <MessageSquare className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setComprovanteNota(dest);
+                                                            setComprovanteArquivos([]);
+                                                            setComprovanteObs("");
+                                                            setShowAddComprovante(true);
+                                                        }}
+                                                        className="text-orange-600 hover:bg-orange-50"
+                                                        title="Adicionar comprovante"
+                                                    >
+                                                        <FileText className="w-4 h-4" />
+                                                    </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -1165,6 +1320,205 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                             >
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Confirmar Finalização
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Adicionar Comprovante de Entrega */}
+            <Dialog open={showAddComprovante} onOpenChange={setShowAddComprovante}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-orange-600" />
+                            Adicionar Comprovante de Entrega
+                        </DialogTitle>
+                    </DialogHeader>
+                    {comprovanteNota && (
+                        <div className="space-y-4">
+                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <p className="font-semibold text-orange-800">{comprovanteNota.destinatario}</p>
+                                <p className="text-sm text-orange-600">NF: {comprovanteNota.numero_nf}</p>
+                            </div>
+
+                            {/* Upload de arquivos */}
+                            <div className="space-y-2">
+                                <Label>Fotos do Comprovante</Label>
+                                <div className="flex gap-2">
+                                    <div className="flex-1 border-2 border-dashed border-orange-300 rounded-lg p-4 text-center hover:border-orange-500 transition-colors">
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const files = Array.from(e.target.files);
+                                                if (files.length === 0) return;
+                                                setUploadingComprovante(true);
+                                                const novosArquivos = [];
+                                                for (const file of files) {
+                                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                                    novosArquivos.push({ nome: file.name, url: file_url, tipo: file.type });
+                                                }
+                                                setComprovanteArquivos(prev => [...prev, ...novosArquivos]);
+                                                setUploadingComprovante(false);
+                                            }}
+                                            className="hidden"
+                                            id="comprovante-upload"
+                                        />
+                                        <label htmlFor="comprovante-upload" className="cursor-pointer">
+                                            {uploadingComprovante ? (
+                                                <Loader2 className="w-8 h-8 mx-auto text-orange-400 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-8 h-8 mx-auto text-orange-400" />
+                                                    <span className="text-sm text-orange-600">Selecionar</span>
+                                                </>
+                                            )}
+                                        </label>
+                                    </div>
+                                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-4 text-center hover:border-orange-500 transition-colors">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            capture="environment"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                setUploadingComprovante(true);
+                                                const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                                setComprovanteArquivos(prev => [...prev, { nome: file.name, url: file_url, tipo: file.type }]);
+                                                setUploadingComprovante(false);
+                                            }}
+                                            className="hidden"
+                                            id="comprovante-camera"
+                                        />
+                                        <label htmlFor="comprovante-camera" className="cursor-pointer">
+                                            <Camera className="w-8 h-8 mx-auto text-orange-400" />
+                                            <span className="text-sm text-orange-600">Câmera</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {comprovanteArquivos.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {comprovanteArquivos.map((arq, i) => (
+                                            <div key={i} className="relative">
+                                                <img src={arq.url} alt="" className="w-16 h-16 object-cover rounded-lg" />
+                                                <button
+                                                    onClick={() => setComprovanteArquivos(prev => prev.filter((_, idx) => idx !== i))}
+                                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs"
+                                                >×</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Observações</Label>
+                                <Textarea
+                                    value={comprovanteObs}
+                                    onChange={(e) => setComprovanteObs(e.target.value)}
+                                    placeholder="Observações sobre a entrega..."
+                                    rows={3}
+                                />
+                            </div>
+
+                            <Button
+                                onClick={async () => {
+                                    // Criar comprovante
+                                    await createComprovanteMutation.mutateAsync({
+                                        nota_fiscal: comprovanteNota.numero_nf,
+                                        data: format(new Date(), "yyyy-MM-dd"),
+                                        arquivos: comprovanteArquivos,
+                                        observacoes: comprovanteObs
+                                    });
+
+                                    // Atualizar status da nota fiscal se existir
+                                    const notaFiscal = notasFiscais.find(n => n.numero_nf === comprovanteNota.numero_nf);
+                                    if (notaFiscal) {
+                                        await updateNotaFiscalMutation.mutateAsync({
+                                            id: notaFiscal.id,
+                                            data: { 
+                                                observacoes: (notaFiscal.observacoes || "") + `\n[${format(new Date(), "dd/MM HH:mm")}] Comprovante adicionado. ${comprovanteObs}`
+                                            }
+                                        });
+                                    }
+
+                                    setShowAddComprovante(false);
+                                    setComprovanteNota(null);
+                                    setComprovanteArquivos([]);
+                                    setComprovanteObs("");
+                                }}
+                                disabled={comprovanteArquivos.length === 0 || createComprovanteMutation.isPending}
+                                className="w-full bg-orange-600 hover:bg-orange-700"
+                            >
+                                {createComprovanteMutation.isPending ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                )}
+                                Salvar Comprovante
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Editar Observação */}
+            <Dialog open={showEditObs} onOpenChange={setShowEditObs}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MessageSquare className="w-5 h-5 text-purple-600" />
+                            Editar Observação
+                        </DialogTitle>
+                    </DialogHeader>
+                    {editingNotaObs && (
+                        <div className="space-y-4">
+                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                <p className="font-semibold text-purple-800">{editingNotaObs.destinatario}</p>
+                                <p className="text-sm text-purple-600">NF: {editingNotaObs.numero_nf}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Observação</Label>
+                                <Textarea
+                                    value={obsTexto}
+                                    onChange={(e) => setObsTexto(e.target.value)}
+                                    placeholder="Digite a observação..."
+                                    rows={4}
+                                />
+                            </div>
+
+                            <Button
+                                onClick={() => {
+                                    if (!selectedRomaneio?.notas_fiscais) return;
+                                    
+                                    const notas = selectedRomaneio.notas_fiscais.map(n => 
+                                        n.numero_nf === editingNotaObs.numero_nf 
+                                            ? { ...n, observacoes: obsTexto }
+                                            : n
+                                    );
+
+                                    updateRomaneioMutation.mutate({
+                                        id: selectedRomaneio.id,
+                                        data: { notas_fiscais: notas }
+                                    });
+
+                                    setSelectedRomaneio({
+                                        ...selectedRomaneio,
+                                        notas_fiscais: notas
+                                    });
+
+                                    setShowEditObs(false);
+                                    setEditingNotaObs(null);
+                                    toast.success("Observação salva!");
+                                }}
+                                className="w-full bg-purple-600 hover:bg-purple-700"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Salvar Observação
                             </Button>
                         </div>
                     )}

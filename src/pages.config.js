@@ -12,8 +12,6 @@ import ColetasDiarias from './pages/ColetasDiarias';
 import AdicionarColetaDiaria from './pages/AdicionarColetaDiaria';
 import AprovacaoUsuarios from './pages/AprovacaoUsuarios';
 import PersonalizarHome from './pages/PersonalizarHome';
-import Comprovantes from './pages/Comprovantes';
-import Romaneios from './pages/Romaneios';
 import Avisos from './pages/Avisos';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import NotaDeposito from './pages/NotaDeposito';
@@ -24,6 +22,7 @@ import Transportadoras from './pages/Transportadoras';
 import NotasFiscais from './pages/NotasFiscais';
 import MascaraRomaneio from './pages/MascaraRomaneio';
 import RomaneiosGerados from './pages/RomaneiosGerados';
+import ComprovantesCtes from './pages/ComprovantesCtes';
 import __Layout from './Layout.jsx';
 
 
@@ -42,8 +41,6 @@ export const PAGES = {
     "AdicionarColetaDiaria": AdicionarColetaDiaria,
     "AprovacaoUsuarios": AprovacaoUsuarios,
     "PersonalizarHome": PersonalizarHome,
-    "Comprovantes": Comprovantes,
-    "Romaneios": Romaneios,
     "Avisos": Avisos,
     "ComprovantesInternos": ComprovantesInternos,
     "NotaDeposito": NotaDeposito,
@@ -54,6 +51,7 @@ export const PAGES = {
     "NotasFiscais": NotasFiscais,
     "MascaraRomaneio": MascaraRomaneio,
     "RomaneiosGerados": RomaneiosGerados,
+    "ComprovantesCtes": ComprovantesCtes,
 }
 
 export const pagesConfig = {

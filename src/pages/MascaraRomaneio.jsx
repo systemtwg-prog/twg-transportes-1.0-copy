@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { 
-    FileText, Printer, Truck, Calendar, Search, X, Plus, Car, Building2, Save, Pencil, Trash2, Package, Scale, BarChart3
+    FileText as FileTextIcon, Printer, Truck, Calendar, Search, X, Plus, Car, Building2, Save, Pencil, Trash2, Package as PackageIcon, Scale, BarChart3
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -526,6 +528,20 @@ export default function MascaraRomaneio() {
                             <h1 className="text-3xl font-bold text-slate-800">Máscara Romaneio</h1>
                             <p className="text-slate-500">Gere romaneios com notas fiscais cadastradas</p>
                         </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Link to={createPageUrl("NotasFiscais")}>
+                            <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                                <FileTextIcon className="w-4 h-4 mr-2" />
+                                Notas Fiscais
+                            </Button>
+                        </Link>
+                        <Link to={createPageUrl("RomaneiosGerados")}>
+                            <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                                <PackageIcon className="w-4 h-4 mr-2" />
+                                Romaneios Gerados
+                            </Button>
+                        </Link>
                     </div>
                     <Button 
                         onClick={handlePrint}

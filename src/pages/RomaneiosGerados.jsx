@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function RomaneiosGerados() {
     const [filterData, setFilterData] = useState("");
@@ -156,6 +158,20 @@ export default function RomaneiosGerados() {
                         <h1 className="text-3xl font-bold text-slate-800">Romaneios Gerados</h1>
                         <p className="text-slate-500">Histórico de cargas e entregas realizadas</p>
                     </div>
+                </div>
+                <div className="flex gap-2">
+                    <Link to={createPageUrl("NotasFiscais")}>
+                        <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                            <FileText className="w-4 h-4 mr-2" />
+                            Notas Fiscais
+                        </Button>
+                    </Link>
+                    <Link to={createPageUrl("MascaraRomaneio")}>
+                        <Button variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
+                            <Truck className="w-4 h-4 mr-2" />
+                            Máscara Romaneio
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Filtros */}

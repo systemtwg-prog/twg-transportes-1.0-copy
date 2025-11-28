@@ -6,28 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut
+    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell
 } from "lucide-react";
 
 const menuItems = [
     { name: "Home", href: "Home", icon: Home },
     { name: "Comprovantes de Entrega", href: "ComprovantesInternos", icon: FileText },
+    { name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText },
     { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
-    { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
-    { name: "Romaneios/Entregas", href: "Romaneios", icon: Package },
-    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
-    { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
-    { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
-    { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package },
     { name: "Clientes", href: "Clientes", icon: Users },
     { name: "Transportadoras", href: "Transportadoras", icon: Package },
     { name: "Colaboradores", href: "Motoristas", icon: User },
     { name: "Veículos", href: "Veiculos", icon: Car },
+    { name: "Avisos", href: "Avisos", icon: Bell },
+    { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
+    { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
+    { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package },
+    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
+    { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
     { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
-    { name: "Comprovantes", href: "Comprovantes", icon: FileText },
-    { name: "Avisos", href: "Avisos", icon: Home },
     { name: "Relatórios", href: "Relatorios", icon: FileText },
     { name: "Performance", href: "RelatorioMotoristas", icon: Award },
     { name: "Configurações", href: "Configuracoes", icon: Settings },

@@ -10,12 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 export default function NotasFiscais() {
     const [showForm, setShowForm] = useState(false);
@@ -315,6 +317,20 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                             <h1 className="text-3xl font-bold text-slate-800">Notas Fiscais</h1>
                             <p className="text-slate-500">Gerencie notas fiscais para romaneios</p>
                         </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Link to={createPageUrl("MascaraRomaneio")}>
+                            <Button variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
+                                <Truck className="w-4 h-4 mr-2" />
+                                Máscara Romaneio
+                            </Button>
+                        </Link>
+                        <Link to={createPageUrl("RomaneiosGerados")}>
+                            <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                                <Package className="w-4 h-4 mr-2" />
+                                Romaneios Gerados
+                            </Button>
+                        </Link>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <label className="cursor-pointer">

@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { 
     Plus, Search, Pencil, Trash2, Users, Building2, 
-    Phone, MapPin, FileText, Star, Upload
+    Phone, MapPin, FileText, Star, Upload, ClipboardPaste, Sparkles, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
@@ -55,6 +56,97 @@ export default function Clientes() {
     });
 
     const [importing, setImporting] = useState(false);
+    const [showPasteForm, setShowPasteForm] = useState(false);
+    const [pasteText, setPasteText] = useState("");
+    const [processingPaste, setProcessingPaste] = useState(false);
+
+    const handleProcessPaste = async () => {
+        if (!pasteText.trim()) return;
+        
+        setProcessingPaste(true);
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise o texto abaixo e extraia as informações de clientes/empresas. 
+                
+Texto colado:
+${pasteText}
+
+Extraia as seguintes informações de cada cliente/empresa encontrada:
+- razao_social: nome da empresa ou razão social
+- nome_fantasia: nome fantasia (se houver)
+- cnpj_cpf: CNPJ ou CPF
+- tipo: se parece ser remetente, destinatario ou ambos (baseado no contexto)
+- contato: nome do contato
+- telefone: telefone
+- email: email
+- cep: CEP
+- endereco: endereço completo (rua, número)
+- bairro: bairro
+- cidade: cidade
+- uf: estado (sigla)
+- horario_funcionamento_inicio: horário de início do funcionamento (formato HH:MM)
+- horario_funcionamento_fim: horário de fim do funcionamento (formato HH:MM)
+- horario_almoco_inicio: horário início do almoço (formato HH:MM)
+- horario_almoco_fim: horário fim do almoço (formato HH:MM)
+- observacoes: outras informações relevantes`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        clientes: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    razao_social: { type: "string" },
+                                    nome_fantasia: { type: "string" },
+                                    cnpj_cpf: { type: "string" },
+                                    tipo: { type: "string" },
+                                    contato: { type: "string" },
+                                    telefone: { type: "string" },
+                                    email: { type: "string" },
+                                    cep: { type: "string" },
+                                    endereco: { type: "string" },
+                                    bairro: { type: "string" },
+                                    cidade: { type: "string" },
+                                    uf: { type: "string" },
+                                    horario_funcionamento_inicio: { type: "string" },
+                                    horario_funcionamento_fim: { type: "string" },
+                                    horario_almoco_inicio: { type: "string" },
+                                    horario_almoco_fim: { type: "string" },
+                                    observacoes: { type: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (result?.clientes && result.clientes.length > 0) {
+                let importados = 0;
+                for (const cliente of result.clientes) {
+                    if (cliente.razao_social) {
+                        await base44.entities.Cliente.create({
+                            ...cliente,
+                            tipo: cliente.tipo?.toLowerCase() || "remetente"
+                        });
+                        importados++;
+                    }
+                }
+                queryClient.invalidateQueries({ queryKey: ["clientes"] });
+                toast.success(`✅ ${importados} cliente(s) criado(s) com sucesso!`);
+                setShowPasteForm(false);
+                setPasteText("");
+            } else {
+                toast.error("Não foi possível identificar clientes no texto.");
+            }
+        } catch (error) {
+            console.error("Erro ao processar texto:", error);
+            toast.error("Erro ao processar texto. Tente novamente.");
+        }
+        
+        setProcessingPaste(false);
+    };
 
     const handleImportFile = async (e) => {
         const file = e.target.files?.[0];
@@ -191,7 +283,7 @@ export default function Clientes() {
                             <p className="text-slate-500">Gerencie remetentes e destinatários</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                         <label className="cursor-pointer">
                             <input
                                 type="file"
@@ -211,6 +303,14 @@ export default function Clientes() {
                                 </span>
                             </Button>
                         </label>
+                        <Button 
+                            onClick={() => setShowPasteForm(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                        >
+                            <ClipboardPaste className="w-4 h-4 mr-2" />
+                            Colar Texto
+                        </Button>
                         <Button 
                             onClick={() => { setEditingCliente(null); setShowForm(true); }}
                             className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg"
@@ -406,6 +506,60 @@ export default function Clientes() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Paste Dialog */}
+            <Dialog open={showPasteForm} onOpenChange={setShowPasteForm}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-purple-600" />
+                            Colar Informações de Clientes
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole abaixo as informações de clientes. O sistema irá identificar e organizar automaticamente os dados como nome, CNPJ, endereço, telefone, horário de funcionamento, etc.
+                        </p>
+                        <Textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder="Cole aqui as informações dos clientes...
+
+Exemplo:
+Empresa ABC Ltda
+CNPJ: 12.345.678/0001-00
+Endereço: Rua das Flores, 123 - Centro
+Cidade: São Paulo - SP
+Telefone: (11) 99999-9999
+Horário: 08:00 às 18:00
+Almoço: 12:00 às 13:00"
+                            rows={12}
+                            className="font-mono text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleProcessPaste}
+                                disabled={processingPaste || !pasteText.trim()}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {processingPaste ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" /> Processar e Cadastrar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>

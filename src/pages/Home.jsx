@@ -168,7 +168,7 @@ export default function Home() {
     ];
 
     return (
-        <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6`}>
+        <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6 relative`}>
             <div className="max-w-6xl mx-auto space-y-5">
                 {/* Header */}
                 <div className="flex flex-col items-center justify-center py-6">

@@ -287,44 +287,7 @@ export default function ComprovantesInternos() {
                 tipo: file.type
             });
 
-            // Tentar extrair número da nota fiscal usando LLM
-            try {
-                const result = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analise esta imagem de uma DANFE (Documento Auxiliar da Nota Fiscal Eletrônica).
 
-LOCALIZAÇÃO EXATA DO NÚMERO DA NOTA FISCAL:
-- Está no TOPO DIREITO do documento
-- Fica DENTRO do quadrado/box onde aparece a palavra "DANFE"
-- Logo abaixo de "DANFE" aparece "Documento Auxiliar da Nota Fiscal Eletrônica"
-- O campo "NF-e" ou "Nº" está nesse mesmo quadrado
-- O número tem geralmente 6 a 9 dígitos (exemplo: 000.123.456 ou 123456)
-
-IGNORE COMPLETAMENTE:
-- A chave de acesso (são 44 dígitos, muito longa)
-- Códigos de barras
-- CNPJ
-- Número de série
-
-Retorne SOMENTE o número da nota fiscal encontrado no quadrado DANFE no topo direito. Remove pontos e retorne apenas os dígitos.`,
-                    file_urls: [file_url],
-                    response_json_schema: {
-                        type: "object",
-                        properties: {
-                            numero_nota_fiscal: { type: "string", description: "Apenas os dígitos do número da NF (ex: 123456)" },
-                            empresa: { type: "string", description: "Nome da empresa/destinatário se visível" }
-                        }
-                    }
-                });
-                
-                if (result?.numero_nota_fiscal && !form.nota_fiscal) {
-                    setForm(prev => ({
-                        ...prev,
-                        nota_fiscal: result.numero_nota_fiscal
-                    }));
-                }
-            } catch (err) {
-                console.log("Erro ao extrair dados do arquivo:", err);
-            }
         }
 
         setForm(prev => ({
@@ -401,9 +364,9 @@ Retorne SOMENTE o número da nota fiscal encontrado no quadrado DANFE no topo di
                         )}
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg font-semibold"
+                            className="bg-gradient-to-r from-sky-500 to-cyan-600"
                         >
-                            <Plus className="w-6 h-6 mr-2" />
+                            <Plus className="w-5 h-5 mr-2" />
                             Novo Comprovante
                         </Button>
                     </div>

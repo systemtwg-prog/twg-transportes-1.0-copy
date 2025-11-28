@@ -121,6 +121,8 @@ export default function ComprovantesCtes() {
     const [editing, setEditing] = useState(null);
     const [filterData, setFilterData] = useState("");
     const [filterCTE, setFilterCTE] = useState("");
+    const [filterFornecedor, setFilterFornecedor] = useState("");
+    const [filterCliente, setFilterCliente] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -443,14 +445,16 @@ ${pasteText}`,
         const matchData = !filterData || c.data === filterData;
         const matchCTE = !filterCTE || 
             c.numero_cte?.toLowerCase().includes(filterCTE.toLowerCase()) ||
-            c.remetente?.toLowerCase().includes(filterCTE.toLowerCase()) ||
-            c.destinatario?.toLowerCase().includes(filterCTE.toLowerCase()) ||
             c.nfe?.toLowerCase().includes(filterCTE.toLowerCase());
+        const matchFornecedor = !filterFornecedor || 
+            c.remetente?.toLowerCase().includes(filterFornecedor.toLowerCase());
+        const matchCliente = !filterCliente || 
+            c.destinatario?.toLowerCase().includes(filterCliente.toLowerCase());
         const matchStatus = !filterStatus || filterStatus === "all" || 
             (filterStatus === "pendente" && (!c.status || c.status === "pendente")) ||
             (filterStatus === "finalizado" && c.status === "finalizado") ||
             (filterStatus === "sem_comprovante" && (!c.arquivos || c.arquivos.length === 0));
-        return matchData && matchCTE && matchStatus;
+        return matchData && matchCTE && matchFornecedor && matchCliente && matchStatus;
     });
 
     const statusColors = {
@@ -543,7 +547,7 @@ ${pasteText}`,
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" /> Data
@@ -564,17 +568,36 @@ ${pasteText}`,
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Search className="w-3 h-3" /> Buscar
+                                    <Search className="w-3 h-3" /> CTE/NFE
                                 </Label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <Input
-                                        placeholder="CTE, Remetente, Destinatário..."
-                                        value={filterCTE}
-                                        onChange={(e) => setFilterCTE(e.target.value)}
-                                        className="pl-9 bg-white"
-                                    />
-                                </div>
+                                <Input
+                                    placeholder="Buscar CTE ou NFE..."
+                                    value={filterCTE}
+                                    onChange={(e) => setFilterCTE(e.target.value)}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3" /> Fornecedor
+                                </Label>
+                                <Input
+                                    placeholder="Buscar fornecedor..."
+                                    value={filterFornecedor}
+                                    onChange={(e) => setFilterFornecedor(e.target.value)}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3" /> Cliente
+                                </Label>
+                                <Input
+                                    placeholder="Buscar cliente..."
+                                    value={filterCliente}
+                                    onChange={(e) => setFilterCliente(e.target.value)}
+                                    className="bg-white"
+                                />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500">Status</Label>

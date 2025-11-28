@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Upload, Save, Building2, Image } from "lucide-react";
+import { Settings, Upload, Save, Building2, Image, Palette } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 export default function Configuracoes() {
@@ -26,7 +28,10 @@ export default function Configuracoes() {
         telefone: "",
         cnpj: "",
         email: "",
-        ultimo_numero_ordem: 0
+        ultimo_numero_ordem: 0,
+        cor_primaria: "sky",
+        cor_botoes: "blue",
+        tema_escuro: false
     });
 
     useEffect(() => {
@@ -38,7 +43,10 @@ export default function Configuracoes() {
                 telefone: config.telefone || "",
                 cnpj: config.cnpj || "",
                 email: config.email || "",
-                ultimo_numero_ordem: config.ultimo_numero_ordem || 0
+                ultimo_numero_ordem: config.ultimo_numero_ordem || 0,
+                cor_primaria: config.cor_primaria || "sky",
+                cor_botoes: config.cor_botoes || "blue",
+                tema_escuro: config.tema_escuro || false
             });
         }
     }, [config.id]);
@@ -224,6 +232,149 @@ export default function Configuracoes() {
                                     onChange={(e) => setForm({ ...form, ultimo_numero_ordem: parseInt(e.target.value) || 0 })}
                                     className="w-48"
                                 />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Paleta de Cores */}
+                    <Card className="bg-white/80 border-0 shadow-lg">
+                        <CardHeader className="border-b">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Palette className="w-5 h-5 text-purple-600" />
+                                Personalização da Tela Inicial
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label>Cor Principal do Layout</Label>
+                                    <Select value={form.cor_primaria} onValueChange={(v) => setForm({ ...form, cor_primaria: v })}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sky">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-sky-500" />
+                                                    Azul Claro (Sky)
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="blue">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-blue-500" />
+                                                    Azul
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="indigo">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-indigo-500" />
+                                                    Índigo
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="violet">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-violet-500" />
+                                                    Violeta
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="purple">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-purple-500" />
+                                                    Roxo
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="emerald">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-emerald-500" />
+                                                    Verde Esmeralda
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="teal">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-teal-500" />
+                                                    Verde Azulado
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="slate">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-slate-500" />
+                                                    Cinza
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Cor dos Botões</Label>
+                                    <Select value={form.cor_botoes} onValueChange={(v) => setForm({ ...form, cor_botoes: v })}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="blue">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-blue-600" />
+                                                    Azul
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="sky">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-sky-600" />
+                                                    Azul Claro
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="indigo">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-indigo-600" />
+                                                    Índigo
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="violet">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-violet-600" />
+                                                    Violeta
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="emerald">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-emerald-600" />
+                                                    Verde
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="orange">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 rounded-full bg-orange-600" />
+                                                    Laranja
+                                                </div>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                <div>
+                                    <Label>Tema Escuro</Label>
+                                    <p className="text-sm text-slate-500">Usar fundo escuro na tela inicial</p>
+                                </div>
+                                <Switch
+                                    checked={form.tema_escuro}
+                                    onCheckedChange={(v) => setForm({ ...form, tema_escuro: v })}
+                                />
+                            </div>
+
+                            {/* Preview */}
+                            <div className="border rounded-xl overflow-hidden">
+                                <div className="text-xs text-slate-500 p-2 bg-slate-100">Preview</div>
+                                <div className={`p-4 ${form.tema_escuro ? `bg-${form.cor_primaria}-900` : `bg-${form.cor_primaria}-100`}`}>
+                                    <div className="flex gap-2">
+                                        <div className={`px-4 py-2 rounded-lg bg-${form.cor_botoes}-600 text-white text-sm font-medium`}>
+                                            Botão Principal
+                                        </div>
+                                        <div className={`px-4 py-2 rounded-lg bg-${form.cor_botoes}-500 text-white text-sm font-medium`}>
+                                            Botão Secundário
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

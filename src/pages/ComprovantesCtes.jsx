@@ -134,12 +134,53 @@ export default function ComprovantesCtes() {
     const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [uploadingCTE, setUploadingCTE] = useState(null);
     const [uploadingFile, setUploadingFile] = useState(false);
+    const [showStatusDialog, setShowStatusDialog] = useState(false);
+    const [statusForm, setStatusForm] = useState({ nome: "", cor: "bg-gray-100 text-gray-700", ordem: 0 });
+    const [editingStatus, setEditingStatus] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
         queryKey: ["comprovantes-ctes"],
         queryFn: () => base44.entities.ComprovanteCTE.list("-created_date")
     });
+
+    const { data: statusList = [] } = useQuery({
+        queryKey: ["status-cte"],
+        queryFn: () => base44.entities.StatusCTE.list("ordem")
+    });
+
+    const createStatusMutation = useMutation({
+        mutationFn: (data) => base44.entities.StatusCTE.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["status-cte"] });
+            setStatusForm({ nome: "", cor: "bg-gray-100 text-gray-700", ordem: 0 });
+            setEditingStatus(null);
+            toast.success("Status criado!");
+        }
+    });
+
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.StatusCTE.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["status-cte"] });
+            setStatusForm({ nome: "", cor: "bg-gray-100 text-gray-700", ordem: 0 });
+            setEditingStatus(null);
+            toast.success("Status atualizado!");
+        }
+    });
+
+    const deleteStatusMutation = useMutation({
+        mutationFn: (id) => base44.entities.StatusCTE.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["status-cte"] });
+            toast.success("Status excluído!");
+        }
+    });
+
+    const getStatusColor = (statusNome) => {
+        const status = statusList.find(s => s.nome === statusNome);
+        return status?.cor || "bg-gray-100 text-gray-700";
+    };
 
     const [form, setForm] = useState({
         numero_cte: "",
@@ -478,6 +519,14 @@ ${pasteText}`,
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button 
+                            onClick={() => setShowStatusDialog(true)}
+                            variant="outline"
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Cadastro Status
+                        </Button>
+                        <Button 
                             onClick={() => { setPasteText(""); setExtractedCTEs([]); setShowPasteDialog(true); }}
                             variant="outline"
                             className="border-purple-500 text-purple-600 hover:bg-purple-50"
@@ -738,9 +787,28 @@ ${pasteText}`,
                                                     {cte.mdfe || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    <Badge className={`${statusColors[cte.status] || statusColors.pendente} text-xs`}>
-                                                        {cte.status === "finalizado" ? "OK" : "Pend"}
-                                                    </Badge>
+                                                    <Select 
+                                                        value={cte.status || "pendente"} 
+                                                        onValueChange={(v) => updateMutation.mutate({ id: cte.id, data: { status: v } })}
+                                                    >
+                                                        <SelectTrigger className={`h-7 w-24 text-xs ${getStatusColor(cte.status)}`}>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {statusList.length > 0 ? (
+                                                                statusList.map(s => (
+                                                                    <SelectItem key={s.id} value={s.nome}>
+                                                                        <span className={`px-2 py-0.5 rounded ${s.cor}`}>{s.nome}</span>
+                                                                    </SelectItem>
+                                                                ))
+                                                            ) : (
+                                                                <>
+                                                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                                                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                                                                </>
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
                                                     {cte.arquivos && cte.arquivos.length > 0 && (
                                                         <span className="ml-1 text-xs text-slate-400">📎</span>
                                                     )}
@@ -956,6 +1024,129 @@ ${pasteText}`,
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog Cadastro de Status */}
+            <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-blue-600" />
+                            Cadastro de Status
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {/* Lista de status cadastrados */}
+                        {statusList.length > 0 && (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                <Label className="text-xs text-slate-500">Status Cadastrados</Label>
+                                {statusList.map(s => (
+                                    <div key={s.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <Badge className={s.cor}>{s.nome}</Badge>
+                                            <span className="text-xs text-slate-400">Ordem: {s.ordem}</span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { 
+                                                    setStatusForm({ nome: s.nome, cor: s.cor, ordem: s.ordem || 0 }); 
+                                                    setEditingStatus(s); 
+                                                }}
+                                            >
+                                                <Pencil className="w-3 h-3" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { if(confirm("Excluir este status?")) deleteStatusMutation.mutate(s.id); }}
+                                            >
+                                                <Trash2 className="w-3 h-3 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Formulário */}
+                        <div className="border-t pt-4 space-y-4">
+                            <h4 className="font-medium text-sm">{editingStatus ? "Editar Status" : "Novo Status"}</h4>
+                            <div className="space-y-2">
+                                <Label>Nome do Status *</Label>
+                                <Input
+                                    value={statusForm.nome}
+                                    onChange={(e) => setStatusForm({ ...statusForm, nome: e.target.value })}
+                                    placeholder="Ex: Pendente, Finalizado, Em análise..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cor</Label>
+                                <Select value={statusForm.cor} onValueChange={(v) => setStatusForm({ ...statusForm, cor: v })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="bg-gray-100 text-gray-700">
+                                            <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">Cinza</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-amber-100 text-amber-700">
+                                            <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700">Amarelo</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-emerald-100 text-emerald-700">
+                                            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Verde</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-blue-100 text-blue-700">
+                                            <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700">Azul</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-red-100 text-red-700">
+                                            <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Vermelho</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-purple-100 text-purple-700">
+                                            <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-700">Roxo</span>
+                                        </SelectItem>
+                                        <SelectItem value="bg-orange-100 text-orange-700">
+                                            <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-700">Laranja</span>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Ordem</Label>
+                                <Input
+                                    type="number"
+                                    value={statusForm.ordem}
+                                    onChange={(e) => setStatusForm({ ...statusForm, ordem: parseInt(e.target.value) || 0 })}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                {editingStatus && (
+                                    <Button variant="ghost" onClick={() => { setEditingStatus(null); setStatusForm({ nome: "", cor: "bg-gray-100 text-gray-700", ordem: 0 }); }}>
+                                        Cancelar
+                                    </Button>
+                                )}
+                                <Button 
+                                    onClick={() => {
+                                        if (editingStatus) {
+                                            updateStatusMutation.mutate({ id: editingStatus.id, data: statusForm });
+                                        } else {
+                                            createStatusMutation.mutate(statusForm);
+                                        }
+                                    }}
+                                    disabled={!statusForm.nome}
+                                    className="bg-blue-500 hover:bg-blue-600"
+                                >
+                                    <Save className="w-4 h-4 mr-1" />
+                                    {editingStatus ? "Atualizar" : "Cadastrar"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1114,8 +1305,18 @@ ${pasteText}`,
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="pendente">Pendente</SelectItem>
-                                        <SelectItem value="finalizado">Finalizado</SelectItem>
+                                        {statusList.length > 0 ? (
+                                            statusList.map(s => (
+                                                <SelectItem key={s.id} value={s.nome}>
+                                                    <span className={`px-2 py-0.5 rounded ${s.cor}`}>{s.nome}</span>
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <SelectItem value="pendente">Pendente</SelectItem>
+                                                <SelectItem value="finalizado">Finalizado</SelectItem>
+                                            </>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>

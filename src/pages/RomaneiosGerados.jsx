@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,6 +27,7 @@ export default function RomaneiosGerados() {
     const [showEdit, setShowEdit] = useState(false);
     const [editingRomaneio, setEditingRomaneio] = useState(null);
     const [editForm, setEditForm] = useState({ nome: "", placa: "", data: "", observacoes: "" });
+    const [showNotasVeiculo, setShowNotasVeiculo] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: romaneios = [], isLoading } = useQuery({
@@ -298,7 +299,74 @@ export default function RomaneiosGerados() {
                     </Card>
                 )}
 
-                {/* Lista de Notas do Período por Placa */}
+                {/* Dashboard Pendências por Veículo - Clicável */}
+                {Object.entries(dashboard.porPlaca).filter(([placa, dados]) => 
+                    filtered.some(r => r.placa === placa && (r.status === "gerado" || r.status === "em_transito"))
+                ).length > 0 && (
+                    <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-0 shadow-lg">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <AlertTriangle className="w-5 h-5 text-orange-600" />
+                                Pendências por Veículo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {Object.entries(dashboard.porPlaca)
+                                    .filter(([placa]) => filtered.some(r => r.placa === placa && (r.status === "gerado" || r.status === "em_transito")))
+                                    .map(([placa, dados]) => {
+                                        const notasDoVeiculo = notasDosFiltrados.filter(n => {
+                                            const romaneio = filtered.find(r => r.placa === placa && (r.notas_ids || []).includes(n.id));
+                                            return !!romaneio;
+                                        });
+                                        const transportadoras = {};
+                                        filtered.filter(r => r.placa === placa).forEach(r => {
+                                            (r.notas_por_transportadora || []).forEach(t => {
+                                                if (!transportadoras[t.transportadora]) transportadoras[t.transportadora] = 0;
+                                                transportadoras[t.transportadora] += t.quantidade;
+                                            });
+                                        });
+                                        
+                                        return (
+                                            <div 
+                                                key={placa}
+                                                className="p-3 bg-white rounded-xl border-l-4 border-orange-500 shadow-sm cursor-pointer hover:shadow-md hover:bg-orange-50 transition-all"
+                                                onClick={() => setShowNotasVeiculo({ placa, dados, notas: notasDoVeiculo, transportadoras })}
+                                            >
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Car className="w-4 h-4 text-orange-600" />
+                                                    <span className="font-bold text-sm text-orange-700">
+                                                        {placa === "SEM_PLACA" ? "Sem Placa" : placa}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-3 text-sm">
+                                                    <div className="flex items-center gap-1">
+                                                        <Package className="w-3 h-3 text-orange-500" />
+                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
+                                                        <span className="text-xs text-slate-400">entregas</span>
+                                                    </div>
+                                                </div>
+                                                {Object.keys(transportadoras).length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                        {Object.entries(transportadoras).slice(0, 2).map(([transp, qtd]) => (
+                                                            <span key={transp} className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                                                                {transp}: {qtd}
+                                                            </span>
+                                                        ))}
+                                                        {Object.keys(transportadoras).length > 2 && (
+                                                            <span className="text-xs text-slate-400">+{Object.keys(transportadoras).length - 2}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Lista de Notas do Período por Placa do Romaneio */}
                 {notasDosFiltrados.length > 0 && (
                     <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
                         <CardHeader className="pb-2">
@@ -310,10 +378,15 @@ export default function RomaneiosGerados() {
                         <CardContent className="p-6 pt-2">
                             <div className="space-y-4 max-h-96 overflow-y-auto">
                                 {Object.entries(
-                                    notasDosFiltrados.reduce((acc, nota) => {
-                                        const placa = nota.placa || "SEM_PLACA";
+                                    filtered.reduce((acc, romaneio) => {
+                                        const placa = romaneio.placa || "SEM_PLACA";
                                         if (!acc[placa]) acc[placa] = [];
-                                        acc[placa].push(nota);
+                                        (romaneio.notas_ids || []).forEach(id => {
+                                            const nota = notasFiscais.find(n => n.id === id);
+                                            if (nota && !acc[placa].find(n => n.id === nota.id)) {
+                                                acc[placa].push(nota);
+                                            }
+                                        });
                                         return acc;
                                     }, {})
                                 ).map(([placa, notas]) => (
@@ -497,6 +570,52 @@ export default function RomaneiosGerados() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Dialog Notas do Veículo */}
+            <Dialog open={!!showNotasVeiculo} onOpenChange={() => setShowNotasVeiculo(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Car className="w-5 h-5 text-orange-600" />
+                            Notas Pendentes - {showNotasVeiculo?.placa === "SEM_PLACA" ? "Sem Placa" : showNotasVeiculo?.placa}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        {/* Resumo por Transportadora */}
+                        {showNotasVeiculo?.transportadoras && Object.keys(showNotasVeiculo.transportadoras).length > 0 && (
+                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 mb-4">
+                                <p className="text-sm font-semibold text-purple-700 mb-2">Por Transportadora:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(showNotasVeiculo.transportadoras).map(([transp, qtd]) => (
+                                        <Badge key={transp} className="bg-purple-100 text-purple-700">
+                                            {transp}: {qtd}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {showNotasVeiculo?.notas?.length === 0 ? (
+                            <p className="text-center text-slate-500 py-4">Nenhuma nota encontrada</p>
+                        ) : (
+                            showNotasVeiculo?.notas?.map((nota, idx) => (
+                                <div key={nota.id || idx} className="p-3 bg-slate-50 rounded-lg border">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-semibold text-indigo-700">NF: {nota.numero_nf}</span>
+                                        <Badge className="bg-orange-100 text-orange-700">Pendente</Badge>
+                                    </div>
+                                    <p className="text-sm text-slate-600">{nota.destinatario}</p>
+                                    <div className="flex gap-4 text-xs text-slate-500 mt-1">
+                                        {nota.volume && <span>Vol: {nota.volume}</span>}
+                                        {nota.peso && <span>Peso: {nota.peso}</span>}
+                                        {nota.transportadora && <span>Transp: {nota.transportadora}</span>}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Editar Romaneio */}
             <Dialog open={showEdit} onOpenChange={setShowEdit}>

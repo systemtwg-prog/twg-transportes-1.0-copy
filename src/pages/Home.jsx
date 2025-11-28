@@ -102,9 +102,18 @@ export default function Home() {
             if (r.status === "gerado" || r.status === "em_transito") {
                 const placa = r.placa || "SEM_PLACA";
                 if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [], transportadoras: {} };
                 }
                 porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
+                
+                // Agregar por transportadora
+                (r.notas_por_transportadora || []).forEach(t => {
+                    if (!porVeiculo[placa].transportadoras[t.transportadora]) {
+                        porVeiculo[placa].transportadoras[t.transportadora] = 0;
+                    }
+                    porVeiculo[placa].transportadoras[t.transportadora] += t.quantidade;
+                });
+                
                 (r.notas_ids || []).forEach(id => {
                     const nota = notasFiscais.find(n => n.id === id);
                     if (nota) porVeiculo[placa].notas.push(nota);
@@ -117,7 +126,7 @@ export default function Home() {
             if (c.status === "pendente") {
                 const placa = "COLETAS";
                 if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
+                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [], transportadoras: {} };
                 }
                 porVeiculo[placa].coletas++;
             }
@@ -126,10 +135,12 @@ export default function Home() {
         return porVeiculo;
     }, [romaneiosGerados, notasFiscais, coletasDiarias]);
 
-    // Verificar se o usuário já tem veículo selecionado
+    // Verificar se o usuário já tem veículo selecionado - apenas uma vez por sessão
     useEffect(() => {
-        if (currentUser && !currentUser.veiculo_atual && !showVeiculoDialog && locationGranted) {
+        const veiculoJaSolicitado = sessionStorage.getItem("veiculo_solicitado");
+        if (currentUser && !currentUser.veiculo_atual && !showVeiculoDialog && locationGranted && !veiculoJaSolicitado) {
             setShowVeiculoDialog(true);
+            sessionStorage.setItem("veiculo_solicitado", "true");
         }
         if (currentUser?.veiculo_atual) {
             setVeiculoSelecionado(currentUser.veiculo_atual);
@@ -392,6 +403,18 @@ export default function Home() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {Object.keys(dados.transportadoras || {}).length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {Object.entries(dados.transportadoras).slice(0, 3).map(([transp, qtd]) => (
+                                                        <span key={transp} className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                                                            {transp}: {qtd}
+                                                        </span>
+                                                    ))}
+                                                    {Object.keys(dados.transportadoras).length > 3 && (
+                                                        <span className="text-xs text-slate-400">+{Object.keys(dados.transportadoras).length - 3}</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -574,6 +597,20 @@ export default function Home() {
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3">
+                        {/* Resumo por Transportadora */}
+                        {showNotasVeiculo?.dados?.transportadoras && Object.keys(showNotasVeiculo.dados.transportadoras).length > 0 && (
+                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 mb-4">
+                                <p className="text-sm font-semibold text-purple-700 mb-2">Por Transportadora:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(showNotasVeiculo.dados.transportadoras).map(([transp, qtd]) => (
+                                        <Badge key={transp} className="bg-purple-100 text-purple-700">
+                                            {transp}: {qtd}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
                         {showNotasVeiculo?.placa === "COLETAS" ? (
                             coletasDiarias.filter(c => c.status === "pendente").length === 0 ? (
                                 <p className="text-center text-slate-500 py-4">Nenhuma coleta pendente</p>

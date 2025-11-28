@@ -147,7 +147,13 @@ export default function ComprovantesCtes() {
         valor_nf: "",
         volume: "",
         peso: "",
+        frete_peso: "",
+        seguro: "",
+        pedagio: "",
+        outros: "",
+        total: "",
         valor_cobrado: "",
+        porcentagem: "",
         mdfe: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
@@ -218,7 +224,13 @@ export default function ComprovantesCtes() {
             valor_nf: "",
             volume: "",
             peso: "",
+            frete_peso: "",
+            seguro: "",
+            pedagio: "",
+            outros: "",
+            total: "",
             valor_cobrado: "",
+            porcentagem: "",
             mdfe: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
@@ -619,7 +631,13 @@ ${pasteText}`,
                                         <TableHead className="text-white font-bold text-center">VALOR NF</TableHead>
                                         <TableHead className="text-white font-bold text-center">VOL</TableHead>
                                         <TableHead className="text-white font-bold text-center">PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">FRETE PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">SEGURO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">PEDÁGIO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">OUTROS</TableHead>
+                                        <TableHead className="text-white font-bold text-center">TOTAL</TableHead>
                                         <TableHead className="text-white font-bold text-center">VALOR COBRADO</TableHead>
+                                        <TableHead className="text-white font-bold text-center">%</TableHead>
                                         <TableHead className="text-white font-bold text-center">MDFE</TableHead>
                                         <TableHead className="text-white font-bold text-center">STATUS</TableHead>
                                         <TableHead className="text-white font-bold text-center w-32">AÇÕES</TableHead>
@@ -628,7 +646,7 @@ ${pasteText}`,
                                 <TableBody>
                                     {isLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={13} className="text-center py-12">
+                                            <TableCell colSpan={19} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full mx-auto" />
                                             </TableCell>
                                         </TableRow>
@@ -672,8 +690,26 @@ ${pasteText}`,
                                                 <TableCell className="text-center text-sm">
                                                     {cte.peso || "-"}
                                                 </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.frete_peso ? `R$ ${cte.frete_peso}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.seguro ? `R$ ${cte.seguro}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.pedagio ? `R$ ${cte.pedagio}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.outros ? `R$ ${cte.outros}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm font-medium">
+                                                    {cte.total ? `R$ ${cte.total}` : "-"}
+                                                </TableCell>
                                                 <TableCell className="text-center text-sm font-medium text-green-600">
                                                     {cte.valor_cobrado ? `R$ ${cte.valor_cobrado}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm">
+                                                    {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center text-sm">
                                                     {cte.mdfe || "-"}
@@ -979,11 +1015,62 @@ ${pasteText}`,
                                 />
                             </div>
                             <div className="space-y-2">
+                                <Label>Frete Peso (R$)</Label>
+                                <Input
+                                    value={form.frete_peso}
+                                    onChange={(e) => setForm({ ...form, frete_peso: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Seguro (R$)</Label>
+                                <Input
+                                    value={form.seguro}
+                                    onChange={(e) => setForm({ ...form, seguro: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Pedágio (R$)</Label>
+                                <Input
+                                    value={form.pedagio}
+                                    onChange={(e) => setForm({ ...form, pedagio: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-5 gap-4">
+                            <div className="space-y-2">
+                                <Label>Outros (R$)</Label>
+                                <Input
+                                    value={form.outros}
+                                    onChange={(e) => setForm({ ...form, outros: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Total (R$)</Label>
+                                <Input
+                                    value={form.total}
+                                    onChange={(e) => setForm({ ...form, total: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
                                 <Label>Valor Cobrado (R$)</Label>
                                 <Input
                                     value={form.valor_cobrado}
                                     onChange={(e) => setForm({ ...form, valor_cobrado: e.target.value })}
                                     placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>% (Porcentagem)</Label>
+                                <Input
+                                    value={form.porcentagem}
+                                    onChange={(e) => setForm({ ...form, porcentagem: e.target.value })}
+                                    placeholder="0"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -994,6 +1081,9 @@ ${pasteText}`,
                                     placeholder="Número MDFE"
                                 />
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Status</Label>
                                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>

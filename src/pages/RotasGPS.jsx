@@ -13,7 +13,7 @@ import {
     Navigation, MapPin, Truck, Package, ExternalLink, 
     Trash2, Plus, Route, CheckCircle, Camera, Sparkles, 
     ArrowUp, ArrowDown, GripVertical, Loader2, Car, FileText,
-    Upload, Pencil, MessageSquare, BarChart3
+    Upload, Pencil, MessageSquare, BarChart3, Search
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -216,6 +216,72 @@ export default function RotasGPS() {
         window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(endereco)}`, "_blank");
     };
 
+    // Buscar endereço online pela transportadora ou destinatário
+    const [buscandoEndereco, setBuscandoEndereco] = useState(false);
+    
+    const buscarEnderecoOnline = async (nota) => {
+        setBuscandoEndereco(true);
+        toast.info("Buscando endereço online...");
+        
+        try {
+            const termoBusca = nota.transportadora || nota.destinatario;
+            
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Preciso encontrar o endereço completo da transportadora/empresa: "${termoBusca}"
+                ${nota.cidade ? `Cidade provável: ${nota.cidade}` : ""}
+                
+                Busque na internet e retorne o endereço completo com rua, número, bairro, cidade, estado e CEP.
+                Se for uma transportadora conhecida (como Braspress, Jamef, TNT, etc), busque o endereço da filial ou matriz.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        nome_empresa: { type: "string", description: "Nome da empresa encontrada" },
+                        endereco: { type: "string", description: "Endereço completo (rua e número)" },
+                        bairro: { type: "string", description: "Bairro" },
+                        cidade: { type: "string", description: "Cidade" },
+                        estado: { type: "string", description: "Estado/UF" },
+                        cep: { type: "string", description: "CEP" },
+                        telefone: { type: "string", description: "Telefone" },
+                        encontrado: { type: "boolean", description: "Se encontrou o endereço" }
+                    }
+                }
+            });
+
+            if (resultado?.encontrado && resultado?.endereco) {
+                const enderecoCompleto = [resultado.endereco, resultado.bairro, resultado.cidade, resultado.estado].filter(Boolean).join(", ");
+                
+                // Adicionar como rota
+                const novaRota = {
+                    id: Date.now(),
+                    destinatario: resultado.nome_empresa || nota.destinatario,
+                    numero_nf: nota.numero_nf,
+                    transportadora: nota.transportadora,
+                    endereco: resultado.endereco,
+                    bairro: resultado.bairro,
+                    cidade: resultado.cidade,
+                    estado: resultado.estado,
+                    cep: resultado.cep,
+                    telefone: resultado.telefone,
+                    enderecoCompleto: enderecoCompleto
+                };
+                
+                setRotasAdicionadas(prev => [...prev, novaRota]);
+                toast.success("Endereço encontrado e adicionado!");
+                
+                // Abrir no Waze automaticamente
+                abrirRotaWaze(enderecoCompleto);
+            } else {
+                toast.error("Não foi possível encontrar o endereço online");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar endereço:", error);
+            toast.error("Erro ao buscar endereço");
+        }
+        
+        setBuscandoEndereco(false);
+    };
+
     const abrirRotaCompleta = (destinos, app) => {
         if (destinos.length === 0) return;
         
@@ -310,14 +376,17 @@ export default function RotasGPS() {
             
             // Usar LLM para extrair dados da imagem
             const extractedData = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise esta imagem de uma nota fiscal ou documento de transporte e extraia as seguintes informações:
-                - Nome do destinatário ou empresa
-                - Nome da transportadora (se houver)
-                - Endereço completo (rua, número, bairro, cidade, estado, CEP)
-                - Número da nota fiscal
-                - CNPJ (se visível)
-                
-                Extraia o máximo de informações possíveis.`,
+            prompt: `Analise esta imagem de uma nota fiscal, etiqueta ou documento de transporte e extraia as seguintes informações:
+            - Nome do destinatário ou empresa de destino
+            - Nome da transportadora (se houver)
+            - Endereço COMPLETO de entrega (rua, número, bairro, cidade, estado, CEP)
+            - Número da nota fiscal
+            - CNPJ (se visível)
+            - Número de volumes
+            - Peso
+
+            IMPORTANTE: Foque em extrair o ENDEREÇO DE ENTREGA que aparece no documento.
+            Extraia o máximo de informações possíveis para que o motorista possa navegar até o destino.`,
                 file_urls: [file_url],
                 response_json_schema: {
                     type: "object",
@@ -787,7 +856,7 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                         
                         {selectedRomaneioGerado && notasDoRomaneioGerado.length > 0 && (
                             <div className="space-y-2">
-                                <Label className="text-sm text-slate-500">Notas do Romaneio ({notasDoRomaneioGerado.length})</Label>
+                                <Label className="text-sm text-slate-500">Notas do Romaneio ({notasDoRomaneioGerado.length}) - Clique para navegar</Label>
                                 <div className="space-y-2 max-h-64 overflow-y-auto">
                                     {notasDoRomaneioGerado.map((nota) => {
                                         const cliente = clientes.find(c => 
@@ -801,26 +870,53 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                                         return (
                                             <div
                                                 key={nota.id}
-                                                className="p-3 bg-slate-50 rounded-lg border border-slate-200"
+                                                className="p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all"
+                                                onClick={() => {
+                                                    if (enderecoCompleto) {
+                                                        abrirRotaWaze(enderecoCompleto);
+                                                    } else {
+                                                        // Buscar endereço online pela transportadora
+                                                        buscarEnderecoOnline(nota);
+                                                    }
+                                                }}
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <p className="font-medium text-slate-800">{nota.destinatario}</p>
-                                                        <p className="text-sm text-slate-500">NF: {nota.numero_nf}</p>
-                                                        {enderecoCompleto && (
+                                                        <p className="text-sm text-slate-500">NF: {nota.numero_nf} | Transp: {nota.transportadora || "-"}</p>
+                                                        {enderecoCompleto ? (
                                                             <p className="text-sm text-blue-600 mt-1">
                                                                 <MapPin className="w-3 h-3 inline mr-1" />
                                                                 {enderecoCompleto}
                                                             </p>
+                                                        ) : (
+                                                            <p className="text-sm text-orange-600 mt-1">
+                                                                <Search className="w-3 h-3 inline mr-1" />
+                                                                Clique para buscar endereço online
+                                                            </p>
                                                         )}
                                                     </div>
                                                     <div className="flex gap-1">
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                buscarEnderecoOnline(nota);
+                                                            }}
+                                                            title="Buscar endereço online"
+                                                        >
+                                                            <Search className="w-4 h-4 text-orange-600" />
+                                                        </Button>
                                                         {enderecoCompleto && (
                                                             <>
                                                                 <Button 
                                                                     size="sm" 
                                                                     variant="ghost"
-                                                                    onClick={() => abrirRotaWaze(enderecoCompleto)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        abrirRotaWaze(enderecoCompleto);
+                                                                    }}
                                                                     title="Abrir no Waze"
                                                                 >
                                                                     <Navigation className="w-4 h-4 text-blue-600" />
@@ -828,13 +924,37 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                                                                 <Button 
                                                                     size="sm" 
                                                                     variant="ghost"
-                                                                    onClick={() => abrirRotaGoogleMaps(enderecoCompleto)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        abrirRotaGoogleMaps(enderecoCompleto);
+                                                                    }}
                                                                     title="Abrir no Maps"
                                                                 >
                                                                     <MapPin className="w-4 h-4 text-green-600" />
                                                                 </Button>
                                                             </>
                                                         )}
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Adicionar como rota
+                                                                const novaRota = {
+                                                                    id: Date.now(),
+                                                                    destinatario: nota.destinatario,
+                                                                    numero_nf: nota.numero_nf,
+                                                                    transportadora: nota.transportadora,
+                                                                    enderecoCompleto: enderecoCompleto
+                                                                };
+                                                                setRotasAdicionadas(prev => [...prev, novaRota]);
+                                                                toast.success("Nota adicionada às rotas!");
+                                                            }}
+                                                            title="Adicionar às rotas"
+                                                            className="text-green-600 hover:bg-green-50"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             </div>

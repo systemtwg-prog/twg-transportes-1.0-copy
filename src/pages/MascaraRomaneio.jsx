@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { 
-    FileText, Printer, Truck, Calendar, Search, X, Plus, Car, Building2, Save, Pencil, Trash2, Package, Scale, BarChart3
+    FileText, Printer, Truck, Calendar, Search, X, Plus, Car, Building2, Save, Pencil, Trash2, Package, Scale, BarChart3, MapPin
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -69,18 +69,23 @@ export default function MascaraRomaneio() {
 
     const config = configs[0] || {};
 
-    // Dashboard por placa
+    // Dashboard por placa e filial
     const dashboardPorPlaca = useMemo(() => {
         const notasSelecionadasData = notasFiscais.filter(n => notasSelecionadas.includes(n.id));
         
         // Agrupar por placa
         const porPlaca = {};
+        // Agrupar por filial
+        const porFilial = {};
         let pesoGeral = 0;
         let totalNotas = 0;
         let totalEntregasGeral = 0;
         
         notasSelecionadasData.forEach(nota => {
             const placa = nota.placa || "SEM_PLACA";
+            const filial = nota.filial || "SEM_FILIAL";
+            
+            // Por placa
             if (!porPlaca[placa]) {
                 porPlaca[placa] = {
                     notas: [],
@@ -89,6 +94,16 @@ export default function MascaraRomaneio() {
                 };
             }
             porPlaca[placa].notas.push(nota);
+            
+            // Por filial
+            if (!porFilial[filial]) {
+                porFilial[filial] = {
+                    notas: [],
+                    pesoTotal: 0
+                };
+            }
+            porFilial[filial].notas.push(nota);
+            
             totalNotas++;
             
             // Adicionar transportadora (para contar entregas únicas)
@@ -100,6 +115,7 @@ export default function MascaraRomaneio() {
             const pesoStr = nota.peso || "";
             const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
             porPlaca[placa].pesoTotal += pesoNum;
+            porFilial[filial].pesoTotal += pesoNum;
             pesoGeral += pesoNum;
         });
         
@@ -110,6 +126,7 @@ export default function MascaraRomaneio() {
         
         return {
             porPlaca,
+            porFilial,
             pesoGeral,
             totalNotas,
             totalEntregasGeral
@@ -863,7 +880,10 @@ export default function MascaraRomaneio() {
                             </div>
 
                             {/* Detalhamento por Placa */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                <Car className="w-4 h-4" /> Por Veículo
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                                 {Object.entries(dashboardPorPlaca.porPlaca).map(([placa, dados]) => (
                                     <div key={placa} className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500">
                                         <div className="flex items-center justify-between mb-3">
@@ -915,6 +935,37 @@ export default function MascaraRomaneio() {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Detalhamento por Filial */}
+                            {Object.keys(dashboardPorPlaca.porFilial).length > 0 && (
+                                <>
+                                    <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4" /> Por Filial
+                                    </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                        {Object.entries(dashboardPorPlaca.porFilial).map(([filial, dados]) => (
+                                            <div key={filial} className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-purple-500">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin className="w-4 h-4 text-purple-600" />
+                                                        <span className="font-bold text-purple-700">
+                                                            {filial === "SEM_FILIAL" ? "Sem Filial" : filial}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-slate-500">Notas:</span>
+                                                    <span className="font-semibold text-purple-600">{dados.notas.length}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-slate-500">Peso:</span>
+                                                    <span className="font-semibold text-orange-600">{dados.pesoTotal.toFixed(1)} kg</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 )}

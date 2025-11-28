@@ -155,6 +155,9 @@ export default function ComprovantesCtes() {
         volume: "",
         peso: "",
         nfe: "",
+        valor_nf: "",
+        valor_cobrado: "",
+        mdfe: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         observacoes: "",
@@ -230,6 +233,9 @@ export default function ComprovantesCtes() {
             volume: "",
             peso: "",
             nfe: "",
+            valor_nf: "",
+            valor_cobrado: "",
+            mdfe: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             observacoes: "",
@@ -319,17 +325,15 @@ export default function ComprovantesCtes() {
                 prompt: `Extraia os dados de CTEs/Notas Fiscais do texto abaixo. O texto pode conter múltiplos registros.
                 
 Para cada registro encontrado, extraia:
-- numero_cte: Número do CTE ou Nota Fiscal
-- remetente: Nome do remetente
-- destinatario: Nome do destinatário
-- endereco: Endereço completo
-- cep: CEP
-- telefone: Telefone
-- horario: Horário de funcionamento
-- intervalo: Horário de intervalo/almoço
-- volume: Quantidade de volumes
-- peso: Peso em KG
+- numero_cte: Número do CTE
+- remetente: Nome do remetente/fornecedor
+- destinatario: Nome do destinatário/cliente
 - nfe: Número da NFe
+- volume: Quantidade de volumes (VOL)
+- peso: Peso em KG
+- valor_nf: Valor da Nota Fiscal
+- valor_cobrado: Valor cobrado pelo frete
+- mdfe: Número do MDFE
 - status: Status (pendente, finalizado)
 
 Texto:
@@ -345,14 +349,12 @@ ${pasteText}`,
                                     numero_cte: { type: "string" },
                                     remetente: { type: "string" },
                                     destinatario: { type: "string" },
-                                    endereco: { type: "string" },
-                                    cep: { type: "string" },
-                                    telefone: { type: "string" },
-                                    horario: { type: "string" },
-                                    intervalo: { type: "string" },
+                                    nfe: { type: "string" },
                                     volume: { type: "string" },
                                     peso: { type: "string" },
-                                    nfe: { type: "string" },
+                                    valor_nf: { type: "string" },
+                                    valor_cobrado: { type: "string" },
+                                    mdfe: { type: "string" },
                                     status: { type: "string" }
                                 }
                             }
@@ -388,14 +390,12 @@ ${pasteText}`,
                 nota_fiscal: cte.numero_cte || "",
                 remetente: cte.remetente || "",
                 destinatario: cte.destinatario || "",
-                endereco: cte.endereco || "",
-                cep: cte.cep || "",
-                telefone: cte.telefone || "",
-                horario: cte.horario || "",
-                intervalo: cte.intervalo || "",
+                nfe: cte.nfe || "",
                 volume: cte.volume || "",
                 peso: cte.peso || "",
-                nfe: cte.nfe || "",
+                valor_nf: cte.valor_nf || "",
+                valor_cobrado: cte.valor_cobrado || "",
+                mdfe: cte.mdfe || "",
                 data: format(new Date(), "yyyy-MM-dd"),
                 status: cte.status || "pendente",
                 tipo_comprovante: "cte",
@@ -869,7 +869,11 @@ ${pasteText}`,
                                                         {cte.remetente} → {cte.destinatario}
                                                     </p>
                                                     {cte.endereco && <p className="text-sm text-slate-500">{cte.endereco}</p>}
-                                                    {cte.volume && <p className="text-sm text-slate-500">{cte.volume} VOL / {cte.peso} KG</p>}
+                                                    <div className="text-sm text-slate-500">
+                                                        {cte.volume && <span>{cte.volume} VOL</span>}
+                                                        {cte.peso && <span> / {cte.peso} KG</span>}
+                                                        {cte.valor_nf && <span> - R$ {cte.valor_nf}</span>}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1002,7 +1006,7 @@ ${pasteText}`,
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                             <div className="space-y-2">
                                 <Label>Volume</Label>
                                 <Input
@@ -1017,6 +1021,33 @@ ${pasteText}`,
                                     value={form.peso}
                                     onChange={(e) => setForm({ ...form, peso: e.target.value })}
                                     placeholder="Peso em KG"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Valor NF (R$)</Label>
+                                <Input
+                                    value={form.valor_nf}
+                                    onChange={(e) => setForm({ ...form, valor_nf: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Valor Cobrado (R$)</Label>
+                                <Input
+                                    value={form.valor_cobrado}
+                                    onChange={(e) => setForm({ ...form, valor_cobrado: e.target.value })}
+                                    placeholder="0,00"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>MDFE</Label>
+                                <Input
+                                    value={form.mdfe}
+                                    onChange={(e) => setForm({ ...form, mdfe: e.target.value })}
+                                    placeholder="Número MDFE"
                                 />
                             </div>
                             <div className="space-y-2">

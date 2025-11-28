@@ -8,11 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
-    Truck, Package, FileText, Users, Car, 
-    ClipboardList, Settings, BarChart3, Calendar,
-    Navigation, Building2, Bell, Upload, Scale,
-    Camera, ChevronRight, X
-} from "lucide-react";
+          Truck, Package, FileText, Users, Car, 
+          ClipboardList, Settings, BarChart3,
+          Navigation, Building2, Upload,
+          Camera, ChevronRight
+      } from "lucide-react";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import WeatherWidget from "@/components/shared/WeatherWidget";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -169,21 +171,23 @@ export default function Home() {
         <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6`}>
             <div className="max-w-6xl mx-auto space-y-5">
                 {/* Header */}
-                <div className="flex flex-col items-center justify-center py-4">
-                    {config.logo_url && (
-                        <img src={config.logo_url} alt="Logo" className="h-20 md:h-24 object-contain bg-white rounded-2xl p-3 shadow-lg mb-4" />
-                    )}
-                    {/* Widget Data/Hora/Tempo */}
-                    <div className="flex items-center gap-4 bg-white/90 backdrop-blur-sm rounded-xl px-5 py-2 shadow-md">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-medium text-slate-700">{format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
-                        </div>
-                        <div className="w-px h-5 bg-slate-300" />
-                        <div className="text-sm font-bold text-slate-800">
-                            {format(new Date(), "HH:mm")}
-                        </div>
+                <div className="flex flex-col items-center justify-center py-6">
+                    {/* Notificações - canto direito */}
+                    <div className="absolute top-4 right-4">
+                        <NotificationBell />
                     </div>
+
+                    {/* Logo Grande */}
+                    {config.logo_url && (
+                        <img 
+                            src={config.logo_url} 
+                            alt="Logo" 
+                            className="h-28 md:h-36 object-contain mb-5 drop-shadow-xl" 
+                        />
+                    )}
+
+                    {/* Widget Data/Hora/Tempo - sem fundo */}
+                    <WeatherWidget />
                 </div>
 
                 {/* Avisos */}

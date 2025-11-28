@@ -240,25 +240,19 @@ export default function Transportadoras() {
         
         try {
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise o texto abaixo e extraia as informações de transportadoras/empresas de transporte. 
-                
-Texto colado:
-${pasteText}
+                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia TODAS as informações de transportadoras/empresas que encontrar.
 
-Extraia as seguintes informações de cada transportadora encontrada:
-- razao_social: razão social da empresa
-- nome_fantasia: nome fantasia
-- cnpj: CNPJ
-- inscricao_estadual: inscrição estadual
-- telefone: telefone
-- email: email
-- cep: CEP
-- endereco: endereço (rua, número)
-- bairro: bairro
-- cidade: cidade
-- uf: estado (sigla)
-- contato: nome do contato
-- observacoes: outras informações relevantes`,
+TEXTO PARA ANALISAR:
+"""
+${pasteText}
+"""
+
+IMPORTANTE: 
+- Extraia QUALQUER informação que pareça ser de uma transportadora ou empresa
+- Se não encontrar um campo específico, deixe como string vazia ""
+- O campo razao_social é obrigatório - use o nome da empresa
+- Se houver múltiplas transportadoras, retorne todas
+- Retorne os dados no formato JSON especificado`,
                 response_json_schema: {
                     type: "object",
                     properties: {
@@ -267,31 +261,37 @@ Extraia as seguintes informações de cada transportadora encontrada:
                             items: {
                                 type: "object",
                                 properties: {
-                                    razao_social: { type: "string" },
-                                    nome_fantasia: { type: "string" },
-                                    cnpj: { type: "string" },
-                                    inscricao_estadual: { type: "string" },
-                                    telefone: { type: "string" },
-                                    email: { type: "string" },
-                                    cep: { type: "string" },
-                                    endereco: { type: "string" },
-                                    bairro: { type: "string" },
-                                    cidade: { type: "string" },
-                                    uf: { type: "string" },
-                                    contato: { type: "string" },
-                                    observacoes: { type: "string" }
-                                }
+                                    razao_social: { type: "string", description: "Razão social da empresa" },
+                                    nome_fantasia: { type: "string", description: "Nome fantasia" },
+                                    cnpj: { type: "string", description: "CNPJ" },
+                                    inscricao_estadual: { type: "string", description: "Inscrição estadual" },
+                                    telefone: { type: "string", description: "Telefone" },
+                                    email: { type: "string", description: "Email" },
+                                    cep: { type: "string", description: "CEP" },
+                                    endereco: { type: "string", description: "Endereço" },
+                                    bairro: { type: "string", description: "Bairro" },
+                                    cidade: { type: "string", description: "Cidade" },
+                                    uf: { type: "string", description: "Estado UF" },
+                                    contato: { type: "string", description: "Nome do contato" },
+                                    observacoes: { type: "string", description: "Observações" }
+                                },
+                                required: ["razao_social"]
                             }
                         }
-                    }
+                    },
+                    required: ["transportadoras"]
                 }
             });
 
-            if (result?.transportadoras && result.transportadoras.length > 0) {
+            console.log("Resultado LLM:", result);
+
+            const transportadorasEncontradas = result?.transportadoras || [];
+            
+            if (transportadorasEncontradas.length > 0) {
                 let importados = 0;
                 let duplicados = 0;
                 
-                for (const transp of result.transportadoras) {
+                for (const transp of transportadorasEncontradas) {
                     if (transp.razao_social) {
                         // Verificar CNPJ duplicado
                         if (transp.cnpj && cnpjJaCadastrado(transp.cnpj)) {
@@ -309,16 +309,20 @@ Extraia as seguintes informações de cada transportadora encontrada:
                 
                 queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
                 
-                if (duplicados > 0) {
+                if (importados === 0 && duplicados > 0) {
+                    toast.warning(`Nenhuma transportadora criada. ${duplicados} ignorada(s) por CNPJ duplicado.`);
+                } else if (duplicados > 0) {
                     toast.warning(`${importados} transportadora(s) criada(s). ${duplicados} ignorada(s) por CNPJ duplicado.`);
-                } else {
+                } else if (importados > 0) {
                     toast.success(`✅ ${importados} transportadora(s) criada(s) com sucesso!`);
+                } else {
+                    toast.error("Não foi possível criar transportadoras. Verifique os dados.");
                 }
                 
                 setShowPasteForm(false);
                 setPasteText("");
             } else {
-                toast.error("Não foi possível identificar transportadoras no texto.");
+                toast.error("Não foi possível identificar transportadoras no texto. Tente reformatar os dados.");
             }
         } catch (error) {
             console.error("Erro ao processar texto:", error);

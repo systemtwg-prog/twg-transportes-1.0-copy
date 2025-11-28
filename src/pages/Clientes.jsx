@@ -74,29 +74,19 @@ export default function Clientes() {
         
         try {
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise o texto abaixo e extraia as informações de clientes/empresas. 
-                
-Texto colado:
-${pasteText}
+                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia TODAS as informações de clientes/empresas que encontrar.
 
-Extraia as seguintes informações de cada cliente/empresa encontrada:
-- razao_social: nome da empresa ou razão social
-- nome_fantasia: nome fantasia (se houver)
-- cnpj_cpf: CNPJ ou CPF
-- tipo: se parece ser remetente, destinatario ou ambos (baseado no contexto)
-- contato: nome do contato
-- telefone: telefone
-- email: email
-- cep: CEP
-- endereco: endereço completo (rua, número)
-- bairro: bairro
-- cidade: cidade
-- uf: estado (sigla)
-- horario_funcionamento_inicio: horário de início do funcionamento (formato HH:MM)
-- horario_funcionamento_fim: horário de fim do funcionamento (formato HH:MM)
-- horario_almoco_inicio: horário início do almoço (formato HH:MM)
-- horario_almoco_fim: horário fim do almoço (formato HH:MM)
-- observacoes: outras informações relevantes`,
+TEXTO PARA ANALISAR:
+"""
+${pasteText}
+"""
+
+IMPORTANTE: 
+- Extraia QUALQUER informação que pareça ser de uma empresa ou pessoa
+- Se não encontrar um campo específico, deixe como string vazia ""
+- O campo razao_social é obrigatório - use o nome da empresa/pessoa
+- Se houver múltiplos clientes, retorne todos
+- Retorne os dados no formato JSON especificado`,
                 response_json_schema: {
                     type: "object",
                     properties: {
@@ -105,35 +95,41 @@ Extraia as seguintes informações de cada cliente/empresa encontrada:
                             items: {
                                 type: "object",
                                 properties: {
-                                    razao_social: { type: "string" },
-                                    nome_fantasia: { type: "string" },
-                                    cnpj_cpf: { type: "string" },
-                                    tipo: { type: "string" },
-                                    contato: { type: "string" },
-                                    telefone: { type: "string" },
-                                    email: { type: "string" },
-                                    cep: { type: "string" },
-                                    endereco: { type: "string" },
-                                    bairro: { type: "string" },
-                                    cidade: { type: "string" },
-                                    uf: { type: "string" },
-                                    horario_funcionamento_inicio: { type: "string" },
-                                    horario_funcionamento_fim: { type: "string" },
-                                    horario_almoco_inicio: { type: "string" },
-                                    horario_almoco_fim: { type: "string" },
-                                    observacoes: { type: "string" }
-                                }
+                                    razao_social: { type: "string", description: "Nome da empresa ou pessoa" },
+                                    nome_fantasia: { type: "string", description: "Nome fantasia" },
+                                    cnpj_cpf: { type: "string", description: "CNPJ ou CPF" },
+                                    tipo: { type: "string", description: "remetente, destinatario ou ambos" },
+                                    contato: { type: "string", description: "Nome do contato" },
+                                    telefone: { type: "string", description: "Telefone" },
+                                    email: { type: "string", description: "Email" },
+                                    cep: { type: "string", description: "CEP" },
+                                    endereco: { type: "string", description: "Endereço" },
+                                    bairro: { type: "string", description: "Bairro" },
+                                    cidade: { type: "string", description: "Cidade" },
+                                    uf: { type: "string", description: "Estado UF" },
+                                    horario_funcionamento_inicio: { type: "string", description: "Horário início" },
+                                    horario_funcionamento_fim: { type: "string", description: "Horário fim" },
+                                    horario_almoco_inicio: { type: "string", description: "Almoço início" },
+                                    horario_almoco_fim: { type: "string", description: "Almoço fim" },
+                                    observacoes: { type: "string", description: "Observações" }
+                                },
+                                required: ["razao_social"]
                             }
                         }
-                    }
+                    },
+                    required: ["clientes"]
                 }
             });
 
-            if (result?.clientes && result.clientes.length > 0) {
+            console.log("Resultado LLM:", result);
+
+            const clientesEncontrados = result?.clientes || [];
+            
+            if (clientesEncontrados.length > 0) {
                 let importados = 0;
                 let duplicados = 0;
                 
-                for (const cliente of result.clientes) {
+                for (const cliente of clientesEncontrados) {
                     if (cliente.razao_social) {
                         // Verificar CNPJ/CPF duplicado
                         if (cliente.cnpj_cpf && cnpjCpfJaCadastrado(cliente.cnpj_cpf)) {
@@ -151,16 +147,20 @@ Extraia as seguintes informações de cada cliente/empresa encontrada:
                 
                 queryClient.invalidateQueries({ queryKey: ["clientes"] });
                 
-                if (duplicados > 0) {
+                if (importados === 0 && duplicados > 0) {
+                    toast.warning(`Nenhum cliente criado. ${duplicados} ignorado(s) por CNPJ/CPF duplicado.`);
+                } else if (duplicados > 0) {
                     toast.warning(`${importados} cliente(s) criado(s). ${duplicados} ignorado(s) por CNPJ/CPF duplicado.`);
-                } else {
+                } else if (importados > 0) {
                     toast.success(`✅ ${importados} cliente(s) criado(s) com sucesso!`);
+                } else {
+                    toast.error("Não foi possível criar clientes. Verifique os dados.");
                 }
                 
                 setShowPasteForm(false);
                 setPasteText("");
             } else {
-                toast.error("Não foi possível identificar clientes no texto.");
+                toast.error("Não foi possível identificar clientes no texto. Tente reformatar os dados.");
             }
         } catch (error) {
             console.error("Erro ao processar texto:", error);

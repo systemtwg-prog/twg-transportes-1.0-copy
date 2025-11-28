@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell
+    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell, HomeIcon
 } from "lucide-react";
 
 const menuItems = [
@@ -54,16 +54,20 @@ export default function FloatingMenu({ currentPage }) {
     };
 
     return (
-        <div className="fixed top-4 right-4 z-50 flex gap-2">
-            {currentPage !== "Home" && (
-                <Button 
-                    size="icon" 
-                    onClick={handleBack}
-                    className="w-12 h-12 rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
+        <>
+        {/* Botão Início - Fixo no canto inferior esquerdo */}
+        {currentPage !== "Home" && (
+            <Link to={createPageUrl("Home")} className="fixed bottom-4 left-4 z-50">
+                <Button
+                    size="icon"
+                    className="w-14 h-14 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg"
                 >
-                    <ArrowLeft className="w-6 h-6 text-white" />
+                    <HomeIcon className="w-7 h-7 text-white" />
                 </Button>
-            )}
+            </Link>
+        )}
+        
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
                     <Button 
@@ -105,5 +109,6 @@ export default function FloatingMenu({ currentPage }) {
                                 </SheetContent>
                                 </Sheet>
         </div>
+        </>
     );
 }

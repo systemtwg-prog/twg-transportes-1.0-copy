@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,6 +31,10 @@ export default function NotasFiscais() {
     const [selecionados, setSelecionados] = useState([]);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [placaEmMassa, setPlacaEmMassa] = useState("");
+    const [showCadastroTransp, setShowCadastroTransp] = useState(false);
+    const [transpExtraidas, setTranspExtraidas] = useState([]);
+    const [transpSelecionadas, setTranspSelecionadas] = useState([]);
+    const [buscandoDados, setBuscandoDados] = useState({});
     const queryClient = useQueryClient();
 
     const [form, setForm] = useState({
@@ -52,6 +57,87 @@ export default function NotasFiscais() {
         queryKey: ["veiculos-notas"],
         queryFn: () => base44.entities.Veiculo.list()
     });
+
+    const { data: transportadoras = [] } = useQuery({
+        queryKey: ["transportadoras-notas"],
+        queryFn: () => base44.entities.Transportadora.list()
+    });
+
+    // Verificar CNPJ duplicado
+    const cnpjJaCadastrado = (cnpj) => {
+        if (!cnpj) return false;
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        return transportadoras.some(t => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
+    };
+
+    // Criar transportadora
+    const createTranspMutation = useMutation({
+        mutationFn: (data) => base44.entities.Transportadora.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+        }
+    });
+
+    // Buscar dados online da transportadora
+    const buscarDadosOnline = async (index, nome) => {
+        setBuscandoDados(prev => ({ ...prev, [index]: true }));
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Busque informações sobre a transportadora "${nome}" no Brasil.
+
+Retorne os dados encontrados sobre esta empresa de transporte/logística:
+- razao_social: nome completo da empresa
+- nome_fantasia: nome fantasia
+- cnpj: CNPJ se encontrar
+- telefone: telefone de contato
+- email: email de contato
+- endereco: endereço completo
+- bairro: bairro
+- cidade: cidade
+- uf: estado (sigla)
+- cep: CEP
+- horario_funcionamento: horário de funcionamento (ex: 08:00 às 18:00)
+
+Se não encontrar algum dado, deixe em branco.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        razao_social: { type: "string" },
+                        nome_fantasia: { type: "string" },
+                        cnpj: { type: "string" },
+                        telefone: { type: "string" },
+                        email: { type: "string" },
+                        endereco: { type: "string" },
+                        bairro: { type: "string" },
+                        cidade: { type: "string" },
+                        uf: { type: "string" },
+                        cep: { type: "string" },
+                        horario_funcionamento: { type: "string" }
+                    }
+                }
+            });
+
+            if (result) {
+                setTranspExtraidas(prev => {
+                    const newList = [...prev];
+                    newList[index] = {
+                        ...newList[index],
+                        ...result,
+                        razao_social: result.razao_social || newList[index].nome
+                    };
+                    return newList;
+                });
+                toast.success(`Dados atualizados para ${nome}!`);
+            }
+        } catch (error) {
+            console.error("Erro ao buscar dados:", error);
+            toast.error("Não foi possível buscar dados online.");
+        }
+        
+        setBuscandoDados(prev => ({ ...prev, [index]: false }));
+    };
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.NotaFiscal.create(data),
@@ -161,18 +247,17 @@ export default function NotasFiscais() {
         
         try {
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise o texto abaixo e extraia as informações de notas fiscais. 
-                
-Texto colado:
-${pasteText}
+                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de notas fiscais.
 
-IMPORTANTE: NÃO preencha o campo remetente. Deixe-o em branco.
-Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
-- numero_nf: número da nota fiscal
-- destinatario: nome do destinatário (a empresa que vai receber)
-- peso: peso da carga
-- volume: quantidade de volumes
-- transportadora: nome da transportadora`,
+TEXTO PARA ANALISAR:
+"""
+${pasteText}
+"""
+
+IMPORTANTE: 
+- Extraia TODAS as notas fiscais encontradas
+- NÃO preencha o campo remetente, deixe em branco
+- Extraia o nome da transportadora de cada nota`,
                 response_json_schema: {
                     type: "object",
                     properties: {
@@ -181,21 +266,28 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                             items: {
                                 type: "object",
                                 properties: {
-                                    numero_nf: { type: "string" },
-                                    destinatario: { type: "string" },
-                                    peso: { type: "string" },
-                                    volume: { type: "string" },
-                                    transportadora: { type: "string" }
+                                    numero_nf: { type: "string", description: "Número da NF" },
+                                    destinatario: { type: "string", description: "Destinatário" },
+                                    peso: { type: "string", description: "Peso" },
+                                    volume: { type: "string", description: "Volumes" },
+                                    transportadora: { type: "string", description: "Transportadora" }
                                 }
                             }
                         }
-                    }
+                    },
+                    required: ["notas"]
                 }
             });
 
-            if (result?.notas && result.notas.length > 0) {
+            console.log("Resultado LLM:", result);
+
+            const notasEncontradas = result?.notas || [];
+            
+            if (notasEncontradas.length > 0) {
                 let importados = 0;
-                for (const nota of result.notas) {
+                const transportadorasUnicas = new Set();
+                
+                for (const nota of notasEncontradas) {
                     if (nota.numero_nf || nota.destinatario) {
                         await base44.entities.NotaFiscal.create({
                             numero_nf: nota.numero_nf || "",
@@ -203,14 +295,33 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
                             peso: nota.peso || "",
                             volume: nota.volume || "",
                             transportadora: nota.transportadora || "",
-                            remetente: "", // Sempre em branco
+                            remetente: "",
                             data: format(new Date(), "yyyy-MM-dd")
                         });
                         importados++;
+                        
+                        // Coletar transportadoras únicas
+                        if (nota.transportadora) {
+                            transportadorasUnicas.add(nota.transportadora.trim());
+                        }
                     }
                 }
+                
                 queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s) com sucesso!`);
+                toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
+                
+                // Extrair transportadoras para cadastro
+                if (transportadorasUnicas.size > 0) {
+                    const transpList = Array.from(transportadorasUnicas).map(nome => ({
+                        nome,
+                        razao_social: nome,
+                        selecionada: true
+                    }));
+                    setTranspExtraidas(transpList);
+                    setTranspSelecionadas(transpList.map((_, i) => i));
+                    setShowCadastroTransp(true);
+                }
+                
                 setShowPasteForm(false);
                 setPasteText("");
             } else {
@@ -222,6 +333,62 @@ Extraia APENAS as seguintes informações de cada nota fiscal encontrada:
         }
         
         setProcessingPaste(false);
+    };
+
+    // Cadastrar transportadoras selecionadas
+    const handleCadastrarTransportadoras = async () => {
+        let cadastradas = 0;
+        let ignoradas = 0;
+        
+        for (const index of transpSelecionadas) {
+            const transp = transpExtraidas[index];
+            if (transp) {
+                // Verificar se já existe pelo CNPJ ou nome
+                if (transp.cnpj && cnpjJaCadastrado(transp.cnpj)) {
+                    ignoradas++;
+                    continue;
+                }
+                
+                // Verificar se já existe pelo nome
+                const nomeExiste = transportadoras.some(t => 
+                    t.razao_social?.toLowerCase() === transp.razao_social?.toLowerCase() ||
+                    t.nome_fantasia?.toLowerCase() === transp.nome?.toLowerCase()
+                );
+                
+                if (nomeExiste) {
+                    ignoradas++;
+                    continue;
+                }
+                
+                await createTranspMutation.mutateAsync({
+                    razao_social: transp.razao_social || transp.nome,
+                    nome_fantasia: transp.nome_fantasia || transp.nome,
+                    cnpj: transp.cnpj || "",
+                    telefone: transp.telefone || "",
+                    email: transp.email || "",
+                    endereco: transp.endereco || "",
+                    bairro: transp.bairro || "",
+                    cidade: transp.cidade || "",
+                    uf: transp.uf || "",
+                    cep: transp.cep || "",
+                    observacoes: transp.horario_funcionamento ? `Horário: ${transp.horario_funcionamento}` : "",
+                    status: "ativo"
+                });
+                cadastradas++;
+            }
+        }
+        
+        queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+        
+        if (ignoradas > 0) {
+            toast.warning(`${cadastradas} transportadora(s) cadastrada(s). ${ignoradas} ignorada(s) (já existentes).`);
+        } else if (cadastradas > 0) {
+            toast.success(`✅ ${cadastradas} transportadora(s) cadastrada(s)!`);
+        }
+        
+        setShowCadastroTransp(false);
+        setTranspExtraidas([]);
+        setTranspSelecionadas([]);
     };
 
     const handleImportFile = async (e) => {
@@ -586,6 +753,135 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     </>
                                 )}
                             </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Cadastrar Transportadoras */}
+            <Dialog open={showCadastroTransp} onOpenChange={setShowCadastroTransp}>
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-violet-600" />
+                            Cadastrar Transportadoras Extraídas
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Foram encontradas <strong>{transpExtraidas.length}</strong> transportadora(s) nas notas importadas.
+                            Selecione quais deseja cadastrar e clique em "Atualizar Dados" para buscar informações online.
+                        </p>
+                        
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {transpExtraidas.map((transp, index) => (
+                                <div 
+                                    key={index} 
+                                    className={`p-4 rounded-xl border-2 transition-colors ${
+                                        transpSelecionadas.includes(index) 
+                                            ? "border-violet-500 bg-violet-50" 
+                                            : "border-slate-200 bg-white"
+                                    }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <Checkbox 
+                                            checked={transpSelecionadas.includes(index)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setTranspSelecionadas(prev => [...prev, index]);
+                                                } else {
+                                                    setTranspSelecionadas(prev => prev.filter(i => i !== index));
+                                                }
+                                            }}
+                                            className="mt-1"
+                                        />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-semibold text-lg text-slate-800">{transp.nome}</h4>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => buscarDadosOnline(index, transp.nome)}
+                                                    disabled={buscandoDados[index]}
+                                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                                >
+                                                    {buscandoDados[index] ? (
+                                                        <>
+                                                            <div className="animate-spin w-4 h-4 mr-1 border-2 border-blue-500 border-t-transparent rounded-full" />
+                                                            Buscando...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Globe className="w-4 h-4 mr-1" />
+                                                            Atualizar Dados
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                            
+                                            {/* Dados preenchidos */}
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                {transp.cnpj && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Badge variant="outline" className="text-xs">CNPJ</Badge>
+                                                        <span>{transp.cnpj}</span>
+                                                    </div>
+                                                )}
+                                                {transp.telefone && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Badge variant="outline" className="text-xs">Tel</Badge>
+                                                        <span>{transp.telefone}</span>
+                                                    </div>
+                                                )}
+                                                {transp.cidade && transp.uf && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Badge variant="outline" className="text-xs">Cidade</Badge>
+                                                        <span>{transp.cidade}/{transp.uf}</span>
+                                                    </div>
+                                                )}
+                                                {transp.endereco && (
+                                                    <div className="flex items-center gap-1 col-span-2">
+                                                        <Badge variant="outline" className="text-xs">End</Badge>
+                                                        <span className="truncate">{transp.endereco}</span>
+                                                    </div>
+                                                )}
+                                                {transp.horario_funcionamento && (
+                                                    <div className="flex items-center gap-1 col-span-2">
+                                                        <Badge variant="outline" className="text-xs">Horário</Badge>
+                                                        <span>{transp.horario_funcionamento}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {!transp.cnpj && !transp.telefone && !transp.cidade && (
+                                                <p className="text-xs text-slate-400 italic">
+                                                    Clique em "Atualizar Dados" para buscar informações online
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="flex justify-between items-center pt-4 border-t">
+                            <div className="text-sm text-slate-500">
+                                {transpSelecionadas.length} de {transpExtraidas.length} selecionada(s)
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => { setShowCadastroTransp(false); setTranspExtraidas([]); }}>
+                                    <X className="w-4 h-4 mr-1" /> Cancelar
+                                </Button>
+                                <Button 
+                                    onClick={handleCadastrarTransportadoras}
+                                    disabled={transpSelecionadas.length === 0}
+                                    className="bg-violet-600 hover:bg-violet-700"
+                                >
+                                    <Building2 className="w-4 h-4 mr-1" />
+                                    Cadastrar ({transpSelecionadas.length})
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </DialogContent>

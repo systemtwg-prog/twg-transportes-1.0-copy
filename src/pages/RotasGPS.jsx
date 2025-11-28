@@ -218,61 +218,118 @@ export default function RotasGPS() {
 
     // Buscar endereço online pela transportadora ou destinatário
     const [buscandoEndereco, setBuscandoEndereco] = useState(false);
+    const [enderecosEncontrados, setEnderecosEncontrados] = useState([]);
+    const [showSelecionarEndereco, setShowSelecionarEndereco] = useState(false);
+    const [notaParaEndereco, setNotaParaEndereco] = useState(null);
+
+    // Buscar transportadoras cadastradas
+    const { data: transportadorasCadastradas = [] } = useQuery({
+        queryKey: ["transportadoras-rotas"],
+        queryFn: () => base44.entities.Transportadora.list()
+    });
     
     const buscarEnderecoOnline = async (nota) => {
         setBuscandoEndereco(true);
-        toast.info("Buscando endereço online...");
+        setNotaParaEndereco(nota);
+        toast.info("Buscando endereço...");
         
         try {
             const termoBusca = nota.transportadora || nota.destinatario;
-            
-            const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Preciso encontrar o endereço completo da transportadora/empresa: "${termoBusca}"
-                ${nota.cidade ? `Cidade provável: ${nota.cidade}` : ""}
+            const enderecos = [];
+
+            // 1. PRIMEIRO: Buscar nas transportadoras cadastradas
+            const transportadoraCadastrada = transportadorasCadastradas.find(t => 
+                t.razao_social?.toLowerCase().includes(termoBusca.toLowerCase()) ||
+                t.nome_fantasia?.toLowerCase().includes(termoBusca.toLowerCase()) ||
+                termoBusca.toLowerCase().includes(t.razao_social?.toLowerCase() || "") ||
+                termoBusca.toLowerCase().includes(t.nome_fantasia?.toLowerCase() || "")
+            );
+
+            if (transportadoraCadastrada && transportadoraCadastrada.endereco) {
+                const endCadastrado = [
+                    transportadoraCadastrada.endereco,
+                    transportadoraCadastrada.bairro,
+                    transportadoraCadastrada.cidade,
+                    transportadoraCadastrada.uf
+                ].filter(Boolean).join(", ");
                 
-                Busque na internet e retorne o endereço completo com rua, número, bairro, cidade, estado e CEP.
-                Se for uma transportadora conhecida (como Braspress, Jamef, TNT, etc), busque o endereço da filial ou matriz.`,
+                enderecos.push({
+                    id: 1,
+                    fonte: "📋 Cadastro Local",
+                    nome_empresa: transportadoraCadastrada.nome_fantasia || transportadoraCadastrada.razao_social,
+                    endereco: transportadoraCadastrada.endereco,
+                    bairro: transportadoraCadastrada.bairro,
+                    cidade: transportadoraCadastrada.cidade,
+                    estado: transportadoraCadastrada.uf,
+                    cep: transportadoraCadastrada.cep,
+                    telefone: transportadoraCadastrada.telefone,
+                    enderecoCompleto: endCadastrado
+                });
+            }
+
+            // 2. SEGUNDO: Buscar online via Google (priorizar SP)
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Preciso encontrar os endereços da transportadora/empresa: "${termoBusca}" no ESTADO DE SÃO PAULO.
+
+IMPORTANTE: 
+- Busque APENAS filiais, matrizes ou bases localizadas no ESTADO DE SÃO PAULO (SP)
+- Se for uma transportadora conhecida (Braspress, Jamef, TNT, Fedex, Total Express, Sequoia, Jadlog, etc), busque a filial de SP
+- Retorne até 3 endereços diferentes encontrados em SP
+- Se não encontrar em SP, busque em estados próximos (RJ, MG, PR)
+
+Busque no Google Maps e sites oficiais das transportadoras.`,
                 add_context_from_internet: true,
                 response_json_schema: {
                     type: "object",
                     properties: {
-                        nome_empresa: { type: "string", description: "Nome da empresa encontrada" },
-                        endereco: { type: "string", description: "Endereço completo (rua e número)" },
-                        bairro: { type: "string", description: "Bairro" },
-                        cidade: { type: "string", description: "Cidade" },
-                        estado: { type: "string", description: "Estado/UF" },
-                        cep: { type: "string", description: "CEP" },
-                        telefone: { type: "string", description: "Telefone" },
-                        encontrado: { type: "boolean", description: "Se encontrou o endereço" }
+                        enderecos: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    nome_empresa: { type: "string", description: "Nome da empresa/filial" },
+                                    endereco: { type: "string", description: "Endereço (rua e número)" },
+                                    bairro: { type: "string", description: "Bairro" },
+                                    cidade: { type: "string", description: "Cidade" },
+                                    estado: { type: "string", description: "Estado/UF (ex: SP)" },
+                                    cep: { type: "string", description: "CEP" },
+                                    telefone: { type: "string", description: "Telefone" },
+                                    tipo: { type: "string", description: "Tipo (Matriz, Filial, CD, Base)" }
+                                }
+                            }
+                        },
+                        encontrado: { type: "boolean", description: "Se encontrou algum endereço" }
                     }
                 }
             });
 
-            if (resultado?.encontrado && resultado?.endereco) {
-                const enderecoCompleto = [resultado.endereco, resultado.bairro, resultado.cidade, resultado.estado].filter(Boolean).join(", ");
-                
-                // Adicionar como rota
-                const novaRota = {
-                    id: Date.now(),
-                    destinatario: resultado.nome_empresa || nota.destinatario,
-                    numero_nf: nota.numero_nf,
-                    transportadora: nota.transportadora,
-                    endereco: resultado.endereco,
-                    bairro: resultado.bairro,
-                    cidade: resultado.cidade,
-                    estado: resultado.estado,
-                    cep: resultado.cep,
-                    telefone: resultado.telefone,
-                    enderecoCompleto: enderecoCompleto
-                };
-                
-                setRotasAdicionadas(prev => [...prev, novaRota]);
-                toast.success("Endereço encontrado e adicionado!");
-                
-                // Abrir no Waze automaticamente
-                abrirRotaWaze(enderecoCompleto);
+            if (resultado?.encontrado && resultado?.enderecos?.length > 0) {
+                resultado.enderecos.forEach((end, idx) => {
+                    const endCompleto = [end.endereco, end.bairro, end.cidade, end.estado].filter(Boolean).join(", ");
+                    enderecos.push({
+                        id: enderecos.length + 1,
+                        fonte: `🌐 Google - ${end.tipo || 'Filial'}`,
+                        nome_empresa: end.nome_empresa,
+                        endereco: end.endereco,
+                        bairro: end.bairro,
+                        cidade: end.cidade,
+                        estado: end.estado,
+                        cep: end.cep,
+                        telefone: end.telefone,
+                        enderecoCompleto: endCompleto
+                    });
+                });
+            }
+
+            if (enderecos.length === 0) {
+                toast.error("Nenhum endereço encontrado em SP");
+            } else if (enderecos.length === 1) {
+                // Se só tem 1 endereço, usa direto
+                selecionarEndereco(enderecos[0], nota);
             } else {
-                toast.error("Não foi possível encontrar o endereço online");
+                // Se tem mais de 1, mostra opções para o motorista escolher
+                setEnderecosEncontrados(enderecos);
+                setShowSelecionarEndereco(true);
             }
         } catch (error) {
             console.error("Erro ao buscar endereço:", error);
@@ -280,6 +337,31 @@ export default function RotasGPS() {
         }
         
         setBuscandoEndereco(false);
+    };
+
+    const selecionarEndereco = (endereco, nota) => {
+        const novaRota = {
+            id: Date.now(),
+            destinatario: endereco.nome_empresa || nota?.destinatario || notaParaEndereco?.destinatario,
+            numero_nf: nota?.numero_nf || notaParaEndereco?.numero_nf,
+            transportadora: nota?.transportadora || notaParaEndereco?.transportadora,
+            endereco: endereco.endereco,
+            bairro: endereco.bairro,
+            cidade: endereco.cidade,
+            estado: endereco.estado,
+            cep: endereco.cep,
+            telefone: endereco.telefone,
+            enderecoCompleto: endereco.enderecoCompleto
+        };
+        
+        setRotasAdicionadas(prev => [...prev, novaRota]);
+        toast.success("Endereço adicionado às rotas!");
+        setShowSelecionarEndereco(false);
+        setEnderecosEncontrados([]);
+        setNotaParaEndereco(null);
+        
+        // Abrir no Waze automaticamente
+        abrirRotaWaze(endereco.enderecoCompleto);
     };
 
     const abrirRotaCompleta = (destinos, app) => {

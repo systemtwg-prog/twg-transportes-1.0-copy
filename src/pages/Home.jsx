@@ -66,14 +66,14 @@ export default function Home() {
 
     const isAdmin = currentUser?.role === "admin";
 
-    // Cores do tema
+    // Cores do tema - tons claros azulados
     const corPrimaria = config.cor_primaria || "sky";
     const corBotoes = config.cor_botoes || "blue";
     const temaEscuro = config.tema_escuro || false;
 
     const bgGradient = temaEscuro 
-        ? `from-${corPrimaria}-900 via-${corPrimaria}-800 to-slate-900`
-        : `from-${corPrimaria}-400 via-${corPrimaria}-500 to-${corPrimaria}-600`;
+        ? `from-slate-800 via-blue-900 to-slate-900`
+        : `from-sky-100 via-blue-50 to-slate-100`;
 
     // Dashboard por veículo
     const dashboardPorVeiculo = useMemo(() => {
@@ -139,10 +139,10 @@ export default function Home() {
     };
 
     const mainButtons = [
-        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: `from-${corBotoes}-600 to-${corBotoes}-700` },
-        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: `from-${corBotoes}-500 to-cyan-600` },
-        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: `from-${corBotoes}-500 to-${corBotoes}-600` },
-        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: `from-indigo-500 to-${corBotoes}-600` },
+        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-500 via-blue-600 to-indigo-600" },
+        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-sky-500 via-cyan-500 to-blue-500" },
+        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-500 via-blue-500 to-sky-500" },
+        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-500 via-indigo-500 to-blue-500" },
     ];
 
     const quickButtons = [
@@ -175,10 +175,10 @@ export default function Home() {
                             <img src={config.logo_url} alt="Logo" className="h-12 object-contain bg-white/10 rounded-lg p-1" />
                         )}
                         <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-white">
-                                {config.nome_empresa || "Sistema de Transportes"}
-                            </h1>
-                            <p className="text-blue-200 text-sm">
+                            <h1 className={`text-xl md:text-2xl font-bold ${temaEscuro ? 'text-white' : 'text-slate-800'}`}>
+                                              {config.nome_empresa || "Sistema de Transportes"}
+                                          </h1>
+                                          <p className={`text-sm ${temaEscuro ? 'text-blue-200' : 'text-blue-600'}`}>
                                 Olá, {currentUser?.full_name || "Usuário"}! • {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
                             </p>
                         </div>
@@ -210,7 +210,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3">
                     {mainButtons.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
-                            <Button className={`w-full h-20 bg-gradient-to-r ${item.color} hover:opacity-90 shadow-lg border-0 flex flex-col items-center justify-center gap-1`}>
+                            <Button className={`w-full h-20 bg-gradient-to-br ${item.color} hover:scale-105 hover:shadow-xl transition-all duration-300 shadow-lg border-0 flex flex-col items-center justify-center gap-1 rounded-2xl`}>
                                 <item.icon className="w-7 h-7 text-white" />
                                 <span className="text-sm font-semibold text-white">{item.name}</span>
                             </Button>
@@ -222,7 +222,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3">
                     {quickButtons.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
-                            <Button variant="outline" className="w-full h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                            <Button variant="outline" className={`w-full h-12 ${temaEscuro ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : 'bg-white/80 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-400'} backdrop-blur-sm shadow-md rounded-xl transition-all duration-200`}>
                                 <item.icon className="w-5 h-5 mr-2" />
                                 {item.name}
                             </Button>
@@ -232,56 +232,66 @@ export default function Home() {
 
                 {/* Dashboard por Veículo */}
                 {Object.keys(dashboardPorVeiculo).length > 0 && (
-                    <Card className="bg-white/10 backdrop-blur-md border-0 shadow-xl">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-white text-lg flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-blue-300" />
+                    <Card className={`${temaEscuro ? 'bg-white/10 backdrop-blur-md' : 'bg-gradient-to-br from-white via-sky-50 to-blue-50'} border-0 shadow-xl rounded-2xl overflow-hidden`}>
+                        <CardHeader className={`pb-2 ${temaEscuro ? '' : 'border-b border-blue-100'}`}>
+                            <CardTitle className={`text-lg flex items-center gap-2 ${temaEscuro ? 'text-white' : 'text-slate-700'}`}>
+                                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                                    <BarChart3 className="w-4 h-4 text-white" />
+                                </div>
                                 Pendências por Veículo
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 pt-0">
+                        <CardContent className="p-4 pt-3">
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {Object.entries(dashboardPorVeiculo).map(([placa, dados]) => {
                                     const veiculo = veiculos.find(v => v.placa === placa);
                                     const isColetas = placa === "COLETAS";
-                                    
+
                                     return (
                                         <div 
                                             key={placa}
                                             onClick={() => handlePlacaClick(placa)}
-                                            className={`p-3 bg-white/10 rounded-xl border-l-4 ${isColetas ? 'border-green-400' : 'border-blue-400'} backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-all`}
+                                            className={`p-3 rounded-xl border-l-4 cursor-pointer transition-all duration-200 hover:scale-102 hover:shadow-lg ${
+                                                temaEscuro 
+                                                    ? `bg-white/10 ${isColetas ? 'border-green-400' : 'border-blue-400'} backdrop-blur-sm hover:bg-white/20`
+                                                    : `bg-white shadow-md ${isColetas ? 'border-emerald-500' : 'border-blue-500'} hover:shadow-xl`
+                                            }`}
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     {isColetas ? (
-                                                        <Truck className="w-4 h-4 text-green-400" />
+                                                        <div className="p-1.5 bg-emerald-100 rounded-lg">
+                                                            <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                                                        </div>
                                                     ) : (
-                                                        <Car className="w-4 h-4 text-blue-400" />
+                                                        <div className="p-1.5 bg-blue-100 rounded-lg">
+                                                            <Car className="w-3.5 h-3.5 text-blue-600" />
+                                                        </div>
                                                     )}
-                                                    <span className="font-bold text-sm text-white">
+                                                    <span className={`font-bold text-sm ${temaEscuro ? 'text-white' : 'text-slate-700'}`}>
                                                         {isColetas ? "Coletas" : placa}
                                                     </span>
                                                 </div>
                                                 {!isColetas && (
-                                                    <ChevronRight className="w-4 h-4 text-white/50" />
+                                                    <ChevronRight className={`w-4 h-4 ${temaEscuro ? 'text-white/50' : 'text-slate-400'}`} />
                                                 )}
                                             </div>
                                             {veiculo && (
-                                                <p className="text-xs text-blue-200 mb-1">{veiculo.modelo}</p>
+                                                <p className={`text-xs mb-1 ${temaEscuro ? 'text-blue-200' : 'text-slate-500'}`}>{veiculo.modelo}</p>
                                             )}
                                             <div className="flex gap-3 text-sm">
                                                 {dados.entregas > 0 && (
                                                     <div className="flex items-center gap-1">
-                                                        <Package className="w-3 h-3 text-orange-400" />
-                                                        <span className="font-semibold text-orange-300">{dados.entregas}</span>
-                                                        <span className="text-xs text-white/60">entregas</span>
+                                                        <Package className="w-3 h-3 text-orange-500" />
+                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
+                                                        <span className={`text-xs ${temaEscuro ? 'text-white/60' : 'text-slate-400'}`}>entregas</span>
                                                     </div>
                                                 )}
                                                 {dados.coletas > 0 && (
                                                     <div className="flex items-center gap-1">
-                                                        <Truck className="w-3 h-3 text-green-400" />
-                                                        <span className="font-semibold text-green-300">{dados.coletas}</span>
-                                                        <span className="text-xs text-white/60">coletas</span>
+                                                        <Truck className="w-3 h-3 text-emerald-500" />
+                                                        <span className="font-semibold text-emerald-600">{dados.coletas}</span>
+                                                        <span className={`text-xs ${temaEscuro ? 'text-white/60' : 'text-slate-400'}`}>coletas</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -297,12 +307,12 @@ export default function Home() {
                 <div className="grid grid-cols-3 gap-2">
                     {menuItems.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
-                            <Card className="bg-white/10 border-0 hover:bg-white/20 transition-all cursor-pointer backdrop-blur-sm">
+                            <Card className={`border-0 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-lg ${temaEscuro ? 'bg-white/10 hover:bg-white/20 backdrop-blur-sm' : 'bg-white/80 hover:bg-white shadow-md'} rounded-xl`}>
                                 <CardContent className="p-3 flex flex-col items-center text-center">
-                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} mb-2`}>
+                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} mb-2 shadow-md`}>
                                         <item.icon className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="text-xs font-medium text-white">{item.name}</span>
+                                    <span className={`text-xs font-medium ${temaEscuro ? 'text-white' : 'text-slate-700'}`}>{item.name}</span>
                                 </CardContent>
                             </Card>
                         </Link>
@@ -314,7 +324,7 @@ export default function Home() {
                     <div className="flex gap-2 flex-wrap">
                         {adminItems.map((item) => (
                             <Link key={item.name} to={createPageUrl(item.href)}>
-                                <Button variant="ghost" size="sm" className="text-blue-200 hover:text-white hover:bg-white/10">
+                                <Button variant="ghost" size="sm" className={`${temaEscuro ? 'text-blue-200 hover:text-white hover:bg-white/10' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100'} rounded-lg`}>
                                     <item.icon className="w-4 h-4 mr-1" />
                                     {item.name}
                                 </Button>

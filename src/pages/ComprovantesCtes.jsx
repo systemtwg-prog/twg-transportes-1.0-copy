@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import ScannerCamera from "@/components/shared/ScannerCamera";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -141,6 +142,8 @@ export default function ComprovantesCtes() {
     const [editMassaField, setEditMassaField] = useState("");
     const [editMassaValue, setEditMassaValue] = useState("");
     const [showVeiculoNotas, setShowVeiculoNotas] = useState(null);
+    const [showScanner, setShowScanner] = useState(false);
+    const [scannerTarget, setScannerTarget] = useState(null); // 'form' ou 'upload'
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -1010,6 +1013,32 @@ export default function ComprovantesCtes() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
+            {/* Scanner Camera */}
+            {showScanner && (
+                <ScannerCamera
+                    onCapture={async (file) => {
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        if (scannerTarget === 'form') {
+                            setForm(prev => ({
+                                ...prev,
+                                arquivos: [...prev.arquivos, { nome: file.name, url: file_url, tipo: file.type }]
+                            }));
+                        } else if (scannerTarget === 'upload' && uploadingCTE) {
+                            const novosArquivos = [...(uploadingCTE.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }];
+                            await updateMutation.mutateAsync({
+                                id: uploadingCTE.id,
+                                data: { arquivos: novosArquivos, status: "finalizado" }
+                            });
+                            setShowUploadDialog(false);
+                            setUploadingCTE(null);
+                        }
+                        setShowScanner(false);
+                        toast.success("Foto capturada!");
+                    }}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
+
             {/* Dialog Upload Comprovante */}
             <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
                 <DialogContent className="max-w-md">
@@ -1052,24 +1081,12 @@ export default function ComprovantesCtes() {
                                         )}
                                     </label>
                                 </div>
-                                <div className="border-2 border-dashed border-amber-300 rounded-lg p-6 text-center hover:border-amber-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        onChange={(e) => {
-                                            const files = Array.from(e.target.files);
-                                            if (files.length > 0) {
-                                                handleUploadComprovante(uploadingCTE, files);
-                                            }
-                                        }}
-                                        className="hidden"
-                                        id="camera-comprovante"
-                                    />
-                                    <label htmlFor="camera-comprovante" className="cursor-pointer">
-                                        <Camera className="w-8 h-8 mx-auto text-amber-400" />
-                                        <span className="text-sm text-amber-600 block mt-2">Câmera</span>
-                                    </label>
+                                <div 
+                                    className="border-2 border-dashed border-amber-300 rounded-lg p-6 text-center hover:border-amber-500 transition-colors cursor-pointer"
+                                    onClick={() => { setScannerTarget('upload'); setShowScanner(true); }}
+                                >
+                                    <Camera className="w-8 h-8 mx-auto text-amber-400" />
+                                    <span className="text-sm text-amber-600 block mt-2">Scanner</span>
                                 </div>
                             </div>
                         </div>
@@ -1586,19 +1603,12 @@ export default function ComprovantesCtes() {
                                         )}
                                     </label>
                                 </div>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-amber-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        onChange={handleUploadFiles}
-                                        className="hidden"
-                                        id="camera-upload-cte"
-                                    />
-                                    <label htmlFor="camera-upload-cte" className="cursor-pointer">
-                                        <Camera className="w-8 h-8 mx-auto text-slate-400" />
-                                        <span className="text-sm text-slate-600">Câmera</span>
-                                    </label>
+                                <div 
+                                    className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-amber-500 transition-colors cursor-pointer"
+                                    onClick={() => { setScannerTarget('form'); setShowScanner(true); }}
+                                >
+                                    <Camera className="w-8 h-8 mx-auto text-slate-400" />
+                                    <span className="text-sm text-slate-600">Scanner</span>
                                 </div>
                             </div>
 

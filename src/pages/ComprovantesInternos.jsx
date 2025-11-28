@@ -392,9 +392,9 @@ Se não encontrar, retorne vazio.`,
                         )}
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-sky-500 to-cyan-600"
+                            className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg font-semibold"
                         >
-                            <Plus className="w-5 h-5 mr-2" />
+                            <Plus className="w-6 h-6 mr-2" />
                             Novo Comprovante
                         </Button>
                     </div>

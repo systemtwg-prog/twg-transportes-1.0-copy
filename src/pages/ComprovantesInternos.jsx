@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar, RotateCw
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar, RotateCw, RefreshCw
 } from "lucide-react";
+import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -158,23 +159,30 @@ export default function ComprovantesInternos() {
 
     // Função para marcar nota fiscal como entregue
     const marcarNotaEntregue = async (numeroNF) => {
-        if (!numeroNF) return;
+        if (!numeroNF || numeroNF === "SEM NF") return;
         
-        // Buscar nota fiscal pelo número
-        const nota = notasFiscais.find(n => 
-            n.numero_nf === numeroNF || 
-            n.numero_nf?.includes(numeroNF) ||
-            numeroNF.includes(n.numero_nf)
-        );
+        // Buscar notas fiscais atualizadas do banco
+        const notasAtuais = await base44.entities.NotaFiscal.list();
+        const romaneiosAtuais = await base44.entities.RomaneioGerado.list();
+        
+        // Buscar nota fiscal pelo número (busca flexível)
+        const numeroLimpo = numeroNF.replace(/\D/g, '');
+        const nota = notasAtuais.find(n => {
+            const nfLimpo = n.numero_nf?.replace(/\D/g, '') || '';
+            return nfLimpo === numeroLimpo || 
+                   n.numero_nf === numeroNF ||
+                   nfLimpo.includes(numeroLimpo) ||
+                   numeroLimpo.includes(nfLimpo);
+        });
         
         if (nota) {
             // Atualizar status da nota para entregue
             await base44.entities.NotaFiscal.update(nota.id, { status: "entregue" });
             
             // Verificar se todas as notas do romaneio foram entregues
-            for (const romaneio of romaneiosGerados) {
+            for (const romaneio of romaneiosAtuais) {
                 if (romaneio.notas_ids?.includes(nota.id)) {
-                    const notasDoRomaneio = notasFiscais.filter(n => romaneio.notas_ids.includes(n.id));
+                    const notasDoRomaneio = notasAtuais.filter(n => romaneio.notas_ids.includes(n.id));
                     const todasEntregues = notasDoRomaneio.every(n => 
                         n.id === nota.id || n.status === "entregue"
                     );
@@ -184,13 +192,19 @@ export default function ComprovantesInternos() {
                     }
                 }
             }
-            
-            // Invalidar queries para atualizar dashboards
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais-home"] });
-            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados-home"] });
         }
+    };
+
+    // Função para atualizar todos os dashboards
+    const atualizarDashboards = () => {
+        queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais-comprovantes"] });
+        queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+        queryClient.invalidateQueries({ queryKey: ["romaneios-gerados-comprovantes"] });
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais-home"] });
+        queryClient.invalidateQueries({ queryKey: ["romaneios-gerados-home"] });
+        toast.success("Dashboards atualizados!");
     };
 
     const createEmpresaMutation = useMutation({
@@ -285,9 +299,15 @@ export default function ComprovantesInternos() {
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.ComprovanteInterno.create(data),
         onSuccess: async (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
             // Marcar nota como entregue automaticamente
             await marcarNotaEntregue(variables.nota_fiscal);
+            // Atualizar todos os dashboards
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+            queryClient.invalidateQueries({ queryKey: ["notas-fiscais-home"] });
+            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados-home"] });
+            toast.success("Comprovante salvo e nota marcada como entregue!");
             setShowForm(false);
             resetForm();
         }
@@ -397,6 +417,14 @@ export default function ComprovantesInternos() {
                         </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                        <Button 
+                            onClick={atualizarDashboards}
+                            variant="outline"
+                            className="border-green-500 text-green-600 hover:bg-green-50"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar
+                        </Button>
                         <Button 
                             onClick={() => { setEmpresaForm({ nome: "", logo_url: "" }); setEditingEmpresa(null); setShowCadastroEmpresa(true); }}
                             variant="outline"

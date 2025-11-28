@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy, AlertTriangle, Bell
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy, AlertTriangle, Bell, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -453,6 +453,18 @@ export default function ColetasDiarias() {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button 
+                            onClick={() => {
+                                queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
+                                queryClient.invalidateQueries({ queryKey: ["coletas-diarias-home"] });
+                                toast.success("Coletas atualizadas!");
+                            }} 
+                            variant="outline" 
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar
+                        </Button>
                         <Button onClick={handleShare} variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
                             <Share2 className="w-4 h-4 mr-2" />
                             Compartilhar

@@ -53,9 +53,11 @@ export default function Home() {
         queryKey: ["coletas-diarias-home"],
         queryFn: async () => {
             const hoje = new Date().toISOString().split("T")[0];
-            return base44.entities.ColetaDiaria.filter({ data_coleta: hoje });
+            const coletas = await base44.entities.ColetaDiaria.filter({ data_coleta: hoje });
+            return coletas;
         },
-        refetchInterval: 5000 // Atualiza a cada 5 segundos
+        refetchInterval: 3000, // Atualiza a cada 3 segundos
+        staleTime: 0 // Sempre considera os dados como stale
     });
 
     const { data: ordensColeta = [] } = useQuery({
@@ -121,16 +123,16 @@ export default function Home() {
             }
         });
 
-        // Contar coletas pendentes
-        coletasDiarias.forEach(c => {
-            if (c.status === "pendente") {
-                const placa = "COLETAS";
-                if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [], transportadoras: {} };
-                }
-                porVeiculo[placa].coletas++;
-            }
-        });
+        // Contar coletas pendentes - contar todas as coletas com status pendente
+        const coletasPendentes = coletasDiarias.filter(c => c.status === "pendente" || !c.status);
+        if (coletasPendentes.length > 0) {
+            porVeiculo["COLETAS"] = { 
+                entregas: 0, 
+                coletas: coletasPendentes.length, 
+                notas: [], 
+                transportadoras: {} 
+            };
+        }
 
         return porVeiculo;
     }, [romaneiosGerados, notasFiscais, coletasDiarias]);
@@ -403,18 +405,6 @@ export default function Home() {
                                                     </div>
                                                 )}
                                             </div>
-                                            {Object.keys(dados.transportadoras || {}).length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mt-2">
-                                                    {Object.entries(dados.transportadoras).slice(0, 3).map(([transp, qtd]) => (
-                                                        <span key={transp} className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
-                                                            {transp}: {qtd}
-                                                        </span>
-                                                    ))}
-                                                    {Object.keys(dados.transportadoras).length > 3 && (
-                                                        <span className="text-xs text-slate-400">+{Object.keys(dados.transportadoras).length - 3}</span>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                     );
                                 })}

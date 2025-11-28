@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, CameraIcon, Save, Share2, Building2, Calendar, RotateCw
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -20,11 +20,16 @@ import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWit
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
     const [zoom, setZoom] = useState(1);
+    const [rotation, setRotation] = useState(0);
 
     if (!files || files.length === 0) return null;
 
     const currentFile = files[currentPage];
     const isPdf = currentFile?.tipo === "application/pdf" || currentFile?.url?.endsWith(".pdf");
+
+    const rotateImage = () => {
+        setRotation(prev => (prev + 90) % 360);
+    };
 
     return (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
@@ -42,6 +47,11 @@ function FlipbookViewer({ files, onClose }) {
                     <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.min(3, z + 0.25))} className="text-white hover:bg-white/20">
                         <ZoomIn className="w-5 h-5" />
                     </Button>
+                    {!isPdf && (
+                        <Button variant="ghost" size="icon" onClick={rotateImage} className="text-white hover:bg-white/20" title="Girar imagem">
+                            <RotateCw className="w-5 h-5" />
+                        </Button>
+                    )}
                     <a href={currentFile?.url} download target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
                             <Download className="w-5 h-5" />
@@ -66,7 +76,7 @@ function FlipbookViewer({ files, onClose }) {
                         src={currentFile?.url} 
                         alt={currentFile?.nome}
                         className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform"
-                        style={{ transform: `scale(${zoom})` }}
+                        style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                     />
                 )}
             </div>

@@ -201,29 +201,29 @@ export default function ColetasDiarias() {
                 <title>Coletas Diárias - ${formatDate(dataFiltro)}</title>
                 <style>
                     @media print {
-                        @page { margin: 3mm; size: A4; }
+                        @page { margin: 10mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; font-size: 9px; }
-                    .page { height: 287mm; padding: 3mm; display: flex; flex-direction: column; }
-                    .header { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; border-bottom: 2px solid #0ea5e9; }
-                    .logo { max-height: 35px; max-width: 80px; }
+                    body { font-family: Arial, sans-serif; font-size: 12px; }
+                    .page { padding: 10mm; }
+                    .header { display: flex; align-items: center; gap: 15px; padding-bottom: 10px; border-bottom: 2px solid #0ea5e9; margin-bottom: 15px; }
+                    .logo { max-height: 50px; max-width: 120px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 12px; font-weight: 800; color: #0369a1; }
-                    .title { font-size: 11px; font-weight: 800; text-align: center; margin: 4px 0; color: #0369a1; }
-                    .date-info { text-align: right; font-size: 10px; color: #64748b; font-weight: 600; }
-                    table { width: 100%; border-collapse: collapse; flex: 1; }
-                    th { background: #0ea5e9; color: white; padding: 3px 4px; text-align: left; border: 1px solid #0284c7; font-weight: 700; font-size: 8px; }
-                    td { padding: 2px 4px; border: 1px solid #cbd5e1; vertical-align: top; font-size: 8px; line-height: 1.2; }
-                    .num { width: 20px; text-align: center; font-weight: 800; background: #f0f9ff; font-size: 9px; }
-                    .status { text-align: center; width: 35px; font-size: 12px; }
-                    .carga { text-align: center; width: 60px; font-size: 7px; }
+                    .company-name { font-size: 18px; font-weight: 800; color: #0369a1; }
+                    .title { font-size: 16px; font-weight: 800; text-align: center; margin: 10px 0; color: #0369a1; }
+                    .date-info { text-align: right; font-size: 14px; color: #64748b; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th { background: #0ea5e9; color: white; padding: 8px 10px; text-align: left; border: 1px solid #0284c7; font-weight: 700; font-size: 12px; }
+                    td { padding: 8px 10px; border: 1px solid #cbd5e1; vertical-align: top; font-size: 11px; line-height: 1.4; }
+                    .num { width: 40px; text-align: center; font-weight: 800; background: #f0f9ff; font-size: 14px; }
+                    .status { text-align: center; width: 50px; font-size: 16px; }
+                    .carga { text-align: center; width: 100px; font-size: 11px; }
                     tr:nth-child(even) { background: #f8fafc; }
                     .priority { background: #fef3c7 !important; }
-                    strong { font-size: 9px; font-weight: 700; }
-                    .avisos { margin-top: 4px; padding: 4px; border: 1px solid #f59e0b; background: #fef3c7; font-size: 7px; }
-                    .avisos h3 { font-size: 8px; margin-bottom: 3px; }
+                    strong { font-size: 12px; font-weight: 700; }
+                    .avisos { margin-top: 15px; padding: 10px; border: 1px solid #f59e0b; background: #fef3c7; font-size: 11px; }
+                    .avisos h3 { font-size: 12px; margin-bottom: 5px; }
                 </style>
             </head>
             <body>
@@ -254,11 +254,11 @@ export default function ColetasDiarias() {
                                     <tr class="${c.prioridade ? 'priority' : ''}">
                                         <td class="num">${idx + 1}</td>
                                         <td>
-                                            <strong>${(c.remetente_fantasia || c.remetente_nome || "").substring(0, 25)} / ${(c.destinatario_fantasia || c.destinatario_nome || "").substring(0, 25)}</strong>${c.prioridade ? ' ⚡' : ''}<br>
+                                            <strong>${c.remetente_fantasia || c.remetente_nome || ""} / ${c.destinatario_fantasia || c.destinatario_nome || ""}</strong>${c.prioridade ? ' ⚡' : ''}<br>
                                             ${endereco ? endereco + " | " : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "| " + c.remetente_horario : ""}
-                                            ${c.recado ? ` | 📝 ${c.recado.substring(0, 30)}` : ""}
+                                            ${c.recado ? `<br>📝 ${c.recado}` : ""}
                                         </td>
-                                        <td class="carga">${c.volume || "-"}/${c.peso || "-"}<br>NF:${c.nfe || "-"}</td>
+                                        <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
                                         <td class="status">${c.status === 'realizado' ? '✅' : c.status === 'cancelado' ? '❌' : '⬜'}</td>
                                     </tr>
                                 `;

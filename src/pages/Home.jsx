@@ -55,7 +55,7 @@ export default function Home() {
             const hoje = new Date().toISOString().split("T")[0];
             return base44.entities.ColetaDiaria.filter({ data_coleta: hoje });
         },
-        refetchInterval: 30000 // Atualiza a cada 30 segundos
+        refetchInterval: 5000 // Atualiza a cada 5 segundos
     });
 
     const { data: ordensColeta = [] } = useQuery({
@@ -84,13 +84,13 @@ export default function Home() {
     const { data: romaneiosGerados = [] } = useQuery({
         queryKey: ["romaneios-gerados-home"],
         queryFn: () => base44.entities.RomaneioGerado.list("-created_date"),
-        refetchInterval: 30000
+        refetchInterval: 10000
     });
 
     const { data: notasFiscais = [] } = useQuery({
         queryKey: ["notas-fiscais-home"],
         queryFn: () => base44.entities.NotaFiscal.list("-created_date"),
-        refetchInterval: 30000
+        refetchInterval: 10000
     });
 
     // Dashboard por veículo
@@ -597,20 +597,6 @@ export default function Home() {
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3">
-                        {/* Resumo por Transportadora */}
-                        {showNotasVeiculo?.dados?.transportadoras && Object.keys(showNotasVeiculo.dados.transportadoras).length > 0 && (
-                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 mb-4">
-                                <p className="text-sm font-semibold text-purple-700 mb-2">Por Transportadora:</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(showNotasVeiculo.dados.transportadoras).map(([transp, qtd]) => (
-                                        <Badge key={transp} className="bg-purple-100 text-purple-700">
-                                            {transp}: {qtd}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        
                         {showNotasVeiculo?.placa === "COLETAS" ? (
                             coletasDiarias.filter(c => c.status === "pendente").length === 0 ? (
                                 <p className="text-center text-slate-500 py-4">Nenhuma coleta pendente</p>
@@ -630,24 +616,42 @@ export default function Home() {
                                 ))
                             )
                         ) : (
-                            showNotasVeiculo?.dados?.notas?.length === 0 ? (
-                                <p className="text-center text-slate-500 py-4">Nenhuma nota encontrada</p>
-                            ) : (
-                                showNotasVeiculo?.dados?.notas?.map((nota, idx) => (
-                                    <div key={nota.id || idx} className="p-3 bg-slate-50 rounded-lg border">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="font-semibold text-indigo-700">NF: {nota.numero_nf}</span>
-                                            <Badge className="bg-orange-100 text-orange-700">Pendente</Badge>
+                            (() => {
+                                const notasPorTransp = {};
+                                (showNotasVeiculo?.dados?.notas || []).forEach(nota => {
+                                    const transp = nota.transportadora || "Sem Transportadora";
+                                    if (!notasPorTransp[transp]) notasPorTransp[transp] = [];
+                                    notasPorTransp[transp].push(nota);
+                                });
+                                
+                                return Object.keys(notasPorTransp).length === 0 ? (
+                                    <p className="text-center text-slate-500 py-4">Nenhuma nota encontrada</p>
+                                ) : (
+                                    Object.entries(notasPorTransp).map(([transp, notas]) => (
+                                        <div key={transp} className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="font-semibold text-purple-700">{transp}</span>
+                                                <Badge className="bg-purple-100 text-purple-700 ml-auto">{notas.length}</Badge>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {notas.map((nota, idx) => (
+                                                    <div key={nota.id || idx} className="p-2 bg-white rounded border">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-medium text-indigo-700">NF: {nota.numero_nf}</span>
+                                                            <Badge className="bg-orange-100 text-orange-700 text-xs">Pendente</Badge>
+                                                        </div>
+                                                        <p className="text-sm text-slate-600">{nota.destinatario}</p>
+                                                        <div className="flex gap-3 text-xs text-slate-500">
+                                                            {nota.volume && <span>Vol: {nota.volume}</span>}
+                                                            {nota.peso && <span>Peso: {nota.peso}</span>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <p className="text-sm text-slate-600">{nota.destinatario}</p>
-                                        <div className="flex gap-4 text-xs text-slate-500 mt-1">
-                                            {nota.volume && <span>Vol: {nota.volume}</span>}
-                                            {nota.peso && <span>Peso: {nota.peso}</span>}
-                                            {nota.transportadora && <span>Transp: {nota.transportadora}</span>}
-                                        </div>
-                                    </div>
-                                ))
-                            )
+                                    ))
+                                );
+                            })()
                         )}
                     </div>
                 </DialogContent>

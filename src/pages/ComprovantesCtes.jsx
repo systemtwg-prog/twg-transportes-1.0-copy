@@ -473,49 +473,60 @@ export default function ComprovantesCtes() {
         try {
             console.log("Texto colado:", pasteText);
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Extraia os dados de CTEs/Notas Fiscais do texto abaixo. O texto pode conter múltiplos registros em formato de tabela ou lista.
-                
-O texto pode estar no formato:
-DATA | FORNECEDOR | CLIENTE | NFE | CTE | VALOR NF | VOL | PESO | VALOR COBRADO | MDFE
+                    prompt: `Extraia os dados de CTEs do texto abaixo. O texto está em formato de tabela com colunas separadas por | ou espaços.
 
-Para cada linha/registro encontrado, extraia:
-- data: Data (formato DD/MM ou DD/MMM)
-- numero_cte: Número do CTE 
-- remetente: Nome do remetente/fornecedor
-- destinatario: Nome do destinatário/cliente
-- nfe: Número da NFe
-- volume: Quantidade de volumes (VOL)
-- peso: Peso em KG
-- valor_nf: Valor da Nota Fiscal (sem R$)
-- valor_cobrado: Valor cobrado pelo frete (sem R$)
-- mdfe: Número do MDFE
+            IMPORTANTE - Mapeamento correto das colunas:
+            - DATA: data do CTE (formato DD/MM/YYYY)
+            - FORNECEDOR: nome do fornecedor/remetente (campo remetente)
+            - CLIENTE: nome do cliente/destinatário (campo destinatario)
+            - NFE: número da nota fiscal (campo nfe)
+            - CTE: número do CTE (campo numero_cte)
+            - VL NF ou VALOR NF: valor da nota fiscal (campo valor_nf)
+            - VOL: quantidade de volumes (campo volume)
+            - PESO: peso em KG (campo peso)
+            - FRETE PESO: valor do frete peso (campo frete_peso)
+            - COLETA: valor da coleta (campo coleta)
+            - SEGURO: valor do seguro (campo seguro)
+            - PEDÁGIO: valor do pedágio (campo pedagio)
+            - OUTROS: outros valores (campo outros)
+            - VL COBRADO ou VALOR COBRADO: valor cobrado (campo valor_cobrado)
+            - %: porcentagem (campo porcentagem)
+            - MDFE: número do MDFE (campo mdfe)
 
-Texto:
-${pasteText}`,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        registros: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    data: { type: "string" },
-                                    numero_cte: { type: "string" },
-                                    remetente: { type: "string" },
-                                    destinatario: { type: "string" },
-                                    nfe: { type: "string" },
-                                    volume: { type: "string" },
-                                    peso: { type: "string" },
-                                    valor_nf: { type: "string" },
-                                    valor_cobrado: { type: "string" },
-                                    mdfe: { type: "string" }
+            Para cada linha do texto, extraia os valores correspondentes às colunas acima.
+
+            Texto:
+            ${pasteText}`,
+                    response_json_schema: {
+                        type: "object",
+                        properties: {
+                            registros: {
+                                type: "array",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        data: { type: "string" },
+                                        numero_cte: { type: "string" },
+                                        remetente: { type: "string" },
+                                        destinatario: { type: "string" },
+                                        nfe: { type: "string" },
+                                        volume: { type: "string" },
+                                        peso: { type: "string" },
+                                        valor_nf: { type: "string" },
+                                        frete_peso: { type: "string" },
+                                        coleta: { type: "string" },
+                                        seguro: { type: "string" },
+                                        pedagio: { type: "string" },
+                                        outros: { type: "string" },
+                                        valor_cobrado: { type: "string" },
+                                        porcentagem: { type: "string" },
+                                        mdfe: { type: "string" }
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
 
             console.log("Resultado LLM:", result);
             if (result?.registros && result.registros.length > 0) {
@@ -551,7 +562,13 @@ ${pasteText}`,
                     volume: cte.volume || "",
                     peso: cte.peso || "",
                     valor_nf: cte.valor_nf || "",
+                    frete_peso: cte.frete_peso || "",
+                    coleta: cte.coleta || "",
+                    seguro: cte.seguro || "",
+                    pedagio: cte.pedagio || "",
+                    outros: cte.outros || "",
                     valor_cobrado: cte.valor_cobrado || "",
+                    porcentagem: cte.porcentagem || "",
                     mdfe: cte.mdfe || "",
                     data: format(new Date(), "yyyy-MM-dd"),
                     status: "pendente",
@@ -1072,11 +1089,15 @@ ${pasteText}`,
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label>Cole o texto com os dados dos CTEs</Label>
+                            <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 mb-2">
+                                <p className="font-semibold mb-1">Formato esperado das colunas:</p>
+                                <p>DATA | FORNECEDOR | CLIENTE | NFE | CTE | VL NF | VOL | PESO | FRETE PESO | COLETA | SEGURO | PEDÁGIO | OUTROS | VL COBRADO | % | MDFE</p>
+                            </div>
                             <Textarea
                                 value={pasteText}
                                 onChange={(e) => setPasteText(e.target.value)}
                                 rows={6}
-                                placeholder="Cole aqui o texto com os dados dos CTEs..."
+                                placeholder="Cole aqui o texto copiado da planilha ou tabela..."
                                 className="font-mono text-sm"
                             />
                         </div>
@@ -1117,16 +1138,26 @@ ${pasteText}`,
                                                         setExtractedCTEs(novos);
                                                     }}
                                                 />
-                                                <div className="flex-1">
-                                                    <p className="font-semibold">CTE: {cte.numero_cte || "-"}</p>
-                                                    <p className="text-sm text-slate-600">
-                                                        {cte.remetente} → {cte.destinatario}
+                                                <div className="flex-1 text-xs">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-indigo-700">CTE: {cte.numero_cte || "-"}</span>
+                                                        <span className="text-slate-500">NFE: {cte.nfe || "-"}</span>
+                                                    </div>
+                                                    <p className="text-slate-600">
+                                                        <strong>Forn:</strong> {cte.remetente || "-"} → <strong>Cli:</strong> {cte.destinatario || "-"}
                                                     </p>
-                                                    {cte.endereco && <p className="text-sm text-slate-500">{cte.endereco}</p>}
-                                                    <div className="text-sm text-slate-500">
-                                                        {cte.volume && <span>{cte.volume} VOL</span>}
-                                                        {cte.peso && <span> / {cte.peso} KG</span>}
-                                                        {cte.valor_nf && <span> - R$ {cte.valor_nf}</span>}
+                                                    <div className="grid grid-cols-4 gap-1 mt-1 text-slate-500">
+                                                        <span>Vol: {cte.volume || "-"}</span>
+                                                        <span>Peso: {cte.peso || "-"}</span>
+                                                        <span>VlNF: {cte.valor_nf || "-"}</span>
+                                                        <span>VlCob: {cte.valor_cobrado || "-"}</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-5 gap-1 mt-1 text-slate-400">
+                                                        <span>FrtPeso: {cte.frete_peso || "-"}</span>
+                                                        <span>Coleta: {cte.coleta || "-"}</span>
+                                                        <span>Seguro: {cte.seguro || "-"}</span>
+                                                        <span>Pedág: {cte.pedagio || "-"}</span>
+                                                        <span>MDFE: {cte.mdfe || "-"}</span>
                                                     </div>
                                                 </div>
                                             </div>

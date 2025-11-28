@@ -1727,6 +1727,58 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog Selecionar Endereço */}
+            <Dialog open={showSelecionarEndereco} onOpenChange={setShowSelecionarEndereco}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-blue-600" />
+                            Escolha o Endereço
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <p className="text-sm text-slate-600">
+                            Encontramos {enderecosEncontrados.length} endereço(s) para <strong>{notaParaEndereco?.transportadora || notaParaEndereco?.destinatario}</strong>. Selecione o correto:
+                        </p>
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                            {enderecosEncontrados.map((end) => (
+                                <div
+                                    key={end.id}
+                                    className="p-3 border-2 border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
+                                    onClick={() => selecionarEndereco(end, notaParaEndereco)}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Badge variant="outline" className="text-xs">
+                                                    {end.fonte}
+                                                </Badge>
+                                                {end.estado === "SP" && (
+                                                    <Badge className="bg-green-100 text-green-700 text-xs">SP</Badge>
+                                                )}
+                                            </div>
+                                            <p className="font-medium text-slate-800">{end.nome_empresa}</p>
+                                            <p className="text-sm text-slate-600">{end.enderecoCompleto}</p>
+                                            {end.telefone && (
+                                                <p className="text-xs text-slate-500 mt-1">📞 {end.telefone}</p>
+                                            )}
+                                        </div>
+                                        <Navigation className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => setShowSelecionarEndereco(false)}
+                        >
+                            Cancelar
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Dialog para adicionar destino */}
             <Dialog open={showAddDestino} onOpenChange={setShowAddDestino}>
                 <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">

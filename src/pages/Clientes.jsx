@@ -60,6 +60,13 @@ export default function Clientes() {
     const [pasteText, setPasteText] = useState("");
     const [processingPaste, setProcessingPaste] = useState(false);
 
+    // Função para verificar CNPJ/CPF duplicado
+    const cnpjCpfJaCadastrado = (cnpjCpf) => {
+        if (!cnpjCpf) return false;
+        const cnpjLimpo = cnpjCpf.replace(/\D/g, "");
+        return clientes.some(c => c.cnpj_cpf?.replace(/\D/g, "") === cnpjLimpo);
+    };
+
     const handleProcessPaste = async () => {
         if (!pasteText.trim()) return;
         
@@ -124,8 +131,16 @@ Extraia as seguintes informações de cada cliente/empresa encontrada:
 
             if (result?.clientes && result.clientes.length > 0) {
                 let importados = 0;
+                let duplicados = 0;
+                
                 for (const cliente of result.clientes) {
                     if (cliente.razao_social) {
+                        // Verificar CNPJ/CPF duplicado
+                        if (cliente.cnpj_cpf && cnpjCpfJaCadastrado(cliente.cnpj_cpf)) {
+                            duplicados++;
+                            continue;
+                        }
+                        
                         await base44.entities.Cliente.create({
                             ...cliente,
                             tipo: cliente.tipo?.toLowerCase() || "remetente"
@@ -133,8 +148,15 @@ Extraia as seguintes informações de cada cliente/empresa encontrada:
                         importados++;
                     }
                 }
+                
                 queryClient.invalidateQueries({ queryKey: ["clientes"] });
-                toast.success(`✅ ${importados} cliente(s) criado(s) com sucesso!`);
+                
+                if (duplicados > 0) {
+                    toast.warning(`${importados} cliente(s) criado(s). ${duplicados} ignorado(s) por CNPJ/CPF duplicado.`);
+                } else {
+                    toast.success(`✅ ${importados} cliente(s) criado(s) com sucesso!`);
+                }
+                
                 setShowPasteForm(false);
                 setPasteText("");
             } else {
@@ -519,6 +541,7 @@ Extraia as seguintes informações de cada cliente/empresa encontrada:
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
                             Cole abaixo as informações de clientes. O sistema irá identificar e organizar automaticamente os dados como nome, CNPJ, endereço, telefone, horário de funcionamento, etc.
+                            <strong className="block mt-1 text-orange-600">Obs: CNPJs/CPFs já cadastrados serão ignorados para evitar duplicidade.</strong>
                         </p>
                         <Textarea
                             value={pasteText}

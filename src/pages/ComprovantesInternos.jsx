@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
+import ScannerCamera from "@/components/shared/ScannerCamera";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -135,6 +136,8 @@ export default function ComprovantesInternos() {
     const [itensMassa, setItensMassa] = useState([]);
     const [uploadingMassa, setUploadingMassa] = useState(false);
     const [salvandoMassa, setSalvandoMassa] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+    const [scannerTarget, setScannerTarget] = useState(null); // 'form' ou 'massa'
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -1030,6 +1033,15 @@ export default function ComprovantesInternos() {
                                     </div>
                                 </label>
                             </div>
+                            <div 
+                                className="border-2 border-dashed border-purple-300 rounded-lg p-4 text-center hover:border-purple-500 transition-colors cursor-pointer"
+                                onClick={() => { setScannerTarget('massa'); setShowScanner(true); }}
+                            >
+                                <div className="flex flex-col items-center gap-2">
+                                    <Camera className="w-8 h-8 text-purple-400" />
+                                    <span className="text-sm text-purple-600">Scanner</span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Grid de fotos com campos de NF */}
@@ -1118,6 +1130,32 @@ export default function ComprovantesInternos() {
                 </DialogContent>
             </Dialog>
 
+            {/* Scanner Camera */}
+            {showScanner && (
+                <ScannerCamera
+                    onCapture={async (file) => {
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        if (scannerTarget === 'form') {
+                            setForm(prev => ({
+                                ...prev,
+                                arquivos: [...prev.arquivos, { nome: file.name, url: file_url, tipo: file.type }]
+                            }));
+                        } else if (scannerTarget === 'massa') {
+                            setItensMassa(prev => [...prev, {
+                                id: Date.now() + Math.random(),
+                                nota_fiscal: "",
+                                url: file_url,
+                                nome: file.name,
+                                tipo: file.type
+                            }]);
+                        }
+                        setShowScanner(false);
+                        toast.success("Foto capturada!");
+                    }}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -1175,21 +1213,14 @@ export default function ComprovantesInternos() {
                                         </div>
                                     </label>
                                 </div>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        onChange={handleUploadFiles}
-                                        className="hidden"
-                                        id="camera-upload"
-                                    />
-                                    <label htmlFor="camera-upload" className="cursor-pointer">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <CameraIcon className="w-8 h-8 text-slate-400" />
-                                            <span className="text-sm text-slate-600">Tirar Foto</span>
-                                        </div>
-                                    </label>
+                                <div 
+                                    className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors cursor-pointer"
+                                    onClick={() => { setScannerTarget('form'); setShowScanner(true); }}
+                                >
+                                    <div className="flex flex-col items-center gap-2">
+                                        <CameraIcon className="w-8 h-8 text-slate-400" />
+                                        <span className="text-sm text-slate-600">Scanner</span>
+                                    </div>
                                 </div>
                             </div>
 

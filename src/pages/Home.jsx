@@ -11,7 +11,7 @@ import {
           Truck, Package, FileText, Users, Car, 
           ClipboardList, Settings, BarChart3,
           Navigation, Building2, Upload,
-          Camera, ChevronRight
+          Camera, ChevronRight, Bell
       } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import WeatherWidget from "@/components/shared/WeatherWidget";

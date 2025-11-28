@@ -13,14 +13,13 @@ import {
     Navigation, MapPin, Truck, Package, ExternalLink, 
     Trash2, Plus, Route, CheckCircle, Camera, Sparkles, 
     ArrowUp, ArrowDown, GripVertical, Loader2, Car, FileText,
-    Upload, Pencil, MessageSquare, BarChart3, Search
+    Upload, Pencil, MessageSquare, BarChart3, Search, Mic, MicOff
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import AudioRecorder from "@/components/shared/AudioRecorder";
 import ScannerCamera from "@/components/shared/ScannerCamera";
-import { Mic, MicOff } from "lucide-react";
 
 export default function RotasGPS() {
     const [selectedRomaneio, setSelectedRomaneio] = useState(null);

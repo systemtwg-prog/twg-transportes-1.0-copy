@@ -277,31 +277,31 @@ export default function ComprovantesInternos() {
                 tipo: file.type
             });
 
-            // Tentar extrair número da nota fiscal da imagem ou PDF
+            // Tentar extrair número da nota fiscal usando LLM
             try {
-                const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-                    file_url,
-                    json_schema: {
+                const result = await base44.integrations.Core.InvokeLLM({
+                    prompt: `Analise esta imagem de uma nota fiscal ou comprovante de entrega.
+                    
+Extraia APENAS o número da nota fiscal (NF-e, NF, Nota Fiscal, NFe).
+O número geralmente aparece como: NF 12345, NFe: 12345, Nota Fiscal nº 12345, etc.
+
+Se houver múltiplos números, extraia o principal (o maior ou mais destacado).
+Se não encontrar, retorne vazio.`,
+                    file_urls: [file_url],
+                    response_json_schema: {
                         type: "object",
                         properties: {
-                            numero_nota_fiscal: { type: "string", description: "Número da nota fiscal encontrado no documento" },
-                            texto_completo: { type: "string" }
+                            numero_nota_fiscal: { type: "string", description: "Apenas o número da nota fiscal, sem texto adicional" },
+                            empresa: { type: "string", description: "Nome da empresa/destinatário se visível" }
                         }
                     }
                 });
-                if (result.status === "success") {
-                    if (result.output?.numero_nota_fiscal && !form.nota_fiscal) {
-                        setForm(prev => ({
-                            ...prev,
-                            nota_fiscal: result.output.numero_nota_fiscal
-                        }));
-                    }
-                    if (result.output?.texto_completo) {
-                        setForm(prev => ({
-                            ...prev,
-                            texto_extraido: (prev.texto_extraido || "") + "\n" + result.output.texto_completo
-                        }));
-                    }
+                
+                if (result?.numero_nota_fiscal && !form.nota_fiscal) {
+                    setForm(prev => ({
+                        ...prev,
+                        nota_fiscal: result.numero_nota_fiscal
+                    }));
                 }
             } catch (err) {
                 console.log("Erro ao extrair dados do arquivo:", err);

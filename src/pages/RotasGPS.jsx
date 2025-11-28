@@ -466,12 +466,130 @@ Retorne APENAS os índices originais (1, 2, 3...) na nova ordem otimizada.`,
                     </div>
                 </div>
 
-                {/* Seletor de Romaneio */}
+                {/* Ações Rápidas - Sempre visíveis */}
+                <Card className="bg-white/80 border-0 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Camera className="w-5 h-5 text-orange-600" />
+                            Adicionar Nota por Foto
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-slate-500 mb-4">
+                            Tire uma foto do endereço da nota fiscal para adicionar automaticamente como rota.
+                        </p>
+                        <Button 
+                            onClick={() => setShowCamera(true)}
+                            className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700"
+                            disabled={processandoFoto}
+                        >
+                            {processandoFoto ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    Processando Foto...
+                                </>
+                            ) : (
+                                <>
+                                    <Camera className="w-5 h-5 mr-2" />
+                                    Tirar Foto da Nota Fiscal
+                                </>
+                            )}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* Seletor de Romaneio Gerado */}
+                <Card className="bg-white/80 border-0 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Truck className="w-5 h-5 text-indigo-600" />
+                            Buscar Nota do Romaneio
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Selecione o Romaneio Gerado</Label>
+                            <Select value={selectedRomaneioGerado} onValueChange={setSelectedRomaneioGerado}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Escolha um romaneio..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {romaneiosGerados.map(r => (
+                                        <SelectItem key={r.id} value={r.id}>
+                                            {formatDate(r.data)} - {r.placa} ({r.total_notas || 0} notas)
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        {selectedRomaneioGerado && notasDoRomaneioGerado.length > 0 && (
+                            <div className="space-y-2">
+                                <Label className="text-sm text-slate-500">Notas do Romaneio ({notasDoRomaneioGerado.length})</Label>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {notasDoRomaneioGerado.map((nota) => {
+                                        const cliente = clientes.find(c => 
+                                            c.razao_social?.toLowerCase().includes(nota.destinatario?.toLowerCase()) ||
+                                            nota.destinatario?.toLowerCase().includes(c.razao_social?.toLowerCase())
+                                        );
+                                        const enderecoNota = cliente?.endereco || nota.endereco || "";
+                                        const cidadeNota = cliente?.cidade || nota.cidade || "";
+                                        const enderecoCompleto = [enderecoNota, cliente?.bairro, cidadeNota].filter(Boolean).join(", ");
+                                        
+                                        return (
+                                            <div
+                                                key={nota.id}
+                                                className="p-3 bg-slate-50 rounded-lg border border-slate-200"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-slate-800">{nota.destinatario}</p>
+                                                        <p className="text-sm text-slate-500">NF: {nota.numero_nf}</p>
+                                                        {enderecoCompleto && (
+                                                            <p className="text-sm text-blue-600 mt-1">
+                                                                <MapPin className="w-3 h-3 inline mr-1" />
+                                                                {enderecoCompleto}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        {enderecoCompleto && (
+                                                            <>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost"
+                                                                    onClick={() => abrirRotaWaze(enderecoCompleto)}
+                                                                    title="Abrir no Waze"
+                                                                >
+                                                                    <Navigation className="w-4 h-4 text-blue-600" />
+                                                                </Button>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost"
+                                                                    onClick={() => abrirRotaGoogleMaps(enderecoCompleto)}
+                                                                    title="Abrir no Maps"
+                                                                >
+                                                                    <MapPin className="w-4 h-4 text-green-600" />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Seletor de Romaneio Ativo */}
                 <Card className="bg-white/80 border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Route className="w-5 h-5 text-green-600" />
-                            Selecione o Romaneio
+                            Selecione o Romaneio Ativo
                         </CardTitle>
                     </CardHeader>
                     <CardContent>

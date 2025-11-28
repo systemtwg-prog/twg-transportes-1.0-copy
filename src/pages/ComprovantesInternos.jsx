@@ -376,9 +376,9 @@ export default function ComprovantesInternos() {
                         </Button>
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-sky-500 to-cyan-600"
+                            className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg"
                         >
-                            <Plus className="w-5 h-5 mr-2" />
+                            <Plus className="w-6 h-6 mr-2" />
                             Novo Comprovante
                         </Button>
                     </div>
@@ -512,7 +512,14 @@ export default function ComprovantesInternos() {
                                                         <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
                                                     </div>
                                                 )}
-                                                <p className="text-sm text-slate-500">{formatDate(comprovante.data)}</p>
+                                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                    <Input
+                                                        type="date"
+                                                        value={comprovante.data}
+                                                        onChange={(e) => updateMutation.mutate({ id: comprovante.id, data: { data: e.target.value } })}
+                                                        className="h-6 text-xs w-32 bg-white border-slate-200"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <Badge variant="outline">
@@ -550,7 +557,8 @@ export default function ComprovantesInternos() {
                                             variant="ghost" 
                                             size="sm" 
                                             className="text-green-600 hover:bg-green-50"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 const texto = `*COMPROVANTE DE ENTREGA*\nNF: ${comprovante.nota_fiscal}\nData: ${formatDate(comprovante.data)}\n${comprovante.observacoes ? `Obs: ${comprovante.observacoes}` : ""}\n${comprovante.arquivos?.[0]?.url || ""}`;
                                                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
                                             }}
@@ -559,14 +567,20 @@ export default function ComprovantesInternos() {
                                         </Button>
                                         <div className="flex gap-1">
                                             {comprovante.arquivos?.length > 0 && (
-                                                <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)}>
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
+                                                <>
+                                                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setViewFiles(comprovante.arquivos); }} title="Visualizar">
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setViewFiles(comprovante.arquivos); }} title="Girar foto">
+                                                        <RotateCw className="w-4 h-4 text-blue-600" />
+                                                    </Button>
+                                                </>
                                             )}
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)}>
+                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(comprovante); }}>
                                                 <Pencil className="w-4 h-4" />
                                             </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => {
+                                            <Button variant="ghost" size="sm" onClick={(e) => {
+                                                e.stopPropagation();
                                                 if (confirm("Excluir este comprovante?")) deleteMutation.mutate(comprovante.id);
                                             }}>
                                                 <Trash2 className="w-4 h-4 text-red-600" />

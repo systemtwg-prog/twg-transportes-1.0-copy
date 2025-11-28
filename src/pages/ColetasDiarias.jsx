@@ -224,6 +224,8 @@ export default function ColetasDiarias() {
                     strong { font-size: 12px; font-weight: 700; }
                     .avisos { margin-top: 15px; padding: 10px; border: 1px solid #f59e0b; background: #fef3c7; font-size: 11px; }
                     .avisos h3 { font-size: 12px; margin-bottom: 5px; }
+                    .linhas-anotacao { margin-top: 20px; }
+                    .linha { border-bottom: 1px solid #cbd5e1; height: 20mm; }
                 </style>
             </head>
             <body>
@@ -271,6 +273,13 @@ export default function ColetasDiarias() {
                             ${avisosAtivos.map(aviso => `<strong>${aviso.titulo}:</strong> ${aviso.mensagem} `).join(' | ')}
                         </div>
                     ` : ''}
+                    <div class="linhas-anotacao">
+                        <div class="linha"></div>
+                        <div class="linha"></div>
+                        <div class="linha"></div>
+                        <div class="linha"></div>
+                        <div class="linha"></div>
+                    </div>
                 </div>
             </body>
             </html>

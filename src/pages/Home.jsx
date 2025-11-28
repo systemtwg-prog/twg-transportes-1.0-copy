@@ -139,10 +139,10 @@ export default function Home() {
     };
 
     const mainButtons = [
-        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-500 via-blue-600 to-indigo-600" },
-        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-sky-500 via-cyan-500 to-blue-500" },
-        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-500 via-blue-500 to-sky-500" },
-        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-500 via-indigo-500 to-blue-500" },
+        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 via-blue-700 to-indigo-700" },
+        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-cyan-500 via-sky-600 to-blue-600" },
+        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 via-purple-600 to-violet-600" },
+        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600" },
     ];
 
     const quickButtons = [
@@ -169,50 +169,51 @@ export default function Home() {
         <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6`}>
             <div className="max-w-6xl mx-auto space-y-5">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        {config.logo_url && (
-                            <img src={config.logo_url} alt="Logo" className="h-12 object-contain bg-white/10 rounded-lg p-1" />
-                        )}
-                        <div>
-                            <h1 className={`text-xl md:text-2xl font-bold ${temaEscuro ? 'text-white' : 'text-slate-800'}`}>
-                                              {config.nome_empresa || "Sistema de Transportes"}
-                                          </h1>
-                                          <p className={`text-sm ${temaEscuro ? 'text-blue-200' : 'text-blue-600'}`}>
-                                Olá, {currentUser?.full_name || "Usuário"}! • {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
-                            </p>
+                <div className="flex flex-col items-center justify-center py-4">
+                    {config.logo_url && (
+                        <img src={config.logo_url} alt="Logo" className="h-20 md:h-24 object-contain bg-white rounded-2xl p-3 shadow-lg mb-4" />
+                    )}
+                    {/* Widget Data/Hora/Tempo */}
+                    <div className="flex items-center gap-4 bg-white/90 backdrop-blur-sm rounded-xl px-5 py-2 shadow-md">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-slate-700">{format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
+                        </div>
+                        <div className="w-px h-5 bg-slate-300" />
+                        <div className="text-sm font-bold text-slate-800">
+                            {format(new Date(), "HH:mm")}
                         </div>
                     </div>
                 </div>
 
                 {/* Avisos */}
-                {avisos.length > 0 && (
-                    <div className="space-y-2">
-                        {avisos.map(aviso => (
-                            <div 
-                                key={aviso.id}
-                                className={`p-3 rounded-xl border-l-4 backdrop-blur-sm ${
-                                    aviso.tipo === "urgente" 
-                                        ? "bg-red-500/20 border-red-400 text-red-100"
-                                        : aviso.tipo === "alerta"
-                                        ? "bg-amber-500/20 border-amber-400 text-amber-100"
-                                        : "bg-blue-500/20 border-blue-400 text-blue-100"
-                                }`}
-                            >
-                                <p className="font-semibold text-sm">{aviso.titulo}</p>
-                                <p className="text-xs opacity-90">{aviso.mensagem}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                  {avisos.length > 0 && (
+                      <div className="space-y-2">
+                          {avisos.map(aviso => (
+                              <div 
+                                  key={aviso.id}
+                                  className={`p-3 rounded-xl border-l-4 ${
+                                      aviso.tipo === "urgente" 
+                                          ? "bg-gray-500 border-red-500 text-white"
+                                          : aviso.tipo === "alerta"
+                                          ? "bg-gray-500 border-amber-500 text-white"
+                                          : "bg-gray-500 border-blue-500 text-white"
+                                  }`}
+                              >
+                                  <p className="font-semibold text-sm">{aviso.titulo}</p>
+                                  <p className="text-xs opacity-90">{aviso.mensagem}</p>
+                              </div>
+                          ))}
+                      </div>
+                  )}
 
                 {/* Botões Principais */}
                 <div className="grid grid-cols-2 gap-3">
                     {mainButtons.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
-                            <Button className={`w-full h-20 bg-gradient-to-br ${item.color} hover:scale-105 hover:shadow-xl transition-all duration-300 shadow-lg border-0 flex flex-col items-center justify-center gap-1 rounded-2xl`}>
-                                <item.icon className="w-7 h-7 text-white" />
-                                <span className="text-sm font-semibold text-white">{item.name}</span>
+                            <Button className={`w-full h-24 bg-gradient-to-br ${item.color} hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl border-2 border-white/30 flex flex-col items-center justify-center gap-2 rounded-2xl`}>
+                                <item.icon className="w-8 h-8 text-white drop-shadow-md" />
+                                <span className="text-sm font-bold text-white drop-shadow-md">{item.name}</span>
                             </Button>
                         </Link>
                     ))}
@@ -232,9 +233,9 @@ export default function Home() {
 
                 {/* Dashboard por Veículo */}
                 {Object.keys(dashboardPorVeiculo).length > 0 && (
-                    <Card className={`${temaEscuro ? 'bg-white/10 backdrop-blur-md' : 'bg-gradient-to-br from-white via-sky-50 to-blue-50'} border-0 shadow-xl rounded-2xl overflow-hidden`}>
-                        <CardHeader className={`pb-2 ${temaEscuro ? '' : 'border-b border-blue-100'}`}>
-                            <CardTitle className={`text-lg flex items-center gap-2 ${temaEscuro ? 'text-white' : 'text-slate-700'}`}>
+                    <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
+                        <CardHeader className="pb-2 border-b border-slate-100">
+                            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
                                 <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
                                     <BarChart3 className="w-4 h-4 text-white" />
                                 </div>
@@ -251,11 +252,7 @@ export default function Home() {
                                         <div 
                                             key={placa}
                                             onClick={() => handlePlacaClick(placa)}
-                                            className={`p-3 rounded-xl border-l-4 cursor-pointer transition-all duration-200 hover:scale-102 hover:shadow-lg ${
-                                                temaEscuro 
-                                                    ? `bg-white/10 ${isColetas ? 'border-green-400' : 'border-blue-400'} backdrop-blur-sm hover:bg-white/20`
-                                                    : `bg-white shadow-md ${isColetas ? 'border-emerald-500' : 'border-blue-500'} hover:shadow-xl`
-                                            }`}
+                                            className={`p-3 rounded-xl border-l-4 cursor-pointer transition-all duration-200 hover:scale-102 hover:shadow-lg bg-white shadow-md ${isColetas ? 'border-emerald-500' : 'border-blue-500'} hover:shadow-xl`}
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
@@ -268,30 +265,30 @@ export default function Home() {
                                                             <Car className="w-3.5 h-3.5 text-blue-600" />
                                                         </div>
                                                     )}
-                                                    <span className={`font-bold text-sm ${temaEscuro ? 'text-white' : 'text-slate-700'}`}>
+                                                    <span className="font-bold text-sm text-black">
                                                         {isColetas ? "Coletas" : placa}
                                                     </span>
                                                 </div>
                                                 {!isColetas && (
-                                                    <ChevronRight className={`w-4 h-4 ${temaEscuro ? 'text-white/50' : 'text-slate-400'}`} />
+                                                    <ChevronRight className="w-4 h-4 text-slate-400" />
                                                 )}
                                             </div>
                                             {veiculo && (
-                                                <p className={`text-xs mb-1 ${temaEscuro ? 'text-blue-200' : 'text-slate-500'}`}>{veiculo.modelo}</p>
+                                                <p className="text-xs mb-1 text-slate-500">{veiculo.modelo}</p>
                                             )}
                                             <div className="flex gap-3 text-sm">
                                                 {dados.entregas > 0 && (
                                                     <div className="flex items-center gap-1">
                                                         <Package className="w-3 h-3 text-orange-500" />
                                                         <span className="font-semibold text-orange-600">{dados.entregas}</span>
-                                                        <span className={`text-xs ${temaEscuro ? 'text-white/60' : 'text-slate-400'}`}>entregas</span>
+                                                        <span className="text-xs text-slate-400">entregas</span>
                                                     </div>
                                                 )}
                                                 {dados.coletas > 0 && (
                                                     <div className="flex items-center gap-1">
                                                         <Truck className="w-3 h-3 text-emerald-500" />
                                                         <span className="font-semibold text-emerald-600">{dados.coletas}</span>
-                                                        <span className={`text-xs ${temaEscuro ? 'text-white/60' : 'text-slate-400'}`}>coletas</span>
+                                                        <span className="text-xs text-slate-400">coletas</span>
                                                     </div>
                                                 )}
                                             </div>

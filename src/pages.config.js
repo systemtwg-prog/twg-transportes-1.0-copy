@@ -22,6 +22,7 @@ import RomaneiosGerados from './pages/RomaneiosGerados';
 import ComprovantesCtes from './pages/ComprovantesCtes';
 import RotasGPS from './pages/RotasGPS';
 import ComprovantesInternos from './pages/ComprovantesInternos';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -50,6 +51,7 @@ export const PAGES = {
     "ComprovantesCtes": ComprovantesCtes,
     "RotasGPS": RotasGPS,
     "ComprovantesInternos": ComprovantesInternos,
+    "Home": Home,
 }
 
 export const pagesConfig = {

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { 
     Bell, BellRing, Package, Truck, AlertTriangle, 
-    ClipboardList, Settings, Check, CheckCheck, X 
+    ClipboardList, Settings, CheckCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

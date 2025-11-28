@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy, AlertTriangle, Bell
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +42,19 @@ export default function ColetasDiarias() {
     });
 
     const config = configs[0] || {};
+
+    const { data: avisosAtivos = [] } = useQuery({
+        queryKey: ["avisos-ativos-coletas"],
+        queryFn: async () => {
+            const avisos = await base44.entities.Aviso.filter({ ativo: true });
+            const hoje = new Date().toISOString().split("T")[0];
+            return avisos.filter(a => {
+                if (a.data_inicio && a.data_inicio > hoje) return false;
+                if (a.data_fim && a.data_fim < hoje) return false;
+                return true;
+            });
+        }
+    });
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, status }) => base44.entities.ColetaDiaria.update(id, { status }),
@@ -258,6 +271,19 @@ export default function ColetasDiarias() {
                         ${Array(Math.max(linhasEmBranco, 5)).fill('<tr class="empty-row"><td class="num"></td><td></td><td></td><td></td></tr>').join("")}
                     </tbody>
                 </table>
+                ${avisosAtivos.length > 0 ? `
+                    <div style="margin-top: 20px; padding: 15px; border: 2px solid #f59e0b; border-radius: 8px; background: #fef3c7;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 800; color: #b45309;">📢 AVISOS IMPORTANTES</h3>
+                        ${avisosAtivos.map(aviso => `
+                            <div style="padding: 8px 0; border-bottom: 1px dashed #fcd34d;">
+                                <strong style="color: ${aviso.tipo === 'urgente' ? '#dc2626' : aviso.tipo === 'alerta' ? '#d97706' : '#0284c7'};">
+                                    ${aviso.tipo === 'urgente' ? '🚨' : aviso.tipo === 'alerta' ? '⚠️' : 'ℹ️'} ${aviso.titulo}
+                                </strong>
+                                <p style="margin: 4px 0 0 0; font-size: 13px; color: #374151;">${aviso.mensagem}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
             </body>
             </html>
         `);
@@ -600,6 +626,54 @@ export default function ColetasDiarias() {
                         </Card>
                     </TabsContent>
                 </Tabs>
+
+                {/* Avisos no Rodapé */}
+                {avisosAtivos.length > 0 && (
+                    <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 shadow-lg">
+                        <CardContent className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Bell className="w-5 h-5 text-amber-600" />
+                                <h3 className="font-bold text-amber-800">Avisos Importantes</h3>
+                            </div>
+                            <div className="space-y-2">
+                                {avisosAtivos.map(aviso => (
+                                    <div 
+                                        key={aviso.id} 
+                                        className={`p-3 rounded-lg border-l-4 ${
+                                            aviso.tipo === "urgente" 
+                                                ? "bg-red-50 border-l-red-500" 
+                                                : aviso.tipo === "alerta" 
+                                                    ? "bg-amber-50 border-l-amber-500" 
+                                                    : "bg-sky-50 border-l-sky-500"
+                                        }`}
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            {aviso.tipo === "urgente" || aviso.tipo === "alerta" ? (
+                                                <AlertTriangle className={`w-4 h-4 mt-0.5 ${
+                                                    aviso.tipo === "urgente" ? "text-red-600" : "text-amber-600"
+                                                }`} />
+                                            ) : (
+                                                <Bell className="w-4 h-4 mt-0.5 text-sky-600" />
+                                            )}
+                                            <div>
+                                                <h4 className={`font-semibold text-sm ${
+                                                    aviso.tipo === "urgente" 
+                                                        ? "text-red-800" 
+                                                        : aviso.tipo === "alerta" 
+                                                            ? "text-amber-800" 
+                                                            : "text-sky-800"
+                                                }`}>
+                                                    {aviso.titulo}
+                                                </h4>
+                                                <p className="text-sm text-slate-600">{aviso.mensagem}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );

@@ -233,36 +233,89 @@ export default function RotasGPS() {
             // Fazer upload da imagem
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
             
-            // Usar LLM para extrair dados do endereço
-            const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise esta imagem de uma nota fiscal e extraia as seguintes informações:
-                - Nome do destinatário
+            // Usar LLM para extrair dados da imagem
+            const extractedData = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise esta imagem de uma nota fiscal ou documento de transporte e extraia as seguintes informações:
+                - Nome do destinatário ou empresa
+                - Nome da transportadora (se houver)
                 - Endereço completo (rua, número, bairro, cidade, estado, CEP)
                 - Número da nota fiscal
+                - CNPJ (se visível)
                 
-                Retorne os dados estruturados.`,
+                Extraia o máximo de informações possíveis.`,
                 file_urls: [file_url],
                 response_json_schema: {
                     type: "object",
                     properties: {
-                        destinatario: { type: "string", description: "Nome do destinatário" },
+                        destinatario: { type: "string", description: "Nome do destinatário ou empresa" },
+                        transportadora: { type: "string", description: "Nome da transportadora" },
                         endereco: { type: "string", description: "Endereço completo" },
                         bairro: { type: "string", description: "Bairro" },
                         cidade: { type: "string", description: "Cidade" },
                         estado: { type: "string", description: "Estado/UF" },
                         cep: { type: "string", description: "CEP" },
-                        numero_nf: { type: "string", description: "Número da nota fiscal" }
+                        numero_nf: { type: "string", description: "Número da nota fiscal" },
+                        cnpj: { type: "string", description: "CNPJ" }
                     }
                 }
             });
 
-            if (result) {
+            let enderecoFinal = [extractedData.endereco, extractedData.bairro, extractedData.cidade, extractedData.estado].filter(Boolean).join(", ");
+
+            // Se não encontrou endereço completo, buscar online pela transportadora ou destinatário
+            if (!extractedData.endereco || extractedData.endereco.length < 10) {
+                const termoBusca = extractedData.transportadora || extractedData.destinatario || extractedData.cnpj;
+                
+                if (termoBusca) {
+                    toast.info("Buscando endereço online...");
+                    
+                    const buscaOnline = await base44.integrations.Core.InvokeLLM({
+                        prompt: `Preciso encontrar o endereço completo da empresa/transportadora: "${termoBusca}"
+                        ${extractedData.cnpj ? `CNPJ: ${extractedData.cnpj}` : ""}
+                        ${extractedData.cidade ? `Cidade provável: ${extractedData.cidade}` : ""}
+                        
+                        Busque na internet e retorne o endereço completo com rua, número, bairro, cidade, estado e CEP.
+                        Se for uma transportadora conhecida, busque o endereço da filial ou matriz mais próxima.`,
+                        add_context_from_internet: true,
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                nome_empresa: { type: "string", description: "Nome da empresa encontrada" },
+                                endereco: { type: "string", description: "Endereço completo (rua e número)" },
+                                bairro: { type: "string", description: "Bairro" },
+                                cidade: { type: "string", description: "Cidade" },
+                                estado: { type: "string", description: "Estado/UF" },
+                                cep: { type: "string", description: "CEP" },
+                                telefone: { type: "string", description: "Telefone" },
+                                encontrado: { type: "boolean", description: "Se encontrou o endereço" }
+                            }
+                        }
+                    });
+
+                    if (buscaOnline?.encontrado && buscaOnline?.endereco) {
+                        extractedData.endereco = buscaOnline.endereco;
+                        extractedData.bairro = buscaOnline.bairro || extractedData.bairro;
+                        extractedData.cidade = buscaOnline.cidade || extractedData.cidade;
+                        extractedData.estado = buscaOnline.estado || extractedData.estado;
+                        extractedData.cep = buscaOnline.cep || extractedData.cep;
+                        extractedData.destinatario = buscaOnline.nome_empresa || extractedData.destinatario || extractedData.transportadora;
+                        enderecoFinal = [buscaOnline.endereco, buscaOnline.bairro, buscaOnline.cidade, buscaOnline.estado].filter(Boolean).join(", ");
+                        toast.success("Endereço encontrado online!");
+                    }
+                }
+            }
+
+            if (extractedData) {
                 setNotaExtraidaFoto({
-                    ...result,
-                    enderecoCompleto: [result.endereco, result.bairro, result.cidade, result.estado].filter(Boolean).join(", ")
+                    ...extractedData,
+                    enderecoCompleto: enderecoFinal
                 });
                 setShowNotaExtraida(true);
-                toast.success("Endereço extraído com sucesso!");
+                if (enderecoFinal) {
+                    toast.success("Endereço extraído com sucesso!");
+                } else {
+                    toast.warning("Dados extraídos, mas endereço incompleto");
+                }
             } else {
                 toast.error("Não foi possível extrair os dados da imagem");
             }

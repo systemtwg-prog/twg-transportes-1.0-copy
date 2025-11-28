@@ -58,13 +58,13 @@ export default function ScannerCamera({ onCapture, onClose }) {
 
         ctx.drawImage(video, zoomX, zoomY, zoomWidth, zoomHeight, 0, 0, canvas.width, canvas.height);
 
-        // Aplicar filtro de documento (aumentar contraste e nitidez)
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
+        // Aplicar filtros avançados de escaneamento de documento
+        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let data = imageData.data;
         
-        // Aumentar contraste para melhorar leitura de documentos
-        const contrast = 1.3;
-        const brightness = 10;
+        // 1. Aumentar contraste e brilho para melhorar leitura
+        const contrast = 1.4;
+        const brightness = 15;
         for (let i = 0; i < data.length; i += 4) {
             data[i] = Math.min(255, Math.max(0, ((data[i] - 128) * contrast) + 128 + brightness));
             data[i + 1] = Math.min(255, Math.max(0, ((data[i + 1] - 128) * contrast) + 128 + brightness));
@@ -72,7 +72,43 @@ export default function ScannerCamera({ onCapture, onClose }) {
         }
         ctx.putImageData(imageData, 0, 0);
 
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        // 2. Aplicar nitidez (unsharp mask)
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // Blur suave
+        ctx.filter = 'blur(1px)';
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = 'none';
+        
+        const blurredData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const originalData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const sharpAmount = 0.6;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            for (let j = 0; j < 3; j++) {
+                const diff = originalData.data[i + j] - blurredData.data[i + j];
+                originalData.data[i + j] = Math.min(255, Math.max(0, originalData.data[i + j] + diff * sharpAmount));
+            }
+        }
+        ctx.putImageData(originalData, 0, 0);
+
+        // 3. Aumentar saturação levemente para cores mais vivas
+        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        data = imageData.data;
+        const saturation = 1.15;
+        for (let i = 0; i < data.length; i += 4) {
+            const gray = 0.2989 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i] = Math.min(255, Math.max(0, gray + (data[i] - gray) * saturation));
+            data[i + 1] = Math.min(255, Math.max(0, gray + (data[i + 1] - gray) * saturation));
+            data[i + 2] = Math.min(255, Math.max(0, gray + (data[i + 2] - gray) * saturation));
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
         setCapturedImage(dataUrl);
     };
 

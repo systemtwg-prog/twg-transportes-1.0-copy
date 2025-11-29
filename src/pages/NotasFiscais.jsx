@@ -35,6 +35,22 @@ export default function NotasFiscais() {
     const [transpExtraidas, setTranspExtraidas] = useState([]);
     const [transpSelecionadas, setTranspSelecionadas] = useState([]);
     const [buscandoDados, setBuscandoDados] = useState({});
+    
+    // Estados para gravação de áudio
+    const [showAudioDialog, setShowAudioDialog] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioUrl, setAudioUrl] = useState(null);
+    const [transcription, setTranscription] = useState("");
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioFileUrl, setAudioFileUrl] = useState("");
+    const [buscandoOnline, setBuscandoOnline] = useState(false);
+    const [dadosExtraidos, setDadosExtraidos] = useState(null);
+    const [destinoSelecionado, setDestinoSelecionado] = useState("");
+    const mediaRecorderRef = React.useRef(null);
+    const audioChunksRef = React.useRef([]);
+    const audioRef = React.useRef(null);
+    
     const queryClient = useQueryClient();
 
     const [form, setForm] = useState({

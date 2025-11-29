@@ -10,13 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Package, Truck, Car, BarChart3
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
 import QuickPhotoCapture from "@/components/shared/QuickPhotoCapture";
 
 function FlipbookViewer({ files, onClose }) {
@@ -122,19 +121,12 @@ export default function ComprovantesInternos() {
     const [filterEmpresa, setFilterEmpresa] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
-    const [showEditEmpresa, setShowEditEmpresa] = useState(false);
-    const [empresaEmMassa, setEmpresaEmMassa] = useState("");
-    const [selecionados, setSelecionados] = useState([]);
     const [showCadastroEmpresa, setShowCadastroEmpresa] = useState(false);
     const [empresaForm, setEmpresaForm] = useState({ nome: "", logo_url: "" });
     const [editingEmpresa, setEditingEmpresa] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
-    const [showFormMassa, setShowFormMassa] = useState(false);
-    const [itensMassa, setItensMassa] = useState([]);
-    const [uploadingMassa, setUploadingMassa] = useState(false);
-    const [salvandoMassa, setSalvandoMassa] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
-    const [cameraTarget, setCameraTarget] = useState(null);
+    const [processandoIA, setProcessandoIA] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -147,62 +139,9 @@ export default function ComprovantesInternos() {
         queryFn: () => base44.entities.EmpresaComprovante.list()
     });
 
-    const { data: notasFiscais = [] } = useQuery({
-        queryKey: ["notas-fiscais-comprovantes"],
-        queryFn: () => base44.entities.NotaFiscal.list()
-    });
-
-    const { data: romaneiosGerados = [] } = useQuery({
-        queryKey: ["romaneios-gerados-comprovantes"],
-        queryFn: () => base44.entities.RomaneioGerado.list()
-    });
-
-    const { data: coletasDiarias = [] } = useQuery({
-        queryKey: ["coletas-diarias-comprovantes"],
-        queryFn: () => base44.entities.ColetaDiaria.filter({ status: "pendente" })
-    });
-
-    const { data: veiculos = [] } = useQuery({
-        queryKey: ["veiculos-comprovantes"],
-        queryFn: () => base44.entities.Veiculo.list()
-    });
-
-    // Dashboard por veículo
-    const dashboardPorVeiculo = React.useMemo(() => {
-        const porVeiculo = {};
-
-        romaneiosGerados.forEach(r => {
-            if (r.status === "gerado" || r.status === "em_transito") {
-                const placa = r.placa || "SEM_PLACA";
-                if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
-                }
-                porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
-                (r.notas_ids || []).forEach(id => {
-                    const nota = notasFiscais.find(n => n.id === id);
-                    if (nota) porVeiculo[placa].notas.push(nota);
-                });
-            }
-        });
-
-        coletasDiarias.forEach(c => {
-            if (c.status === "pendente") {
-                const placa = "COLETAS";
-                if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [] };
-                }
-                porVeiculo[placa].coletas++;
-            }
-        });
-
-        return porVeiculo;
-    }, [romaneiosGerados, notasFiscais, coletasDiarias]);
-
     const atualizarDashboards = () => {
         queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
-        toast.success("Dashboards atualizados!");
+        toast.success("Dados atualizados!");
     };
 
     const createEmpresaMutation = useMutation({
@@ -256,40 +195,10 @@ export default function ComprovantesInternos() {
         nota_fiscal: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
-        texto_extraido: "",
-        romaneio_id: "",
         observacoes: ""
     });
 
     const empresasUnicas = [...new Set(comprovantes.map(c => c.empresa).filter(Boolean))];
-
-    const updateEmpresaMutation = useMutation({
-        mutationFn: async ({ ids, empresa }) => {
-            for (const id of ids) {
-                await base44.entities.ComprovanteInterno.update(id, { empresa });
-            }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
-            setShowEditEmpresa(false);
-            setSelecionados([]);
-            setEmpresaEmMassa("");
-        }
-    });
-
-    const toggleSelecionado = (id) => {
-        setSelecionados(prev => 
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
-    };
-
-    const selecionarTodos = () => {
-        if (selecionados.length === filtered.length) {
-            setSelecionados([]);
-        } else {
-            setSelecionados(filtered.map(c => c.id));
-        }
-    };
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.ComprovanteInterno.create(data),
@@ -320,8 +229,6 @@ export default function ComprovantesInternos() {
             nota_fiscal: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
-            texto_extraido: "",
-            romaneio_id: "",
             observacoes: ""
         });
         setEditing(null);
@@ -388,6 +295,50 @@ export default function ComprovantesInternos() {
         return matchData && matchNF && matchEmpresa;
     });
 
+    // Função para processar foto com IA
+    const processarFotoComIA = async (file_url) => {
+        setProcessandoIA(true);
+        try {
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
+                Extraia as seguintes informações:
+                1. Número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas)
+                2. Qualquer informação relevante como destinatário, data, valor, observações
+
+                Retorne os dados encontrados de forma estruturada.`,
+                file_urls: [file_url],
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
+                        observacoes: { type: "string", description: "Outras informações relevantes encontradas na imagem" }
+                    }
+                }
+            });
+
+            if (resultado?.numero_nota) {
+                setForm(prev => ({ 
+                    ...prev, 
+                    nota_fiscal: prev.nota_fiscal || resultado.numero_nota 
+                }));
+                toast.success(`NF identificada: ${resultado.numero_nota}`);
+            }
+            
+            if (resultado?.observacoes) {
+                setForm(prev => ({ 
+                    ...prev, 
+                    observacoes: prev.observacoes 
+                        ? `${prev.observacoes}\n${resultado.observacoes}` 
+                        : resultado.observacoes 
+                }));
+            }
+        } catch (err) {
+            console.error("Erro ao processar imagem com IA:", err);
+            toast.info("Não foi possível ler a imagem automaticamente");
+        }
+        setProcessandoIA(false);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
@@ -419,84 +370,17 @@ export default function ComprovantesInternos() {
                             <Building2 className="w-4 h-4 mr-2" />
                             Cadastro Empresas
                         </Button>
-                        {selecionados.length > 0 && (
-                            <Button 
-                                onClick={() => setShowEditEmpresa(true)}
-                                variant="outline"
-                                className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                            >
-                                <Building2 className="w-4 h-4 mr-2" />
-                                Editar Empresa ({selecionados.length})
-                            </Button>
-                        )}
-                        <Button 
-                            onClick={() => { setItensMassa([]); setShowFormMassa(true); }}
-                            variant="outline"
-                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Em Massa
-                        </Button>
-                        <Button 
-                            onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg"
-                        >
-                            <Plus className="w-6 h-6 mr-2" />
-                            Novo Comprovante
-                        </Button>
                     </div>
                 </div>
 
-                {/* Dashboard por Veículo */}
-                {Object.keys(dashboardPorVeiculo).length > 0 && (
-                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-indigo-600" />
-                                Pendências por Veículo
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {Object.entries(dashboardPorVeiculo).map(([placa, dados]) => {
-                                    const veiculo = veiculos.find(v => v.placa === placa);
-                                    return (
-                                        <div 
-                                            key={placa}
-                                            className="p-3 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm"
-                                        >
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Car className="w-4 h-4 text-indigo-600" />
-                                                <span className="font-bold text-sm text-indigo-700">
-                                                    {placa === "COLETAS" ? "Coletas" : placa}
-                                                </span>
-                                            </div>
-                                            {veiculo && (
-                                                <p className="text-xs text-slate-500 mb-1">{veiculo.modelo}</p>
-                                            )}
-                                            <div className="flex gap-3 text-sm">
-                                                {dados.entregas > 0 && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Package className="w-3 h-3 text-orange-500" />
-                                                        <span className="font-semibold text-orange-600">{dados.entregas}</span>
-                                                        <span className="text-xs text-slate-400">entregas</span>
-                                                    </div>
-                                                )}
-                                                {dados.coletas > 0 && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Truck className="w-3 h-3 text-blue-500" />
-                                                        <span className="font-semibold text-blue-600">{dados.coletas}</span>
-                                                        <span className="text-xs text-slate-400">coletas</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                {/* Botão Grande Novo Comprovante */}
+                <Button 
+                    onClick={() => { resetForm(); setShowForm(true); }}
+                    className="w-full h-20 text-xl bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-xl"
+                >
+                    <Plus className="w-8 h-8 mr-3" />
+                    Novo Comprovante
+                </Button>
 
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -568,22 +452,6 @@ export default function ComprovantesInternos() {
                     </CardContent>
                 </Card>
 
-                {/* Seleção em massa */}
-                {filtered.length > 0 && (
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={selecionarTodos}
-                        >
-                            {selecionados.length === filtered.length ? "Desmarcar Todos" : "Selecionar Todos"}
-                        </Button>
-                        {selecionados.length > 0 && (
-                            <span className="text-sm text-slate-500">{selecionados.length} selecionado(s)</span>
-                        )}
-                    </div>
-                )}
-
                 {/* Lista */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {isLoading ? (
@@ -599,35 +467,25 @@ export default function ComprovantesInternos() {
                         filtered.map((comprovante) => (
                             <Card 
                                 key={comprovante.id} 
-                                className={`bg-white/90 border-2 shadow-md hover:shadow-lg transition-shadow cursor-pointer ${selecionados.includes(comprovante.id) ? "border-sky-500 bg-sky-50" : "border-transparent"}`}
-                                onClick={() => toggleSelecionado(comprovante.id)}
+                                className="bg-white/90 border-0 shadow-md hover:shadow-lg transition-shadow"
                             >
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between mb-3">
-                                        <div className="flex items-start gap-2">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={selecionados.includes(comprovante.id)}
-                                                onChange={() => toggleSelecionado(comprovante.id)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="mt-1 w-4 h-4"
-                                            />
-                                            <div>
-                                                <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
-                                                {comprovante.empresa && (
-                                                    <div className="flex items-center gap-1.5">
-                                                        {getEmpresaLogo(comprovante.empresa) && (
-                                                            <img 
-                                                                src={getEmpresaLogo(comprovante.empresa)} 
-                                                                alt="" 
-                                                                className="w-5 h-5 object-contain rounded"
-                                                            />
-                                                        )}
-                                                        <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
-                                                    </div>
-                                                )}
-                                                <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
-                                            </div>
+                                        <div>
+                                            <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                            {comprovante.empresa && (
+                                                <div className="flex items-center gap-1.5">
+                                                    {getEmpresaLogo(comprovante.empresa) && (
+                                                        <img 
+                                                            src={getEmpresaLogo(comprovante.empresa)} 
+                                                            alt="" 
+                                                            className="w-5 h-5 object-contain rounded"
+                                                        />
+                                                    )}
+                                                    <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
                                         </div>
                                         <Badge variant="outline">
                                             {comprovante.arquivos?.length || 0} arquivo(s)
@@ -638,7 +496,7 @@ export default function ComprovantesInternos() {
                                         <div className="mb-3">
                                             <div 
                                                 className="w-full h-40 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
-                                                onClick={(e) => { e.stopPropagation(); setViewFiles(comprovante.arquivos); }}
+                                                onClick={() => setViewFiles(comprovante.arquivos)}
                                             >
                                                 {comprovante.arquivos[0]?.tipo?.startsWith("image/") ? (
                                                     <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
@@ -660,8 +518,7 @@ export default function ComprovantesInternos() {
                                             variant="ghost" 
                                             size="sm" 
                                             className="text-green-600 hover:bg-green-50"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
+                                            onClick={() => {
                                                 const texto = `*COMPROVANTE DE ENTREGA*\nNF: ${comprovante.nota_fiscal}\nData: ${formatDate(comprovante.data)}\n${comprovante.observacoes ? `Obs: ${comprovante.observacoes}` : ""}\n${comprovante.arquivos?.[0]?.url || ""}`;
                                                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
                                             }}
@@ -670,15 +527,14 @@ export default function ComprovantesInternos() {
                                         </Button>
                                         <div className="flex gap-1">
                                             {comprovante.arquivos?.length > 0 && (
-                                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setViewFiles(comprovante.arquivos); }}>
+                                                <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)}>
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
                                             )}
-                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(comprovante); }}>
+                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)}>
                                                 <Pencil className="w-4 h-4" />
                                             </Button>
-                                            <Button variant="ghost" size="sm" onClick={(e) => {
-                                                e.stopPropagation();
+                                            <Button variant="ghost" size="sm" onClick={() => {
                                                 if (confirm("Excluir este comprovante?")) deleteMutation.mutate(comprovante.id);
                                             }}>
                                                 <Trash2 className="w-4 h-4 text-red-600" />
@@ -697,33 +553,26 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
-            {/* Quick Photo Camera - para formulário */}
+            {/* Quick Photo Camera */}
             {showCamera && (
                 <div className="fixed inset-0 z-[100]">
                     <QuickPhotoCapture
                         onCapture={async (file) => {
                             try {
+                                toast.info("Enviando foto...");
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                                 
-                                if (cameraTarget === 'form') {
-                                    // Adiciona foto ao formulário aberto
-                                    setForm(prev => ({
-                                        ...prev,
-                                        arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
-                                    }));
-                                    toast.success("Foto adicionada!");
-                                } else if (cameraTarget === 'massa') {
-                                    // Adiciona em massa
-                                    setItensMassa(prev => [...prev, {
-                                        id: Date.now() + Math.random(),
-                                        nota_fiscal: "",
-                                        url: file_url,
-                                        nome: file.name,
-                                        tipo: file.type
-                                    }]);
-                                    toast.success("Foto adicionada!");
-                                }
+                                // Adiciona foto ao formulário
+                                setForm(prev => ({
+                                    ...prev,
+                                    arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
+                                }));
+                                
                                 setShowCamera(false);
+                                toast.success("Foto adicionada!");
+                                
+                                // Processa com IA após adicionar
+                                await processarFotoComIA(file_url);
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");
@@ -735,7 +584,7 @@ export default function ComprovantesInternos() {
                 </div>
             )}
 
-            {/* Form Dialog */}
+            {/* Form Dialog - Novo Comprovante */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
@@ -745,31 +594,35 @@ export default function ComprovantesInternos() {
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Nota Fiscal *</Label>
-                                <Input
-                                    value={form.nota_fiscal}
-                                    onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
-                                    required
-                                    placeholder="Número da NF"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Data *</Label>
-                                <Input
-                                    type="date"
-                                    value={form.data}
-                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                    required
-                                />
-                            </div>
+                        {/* Nota Fiscal */}
+                        <div className="space-y-2">
+                            <Label>Nota Fiscal *</Label>
+                            <Input
+                                value={form.nota_fiscal}
+                                onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
+                                required
+                                placeholder="Número da NF"
+                                className="h-12 text-lg"
+                            />
                         </div>
 
+                        {/* Data */}
                         <div className="space-y-2">
-                            <Label>Arquivos</Label>
-                            <div className="flex gap-2">
-                                <div className="flex-1 border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors">
+                            <Label>Data</Label>
+                            <Input
+                                type="date"
+                                value={form.data}
+                                onChange={(e) => setForm({ ...form, data: e.target.value })}
+                                className="h-12"
+                            />
+                        </div>
+
+                        {/* Arquivos - Upload e Foto */}
+                        <div className="space-y-2">
+                            <Label>Arquivos (Foto ou PDF)</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Upload Arquivo */}
+                                <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-sky-500 transition-colors">
                                     <input
                                         type="file"
                                         multiple
@@ -781,212 +634,107 @@ export default function ComprovantesInternos() {
                                     <label htmlFor="file-upload" className="cursor-pointer">
                                         <div className="flex flex-col items-center gap-2">
                                             {uploading ? (
-                                                <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full" />
+                                                <div className="animate-spin w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full" />
                                             ) : (
                                                 <>
-                                                    <Upload className="w-8 h-8 text-slate-400" />
-                                                    <span className="text-sm text-slate-600">Adicionar arquivos</span>
+                                                    <Upload className="w-10 h-10 text-slate-400" />
+                                                    <span className="text-sm text-slate-600 font-medium">Anexar Arquivo</span>
                                                 </>
                                             )}
                                         </div>
                                     </label>
                                 </div>
+
+                                {/* Tirar Foto */}
                                 <div 
-                                    className="border-2 border-dashed border-sky-400 rounded-lg p-4 text-center hover:border-sky-500 hover:bg-sky-50 transition-colors cursor-pointer"
-                                    onClick={() => { setCameraTarget('form'); setShowCamera(true); }}
+                                    className="border-2 border-dashed border-sky-400 rounded-xl p-6 text-center hover:border-sky-500 hover:bg-sky-50 transition-colors cursor-pointer"
+                                    onClick={() => setShowCamera(true)}
                                 >
                                     <div className="flex flex-col items-center gap-2">
-                                        <Camera className="w-8 h-8 text-sky-500" />
-                                        <span className="text-sm text-sky-600 font-medium">Foto Rápida</span>
+                                        <Camera className="w-10 h-10 text-sky-500" />
+                                        <span className="text-sm text-sky-600 font-medium">Tirar Foto</span>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Lista de arquivos adicionados */}
                             {form.arquivos.length > 0 && (
-                                <div className="space-y-2 mt-3">
+                                <div className="space-y-2 mt-4">
+                                    <Label className="text-xs text-slate-500">Arquivos Anexados</Label>
                                     {form.arquivos.map((arq, index) => (
-                                        <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                                            <div className="flex items-center gap-2">
+                                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                                            <div className="flex items-center gap-3">
                                                 {arq.tipo?.startsWith("image/") ? (
-                                                    <img src={arq.url} alt="" className="w-10 h-10 object-cover rounded" />
+                                                    <img 
+                                                        src={arq.url} 
+                                                        alt="" 
+                                                        className="w-14 h-14 object-cover rounded-lg cursor-pointer"
+                                                        onClick={() => setViewFiles([arq])}
+                                                    />
                                                 ) : (
-                                                    <File className="w-10 h-10 p-2 bg-slate-200 rounded text-slate-600" />
+                                                    <File className="w-14 h-14 p-3 bg-slate-200 rounded-lg text-slate-600" />
                                                 )}
-                                                <span className="text-sm text-slate-700 truncate max-w-[200px]">{arq.nome}</span>
+                                                <div>
+                                                    <span className="text-sm text-slate-700 font-medium truncate max-w-[180px] block">{arq.nome}</span>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="link" 
+                                                        size="sm" 
+                                                        className="h-auto p-0 text-sky-600"
+                                                        onClick={() => setViewFiles([arq])}
+                                                    >
+                                                        <Eye className="w-3 h-3 mr-1" /> Visualizar
+                                                    </Button>
+                                                </div>
                                             </div>
                                             <Button type="button" variant="ghost" size="icon" onClick={() => removeArquivo(index)}>
-                                                <X className="w-4 h-4 text-red-600" />
+                                                <X className="w-5 h-5 text-red-600" />
                                             </Button>
                                         </div>
                                     ))}
                                 </div>
                             )}
+
+                            {/* Indicador de processamento IA */}
+                            {processandoIA && (
+                                <div className="flex items-center gap-2 p-3 bg-sky-50 rounded-xl text-sky-700">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span className="text-sm">Lendo informações da imagem com IA...</span>
+                                </div>
+                            )}
                         </div>
 
+                        {/* Observações */}
                         <div className="space-y-2">
                             <Label>Observações</Label>
                             <Textarea
                                 value={form.observacoes}
                                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
-                                rows={3}
-                                placeholder="Digite suas observações..."
-                            />
-                            <AudioRecorderWithTranscription 
-                                onRecordingComplete={(audioUrl, transcricao) => {
-                                    setForm(prev => ({
-                                        ...prev,
-                                        observacoes: (prev.observacoes || "") + (transcricao ? `\n${transcricao}` : "") + `\n[Áudio: ${audioUrl}]`
-                                    }));
-                                }}
+                                rows={4}
+                                placeholder="Informações adicionais..."
+                                className="resize-none"
                             />
                         </div>
 
-                        <Button type="submit" className="w-full h-14 text-lg bg-sky-600 hover:bg-sky-700">
-                            <Save className="w-6 h-6 mr-2" />
-                            {editing ? "Salvar Comprovante" : "Gravar Comprovante"}
-                        </Button>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Form Massa Dialog */}
-            <Dialog open={showFormMassa} onOpenChange={setShowFormMassa}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-purple-600" />
-                            Novo Comprovante em Massa
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <div className="flex-1 border-2 border-dashed border-purple-300 rounded-lg p-4 text-center hover:border-purple-500 transition-colors">
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={async (e) => {
-                                        const files = Array.from(e.target.files);
-                                        if (files.length === 0) return;
-                                        setUploadingMassa(true);
-                                        const novosItens = [];
-                                        for (const file of files) {
-                                            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                                            novosItens.push({
-                                                id: Date.now() + Math.random(),
-                                                nota_fiscal: "",
-                                                url: file_url,
-                                                nome: file.name,
-                                                tipo: file.type
-                                            });
-                                        }
-                                        setItensMassa(prev => [...prev, ...novosItens]);
-                                        setUploadingMassa(false);
-                                    }}
-                                    className="hidden"
-                                    id="massa-upload"
-                                />
-                                <label htmlFor="massa-upload" className="cursor-pointer">
-                                    <div className="flex flex-col items-center gap-2">
-                                        {uploadingMassa ? (
-                                            <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
-                                        ) : (
-                                            <>
-                                                <Upload className="w-8 h-8 text-purple-400" />
-                                                <span className="text-sm text-purple-600">Adicionar Fotos</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </label>
-                            </div>
-                            <div 
-                                className="border-2 border-dashed border-purple-400 rounded-lg p-4 text-center hover:border-purple-500 hover:bg-purple-50 transition-colors cursor-pointer"
-                                onClick={() => { setCameraTarget('massa'); setShowCamera(true); }}
-                            >
-                                <div className="flex flex-col items-center gap-2">
-                                    <Camera className="w-8 h-8 text-purple-500" />
-                                    <span className="text-sm text-purple-600 font-medium">Foto Rápida</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {itensMassa.length > 0 && (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {itensMassa.map((item, index) => (
-                                    <div key={item.id} className="relative border rounded-lg overflow-hidden bg-slate-50">
-                                        <div className="p-2 bg-white border-b">
-                                            <Input
-                                                placeholder="Nº Nota Fiscal"
-                                                value={item.nota_fiscal}
-                                                onChange={(e) => {
-                                                    const novosItens = [...itensMassa];
-                                                    novosItens[index].nota_fiscal = e.target.value;
-                                                    setItensMassa(novosItens);
-                                                }}
-                                                className="text-sm h-8"
-                                            />
-                                        </div>
-                                        <div className="relative aspect-square">
-                                            <img 
-                                                src={item.url} 
-                                                alt={item.nome} 
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="absolute top-1 right-1 h-6 w-6 bg-red-500 hover:bg-red-600 text-white rounded-full"
-                                                onClick={() => setItensMassa(prev => prev.filter(i => i.id !== item.id))}
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {itensMassa.length === 0 && (
-                            <div className="text-center py-8 text-slate-500">
-                                <Camera className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                                Adicione fotos para criar comprovantes
-                            </div>
-                        )}
-
+                        {/* Botão Salvar */}
                         <Button 
-                            onClick={async () => {
-                                if (itensMassa.length === 0) return;
-                                setSalvandoMassa(true);
-                                for (const item of itensMassa) {
-                                    await base44.entities.ComprovanteInterno.create({
-                                        nota_fiscal: item.nota_fiscal || "SEM NF",
-                                        data: format(new Date(), "yyyy-MM-dd"),
-                                        arquivos: [{ nome: item.nome, url: item.url, tipo: item.tipo }]
-                                    });
-                                }
-                                queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
-                                setSalvandoMassa(false);
-                                setShowFormMassa(false);
-                                setItensMassa([]);
-                                toast.success("Comprovantes salvos!");
-                            }}
-                            disabled={itensMassa.length === 0 || salvandoMassa}
-                            className="w-full h-12 bg-purple-600 hover:bg-purple-700"
+                            type="submit" 
+                            className="w-full h-14 text-lg bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700"
+                            disabled={createMutation.isPending || updateMutation.isPending}
                         >
-                            {salvandoMassa ? (
+                            {(createMutation.isPending || updateMutation.isPending) ? (
                                 <>
-                                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                    <Loader2 className="w-6 h-6 mr-2 animate-spin" />
                                     Salvando...
                                 </>
                             ) : (
                                 <>
-                                    <Save className="w-5 h-5 mr-2" />
-                                    Salvar {itensMassa.length} Comprovante(s)
+                                    <Save className="w-6 h-6 mr-2" />
+                                    Salvar Comprovante
                                 </>
                             )}
                         </Button>
-                    </div>
+                    </form>
                 </DialogContent>
             </Dialog>
 
@@ -1103,57 +851,6 @@ export default function ComprovantesInternos() {
                                     {editingEmpresa ? "Atualizar" : "Cadastrar"}
                                 </Button>
                             </div>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Dialog Editar Empresa em Massa */}
-            <Dialog open={showEditEmpresa} onOpenChange={setShowEditEmpresa}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-orange-600" />
-                            Editar Empresa em Massa
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
-                            Alterar a empresa de <strong>{selecionados.length}</strong> comprovante(s).
-                        </p>
-                        <div className="space-y-2">
-                            <Label>Selecione a Empresa</Label>
-                            <Select value={empresaEmMassa} onValueChange={setEmpresaEmMassa}>
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione uma empresa..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {empresasCadastradas.map(emp => (
-                                        <SelectItem key={emp.id} value={emp.nome}>
-                                            <div className="flex items-center gap-2">
-                                                {emp.logo_url ? (
-                                                    <img src={emp.logo_url} alt="" className="w-5 h-5 object-contain rounded" />
-                                                ) : (
-                                                    <Building2 className="w-5 h-5 text-slate-400" />
-                                                )}
-                                                <span>{emp.nome}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowEditEmpresa(false)}>
-                                Cancelar
-                            </Button>
-                            <Button 
-                                onClick={() => updateEmpresaMutation.mutate({ ids: selecionados, empresa: empresaEmMassa })}
-                                disabled={updateEmpresaMutation.isPending || !empresaEmMassa}
-                                className="bg-orange-500 hover:bg-orange-600"
-                            >
-                                {updateEmpresaMutation.isPending ? "Salvando..." : "Salvar"}
-                            </Button>
                         </div>
                     </div>
                 </DialogContent>

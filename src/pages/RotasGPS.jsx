@@ -230,6 +230,15 @@ export default function RotasGPS() {
         queryKey: ["transportadoras-rotas"],
         queryFn: () => base44.entities.Transportadora.list()
     });
+
+    // Mutation para criar transportadora
+    const createTransportadoraMutation = useMutation({
+        mutationFn: (data) => base44.entities.Transportadora.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["transportadoras-rotas"] });
+            toast.success("Transportadora cadastrada!");
+        }
+    });
     
     const buscarEnderecoOnline = async (nota) => {
         setBuscandoEndereco(true);

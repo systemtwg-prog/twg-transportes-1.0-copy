@@ -236,7 +236,11 @@ export default function RotasGPS() {
         mutationFn: (data) => base44.entities.Transportadora.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["transportadoras-rotas"] });
-            toast.success("Transportadora cadastrada!");
+            toast.success("Transportadora cadastrada com sucesso!");
+        },
+        onError: (error) => {
+            console.error("Erro ao cadastrar transportadora:", error);
+            toast.error("Erro ao cadastrar transportadora");
         }
     });
     
@@ -1182,15 +1186,14 @@ Reorganize na ordem mais eficiente.`,
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         const novaTransportadora = {
-                                                            razao_social: end.nome_empresa || "N/I",
-                                                            nome_fantasia: end.nome_empresa,
-                                                            cnpj: "00.000.000/0001-00",
-                                                            endereco: end.endereco,
-                                                            bairro: end.bairro,
-                                                            cidade: end.cidade,
-                                                            uf: end.estado,
-                                                            cep: end.cep,
-                                                            telefone: end.telefone,
+                                                            razao_social: end.nome_empresa || "Transportadora",
+                                                            nome_fantasia: end.nome_empresa || "",
+                                                            endereco: end.endereco || "",
+                                                            bairro: end.bairro || "",
+                                                            cidade: end.cidade || "",
+                                                            uf: end.estado || "",
+                                                            cep: end.cep || "",
+                                                            telefone: end.telefone || "",
                                                             status: "ativo"
                                                         };
                                                         createTransportadoraMutation.mutate(novaTransportadora);

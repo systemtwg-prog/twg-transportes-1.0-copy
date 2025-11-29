@@ -11,12 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Receipt, Camera, Trash2, Pencil, Eye, 
-    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, ScanLine, CheckSquare, Square, ChevronLeft, ChevronRight
+    Upload, Search, CheckCircle, Clock, Save, X, ZoomIn, ZoomOut, Download, CheckSquare, Square, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AudioRecorder from "@/components/shared/AudioRecorder";
-import ScannerCamera from "@/components/shared/ScannerCamera";
+import QuickPhotoCapture from "@/components/shared/QuickPhotoCapture";
+import { toast } from "sonner";
 
 export default function NotaDeposito() {
     const [showForm, setShowForm] = useState(false);
@@ -24,7 +25,7 @@ export default function NotaDeposito() {
     const [search, setSearch] = useState("");
     const [uploading, setUploading] = useState(false);
     const [viewImage, setViewImage] = useState(null);
-    const [showScanner, setShowScanner] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
     const [carouselImages, setCarouselImages] = useState(null);
     const [carouselIndex, setCarouselIndex] = useState(0);
     const queryClient = useQueryClient();
@@ -119,14 +120,17 @@ export default function NotaDeposito() {
         setForm({ ...form, fotos: form.fotos.filter((_, i) => i !== index) });
     };
 
-    const handleScanCapture = async (file) => {
+    const handlePhotoCapture = async (file) => {
+        setShowCamera(false);
         setUploading(true);
+        toast.info("Salvando foto...");
         try {
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
             
             // Se o formulário está aberto, adiciona ao formulário
             if (showForm) {
                 setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), { url: file_url, nome: file.name, tipo: file.type }] }));
+                toast.success("Foto adicionada!");
             } else {
                 // Senão, salva direto como nova nota de depósito
                 const dataFormatada = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
@@ -138,12 +142,13 @@ export default function NotaDeposito() {
                     usuario_foto: currentUser?.full_name || currentUser?.email || ""
                 });
                 queryClient.invalidateQueries({ queryKey: ["notas-deposito"] });
+                toast.success("Nota salva com sucesso!");
             }
         } catch (error) {
             console.error("Erro ao salvar:", error);
+            toast.error("Erro ao salvar foto");
         }
         setUploading(false);
-        setShowScanner(false);
     };
 
     const handleSubmit = (e) => {
@@ -199,13 +204,22 @@ export default function NotaDeposito() {
                             <p className="text-slate-500">Registre notas de depósito com foto</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { resetForm(); setShowForm(true); }}
-                        className="bg-gradient-to-r from-violet-500 to-purple-600 h-14 px-8 text-lg"
-                    >
-                        <Plus className="w-6 h-6 mr-2" />
-                        Nova Nota
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={() => setShowCamera(true)}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 h-14 px-6 text-lg"
+                        >
+                            <Camera className="w-6 h-6 mr-2" />
+                            Foto Rápida
+                        </Button>
+                        <Button 
+                            onClick={() => { resetForm(); setShowForm(true); }}
+                            className="bg-gradient-to-r from-violet-500 to-purple-600 h-14 px-8 text-lg"
+                        >
+                            <Plus className="w-6 h-6 mr-2" />
+                            Nova Nota
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Search */}
@@ -428,22 +442,17 @@ export default function NotaDeposito() {
                             <div className="flex flex-col gap-2">
                                 <Button 
                                     type="button"
-                                    onClick={() => setShowScanner(true)}
+                                    onClick={() => setShowCamera(true)}
                                     className="w-full h-14 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                                 >
-                                    <ScanLine className="w-5 h-5 mr-2" />
-                                    Escanear Documento
+                                    <Camera className="w-5 h-5 mr-2" />
+                                    Tirar Foto
                                 </Button>
                                 <div className="flex gap-2">
                                     <input type="file" accept="image/*" multiple onChange={handleUploadFotos} className="hidden" id="foto-nota" />
                                     <label htmlFor="foto-nota" className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
                                         <Upload className="w-5 h-5 text-slate-400" />
                                         <span className="text-sm text-slate-600">Galeria</span>
-                                    </label>
-                                    <input type="file" accept="image/*" capture="environment" multiple onChange={handleUploadFotos} className="hidden" id="camera-nota" />
-                                    <label htmlFor="camera-nota" className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-violet-500 cursor-pointer">
-                                        <Camera className="w-5 h-5 text-slate-400" />
-                                        <span className="text-sm text-slate-600">Foto Rápida</span>
                                     </label>
                                 </div>
                             </div>
@@ -501,11 +510,11 @@ export default function NotaDeposito() {
                 </DialogContent>
             </Dialog>
 
-            {/* Scanner Camera */}
-            {showScanner && (
-                <ScannerCamera 
-                    onCapture={handleScanCapture}
-                    onClose={() => setShowScanner(false)}
+            {/* Quick Photo Camera */}
+            {showCamera && (
+                <QuickPhotoCapture 
+                    onCapture={handlePhotoCapture}
+                    onClose={() => setShowCamera(false)}
                 />
             )}
         </div>

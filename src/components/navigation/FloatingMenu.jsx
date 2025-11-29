@@ -1,12 +1,12 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell, HomeIcon, Search
+    Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer
 } from "lucide-react";
 
 const menuItems = [
@@ -26,6 +26,7 @@ const menuItems = [
     { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
     { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
     { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package },
+    { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer },
     { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
     { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
     { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
@@ -33,7 +34,7 @@ const menuItems = [
     { name: "Performance", href: "RelatorioMotoristas", icon: Award },
     { name: "Configurações", href: "Configuracoes", icon: Settings },
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
-    { name: "Backup", href: "Backup", icon: LayoutGrid },
+    { name: "Backup", href: "Backup", icon: Database },
     { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
     { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
 ];
@@ -41,15 +42,9 @@ const menuItems = [
 export default function FloatingMenu({ currentPage }) {
     const [open, setOpen] = React.useState(false);
 
-    const handleBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            window.location.href = createPageUrl("Home");
-        }
-    };
-
     const handleLogout = () => {
+        // Limpar sessão de desbloqueio ao sair
+        sessionStorage.removeItem("appUnlocked");
         if (confirm("Deseja realmente sair do sistema?")) {
             base44.auth.logout();
         }

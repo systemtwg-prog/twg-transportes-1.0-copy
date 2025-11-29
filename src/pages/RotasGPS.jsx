@@ -13,7 +13,7 @@ import {
     Navigation, MapPin, Truck, Package, ExternalLink, 
     Trash2, Plus, Route, CheckCircle, Camera, Sparkles, 
     ArrowUp, ArrowDown, GripVertical, Loader2, Car, FileText,
-    Upload, Pencil, MessageSquare, BarChart3, Search, Mic, MicOff
+    Upload, Pencil, MessageSquare, BarChart3, Search, Mic, MicOff, Building2, Save
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

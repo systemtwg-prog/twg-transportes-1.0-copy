@@ -96,11 +96,6 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         }, "image/jpeg", 0.85);
     };
 
-    const retakePhoto = () => {
-        setCapturedImage(null);
-        startCamera();
-    };
-
     const handleClose = () => {
         stopCamera();
         onClose();

@@ -39,24 +39,7 @@ function TransportadoraForm({ transportadora, onSubmit, onCancel }) {
         onSubmit(form);
     };
 
-    const buscarCep = async () => {
-        if (form.cep?.length !== 8) return;
-        try {
-            const res = await fetch(`https://viacep.com.br/ws/${form.cep}/json/`);
-            const data = await res.json();
-            if (!data.erro) {
-                setForm({
-                    ...form,
-                    endereco: data.logradouro || "",
-                    bairro: data.bairro || "",
-                    cidade: data.localidade || "",
-                    uf: data.uf || ""
-                });
-            }
-        } catch (err) {
-            console.error("Erro ao buscar CEP:", err);
-        }
-    };
+
 
     return (
         <Card className="border-0 shadow-xl">

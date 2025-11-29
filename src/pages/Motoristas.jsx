@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import CrachaMotorista from "@/components/motorista/CrachaMotorista";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
+import CepAutoComplete from "@/components/cep/CepAutoComplete";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -322,12 +323,23 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Endereço</Label>
-                        <Input
-                            value={form.endereco}
-                            onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <CepAutoComplete
+                            value={form.cep || ""}
+                            onChange={(cep) => setForm({ ...form, cep })}
+                            onAddressFound={(addr) => setForm({ 
+                                ...form, 
+                                endereco: `${addr.endereco}, ${addr.bairro} - ${addr.cidade}/${addr.uf}`
+                            })}
                         />
+                        <div className="md:col-span-2 space-y-2">
+                            <Label>Endereço</Label>
+                            <Input
+                                value={form.endereco}
+                                onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+                                placeholder="Rua, número, bairro - Cidade/UF"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

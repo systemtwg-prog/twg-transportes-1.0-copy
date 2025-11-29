@@ -757,6 +757,14 @@ Retorne os dados encontrados no formato estruturado.`,
                             Colar Texto
                         </Button>
                         <Button 
+                            onClick={() => setShowAudioDialog(true)}
+                            variant="outline"
+                            className="border-red-500 text-red-700 hover:bg-red-50"
+                        >
+                            <Mic className="w-4 h-4 mr-2" />
+                            Gravar Áudio
+                        </Button>
+                        <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-blue-500 to-indigo-600 h-14 px-8 text-lg"
                         >

@@ -62,15 +62,15 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
-        // Reduzir resolução para upload mais rápido
-        const maxWidth = 1280;
+        // Resolução menor para upload mais rápido
+        const maxWidth = 800;
         const scale = Math.min(1, maxWidth / video.videoWidth);
         canvas.width = video.videoWidth * scale;
         canvas.height = video.videoHeight * scale;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Mostrar preview da foto capturada
+        // Compressão maior para upload rápido
         canvas.toBlob((blob) => {
             if (blob) {
                 const imageUrl = URL.createObjectURL(blob);
@@ -78,7 +78,7 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                 setCapturedBlob(blob);
                 stopCamera();
             }
-        }, "image/jpeg", 0.85);
+        }, "image/jpeg", 0.7);
     };
 
     const retakePhoto = () => {

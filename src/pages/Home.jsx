@@ -147,6 +147,8 @@ export default function Home() {
         { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600" },
     ];
 
+    const bigButton = { name: "Busca de Multas", href: "BuscaMultas", icon: Car, color: "from-red-500 via-orange-500 to-amber-500" };
+
     const quickButtons = [
         { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
         { name: "Veículos", href: "Veiculos", icon: Car },
@@ -222,6 +224,14 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+
+                {/* Botão Grande - Busca de Multas */}
+                <Link to={createPageUrl(bigButton.href)}>
+                    <Button className={`w-full h-20 bg-gradient-to-br ${bigButton.color} hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl border-2 border-white/30 flex items-center justify-center gap-3 rounded-2xl`}>
+                        <bigButton.icon className="w-8 h-8 text-white drop-shadow-md" />
+                        <span className="text-lg font-bold text-white drop-shadow-md">{bigButton.name}</span>
+                    </Button>
+                </Link>
 
                 {/* Botões Rápidos */}
                 <div className="grid grid-cols-2 gap-3">

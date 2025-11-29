@@ -51,24 +51,6 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         setFacingMode(prev => prev === "environment" ? "user" : "environment");
     };
 
-    // Aplicar filtros de melhoria na imagem (simplificado para performance)
-    const enhanceImage = (ctx, width, height) => {
-        const imageData = ctx.getImageData(0, 0, width, height);
-        const data = imageData.data;
-
-        // Aumentar brilho e contraste
-        const brightness = 10;
-        const contrast = 1.15;
-
-        for (let i = 0; i < data.length; i += 4) {
-            data[i] = Math.max(0, Math.min(255, ((data[i] - 128) * contrast + 128) + brightness));
-            data[i + 1] = Math.max(0, Math.min(255, ((data[i + 1] - 128) * contrast + 128) + brightness));
-            data[i + 2] = Math.max(0, Math.min(255, ((data[i + 2] - 128) * contrast + 128) + brightness));
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-    };
-
     const capturePhoto = () => {
         if (!videoRef.current || !canvasRef.current) return;
 

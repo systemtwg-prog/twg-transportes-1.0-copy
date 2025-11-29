@@ -40,6 +40,18 @@ export default function RomaneiosGerados() {
         queryFn: () => base44.entities.NotaFiscal.list("-created_date")
     });
 
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const { data: veiculos = [] } = useQuery({
+        queryKey: ["veiculos-romaneios"],
+        queryFn: () => base44.entities.Veiculo.list()
+    });
+
+    const config = configs[0] || {};
+
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.RomaneioGerado.update(id, data),
         onSuccess: () => {

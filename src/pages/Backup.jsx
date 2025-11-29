@@ -41,8 +41,15 @@ export default function Backup() {
     const [importFile, setImportFile] = useState(null);
 
     const { data: currentUser, isLoading: loadingUser } = useQuery({
-        queryKey: ["current-user"],
-        queryFn: () => base44.auth.me()
+        queryKey: ["current-user-backup"],
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch (e) {
+                console.log("Erro ao carregar usuário:", e);
+                return null;
+            }
+        }
     });
 
     const isAdmin = currentUser?.role === "admin";

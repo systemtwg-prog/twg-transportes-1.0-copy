@@ -26,10 +26,25 @@ export default function PersonalizarHome() {
     const queryClient = useQueryClient();
     const [saving, setSaving] = useState(false);
 
-    const { data: user } = useQuery({
-        queryKey: ["current-user"],
-        queryFn: () => base44.auth.me()
+    const { data: user, isLoading } = useQuery({
+        queryKey: ["current-user-personalize"],
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch (e) {
+                console.log("Erro ao carregar usuário:", e);
+                return null;
+            }
+        }
     });
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-4 md:p-8 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
 
     const [widgets, setWidgets] = useState(["stats", "menu", "ultimas_ordens"]);
 

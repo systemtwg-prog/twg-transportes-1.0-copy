@@ -58,18 +58,44 @@ export default function AprovacaoUsuarios() {
     });
     const queryClient = useQueryClient();
 
-    const { data: currentUser, isLoading: loadingUser } = useQuery({
+    const { data: currentUser, isLoading: loadingUser, isError: errorUser } = useQuery({
         queryKey: ["current-user-approval"],
-        queryFn: () => base44.auth.me()
-    });
-
-    const { data: usuarios = [], isLoading } = useQuery({
-        queryKey: ["usuarios"],
-        queryFn: () => base44.entities.User.list("-created_date"),
-        enabled: currentUser?.role === "admin" // Só busca se for admin
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch (e) {
+                console.log("Erro ao carregar usuário:", e);
+                return null;
+            }
+        }
     });
 
     const isAdmin = currentUser?.role === "admin";
+
+    const { data: usuarios = [], isLoading } = useQuery({
+        queryKey: ["usuarios"],
+        queryFn: async () => {
+            try {
+                return await base44.entities.User.list("-created_date");
+            } catch (e) {
+                console.log("Erro ao carregar usuários:", e);
+                return [];
+            }
+        },
+        enabled: isAdmin
+    });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    // Carregar config de aprovação automática
+    React.useEffect(() => {
+        if (configs[0]?.auto_approval_config) {
+            setAutoApprovalConfig(configs[0].auto_approval_config);
+        }
+    }, [configs]);
 
     // Aguardar carregamento do usuário
     if (loadingUser) {
@@ -94,18 +120,6 @@ export default function AprovacaoUsuarios() {
             </div>
         );
     }
-
-    const { data: configs = [] } = useQuery({
-        queryKey: ["configuracoes"],
-        queryFn: () => base44.entities.Configuracoes.list()
-    });
-
-    // Carregar config de aprovação automática
-    React.useEffect(() => {
-        if (configs[0]?.auto_approval_config) {
-            setAutoApprovalConfig(configs[0].auto_approval_config);
-        }
-    }, [configs]);
 
     const saveAutoConfigMutation = useMutation({
         mutationFn: async (config) => {

@@ -69,18 +69,23 @@ export default function BuscaMultas() {
         
         try {
             const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Você é um sistema de consulta de multas de veículos.
-Simule uma consulta de multas para o veículo:
+                prompt: `Busque multas de trânsito REAIS e ATUAIS para o veículo brasileiro:
 - Placa: ${veiculoInfo?.placa || ""}
 - RENAVAM: ${veiculoInfo?.renavam || ""}
 
-Gere de 0 a 3 multas fictícias realistas para fins de demonstração, com:
-- Infrações comuns de trânsito (excesso de velocidade, estacionamento irregular, etc)
-- Valores realistas de multas brasileiras
-- Datas nos últimos 6 meses
-- Locais em São Paulo
+IMPORTANTE: Consulte as seguintes fontes oficiais para buscar multas:
+1. DETRAN de todos os estados brasileiros (SP, RJ, MG, PR, SC, RS, BA, PE, CE, GO, etc)
+2. DER (Departamento de Estradas de Rodagem) de cada estado
+3. DSV (Departamento de Segurança Viária)
+4. DNIT (Departamento Nacional de Infraestrutura de Transportes)
+5. PRF (Polícia Rodoviária Federal) - portal.prf.gov.br
+6. Prefeituras das principais cidades (São Paulo, Rio, BH, Curitiba, Porto Alegre, etc)
+7. Concessionárias de rodovias (CCR, Ecorodovias, Arteris, etc)
+8. SENATRAN (Secretaria Nacional de Trânsito)
 
-Se não houver multas, retorne array vazio.`,
+Busque multas dos últimos 24 meses (2023 e 2024). Retorne TODAS as multas encontradas com dados reais e atualizados.
+Se não encontrar multas reais para esta placa, retorne array vazio.`,
+                add_context_from_internet: true,
                 response_json_schema: {
                     type: "object",
                     properties: {

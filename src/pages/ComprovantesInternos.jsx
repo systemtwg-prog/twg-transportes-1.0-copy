@@ -702,6 +702,8 @@ export default function ComprovantesInternos() {
                 <div className="fixed inset-0 z-[100]">
                     <QuickPhotoCapture
                         onCapture={async (file) => {
+                            setShowCamera(false);
+                            toast.info("Enviando foto...");
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                                 if (cameraTarget === 'form') {
@@ -709,7 +711,7 @@ export default function ComprovantesInternos() {
                                         ...prev,
                                         arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
                                     }));
-                                    toast.success("Foto adicionada!");
+                                    toast.success("Foto adicionada ao formulário!");
                                 } else if (cameraTarget === 'massa') {
                                     setItensMassa(prev => [...prev, {
                                         id: Date.now() + Math.random(),
@@ -718,13 +720,12 @@ export default function ComprovantesInternos() {
                                         nome: file.name,
                                         tipo: file.type
                                     }]);
-                                    toast.success("Foto adicionada!");
+                                    toast.success("Foto adicionada em massa!");
                                 }
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");
                             }
-                            setShowCamera(false);
                         }}
                         onClose={() => setShowCamera(false)}
                     />

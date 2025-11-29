@@ -438,6 +438,13 @@ export default function ComprovantesInternos() {
                             Em Massa
                         </Button>
                         <Button 
+                            onClick={() => { setCameraTarget(null); setShowCamera(true); }}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 h-14 px-6 text-lg"
+                        >
+                            <Camera className="w-6 h-6 mr-2" />
+                            Foto Rápida
+                        </Button>
+                        <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg"
                         >
@@ -697,15 +704,16 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
-            {/* Quick Photo Camera */}
+            {/* Quick Photo Camera - Salva direto como comprovante */}
             {showCamera && (
                 <div className="fixed inset-0 z-[100]">
                     <QuickPhotoCapture
                         onCapture={async (file) => {
                             setShowCamera(false);
-                            toast.info("Enviando foto...");
+                            toast.info("Salvando comprovante...");
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                
                                 if (cameraTarget === 'form') {
                                     setForm(prev => ({
                                         ...prev,
@@ -721,6 +729,15 @@ export default function ComprovantesInternos() {
                                         tipo: file.type
                                     }]);
                                     toast.success("Foto adicionada em massa!");
+                                } else {
+                                    // Salva direto como comprovante novo (comportamento padrão ao clicar no botão câmera)
+                                    await base44.entities.ComprovanteInterno.create({
+                                        nota_fiscal: "",
+                                        data: format(new Date(), "yyyy-MM-dd"),
+                                        arquivos: [{ nome: file.name, url: file_url, tipo: file.type }]
+                                    });
+                                    queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+                                    toast.success("Comprovante salvo com sucesso!");
                                 }
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);

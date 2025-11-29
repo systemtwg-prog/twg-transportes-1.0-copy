@@ -11,13 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter, Settings, Mic, MicOff, Navigation, MapPin, Loader2
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
+import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { toast } from "sonner";
 
 export default function RomaneiosGerados() {
     const [filterData, setFilterData] = useState("");
@@ -34,6 +36,13 @@ export default function RomaneiosGerados() {
         motorista_nome: [],
         status: []
     });
+    const [showPrintConfig, setShowPrintConfig] = useState(false);
+    const [buscaTransportadora, setBuscaTransportadora] = useState("");
+    const [buscandoTransp, setBuscandoTransp] = useState(false);
+    const [resultadoBusca, setResultadoBusca] = useState(null);
+    const [showResultadoBusca, setShowResultadoBusca] = useState(false);
+    const [gravandoBusca, setGravandoBusca] = useState(false);
+    const [mediaRecorderBusca, setMediaRecorderBusca] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: romaneios = [], isLoading } = useQuery({
@@ -136,6 +145,154 @@ export default function RomaneiosGerados() {
     }, [filtered]);
 
     const placasUnicas = [...new Set(romaneios.map(r => r.placa).filter(Boolean))];
+
+    // Funções de busca de transportadora
+    const buscarTransportadoraOnline = async () => {
+        if (!buscaTransportadora.trim()) {
+            toast.error("Digite o nome da transportadora");
+            return;
+        }
+        
+        setBuscandoTransp(true);
+        toast.info("Buscando endereço...");
+        
+        try {
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Busque o endereço da transportadora ou empresa "${buscaTransportadora}" em São Paulo. Retorne o endereço completo, telefone e site se disponível.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        nome_empresa: { type: "string" },
+                        endereco: { type: "string" },
+                        bairro: { type: "string" },
+                        cidade: { type: "string" },
+                        estado: { type: "string" },
+                        cep: { type: "string" },
+                        telefone: { type: "string" },
+                        site: { type: "string" },
+                        encontrado: { type: "boolean" }
+                    }
+                }
+            });
+
+            if (resultado?.encontrado) {
+                const enderecoCompleto = [resultado.endereco, resultado.bairro, resultado.cidade, resultado.estado].filter(Boolean).join(", ");
+                setResultadoBusca({ ...resultado, enderecoCompleto });
+                setShowResultadoBusca(true);
+                toast.success("Endereço encontrado!");
+            } else {
+                toast.error("Endereço não encontrado");
+            }
+        } catch (error) {
+            console.error("Erro na busca:", error);
+            toast.error("Erro ao buscar endereço");
+        }
+        
+        setBuscandoTransp(false);
+    };
+
+    const iniciarGravacaoBusca = async () => {
+        if (gravandoBusca) {
+            if (mediaRecorderBusca) mediaRecorderBusca.stop();
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(track => track.stop());
+                setGravandoBusca(false);
+                setBuscandoTransp(true);
+
+                const audioBlob = new Blob(chunks, { type: "audio/webm" });
+                const file = new File([audioBlob], "busca_voz.webm", { type: "audio/webm" });
+
+                try {
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                    const resultado = await base44.integrations.Core.InvokeLLM({
+                        prompt: "Transcreva este áudio e extraia o nome da empresa ou transportadora mencionada.",
+                        file_urls: [file_url],
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                transcricao: { type: "string" },
+                                nome_empresa: { type: "string" }
+                            }
+                        }
+                    });
+
+                    if (resultado?.nome_empresa || resultado?.transcricao) {
+                        setBuscaTransportadora(resultado.nome_empresa || resultado.transcricao);
+                        toast.success("Áudio transcrito!");
+                    }
+                } catch (error) {
+                    toast.error("Erro ao processar áudio");
+                }
+                setBuscandoTransp(false);
+            };
+
+            mediaRecorder.start();
+            setMediaRecorderBusca(mediaRecorder);
+            setGravandoBusca(true);
+            toast.info("Fale o nome da transportadora...");
+        } catch (error) {
+            toast.error("Permita o acesso ao microfone");
+        }
+    };
+
+    const abrirRotaWaze = (endereco) => {
+        if (!endereco) return;
+        window.open(`https://waze.com/ul?q=${encodeURIComponent(endereco)}&navigate=yes`, "_blank");
+    };
+
+    const abrirRotaGoogleMaps = (endereco) => {
+        if (!endereco) return;
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(endereco)}`, "_blank");
+    };
+
+    const handlePrintDashboard = (printConfig = {}) => {
+        const cfg = {
+            marginTop: printConfig.marginTop ?? 5,
+            fontSize: printConfig.fontSize ?? 9,
+            columns: printConfig.columns ?? 2,
+        };
+
+        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        if (!winPrint) return;
+
+        let html = '';
+        Object.entries(dashboard.porPlaca).forEach(([placa, dados]) => {
+            const veiculo = veiculos.find(v => v.placa === placa);
+            html += `
+                <div class="card">
+                    <div class="header">🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</div>
+                    <div class="content">Notas: ${dados.notas} | Entregas: ${dados.entregas} | Peso: ${dados.peso.toFixed(1)}kg</div>
+                </div>
+            `;
+        });
+
+        winPrint.document.write(`
+            <html><head><title>Dashboard Romaneios</title>
+            <style>
+                body { font-family: Arial; padding: ${cfg.marginTop}mm; font-size: ${cfg.fontSize}px; }
+                .grid { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: 8px; }
+                .card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; }
+                .header { background: #2563eb; color: white; padding: 4px 8px; font-weight: bold; }
+                .content { padding: 8px; }
+            </style></head>
+            <body><h2>Resumo por Placa - ${format(new Date(), "dd/MM/yyyy")}</h2><div class="grid">${html}</div></body></html>
+        `);
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
@@ -833,6 +990,68 @@ export default function RomaneiosGerados() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Dialog Resultado da Busca */}
+            <Dialog open={showResultadoBusca} onOpenChange={setShowResultadoBusca}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-amber-600" />
+                            Endereço Encontrado
+                        </DialogTitle>
+                    </DialogHeader>
+                    {resultadoBusca && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                <p className="font-semibold text-amber-800 text-lg">{resultadoBusca.nome_empresa}</p>
+                                <p className="text-slate-700 mt-2">{resultadoBusca.enderecoCompleto}</p>
+                                {resultadoBusca.telefone && (
+                                    <p className="text-sm text-slate-600 mt-1">📞 {resultadoBusca.telefone}</p>
+                                )}
+                                {resultadoBusca.site && (
+                                    <a href={resultadoBusca.site} target="_blank" className="text-sm text-blue-600 hover:underline mt-1 block">
+                                        🌐 {resultadoBusca.site}
+                                    </a>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaWaze(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    className="flex-1 bg-blue-500 hover:bg-blue-600"
+                                >
+                                    <Navigation className="w-5 h-5 mr-2" />
+                                    Waze
+                                </Button>
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaGoogleMaps(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    variant="outline"
+                                    className="flex-1 border-green-500 text-green-600"
+                                >
+                                    <MapPin className="w-5 h-5 mr-2" />
+                                    Maps
+                                </Button>
+                            </div>
+                            <Button variant="outline" onClick={() => setShowResultadoBusca(false)} className="w-full">
+                                Fechar
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Print Config Dialog */}
+            <PrintConfigDialog
+                open={showPrintConfig}
+                onOpenChange={setShowPrintConfig}
+                onPrint={handlePrintDashboard}
+                configKey="romaneiosGeradosDashboardPrint"
+            />
 
             {/* Dialog Editar Romaneio */}
             <Dialog open={showEdit} onOpenChange={setShowEdit}>

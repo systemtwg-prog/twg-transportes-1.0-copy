@@ -13,13 +13,14 @@ import {
     Navigation, MapPin, Truck, Package, ExternalLink, 
     Trash2, Plus, Route, CheckCircle, Camera, Sparkles, 
     ArrowUp, ArrowDown, GripVertical, Loader2, Car, FileText,
-    Upload, Pencil, MessageSquare, BarChart3, Search, Mic, MicOff, Building2, Save
+    Upload, Pencil, MessageSquare, BarChart3, Search, Mic, MicOff, Building2, Save, Settings, Printer
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import AudioRecorder from "@/components/shared/AudioRecorder";
 import ScannerCamera from "@/components/shared/ScannerCamera";
+import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
 
 export default function RotasGPS() {
     const [selectedRomaneio, setSelectedRomaneio] = useState(null);
@@ -103,6 +104,15 @@ export default function RotasGPS() {
     const [showVozDialog, setShowVozDialog] = useState(false);
     const [processandoVoz, setProcessandoVoz] = useState(false);
     const [mediaRecorderVoz, setMediaRecorderVoz] = useState(null);
+    
+    // Estados para pesquisa de transportadora
+    const [showPrintConfig, setShowPrintConfig] = useState(false);
+    const [buscaTransportadora, setBuscaTransportadora] = useState("");
+    const [buscandoTransp, setBuscandoTransp] = useState(false);
+    const [resultadoBusca, setResultadoBusca] = useState(null);
+    const [showResultadoBusca, setShowResultadoBusca] = useState(false);
+    const [gravandoBusca, setGravandoBusca] = useState(false);
+    const [mediaRecorderBusca, setMediaRecorderBusca] = useState(null);
 
     // Dashboard por veículo
     const dashboardPorVeiculo = useMemo(() => {
@@ -741,6 +751,154 @@ Reorganize na ordem mais eficiente.`,
         entregue: "bg-green-100 text-green-800"
     };
 
+    // Função de busca de transportadora
+    const buscarTransportadoraOnline = async () => {
+        if (!buscaTransportadora.trim()) {
+            toast.error("Digite o nome da transportadora");
+            return;
+        }
+        
+        setBuscandoTransp(true);
+        toast.info("Buscando endereço...");
+        
+        try {
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Busque o endereço da transportadora ou empresa "${buscaTransportadora}" em São Paulo. Retorne o endereço completo, telefone e site se disponível.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        nome_empresa: { type: "string" },
+                        endereco: { type: "string" },
+                        bairro: { type: "string" },
+                        cidade: { type: "string" },
+                        estado: { type: "string" },
+                        cep: { type: "string" },
+                        telefone: { type: "string" },
+                        site: { type: "string" },
+                        encontrado: { type: "boolean" }
+                    }
+                }
+            });
+
+            if (resultado?.encontrado) {
+                const enderecoCompleto = [resultado.endereco, resultado.bairro, resultado.cidade, resultado.estado].filter(Boolean).join(", ");
+                setResultadoBusca({ ...resultado, enderecoCompleto });
+                setShowResultadoBusca(true);
+                toast.success("Endereço encontrado!");
+            } else {
+                toast.error("Endereço não encontrado");
+            }
+        } catch (error) {
+            console.error("Erro na busca:", error);
+            toast.error("Erro ao buscar endereço");
+        }
+        
+        setBuscandoTransp(false);
+    };
+
+    // Gravar áudio para busca
+    const iniciarGravacaoBusca = async () => {
+        if (gravandoBusca) {
+            if (mediaRecorderBusca) {
+                mediaRecorderBusca.stop();
+            }
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(track => track.stop());
+                setGravandoBusca(false);
+                setBuscandoTransp(true);
+
+                const audioBlob = new Blob(chunks, { type: "audio/webm" });
+                const file = new File([audioBlob], "busca_voz.webm", { type: "audio/webm" });
+
+                try {
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                    const resultado = await base44.integrations.Core.InvokeLLM({
+                        prompt: "Transcreva este áudio e extraia o nome da empresa ou transportadora mencionada.",
+                        file_urls: [file_url],
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                transcricao: { type: "string" },
+                                nome_empresa: { type: "string" }
+                            }
+                        }
+                    });
+
+                    if (resultado?.nome_empresa || resultado?.transcricao) {
+                        setBuscaTransportadora(resultado.nome_empresa || resultado.transcricao);
+                        toast.success("Áudio transcrito!");
+                    }
+                } catch (error) {
+                    console.error("Erro ao processar áudio:", error);
+                    toast.error("Erro ao processar áudio");
+                }
+                setBuscandoTransp(false);
+            };
+
+            mediaRecorder.start();
+            setMediaRecorderBusca(mediaRecorder);
+            setGravandoBusca(true);
+            toast.info("Fale o nome da transportadora...");
+        } catch (error) {
+            console.error("Erro ao gravar:", error);
+            toast.error("Permita o acesso ao microfone");
+        }
+    };
+
+    // Impressão do dashboard
+    const handlePrintDashboard = (printConfig = {}) => {
+        const cfg = {
+            marginTop: printConfig.marginTop ?? 5,
+            marginBottom: printConfig.marginBottom ?? 5,
+            marginLeft: printConfig.marginLeft ?? 5,
+            marginRight: printConfig.marginRight ?? 5,
+            fontSize: printConfig.fontSize ?? 9,
+            columns: printConfig.columns ?? 2,
+        };
+
+        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        if (!winPrint) return;
+
+        let html = '';
+        Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
+            if (placa === "COLETAS") return;
+            const veiculo = veiculos.find(v => v.placa === placa);
+            html += `
+                <div class="card">
+                    <div class="header">🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</div>
+                    <div class="content">Entregas: ${dados.entregas} | Notas: ${dados.notas?.length || 0}</div>
+                </div>
+            `;
+        });
+
+        winPrint.document.write(`
+            <html><head><title>Dashboard Rotas</title>
+            <style>
+                body { font-family: Arial; padding: ${cfg.marginTop}mm; font-size: ${cfg.fontSize}px; }
+                .grid { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: 8px; }
+                .card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; }
+                .header { background: #2563eb; color: white; padding: 4px 8px; font-weight: bold; }
+                .content { padding: 8px; }
+            </style></head>
+            <body><h2>Pendências por Veículo - ${format(new Date(), "dd/MM/yyyy")}</h2><div class="grid">${html}</div></body></html>
+        `);
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
+
     const [selectedRomaneioGerado, setSelectedRomaneioGerado] = useState("");
     const notasDoRomaneioGerado = selectedRomaneioGerado 
         ? romaneiosGerados.find(r => r.id === selectedRomaneioGerado)?.notas_ids?.map(id => notasFiscais.find(n => n.id === id)).filter(Boolean) || []
@@ -760,14 +918,69 @@ Reorganize na ordem mais eficiente.`,
                     </div>
                 </div>
 
+                {/* Busca de Transportadora */}
+                <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-0 shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-amber-600" />
+                            Pesquisar Transportadora
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <Input
+                                    placeholder="Nome da transportadora..."
+                                    value={buscaTransportadora}
+                                    onChange={(e) => setBuscaTransportadora(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && buscarTransportadoraOnline()}
+                                    className="pl-9 bg-white"
+                                />
+                            </div>
+                            <Button
+                                onClick={iniciarGravacaoBusca}
+                                className={gravandoBusca ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-purple-500 hover:bg-purple-600"}
+                                disabled={buscandoTransp}
+                            >
+                                {gravandoBusca ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                            </Button>
+                            <Button
+                                onClick={buscarTransportadoraOnline}
+                                className="bg-amber-600 hover:bg-amber-700"
+                                disabled={buscandoTransp || !buscaTransportadora.trim()}
+                            >
+                                {buscandoTransp ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <>
+                                        <Search className="w-5 h-5 mr-1" />
+                                        Procurar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Dashboard por Veículo */}
                 {Object.keys(dashboardPorVeiculo).length > 0 && (
                     <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-0 shadow-lg">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-indigo-600" />
-                                Pendências por Veículo
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-indigo-600" />
+                                    Pendências por Veículo
+                                </CardTitle>
+                                <div className="flex gap-2">
+                                    <Button onClick={() => setShowPrintConfig(true)} size="sm" variant="outline" className="border-indigo-500 text-indigo-600">
+                                        <Settings className="w-4 h-4" />
+                                    </Button>
+                                    <Button onClick={() => handlePrintDashboard()} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                                        <Printer className="w-4 h-4 mr-1" /> Imprimir
+                                    </Button>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -1139,6 +1352,72 @@ Reorganize na ordem mais eficiente.`,
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Dialog Resultado da Busca */}
+            <Dialog open={showResultadoBusca} onOpenChange={setShowResultadoBusca}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-amber-600" />
+                            Endereço Encontrado
+                        </DialogTitle>
+                    </DialogHeader>
+                    {resultadoBusca && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                <p className="font-semibold text-amber-800 text-lg">{resultadoBusca.nome_empresa}</p>
+                                <p className="text-slate-700 mt-2">{resultadoBusca.enderecoCompleto}</p>
+                                {resultadoBusca.telefone && (
+                                    <p className="text-sm text-slate-600 mt-1">📞 {resultadoBusca.telefone}</p>
+                                )}
+                                {resultadoBusca.site && (
+                                    <a href={resultadoBusca.site} target="_blank" className="text-sm text-blue-600 hover:underline mt-1 block">
+                                        🌐 {resultadoBusca.site}
+                                    </a>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaWaze(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    className="flex-1 bg-blue-500 hover:bg-blue-600"
+                                >
+                                    <Navigation className="w-5 h-5 mr-2" />
+                                    Abrir no Waze
+                                </Button>
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaGoogleMaps(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    variant="outline"
+                                    className="flex-1 border-green-500 text-green-600"
+                                >
+                                    <MapPin className="w-5 h-5 mr-2" />
+                                    Google Maps
+                                </Button>
+                            </div>
+                            <Button 
+                                variant="outline"
+                                onClick={() => setShowResultadoBusca(false)}
+                                className="w-full"
+                            >
+                                Fechar
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Print Config Dialog */}
+            <PrintConfigDialog
+                open={showPrintConfig}
+                onOpenChange={setShowPrintConfig}
+                onPrint={handlePrintDashboard}
+                configKey="rotasGPSDashboardPrint"
+            />
 
             {/* Dialog Selecionar Endereço */}
             <Dialog open={showSelecionarEndereco} onOpenChange={setShowSelecionarEndereco}>

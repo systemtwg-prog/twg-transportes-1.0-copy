@@ -72,79 +72,79 @@ function FlipbookViewer({ files, onClose }) {
                 )}
             </div>
 
-            {/* Controles inferiores - Zoom, Rotação e Download */}
-            <div className="p-4 bg-gradient-to-t from-black/80 to-transparent">
-                {/* Barra de controles */}
-                <div className="flex items-center justify-center gap-3 mb-4">
+            {/* Controles - posicionados mais acima */}
+            <div className="absolute bottom-24 left-0 right-0 flex flex-col items-center gap-3 px-4">
+                {/* Barra de controles compacta */}
+                <div className="flex items-center justify-center gap-2 bg-black/60 rounded-full px-4 py-2">
                     {/* Zoom Out */}
                     <Button 
                         onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} 
-                        className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
+                        className="bg-white/20 hover:bg-white/30 text-white h-10 w-10 rounded-full p-0"
                     >
-                        <ZoomOut className="w-7 h-7" />
+                        <ZoomOut className="w-5 h-5" />
                     </Button>
                     
                     {/* Indicador de Zoom */}
-                    <div className="bg-white/20 px-4 py-2 rounded-full text-white font-bold min-w-[80px] text-center">
+                    <div className="bg-white/20 px-3 py-1 rounded-full text-white font-bold text-sm min-w-[60px] text-center">
                         {Math.round(zoom * 100)}%
                     </div>
                     
                     {/* Zoom In */}
                     <Button 
                         onClick={() => setZoom(z => Math.min(3, z + 0.25))} 
-                        className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
+                        className="bg-white/20 hover:bg-white/30 text-white h-10 w-10 rounded-full p-0"
                     >
-                        <ZoomIn className="w-7 h-7" />
+                        <ZoomIn className="w-5 h-5" />
                     </Button>
                     
                     {/* Separador */}
-                    <div className="w-px h-10 bg-white/30 mx-2" />
+                    <div className="w-px h-6 bg-white/30 mx-1" />
                     
                     {/* Rotacionar */}
                     {!isPdf && (
                         <Button 
                             onClick={rotateImage} 
-                            className="bg-amber-500 hover:bg-amber-600 text-white h-14 w-14 rounded-full"
+                            className="bg-amber-500 hover:bg-amber-600 text-white h-10 w-10 rounded-full p-0"
                         >
-                            <RotateCw className="w-7 h-7" />
+                            <RotateCw className="w-5 h-5" />
                         </Button>
                     )}
                     
                     {/* Download */}
                     <a href={currentFile?.url} download target="_blank" rel="noopener noreferrer">
-                        <Button className="bg-green-500 hover:bg-green-600 text-white h-14 w-14 rounded-full">
-                            <Download className="w-7 h-7" />
+                        <Button className="bg-green-500 hover:bg-green-600 text-white h-10 w-10 rounded-full p-0">
+                            <Download className="w-5 h-5" />
                         </Button>
                     </a>
                 </div>
 
                 {/* Navegação entre páginas */}
                 {files.length > 1 && (
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="flex items-center justify-center gap-3 bg-black/60 rounded-full px-4 py-2">
                         <Button 
                             onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                             disabled={currentPage === 0}
-                            className="bg-white/20 hover:bg-white/30 text-white h-12 px-6 rounded-full disabled:opacity-30"
+                            className="bg-white/20 hover:bg-white/30 text-white h-9 px-4 rounded-full disabled:opacity-30 text-sm"
                         >
-                            <ChevronLeft className="w-6 h-6 mr-1" />
+                            <ChevronLeft className="w-4 h-4 mr-1" />
                             Anterior
                         </Button>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5">
                             {files.map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setCurrentPage(i)}
-                                    className={`w-3 h-3 rounded-full transition-colors ${i === currentPage ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
+                                    className={`w-2.5 h-2.5 rounded-full transition-colors ${i === currentPage ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
                                 />
                             ))}
                         </div>
                         <Button 
                             onClick={() => setCurrentPage(p => Math.min(files.length - 1, p + 1))}
                             disabled={currentPage === files.length - 1}
-                            className="bg-white/20 hover:bg-white/30 text-white h-12 px-6 rounded-full disabled:opacity-30"
+                            className="bg-white/20 hover:bg-white/30 text-white h-9 px-4 rounded-full disabled:opacity-30 text-sm"
                         >
                             Próximo
-                            <ChevronRight className="w-6 h-6 ml-1" />
+                            <ChevronRight className="w-4 h-4 ml-1" />
                         </Button>
                     </div>
                 )}

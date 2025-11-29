@@ -603,43 +603,28 @@ export default function ComprovantesInternos() {
                                                 </div>
                                             )}
                                             <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
-                                            
-                                            {/* Preview da imagem abaixo da data */}
-                                            {comprovante.arquivos?.[0]?.url && (
-                                                <div 
-                                                    className="mt-2 w-20 h-14 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setViewFiles(comprovante.arquivos);
-                                                    }}
-                                                >
-                                                    <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
                                         </div>
                                         <Badge variant="outline">
                                             {comprovante.arquivos?.length || 0} arquivo(s)
                                         </Badge>
                                     </div>
 
-                                    {/* Preview da imagem grande */}
-                                    <div className="mb-3">
-                                        <div 
-                                            className="w-full h-32 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (comprovante.arquivos?.length > 0) setViewFiles(comprovante.arquivos);
-                                            }}
-                                        >
-                                            {comprovante.arquivos?.[0]?.tipo?.startsWith("image/") || comprovante.arquivos?.[0]?.url ? (
-                                                <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <File className="w-10 h-10 text-slate-300" />
-                                                    <span className="text-slate-400 text-sm ml-2">Sem imagem</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                    {/* Preview da imagem - largura total do cartão */}
+                                    <div 
+                                        className="w-full h-44 bg-slate-100 rounded-xl overflow-hidden cursor-pointer mb-3"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (comprovante.arquivos?.length > 0) setViewFiles(comprovante.arquivos);
+                                        }}
+                                    >
+                                        {comprovante.arquivos?.[0]?.url ? (
+                                            <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <File className="w-10 h-10 text-slate-300" />
+                                                <span className="text-slate-400 text-sm ml-2">Sem imagem</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {comprovante.observacoes && (

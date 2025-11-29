@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Check, RotateCcw, Zap, Sun } from "lucide-react";
+import { Camera, X, RotateCcw } from "lucide-react";
 
 export default function QuickPhotoCapture({ onCapture, onClose }) {
     const [processing, setProcessing] = useState(false);

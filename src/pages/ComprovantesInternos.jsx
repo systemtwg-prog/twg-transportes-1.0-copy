@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import QuickPhotoCapture from "@/components/shared/QuickPhotoCapture";
+import FastPhotoCapture from "@/components/shared/FastPhotoCapture";
+import BulkPhotoCapture from "@/components/shared/BulkPhotoCapture";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -126,9 +127,6 @@ export default function ComprovantesInternos() {
     const [editingEmpresa, setEditingEmpresa] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
-    const [showCameraMassa, setShowCameraMassa] = useState(false);
-    const [fotosMassa, setFotosMassa] = useState([]);
-    const [processandoMassa, setProcessandoMassa] = useState(false);
     const [processandoIA, setProcessandoIA] = useState(false);
     const queryClient = useQueryClient();
 
@@ -298,50 +296,6 @@ export default function ComprovantesInternos() {
         return matchData && matchNF && matchEmpresa;
     });
 
-    // Função para processar fotos em massa
-    const processarFotosMassa = async () => {
-        if (fotosMassa.length === 0) return;
-        
-        setProcessandoMassa(true);
-        
-        try {
-            for (const foto of fotosMassa) {
-                // Processar cada foto com IA para extrair NF
-                const resultado = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
-                    Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).
-                    Retorne apenas o número encontrado.`,
-                    file_urls: [foto.url],
-                    response_json_schema: {
-                        type: "object",
-                        properties: {
-                            numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
-                            observacoes: { type: "string", description: "Outras informações relevantes" }
-                        }
-                    }
-                });
-
-                // Criar comprovante para cada foto
-                await base44.entities.ComprovanteInterno.create({
-                    nota_fiscal: resultado?.numero_nota || "A identificar",
-                    data: format(new Date(), "yyyy-MM-dd"),
-                    arquivos: [foto],
-                    observacoes: resultado?.observacoes || ""
-                });
-            }
-            
-            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
-            toast.success(`${fotosMassa.length} comprovante(s) criado(s)!`);
-            setFotosMassa([]);
-            setShowCameraMassa(false);
-        } catch (error) {
-            console.error("Erro ao processar fotos:", error);
-            toast.error("Erro ao processar algumas fotos");
-        }
-        
-        setProcessandoMassa(false);
-    };
-
     // Função para processar foto com IA
     const processarFotoComIA = async (file_url) => {
         setProcessandoIA(true);
@@ -403,7 +357,7 @@ export default function ComprovantesInternos() {
                     <div className="flex gap-2 flex-wrap">
                         <Button 
                             onClick={() => setShowCameraMassa(true)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
                         >
                             <Camera className="w-4 h-4 mr-2" />
                             Fotos em Massa
@@ -607,18 +561,16 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
-            {/* Quick Photo Camera */}
+            {/* Fast Photo Camera */}
             {showCamera && (
                 <div className="fixed inset-0 z-[100]">
-                    <QuickPhotoCapture
+                    <FastPhotoCapture
                         onCapture={async (file) => {
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                                 
-                                // Fecha a câmera primeiro
                                 setShowCamera(false);
                                 
-                                // Adiciona foto ao formulário
                                 setForm(prev => ({
                                     ...prev,
                                     arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
@@ -626,7 +578,6 @@ export default function ComprovantesInternos() {
                                 
                                 toast.success("Foto anexada!");
                                 
-                                // Processa com IA após adicionar
                                 await processarFotoComIA(file_url);
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
@@ -639,71 +590,35 @@ export default function ComprovantesInternos() {
                 </div>
             )}
 
-            {/* Camera para Fotos em Massa */}
+            {/* Bulk Photo Camera */}
             {showCameraMassa && (
-                <div className="fixed inset-0 z-[100] bg-black">
-                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/70 to-transparent">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => {
-                                if (fotosMassa.length > 0 && !processandoMassa) {
-                                    // Salvar fotos capturadas
-                                    processarFotosMassa();
-                                } else {
-                                    setShowCameraMassa(false);
-                                    setFotosMassa([]);
+                <div className="fixed inset-0 z-[100]">
+                    <BulkPhotoCapture
+                        onComplete={async (resultados) => {
+                            setShowCameraMassa(false);
+                            
+                            let criados = 0;
+                            for (const resultado of resultados) {
+                                if (resultado.url) {
+                                    try {
+                                        await base44.entities.ComprovanteInterno.create({
+                                            nota_fiscal: resultado.numero_nota || "Pendente",
+                                            data: format(new Date(), "yyyy-MM-dd"),
+                                            arquivos: [{ nome: "foto.jpg", url: resultado.url, tipo: "image/jpeg" }],
+                                            observacoes: resultado.observacoes || ""
+                                        });
+                                        criados++;
+                                    } catch (error) {
+                                        console.error("Erro ao criar comprovante:", error);
+                                    }
                                 }
-                            }} 
-                            className="text-white hover:bg-white/20"
-                        >
-                            <X className="w-6 h-6" />
-                        </Button>
-                        <div className="text-white text-center">
-                            <span className="text-lg font-bold">Fotos em Massa</span>
-                            <p className="text-xs text-white/70">{fotosMassa.length} foto(s) capturada(s)</p>
-                        </div>
-                        {fotosMassa.length > 0 && !processandoMassa && (
-                            <Button 
-                                onClick={processarFotosMassa}
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                            >
-                                <Save className="w-4 h-4 mr-1" />
-                                Salvar ({fotosMassa.length})
-                            </Button>
-                        )}
-                        {fotosMassa.length === 0 && <div className="w-24" />}
-                    </div>
-                    
-                    {processandoMassa ? (
-                        <div className="flex-1 flex items-center justify-center h-full">
-                            <div className="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
-                                <div className="animate-spin w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full" />
-                                <span className="text-slate-700 font-medium text-lg">Processando {fotosMassa.length} fotos...</span>
-                                <p className="text-sm text-slate-500">Identificando notas fiscais com IA</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <QuickPhotoCapture
-                            onCapture={async (file) => {
-                                try {
-                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                                    setFotosMassa(prev => [...prev, { nome: file.name, url: file_url, tipo: file.type }]);
-                                    toast.success(`Foto ${fotosMassa.length + 1} capturada!`);
-                                } catch (error) {
-                                    console.error("Erro ao fazer upload:", error);
-                                    toast.error("Erro ao salvar foto");
-                                }
-                            }}
-                            onClose={() => {
-                                if (fotosMassa.length > 0) {
-                                    processarFotosMassa();
-                                } else {
-                                    setShowCameraMassa(false);
-                                }
-                            }}
-                        />
-                    )}
+                            }
+                            
+                            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+                            toast.success(`${criados} comprovante(s) criado(s)!`);
+                        }}
+                        onClose={() => setShowCameraMassa(false)}
+                    />
                 </div>
             )}
 

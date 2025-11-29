@@ -58,7 +58,7 @@ export default function AprovacaoUsuarios() {
     });
     const queryClient = useQueryClient();
 
-    const { data: currentUser, isLoading: loadingUser, isError: errorUser } = useQuery({
+    const { data: currentUser, isLoading: loadingUser } = useQuery({
         queryKey: ["current-user-approval"],
         queryFn: async () => {
             try {
@@ -88,6 +88,31 @@ export default function AprovacaoUsuarios() {
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const saveAutoConfigMutation = useMutation({
+        mutationFn: async (config) => {
+            const existing = configs[0];
+            if (existing) {
+                return base44.entities.Configuracoes.update(existing.id, { auto_approval_config: config });
+            } else {
+                return base44.entities.Configuracoes.create({ auto_approval_config: config });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
+            toast.success("Configuração de aprovação automática salva!");
+            setShowAutoConfig(false);
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+            toast.success("Usuário atualizado!");
+            setShowPermissions(false);
+        }
     });
 
     // Carregar config de aprovação automática
@@ -120,31 +145,6 @@ export default function AprovacaoUsuarios() {
             </div>
         );
     }
-
-    const saveAutoConfigMutation = useMutation({
-        mutationFn: async (config) => {
-            const existing = configs[0];
-            if (existing) {
-                return base44.entities.Configuracoes.update(existing.id, { auto_approval_config: config });
-            } else {
-                return base44.entities.Configuracoes.create({ auto_approval_config: config });
-            }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
-            toast.success("Configuração de aprovação automática salva!");
-            setShowAutoConfig(false);
-        }
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["usuarios"] });
-            toast.success("Usuário atualizado!");
-            setShowPermissions(false);
-        }
-    });
 
     const handleAprovar = (user) => {
         updateMutation.mutate({

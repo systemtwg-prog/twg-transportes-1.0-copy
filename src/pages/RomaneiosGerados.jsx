@@ -159,6 +159,163 @@ export default function RomaneiosGerados() {
         cancelado: "Cancelado"
     };
 
+    const handleReprint = (romaneio) => {
+        const notasDoRomaneio = (romaneio.notas_ids || [])
+            .map(id => notasFiscais.find(n => n.id === id))
+            .filter(Boolean);
+
+        if (notasDoRomaneio.length === 0) {
+            alert("Nenhuma nota fiscal encontrada para este romaneio.");
+            return;
+        }
+
+        const winPrint = window.open('', '_blank', 'width=900,height=650');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
+
+        const NOTAS_POR_PAGINA = 6;
+        const totalPaginas = Math.ceil(notasDoRomaneio.length / NOTAS_POR_PAGINA);
+        let pagesHtml = "";
+
+        for (let pagina = 0; pagina < totalPaginas; pagina++) {
+            const notasDaPagina = notasDoRomaneio.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+            
+            let rowsHtml = "";
+            notasDaPagina.forEach((nota) => {
+                const remetenteNota = nota.remetente || "";
+                const destinatarioNota = nota.destinatario || "";
+                const numeroNf = nota.numero_nf || "";
+                const transportadoraNota = nota.transportadora || "";
+                const volumeNota = nota.volume ? nota.volume + " vol" : "";
+                
+                rowsHtml += '<tr class="nota-row">';
+                rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+                rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+                rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+                rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+                rowsHtml += '</tr>';
+                rowsHtml += '<tr class="transportadora-row">';
+                rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+                rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+                rowsHtml += '</tr>';
+            });
+
+            const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+            for (let i = 0; i < linhasRestantes; i++) {
+                rowsHtml += `
+                    <tr class="nota-row vazia">
+                        <td class="remetente"></td>
+                        <td class="destinatario"></td>
+                        <td class="nfe"></td>
+                        <td class="carimbo" rowspan="2"></td>
+                    </tr>
+                    <tr class="transportadora-row vazia">
+                        <td class="transportadora-nome" colspan="2"></td>
+                        <td class="volume"></td>
+                    </tr>
+                `;
+            }
+
+            const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+            const veiculoInfo = veiculos.find(v => v.placa === romaneio.placa);
+            const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : (romaneio.placa || "");
+
+            pagesHtml += `
+                <div class="page">
+                    <div class="header">
+                        <div class="logo">
+                            ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div class="logo-placeholder">TWG</div>'}
+                        </div>
+                        <div class="company-info">
+                            <p class="company-name">TWG TRANSPORTES</p>
+                            <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
+                            <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                        </div>
+                        <div class="romaneio-info">
+                            <p class="date">${formatDate(romaneio.data)}</p>
+                            <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
+                            <p class="motorista-veiculo">Motorista: ${romaneio.motorista_nome || "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="col-remetente">Remetente</th>
+                                <th class="col-destinatario">Destinatário</th>
+                                <th class="col-nfe">NFE</th>
+                                <th class="col-carimbo">Carimbo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Romaneio de Entregas - Reimpressão</title>
+                <style>
+                    @media print {
+                        @page { margin: 5mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .page { page-break-after: always; }
+                        .page:last-child { page-break-after: avoid; }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; }
+                    .page { padding: 5mm; height: 287mm; display: flex; flex-direction: column; }
+                    .header { display: flex; align-items: flex-start; margin-bottom: 8px; border-bottom: 3px solid #000; padding-bottom: 8px; }
+                    .logo { width: 120px; margin-right: 20px; }
+                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                    .logo-placeholder { width: 100px; height: 60px; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
+                    .company-info { flex: 1; }
+                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                    .romaneio-info { text-align: right; }
+                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
+                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
+                    .date { font-size: 22px; font-weight: bold; }
+                    
+                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    th { background: #d0d0d0; padding: 10px; text-align: left; border: 2px solid #000; font-size: 16px; }
+                    td { border: 2px solid #000; font-size: 14px; vertical-align: top; }
+                    
+                    .col-remetente { width: 18%; }
+                    .col-destinatario { width: 42%; }
+                    .col-nfe { width: 15%; text-align: center; }
+                    .col-carimbo { width: 25%; }
+                    
+                    .nota-row .remetente { padding: 6px 8px; font-size: 12px; font-weight: bold; text-align: center; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 8px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 20px; padding: 6px 8px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .carimbo { min-height: 90px; padding: 6px; vertical-align: middle; }
+
+                    .transportadora-row td { border-top: none; padding: 8px; text-align: center; vertical-align: middle; }
+                    .transportadora-row .transportadora-nome { font-size: 16px; font-weight: bold; line-height: 1.3; text-transform: uppercase; color: #333; }
+                    .transportadora-row .volume { text-align: center; font-size: 16px; font-weight: bold; }
+
+                    .nota-row.vazia td,
+                    .transportadora-row.vazia td { border: none !important; }
+                </style>
+            </head>
+            <body>
+                ${pagesHtml}
+            </body>
+            </html>
+        `);
+        
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">

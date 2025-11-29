@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter
 } from "lucide-react";
+import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -27,6 +28,12 @@ export default function NotasFiscais() {
     const [processingPaste, setProcessingPaste] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [columnFilters, setColumnFilters] = useState({
+        destinatario: [],
+        transportadora: [],
+        filial: [],
+        placa: []
+    });
     const [importing, setImporting] = useState(false);
     const [selecionados, setSelecionados] = useState([]);
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -742,11 +749,25 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         toast.success(`${atualizadas} nota(s) atualizada(s)!`);
     };
 
-    const filtered = notas.filter(n =>
-        n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
-        n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
-        n.transportadora?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = notas.filter(n => {
+        // Busca geral
+        const matchSearch = !search || 
+            n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
+            n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
+            n.transportadora?.toLowerCase().includes(search.toLowerCase());
+
+        // Filtros de coluna
+        const matchDestinatario = columnFilters.destinatario.length === 0 || 
+            columnFilters.destinatario.includes(n.destinatario || "");
+        const matchTransportadora = columnFilters.transportadora.length === 0 || 
+            columnFilters.transportadora.includes(n.transportadora || "");
+        const matchFilial = columnFilters.filial.length === 0 || 
+            columnFilters.filial.includes(n.filial || "");
+        const matchPlaca = columnFilters.placa.length === 0 || 
+            columnFilters.placa.includes(n.placa || "");
+
+        return matchSearch && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
+    });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
@@ -891,12 +912,56 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                             />
                                         </TableHead>
                                         <TableHead>NF</TableHead>
-                                        <TableHead>Destinatário</TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Destinatário
+                                                <TableColumnFilter
+                                                    data={notas}
+                                                    columnKey="destinatario"
+                                                    columnLabel="Destinatário"
+                                                    selectedValues={columnFilters.destinatario}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, destinatario: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
                                         <TableHead>Peso</TableHead>
                                         <TableHead>Volume</TableHead>
-                                        <TableHead>Transportadora</TableHead>
-                                        <TableHead>Filial</TableHead>
-                                        <TableHead>Placa</TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Transportadora
+                                                <TableColumnFilter
+                                                    data={notas}
+                                                    columnKey="transportadora"
+                                                    columnLabel="Transportadora"
+                                                    selectedValues={columnFilters.transportadora}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, transportadora: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Filial
+                                                <TableColumnFilter
+                                                    data={notas}
+                                                    columnKey="filial"
+                                                    columnLabel="Filial"
+                                                    selectedValues={columnFilters.filial}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, filial: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Placa
+                                                <TableColumnFilter
+                                                    data={notas}
+                                                    columnKey="placa"
+                                                    columnLabel="Placa"
+                                                    selectedValues={columnFilters.placa}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, placa: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
                                         <TableHead>Data</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>

@@ -117,23 +117,15 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                 </Button>
             </div>
 
-            {/* Camera View / Captured Image */}
+            {/* Camera View */}
             <div className="flex-1 flex items-center justify-center">
-                {capturedImage ? (
-                    <img 
-                        src={capturedImage.url} 
-                        alt="Captura" 
-                        className="max-w-full max-h-full object-contain"
-                    />
-                ) : (
-                    <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-full object-cover"
-                    />
-                )}
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                />
             </div>
 
             {/* Canvas oculto para processamento */}

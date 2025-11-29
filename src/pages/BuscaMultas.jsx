@@ -73,13 +73,17 @@ export default function BuscaMultas() {
 
 Para o veículo com placa ${veiculoInfo?.placa || ""} e RENAVAM ${veiculoInfo?.renavam || "N/I"}, gere uma lista de multas de demonstração realistas.
 
-GERE de 2 a 4 multas com os seguintes critérios:
-- Datas entre janeiro/2024 e novembro/2024
+GERE de 4 a 6 multas com os seguintes critérios:
+- Incluir multas de 2024 E 2025 (algumas já vencidas, outras a vencer)
+- Datas de infração entre janeiro/2024 e novembro/2025
+- Datas de vencimento: algumas já passadas (vencidas), outras futuras (a vencer em dezembro/2025, janeiro/2026)
 - Valores realistas: R$ 88,38 (leve), R$ 130,16 (média), R$ 195,23 (grave), R$ 293,47 (gravíssima)
 - Pontuação: 3 pts (leve), 4 pts (média), 5 pts (grave), 7 pts (gravíssima)
-- Infrações comuns: excesso de velocidade, estacionamento irregular, avanço de sinal, uso de celular, rodízio municipal
-- Locais em São Paulo e rodovias (Av. Paulista, Marginal Tietê, Rod. Bandeirantes, etc)
+- Infrações comuns: excesso de velocidade, estacionamento irregular, avanço de sinal, uso de celular, rodízio municipal, ultrapassagem proibida
+- Locais em São Paulo e rodovias (Av. Paulista, Marginal Tietê, Rod. Bandeirantes, Rod. Anhanguera, etc)
 - Órgãos: DETRAN-SP, CET, DER-SP, PRF, Prefeitura de SP
+
+IMPORTANTE: Gere pelo menos 2 multas de 2025, sendo 1 vencida e 1 a vencer.
 
 Use números de auto no formato: XX123456789 (2 letras + 9 números)
 Use datas no formato: YYYY-MM-DD`,

@@ -552,7 +552,7 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                                 >
                                                     <SelectTrigger className="w-32 h-8">
                                                         <Badge className={statusColors[multa.status]}>
-                                                            {multa.status}
+                                                            {statusLabels[multa.status] || multa.status}
                                                         </Badge>
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -565,6 +565,26 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                             </TableCell>
                                             <TableCell className="text-right font-bold">
                                                 {formatCurrency(multa.valor)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        onClick={() => handlePrintMulta(multa)}
+                                                        title="Imprimir"
+                                                    >
+                                                        <Printer className="w-4 h-4 text-blue-600" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        onClick={() => handleShareWhatsApp(multa)}
+                                                        title="Compartilhar WhatsApp"
+                                                    >
+                                                        <Share2 className="w-4 h-4 text-green-600" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

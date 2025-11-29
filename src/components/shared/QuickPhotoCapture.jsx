@@ -78,33 +78,23 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
+        // Reduzir resolução para upload mais rápido
+        const maxWidth = 1280;
+        const scale = Math.min(1, maxWidth / video.videoWidth);
+        canvas.width = video.videoWidth * scale;
+        canvas.height = video.videoHeight * scale;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Aplicar melhorias de imagem
-        try {
-            enhanceImage(ctx, canvas.width, canvas.height);
-        } catch (e) {
-            console.warn("Não foi possível aplicar melhorias:", e);
-        }
-
+        // Upload direto sem preview para ser mais rápido
         canvas.toBlob((blob) => {
             if (blob) {
-                const url = URL.createObjectURL(blob);
-                setCapturedImage({ url, blob });
+                const file = new File([blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
+                stopCamera();
+                onCapture(file);
             }
             setProcessing(false);
-        }, "image/jpeg", 0.92);
-    };
-
-    const confirmPhoto = () => {
-        if (!capturedImage) return;
-        
-        const file = new File([capturedImage.blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
-        stopCamera();
-        onCapture(file);
+        }, "image/jpeg", 0.85);
     };
 
     const retakePhoto = () => {

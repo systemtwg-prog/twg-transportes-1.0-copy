@@ -206,7 +206,11 @@ export default function Home() {
             // Agrupar por transportadora
             const agrupadas = {};
             notas.forEach(nota => {
-                const transp = nota.transportadora || "SEM TRANSPORTADORA";
+                let transp = nota.transportadora || "SEM TRANSPORTADORA";
+                // Substituir transportadora pelo destinatário quando for WASHINGTON GONZALES
+                if (transp.toUpperCase().includes("WASHINGTON GONZALES")) {
+                    transp = nota.destinatario || "SEM TRANSPORTADORA";
+                }
                 totalTransportadoras.add(transp);
                 if (!agrupadas[transp]) agrupadas[transp] = [];
                 agrupadas[transp].push(nota);

@@ -17,13 +17,20 @@ export default function Layout({ children, currentPageName }) {
         return () => window.removeEventListener("resize", checkDevice);
     }, []);
 
-    // Redirecionar para HomeDesktop se estiver no desktop e na Home
+    // Redirecionar para Home/HomeDesktop baseado no dispositivo
     useEffect(() => {
+        // Se estiver no desktop e na Home mobile, redirecionar para HomeDesktop
         if (isDesktop && currentPageName === "Home") {
             navigate(createPageUrl("HomeDesktop"));
         }
+        // Se estiver no mobile e na HomeDesktop, redirecionar para Home
         if (!isDesktop && currentPageName === "HomeDesktop") {
             navigate(createPageUrl("Home"));
+        }
+        // Se não estiver em nenhuma Home, redirecionar para a Home correta
+        if (currentPageName !== "Home" && currentPageName !== "HomeDesktop" && !sessionStorage.getItem("homeVisited")) {
+            sessionStorage.setItem("homeVisited", "true");
+            navigate(createPageUrl(isDesktop ? "HomeDesktop" : "Home"));
         }
     }, [isDesktop, currentPageName, navigate]);
 

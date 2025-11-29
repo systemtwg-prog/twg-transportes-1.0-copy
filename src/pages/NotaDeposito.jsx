@@ -121,9 +121,29 @@ export default function NotaDeposito() {
 
     const handleScanCapture = async (file) => {
         setUploading(true);
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), { url: file_url, nome: file.name, tipo: file.type }] }));
+        try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            
+            // Se o formulário está aberto, adiciona ao formulário
+            if (showForm) {
+                setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), { url: file_url, nome: file.name, tipo: file.type }] }));
+            } else {
+                // Senão, salva direto como nova nota de depósito
+                const dataFormatada = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
+                await base44.entities.NotaDeposito.create({
+                    titulo: `Depósito ${dataFormatada}`,
+                    data: format(new Date(), "yyyy-MM-dd"),
+                    fotos: [{ url: file_url, nome: file.name, tipo: file.type }],
+                    status: "pendente",
+                    usuario_foto: currentUser?.full_name || currentUser?.email || ""
+                });
+                queryClient.invalidateQueries({ queryKey: ["notas-deposito"] });
+            }
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+        }
         setUploading(false);
+        setShowScanner(false);
     };
 
     const handleSubmit = (e) => {

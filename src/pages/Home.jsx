@@ -214,10 +214,11 @@ export default function Home() {
 
             if (Object.keys(agrupadas).length === 0) return;
 
+            const qtdTranspVeiculo = Object.keys(agrupadas).length;
             todosVeiculosHtml += `
                 <div class="veiculo-card">
                     <div class="veiculo-header">
-                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} (${notas.length})
+                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${notas.length} NFs | ${qtdTranspVeiculo} Transp.
                     </div>
                     ${Object.entries(agrupadas).map(([transp, notasT]) => `
                         <div>

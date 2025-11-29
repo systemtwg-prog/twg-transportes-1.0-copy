@@ -34,44 +34,27 @@ function FlipbookViewer({ files, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black z-50 flex flex-col">
             {/* Header com botão Voltar */}
-            <div className="flex items-center justify-between p-4 bg-black/50">
+            <div className="flex items-center justify-between p-3 bg-gradient-to-b from-black/80 to-transparent">
                 <Button 
-                    variant="ghost" 
                     onClick={onClose} 
-                    className="text-white hover:bg-white/20 h-12 px-4"
+                    className="bg-white/20 hover:bg-white/30 text-white h-12 px-5 rounded-full"
                 >
                     <ChevronLeft className="w-6 h-6 mr-1" />
                     Voltar
                 </Button>
                 <div className="text-white text-center">
-                    <span className="font-medium">{currentFile?.nome}</span>
                     {files.length > 1 && (
-                        <span className="text-white/60 ml-2">({currentPage + 1} de {files.length})</span>
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                            {currentPage + 1} de {files.length}
+                        </span>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} className="text-white hover:bg-white/20">
-                        <ZoomOut className="w-5 h-5" />
-                    </Button>
-                    <span className="text-white px-2">{Math.round(zoom * 100)}%</span>
-                    <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.min(3, z + 0.25))} className="text-white hover:bg-white/20">
-                        <ZoomIn className="w-5 h-5" />
-                    </Button>
-                    {!isPdf && (
-                        <Button variant="ghost" size="icon" onClick={rotateImage} className="text-white hover:bg-white/20">
-                            <RotateCw className="w-5 h-5" />
-                        </Button>
-                    )}
-                    <a href={currentFile?.url} download target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                            <Download className="w-5 h-5" />
-                        </Button>
-                    </a>
-                </div>
+                <div className="w-24" /> {/* Spacer */}
             </div>
 
+            {/* Área da imagem */}
             <div className="flex-1 flex items-center justify-center overflow-auto p-4">
                 {isPdf ? (
                     <iframe 
@@ -83,41 +66,89 @@ function FlipbookViewer({ files, onClose }) {
                     <img 
                         src={currentFile?.url} 
                         alt={currentFile?.nome}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform"
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform duration-200"
                         style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
                     />
                 )}
             </div>
 
-            {files.length > 1 && (
-                <div className="flex items-center justify-center gap-4 p-4 bg-black/50">
+            {/* Controles inferiores - Zoom, Rotação e Download */}
+            <div className="p-4 bg-gradient-to-t from-black/80 to-transparent">
+                {/* Barra de controles */}
+                <div className="flex items-center justify-center gap-3 mb-4">
+                    {/* Zoom Out */}
                     <Button 
-                        variant="ghost" 
-                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                        disabled={currentPage === 0}
-                        className="text-white hover:bg-white/20"
+                        onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} 
+                        className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
                     >
-                        <ChevronLeft className="w-6 h-6" />
+                        <ZoomOut className="w-7 h-7" />
                     </Button>
-                    <div className="flex gap-2">
-                        {files.map((_, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setCurrentPage(i)}
-                                className={`w-3 h-3 rounded-full transition-colors ${i === currentPage ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
-                            />
-                        ))}
+                    
+                    {/* Indicador de Zoom */}
+                    <div className="bg-white/20 px-4 py-2 rounded-full text-white font-bold min-w-[80px] text-center">
+                        {Math.round(zoom * 100)}%
                     </div>
+                    
+                    {/* Zoom In */}
                     <Button 
-                        variant="ghost" 
-                        onClick={() => setCurrentPage(p => Math.min(files.length - 1, p + 1))}
-                        disabled={currentPage === files.length - 1}
-                        className="text-white hover:bg-white/20"
+                        onClick={() => setZoom(z => Math.min(3, z + 0.25))} 
+                        className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
                     >
-                        <ChevronRight className="w-6 h-6" />
+                        <ZoomIn className="w-7 h-7" />
                     </Button>
+                    
+                    {/* Separador */}
+                    <div className="w-px h-10 bg-white/30 mx-2" />
+                    
+                    {/* Rotacionar */}
+                    {!isPdf && (
+                        <Button 
+                            onClick={rotateImage} 
+                            className="bg-amber-500 hover:bg-amber-600 text-white h-14 w-14 rounded-full"
+                        >
+                            <RotateCw className="w-7 h-7" />
+                        </Button>
+                    )}
+                    
+                    {/* Download */}
+                    <a href={currentFile?.url} download target="_blank" rel="noopener noreferrer">
+                        <Button className="bg-green-500 hover:bg-green-600 text-white h-14 w-14 rounded-full">
+                            <Download className="w-7 h-7" />
+                        </Button>
+                    </a>
                 </div>
-            )}
+
+                {/* Navegação entre páginas */}
+                {files.length > 1 && (
+                    <div className="flex items-center justify-center gap-4">
+                        <Button 
+                            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                            disabled={currentPage === 0}
+                            className="bg-white/20 hover:bg-white/30 text-white h-12 px-6 rounded-full disabled:opacity-30"
+                        >
+                            <ChevronLeft className="w-6 h-6 mr-1" />
+                            Anterior
+                        </Button>
+                        <div className="flex gap-2">
+                            {files.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setCurrentPage(i)}
+                                    className={`w-3 h-3 rounded-full transition-colors ${i === currentPage ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
+                                />
+                            ))}
+                        </div>
+                        <Button 
+                            onClick={() => setCurrentPage(p => Math.min(files.length - 1, p + 1))}
+                            disabled={currentPage === files.length - 1}
+                            className="bg-white/20 hover:bg-white/30 text-white h-12 px-6 rounded-full disabled:opacity-30"
+                        >
+                            Próximo
+                            <ChevronRight className="w-6 h-6 ml-1" />
+                        </Button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -589,20 +620,21 @@ export default function ComprovantesInternos() {
                                                 {selectedIds.includes(comprovante.id) && <Check className="w-4 h-4 text-white" />}
                                             </div>
                                             <div>
-                                            <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
-                                            {comprovante.empresa && (
-                                                <div className="flex items-center gap-1.5">
-                                                    {getEmpresaLogo(comprovante.empresa) && (
-                                                        <img 
-                                                            src={getEmpresaLogo(comprovante.empresa)} 
-                                                            alt="" 
-                                                            className="w-5 h-5 object-contain rounded"
-                                                        />
-                                                    )}
-                                                    <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
-                                                </div>
-                                            )}
-                                            <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                                <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                                {comprovante.empresa && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        {getEmpresaLogo(comprovante.empresa) && (
+                                                            <img 
+                                                                src={getEmpresaLogo(comprovante.empresa)} 
+                                                                alt="" 
+                                                                className="w-5 h-5 object-contain rounded"
+                                                            />
+                                                        )}
+                                                        <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                    </div>
+                                                )}
+                                                <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                            </div>
                                         </div>
                                         <Badge variant="outline">
                                             {comprovante.arquivos?.length || 0} arquivo(s)

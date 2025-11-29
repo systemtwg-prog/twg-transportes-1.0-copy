@@ -152,7 +152,7 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
             <canvas ref={canvasRef} className="hidden" />
 
             {/* Footer Controls */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center gap-6 bg-gradient-to-t from-black/70 to-transparent">
+            <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center items-center gap-8 bg-gradient-to-t from-black/80 to-transparent">
                 {capturedImage ? (
                     <>
                         {/* Botão Tirar Outra */}
@@ -160,9 +160,9 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                             onClick={retakePhoto}
                             disabled={processing}
                             variant="outline"
-                            className="h-16 px-6 rounded-full bg-white/20 border-white text-white hover:bg-white/30"
+                            className="h-20 px-8 rounded-full bg-white/20 border-2 border-white text-white hover:bg-white/30 text-lg"
                         >
-                            <RotateCcw className="w-6 h-6 mr-2" />
+                            <RotateCcw className="w-7 h-7 mr-2" />
                             Tirar Outra
                         </Button>
                         
@@ -170,23 +170,23 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                         <Button
                             onClick={confirmPhoto}
                             disabled={processing}
-                            className="h-20 w-20 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg"
+                            className="h-28 w-28 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl border-4 border-white"
                         >
                             {processing ? (
-                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                                <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
                             ) : (
-                                <Check className="w-10 h-10" />
+                                <Check className="w-14 h-14" />
                             )}
                         </Button>
                     </>
                 ) : (
-                    <Button
+                    <button
                         onClick={capturePhoto}
                         disabled={processing}
-                        className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black shadow-lg"
+                        className="w-32 h-32 rounded-full bg-white hover:bg-gray-100 text-black shadow-2xl border-4 border-sky-400 flex items-center justify-center active:scale-95 transition-transform"
                     >
-                        <Camera className="w-10 h-10" />
-                    </Button>
+                        <Camera className="w-16 h-16 text-sky-600" />
+                    </button>
                 )}
             </div>
 

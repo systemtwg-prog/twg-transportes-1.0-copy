@@ -603,13 +603,26 @@ export default function ComprovantesInternos() {
                                                 </div>
                                             )}
                                             <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                            
+                                            {/* Preview da imagem abaixo da data */}
+                                            {comprovante.arquivos?.[0]?.url && (
+                                                <div 
+                                                    className="mt-2 w-20 h-14 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setViewFiles(comprovante.arquivos);
+                                                    }}
+                                                >
+                                                    <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
                                         </div>
                                         <Badge variant="outline">
                                             {comprovante.arquivos?.length || 0} arquivo(s)
                                         </Badge>
                                     </div>
 
-                                    {/* Preview da imagem sempre visível */}
+                                    {/* Preview da imagem grande */}
                                     <div className="mb-3">
                                         <div 
                                             className="w-full h-32 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"

@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter
 } from "lucide-react";
+import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
@@ -28,6 +29,11 @@ export default function RomaneiosGerados() {
     const [editingRomaneio, setEditingRomaneio] = useState(null);
     const [editForm, setEditForm] = useState({ nome: "", placa: "", data: "", observacoes: "" });
     const [showNotasVeiculo, setShowNotasVeiculo] = useState(null);
+    const [columnFilters, setColumnFilters] = useState({
+        placa: [],
+        motorista_nome: [],
+        status: []
+    });
     const queryClient = useQueryClient();
 
     const { data: romaneios = [], isLoading } = useQuery({
@@ -74,9 +80,15 @@ export default function RomaneiosGerados() {
                 const matchDestinatario = !filterDestinatario || 
                     r.destinatarios?.some(d => d.toLowerCase().includes(filterDestinatario.toLowerCase()));
                 const matchPlaca = !filterPlaca || filterPlaca === "all" || r.placa === filterPlaca;
-                return matchDataInicio && matchDataFim && matchDestinatario && matchPlaca;
+                
+                // Filtros de coluna
+                const matchColPlaca = columnFilters.placa.length === 0 || columnFilters.placa.includes(r.placa || "");
+                const matchColMotorista = columnFilters.motorista_nome.length === 0 || columnFilters.motorista_nome.includes(r.motorista_nome || "");
+                const matchColStatus = columnFilters.status.length === 0 || columnFilters.status.includes(r.status || "gerado");
+                
+                return matchDataInicio && matchDataFim && matchDestinatario && matchPlaca && matchColPlaca && matchColMotorista && matchColStatus;
             });
-        }, [romaneios, filterData, filterDataFim, filterDestinatario, filterPlaca]);
+        }, [romaneios, filterData, filterDataFim, filterDestinatario, filterPlaca, columnFilters]);
 
         // Todas as notas dos romaneios filtrados
         const todasNotasIds = useMemo(() => {
@@ -632,12 +644,45 @@ export default function RomaneiosGerados() {
                                     <TableRow className="bg-slate-50">
                                         <TableHead>Data</TableHead>
                                         <TableHead>Nome</TableHead>
-                                        <TableHead>Placa</TableHead>
-                                        <TableHead>Motorista</TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Placa
+                                                <TableColumnFilter
+                                                    data={romaneios}
+                                                    columnKey="placa"
+                                                    columnLabel="Placa"
+                                                    selectedValues={columnFilters.placa}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, placa: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Motorista
+                                                <TableColumnFilter
+                                                    data={romaneios}
+                                                    columnKey="motorista_nome"
+                                                    columnLabel="Motorista"
+                                                    selectedValues={columnFilters.motorista_nome}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, motorista_nome: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
                                         <TableHead className="text-center">Notas</TableHead>
                                         <TableHead className="text-center">Entregas</TableHead>
                                         <TableHead className="text-center">Peso</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>
+                                            <div className="flex items-center gap-1">
+                                                Status
+                                                <TableColumnFilter
+                                                    data={romaneios}
+                                                    columnKey="status"
+                                                    columnLabel="Status"
+                                                    selectedValues={columnFilters.status}
+                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, status: v }))}
+                                                />
+                                            </div>
+                                        </TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>

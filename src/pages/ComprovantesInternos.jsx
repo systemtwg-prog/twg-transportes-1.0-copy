@@ -697,113 +697,33 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
-            {/* Quick Photo Camera */}
+            {/* Quick Photo Camera - para formulário */}
             {showCamera && (
                 <div className="fixed inset-0 z-[100]">
                     <QuickPhotoCapture
                         onCapture={async (file) => {
-                            // NÃO fecha a câmera aqui - deixa o componente mostrar o loading
-                            // A câmera será fechada após o processamento completo
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                                 
                                 if (cameraTarget === 'form') {
-                                    // Adiciona foto ao formulário
+                                    // Adiciona foto ao formulário aberto
                                     setForm(prev => ({
                                         ...prev,
                                         arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
                                     }));
-                                    
-                                    // Tenta extrair número da nota fiscal da imagem
-                                    try {
-                                        const resultado = await base44.integrations.Core.InvokeLLM({
-                                            prompt: `Analise esta imagem de um comprovante/nota fiscal e extraia APENAS o número da nota fiscal. 
-                                            Procure por campos como "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas que pareçam ser o número do documento.
-                                            Retorne apenas o número encontrado, sem texto adicional.`,
-                                            file_urls: [file_url],
-                                            response_json_schema: {
-                                                type: "object",
-                                                properties: {
-                                                    numero_nota: { type: "string", description: "Número da nota fiscal encontrado" }
-                                                }
-                                            }
-                                        });
-                                        
-                                        if (resultado?.numero_nota) {
-                                            setForm(prev => ({ ...prev, nota_fiscal: resultado.numero_nota }));
-                                            toast.success(`NF identificada: ${resultado.numero_nota}`);
-                                        } else {
-                                            toast.success("Foto adicionada!");
-                                        }
-                                    } catch (err) {
-                                        console.error("Erro ao ler nota:", err);
-                                        toast.success("Foto adicionada!");
-                                    }
-                                    setShowCamera(false);
+                                    toast.success("Foto adicionada!");
                                 } else if (cameraTarget === 'massa') {
-                                    // Adiciona em massa e tenta ler o número
-                                    const novoItem = {
+                                    // Adiciona em massa
+                                    setItensMassa(prev => [...prev, {
                                         id: Date.now() + Math.random(),
                                         nota_fiscal: "",
                                         url: file_url,
                                         nome: file.name,
                                         tipo: file.type
-                                    };
-                                    setItensMassa(prev => [...prev, novoItem]);
-                                    
-                                    // Tenta extrair número da nota
-                                    try {
-                                        const resultado = await base44.integrations.Core.InvokeLLM({
-                                            prompt: `Analise esta imagem de um comprovante/nota fiscal e extraia APENAS o número da nota fiscal. Retorne apenas o número.`,
-                                            file_urls: [file_url],
-                                            response_json_schema: {
-                                                type: "object",
-                                                properties: {
-                                                    numero_nota: { type: "string" }
-                                                }
-                                            }
-                                        });
-                                        
-                                        if (resultado?.numero_nota) {
-                                            setItensMassa(prev => prev.map(item => 
-                                                item.id === novoItem.id ? { ...item, nota_fiscal: resultado.numero_nota } : item
-                                            ));
-                                            toast.success(`NF identificada: ${resultado.numero_nota}`);
-                                        } else {
-                                            toast.success("Foto adicionada!");
-                                        }
-                                    } catch (err) {
-                                        toast.success("Foto adicionada!");
-                                    }
-                                    setShowCamera(false);
-                                } else {
-                                    // Salva direto como comprovante novo e tenta ler número
-                                    let numeroNota = "";
-                                    try {
-                                        const resultado = await base44.integrations.Core.InvokeLLM({
-                                            prompt: `Analise esta imagem de um comprovante/nota fiscal e extraia APENAS o número da nota fiscal. Retorne apenas o número.`,
-                                            file_urls: [file_url],
-                                            response_json_schema: {
-                                                type: "object",
-                                                properties: {
-                                                    numero_nota: { type: "string" }
-                                                }
-                                            }
-                                        });
-                                        numeroNota = resultado?.numero_nota || "";
-                                    } catch (err) {
-                                        console.error("Erro ao ler nota:", err);
-                                    }
-                                    
-                                    await base44.entities.ComprovanteInterno.create({
-                                        nota_fiscal: numeroNota,
-                                        data: format(new Date(), "yyyy-MM-dd"),
-                                        arquivos: [{ nome: file.name, url: file_url, tipo: file.type }]
-                                    });
-                                    queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
-                                    toast.success(numeroNota ? `Comprovante salvo! NF: ${numeroNota}` : "Comprovante salvo!");
-                                    setShowCamera(false);
+                                    }]);
+                                    toast.success("Foto adicionada!");
                                 }
+                                setShowCamera(false);
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");

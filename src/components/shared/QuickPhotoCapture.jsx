@@ -143,12 +143,12 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                 </Button>
             </div>
 
-            {/* Indicador de melhoria */}
+            {/* Indicador de processamento */}
             {processing && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3">
-                        <Zap className="w-8 h-8 text-yellow-500 animate-pulse" />
-                        <span className="text-slate-700 font-medium">Melhorando imagem...</span>
+                        <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full" />
+                        <span className="text-slate-700 font-medium">Enviando...</span>
                     </div>
                 </div>
             )}

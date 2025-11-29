@@ -191,89 +191,103 @@ export default function Home() {
             return;
         }
 
-        const notasHtml = Object.entries(notasAgrupadas).map(([transportadora, notas]) => `
-            <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                <div style="background: #eff6ff; padding: 10px 15px; border-bottom: 1px solid #dbeafe;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold; color: #1e40af; font-size: 14px;">${transportadora}</span>
-                        <span style="background: #dbeafe; color: #1e40af; padding: 2px 10px; border-radius: 10px; font-size: 12px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
+        // Gerar HTML para todos os veículos
+        let todosVeiculosHtml = '';
+        let totalNotas = 0;
+        let totalTransportadoras = new Set();
+
+        Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
+            if (placa === "COLETAS") return;
+            
+            const veiculo = veiculos.find(v => v.placa === placa);
+            const notas = dados.notas || [];
+            totalNotas += notas.length;
+
+            // Agrupar por transportadora
+            const agrupadas = {};
+            notas.forEach(nota => {
+                const transp = nota.transportadora || "SEM TRANSPORTADORA";
+                totalTransportadoras.add(transp);
+                if (!agrupadas[transp]) agrupadas[transp] = [];
+                agrupadas[transp].push(nota);
+            });
+
+            if (Object.keys(agrupadas).length === 0) return;
+
+            todosVeiculosHtml += `
+                <div style="margin-bottom: 15px; border: 2px solid #2563eb; border-radius: 8px; overflow: hidden; page-break-inside: avoid;">
+                    <div style="background: #2563eb; color: white; padding: 8px 12px; font-weight: bold; font-size: 13px;">
+                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} (${notas.length} notas)
                     </div>
+                    ${Object.entries(agrupadas).map(([transp, notasT]) => `
+                        <div style="border-bottom: 1px solid #e2e8f0;">
+                            <div style="background: #eff6ff; padding: 6px 12px; font-size: 11px; font-weight: 600; color: #1e40af;">
+                                ${transp} (${notasT.length})
+                            </div>
+                            <div style="padding: 6px 12px; font-size: 10px;">
+                                ${notasT.map(n => `<span style="display: inline-block; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin: 2px;">${n.numero_nf || '-'} → ${(n.destinatario || '-').substring(0, 25)}</span>`).join(' ')}
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                    <thead>
-                        <tr style="background: #f8fafc;">
-                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">NF</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Destinatário</th>
-                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Volume</th>
-                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Peso</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${notas.map(nota => `
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #2563eb;">${nota.numero_nf || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${nota.destinatario || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.volume || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.peso || '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `).join('');
+            `;
+        });
 
         winPrint.document.write(`
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Notas - ${placaSelecionada}</title>
+                <title>Dashboard Pendências</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1e293b; }
-                    .header { display: flex; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
-                    .logo { width: 100px; margin-right: 20px; }
-                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                    body { font-family: Arial, sans-serif; padding: 15px; color: #1e293b; }
+                    .header { display: flex; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px; }
+                    .logo { width: 80px; margin-right: 15px; }
+                    .logo img { max-width: 100%; max-height: 60px; object-fit: contain; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 20px; font-weight: bold; color: #1e293b; }
-                    .company-details { font-size: 11px; color: #64748b; margin-top: 4px; }
-                    .title { text-align: center; font-size: 18px; font-weight: bold; color: #1e40af; margin: 15px 0; padding: 10px; background: #eff6ff; border-radius: 8px; }
-                    .summary { display: flex; justify-content: space-around; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+                    .company-name { font-size: 16px; font-weight: bold; color: #1e293b; }
+                    .company-details { font-size: 10px; color: #64748b; }
+                    .title { text-align: center; font-size: 14px; font-weight: bold; color: #1e40af; margin: 10px 0; padding: 8px; background: #eff6ff; border-radius: 6px; }
+                    .summary { display: flex; justify-content: center; gap: 30px; background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 15px; font-size: 11px; }
                     .summary-item { text-align: center; }
-                    .summary-label { font-size: 10px; color: #64748b; text-transform: uppercase; }
-                    .summary-value { font-size: 18px; font-weight: bold; color: #1e40af; }
-                    .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8; }
-                    @media print { body { padding: 10px; } }
+                    .summary-label { color: #64748b; text-transform: uppercase; font-size: 9px; }
+                    .summary-value { font-size: 16px; font-weight: bold; color: #1e40af; }
+                    .footer { margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 9px; color: #94a3b8; }
+                    @media print { body { padding: 10px; } @page { margin: 10mm; } }
                 </style>
             </head>
             <body>
                 <div class="header">
                     <div class="logo">
-                        ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div style="width:80px;height:60px;background:#2563eb;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;border-radius:8px;">TWG</div>'}
+                        ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}
                     </div>
                     <div class="company-info">
                         <p class="company-name">${config.nome_empresa || 'TWG TRANSPORTES'}</p>
-                        <p class="company-details">${config.endereco || ''}</p>
-                        <p class="company-details">${config.cnpj ? 'CNPJ: ' + config.cnpj : ''} ${config.telefone ? ' | Tel: ' + config.telefone : ''}</p>
+                        <p class="company-details">${config.cnpj ? 'CNPJ: ' + config.cnpj : ''} ${config.telefone ? ' | ' + config.telefone : ''}</p>
                     </div>
                 </div>
 
-                <div class="title">NOTAS DO VEÍCULO ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</div>
+                <div class="title">PENDÊNCIAS POR VEÍCULO</div>
 
                 <div class="summary">
                     <div class="summary-item">
-                        <div class="summary-label">Total de Notas</div>
+                        <div class="summary-label">Veículos</div>
+                        <div class="summary-value">${Object.keys(dashboardPorVeiculo).filter(p => p !== "COLETAS").length}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total Notas</div>
                         <div class="summary-value">${totalNotas}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Transportadoras</div>
-                        <div class="summary-value">${totalTransp}</div>
+                        <div class="summary-value">${totalTransportadoras.size}</div>
                     </div>
                 </div>
 
-                ${notasHtmlLocal}
+                ${todosVeiculosHtml}
 
                 <div class="footer">
-                    Documento gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </div>
             </body>
             </html>

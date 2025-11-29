@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

@@ -58,10 +58,42 @@ export default function AprovacaoUsuarios() {
     });
     const queryClient = useQueryClient();
 
+    const { data: currentUser, isLoading: loadingUser } = useQuery({
+        queryKey: ["current-user-approval"],
+        queryFn: () => base44.auth.me()
+    });
+
     const { data: usuarios = [], isLoading } = useQuery({
         queryKey: ["usuarios"],
-        queryFn: () => base44.entities.User.list("-created_date")
+        queryFn: () => base44.entities.User.list("-created_date"),
+        enabled: currentUser?.role === "admin" // Só busca se for admin
     });
+
+    const isAdmin = currentUser?.role === "admin";
+
+    // Aguardar carregamento do usuário
+    if (loadingUser) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-4 md:p-8 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    // Verificar se é admin
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-4 md:p-8 flex items-center justify-center">
+                <Card className="max-w-md bg-white/90 border-0 shadow-xl">
+                    <CardContent className="p-8 text-center">
+                        <Shield className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
+                        <p className="text-slate-500">Apenas administradores podem gerenciar usuários.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],

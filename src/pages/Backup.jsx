@@ -31,12 +31,21 @@ export default function Backup() {
     const [importing, setImporting] = useState(false);
     const [importFile, setImportFile] = useState(null);
 
-    const { data: currentUser } = useQuery({
+    const { data: currentUser, isLoading: loadingUser } = useQuery({
         queryKey: ["current-user"],
         queryFn: () => base44.auth.me()
     });
 
     const isAdmin = currentUser?.role === "admin";
+
+    // Aguardar carregamento do usuário antes de verificar permissão
+    if (loadingUser) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
 
     const handleExportBackup = async () => {
         setExporting(true);

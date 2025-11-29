@@ -1126,6 +1126,190 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog Gravar Áudio e Buscar Online */}
+            <Dialog open={showAudioDialog} onOpenChange={(open) => { if (!open) resetAudioDialog(); else setShowAudioDialog(true); }}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Mic className="w-5 h-5 text-red-600" />
+                            Gravar Áudio e Buscar Dados
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Grave um áudio descrevendo o que deseja buscar (empresa, transportadora, cliente, etc). 
+                            O sistema irá transcrever e buscar informações online.
+                        </p>
+
+                        {/* Controles de Gravação */}
+                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                            {!isRecording ? (
+                                <Button
+                                    onClick={startRecording}
+                                    className="bg-red-500 hover:bg-red-600"
+                                    disabled={isTranscribing}
+                                >
+                                    <Mic className="w-5 h-5 mr-2" />
+                                    Iniciar Gravação
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={stopRecording}
+                                    variant="destructive"
+                                    className="animate-pulse"
+                                >
+                                    <Square className="w-5 h-5 mr-2" />
+                                    Parar Gravação
+                                </Button>
+                            )}
+
+                            {audioUrl && !isRecording && (
+                                <Button
+                                    variant="outline"
+                                    onClick={togglePlayback}
+                                    className="border-blue-500 text-blue-600"
+                                >
+                                    {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                                    {isPlaying ? "Pausar" : "Ouvir"}
+                                </Button>
+                            )}
+
+                            {isTranscribing && (
+                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Transcrevendo...
+                                </div>
+                            )}
+
+                            {isRecording && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                                    <span className="text-red-600 font-medium">Gravando...</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {audioUrl && <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} className="hidden" />}
+
+                        {/* Transcrição */}
+                        {transcription && (
+                            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                                <p className="text-xs text-blue-600 font-medium mb-2">Transcrição do áudio:</p>
+                                <p className="text-slate-700">{transcription}</p>
+                            </div>
+                        )}
+
+                        {/* Botão Buscar Online */}
+                        {transcription && !dadosExtraidos && (
+                            <Button 
+                                onClick={buscarDadosOnlineAudio}
+                                disabled={buscandoOnline}
+                                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600"
+                            >
+                                {buscandoOnline ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Buscando na internet...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Globe className="w-5 h-5 mr-2" />
+                                        Buscar Dados Online
+                                    </>
+                                )}
+                            </Button>
+                        )}
+
+                        {/* Dados Encontrados */}
+                        {dadosExtraidos && (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                    <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                        <Search className="w-4 h-4" />
+                                        Dados Encontrados
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        {dadosExtraidos.razao_social && (
+                                            <div><span className="text-slate-500">Razão Social:</span> <strong>{dadosExtraidos.razao_social}</strong></div>
+                                        )}
+                                        {dadosExtraidos.nome_fantasia && (
+                                            <div><span className="text-slate-500">Nome Fantasia:</span> <strong>{dadosExtraidos.nome_fantasia}</strong></div>
+                                        )}
+                                        {dadosExtraidos.cnpj && (
+                                            <div><span className="text-slate-500">CNPJ:</span> <strong>{dadosExtraidos.cnpj}</strong></div>
+                                        )}
+                                        {dadosExtraidos.telefone && (
+                                            <div><span className="text-slate-500">Telefone:</span> <strong>{dadosExtraidos.telefone}</strong></div>
+                                        )}
+                                        {dadosExtraidos.email && (
+                                            <div><span className="text-slate-500">Email:</span> <strong>{dadosExtraidos.email}</strong></div>
+                                        )}
+                                        {dadosExtraidos.endereco && (
+                                            <div className="col-span-2"><span className="text-slate-500">Endereço:</span> <strong>{dadosExtraidos.endereco}</strong></div>
+                                        )}
+                                        {dadosExtraidos.cidade && dadosExtraidos.uf && (
+                                            <div><span className="text-slate-500">Cidade:</span> <strong>{dadosExtraidos.cidade}/{dadosExtraidos.uf}</strong></div>
+                                        )}
+                                        {dadosExtraidos.cep && (
+                                            <div><span className="text-slate-500">CEP:</span> <strong>{dadosExtraidos.cep}</strong></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Seleção de Destino */}
+                                <div className="space-y-2">
+                                    <Label className="font-semibold">Onde deseja cadastrar?</Label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <Button
+                                            type="button"
+                                            variant={destinoSelecionado === "nota_fiscal" ? "default" : "outline"}
+                                            onClick={() => setDestinoSelecionado("nota_fiscal")}
+                                            className={destinoSelecionado === "nota_fiscal" ? "bg-blue-600" : ""}
+                                        >
+                                            <FileText className="w-4 h-4 mr-1" />
+                                            Nota Fiscal
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={destinoSelecionado === "transportadora" ? "default" : "outline"}
+                                            onClick={() => setDestinoSelecionado("transportadora")}
+                                            className={destinoSelecionado === "transportadora" ? "bg-violet-600" : ""}
+                                        >
+                                            <Truck className="w-4 h-4 mr-1" />
+                                            Transportadora
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={destinoSelecionado === "cliente" ? "default" : "outline"}
+                                            onClick={() => setDestinoSelecionado("cliente")}
+                                            className={destinoSelecionado === "cliente" ? "bg-emerald-600" : ""}
+                                        >
+                                            <Users className="w-4 h-4 mr-1" />
+                                            Cliente
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <Button 
+                                    onClick={cadastrarDados}
+                                    disabled={!destinoSelecionado}
+                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
+                                >
+                                    <Save className="w-5 h-5 mr-2" />
+                                    Cadastrar como {destinoSelecionado === "nota_fiscal" ? "Nota Fiscal" : destinoSelecionado === "transportadora" ? "Transportadora" : destinoSelecionado === "cliente" ? "Cliente" : "..."}
+                                </Button>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end">
+                            <Button variant="outline" onClick={resetAudioDialog}>
+                                <X className="w-4 h-4 mr-1" /> Fechar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg">

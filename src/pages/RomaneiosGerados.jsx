@@ -697,6 +697,9 @@ export default function RomaneiosGerados() {
                                                                     <ChevronDown className="w-4 h-4 text-slate-600" />
                                                                 )}
                                                             </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleReprint(romaneio)} title="Reimprimir">
+                                                                <Printer className="w-4 h-4 text-emerald-600" />
+                                                            </Button>
                                                             <Button variant="ghost" size="icon" onClick={() => handleEdit(romaneio)}>
                                                                 <Pencil className="w-4 h-4 text-blue-600" />
                                                             </Button>

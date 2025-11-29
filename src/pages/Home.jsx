@@ -225,7 +225,7 @@ export default function Home() {
                     ))}
                 </div>
 
-                {/* Botão Grande - Busca de Multas */}
+                {/* Botão Grande - Crachá de Identificação */}
                 <Link to={createPageUrl(bigButton.href)}>
                     <Button className={`w-full h-20 bg-gradient-to-br ${bigButton.color} hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl border-2 border-white/30 flex items-center justify-center gap-3 rounded-2xl`}>
                         <bigButton.icon className="w-8 h-8 text-white drop-shadow-md" />

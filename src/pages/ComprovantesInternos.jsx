@@ -691,7 +691,6 @@ export default function ComprovantesInternos() {
                                             </Button>
                                         </div>
                                     </div>
-                                        </div>
                                 </CardContent>
                             </Card>
                         ))

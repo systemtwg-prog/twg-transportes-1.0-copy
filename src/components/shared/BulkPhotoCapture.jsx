@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, RotateCcw, Check, Loader2, Camera, Eye, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, RotateCcw, Check, Loader2, Camera, Save } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -9,8 +10,6 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
     const [fotos, setFotos] = useState([]);
     const [capturing, setCapturing] = useState(false);
     const [processing, setProcessing] = useState(false);
-    const [showReview, setShowReview] = useState(false);
-    const [previewFoto, setPreviewFoto] = useState(null);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);

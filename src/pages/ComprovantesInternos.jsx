@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AudioRecorderWithTranscription from "@/components/shared/AudioRecorderWithTranscription";
-import ScannerCamera from "@/components/shared/ScannerCamera";
+import QuickPhotoCapture from "@/components/shared/QuickPhotoCapture";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);

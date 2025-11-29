@@ -92,49 +92,56 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
     const handleFinish = async () => {
         if (fotos.length === 0) {
-            toast.error("Nenhuma foto para salvar");
+            toast.error("Tire pelo menos uma foto");
             return;
         }
 
         setProcessing(true);
+        stopCamera();
 
         const resultados = [];
 
         for (let i = 0; i < fotos.length; i++) {
             const foto = fotos[i];
-            toast.info(`Processando foto ${i + 1} de ${fotos.length}...`);
+            toast.info(`Enviando foto ${i + 1} de ${fotos.length}...`);
 
             try {
                 const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-                const resultado = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
-                    Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).
-                    Retorne os dados encontrados.`,
-                    file_urls: [file_url],
-                    response_json_schema: {
-                        type: "object",
-                        properties: {
-                            numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
-                            observacoes: { type: "string", description: "Outras informações relevantes" }
-                        }
+                // Se usuário já informou a NF, usa ela, senão tenta identificar com IA
+                let numero_nota = foto.notaFiscal || "";
+                let observacoes = "";
+
+                if (!numero_nota) {
+                    try {
+                        const resultado = await base44.integrations.Core.InvokeLLM({
+                            prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
+                            Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).`,
+                            file_urls: [file_url],
+                            response_json_schema: {
+                                type: "object",
+                                properties: {
+                                    numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
+                                    observacoes: { type: "string", description: "Outras informações relevantes" }
+                                }
+                            }
+                        });
+                        numero_nota = resultado?.numero_nota || "";
+                        observacoes = resultado?.observacoes || "";
+                    } catch (err) {
+                        console.error("Erro IA:", err);
                     }
-                });
+                }
 
                 resultados.push({
                     url: file_url,
-                    numero_nota: resultado?.numero_nota || "",
-                    observacoes: resultado?.observacoes || ""
+                    numero_nota: numero_nota || "Pendente",
+                    observacoes
                 });
 
             } catch (error) {
                 console.error("Erro ao processar foto:", error);
-                resultados.push({
-                    url: null,
-                    numero_nota: "",
-                    observacoes: "Erro ao processar"
-                });
             }
         }
 

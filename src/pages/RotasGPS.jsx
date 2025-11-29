@@ -1172,7 +1172,41 @@ Reorganize na ordem mais eficiente.`,
                                                 <p className="text-xs text-slate-500 mt-1">📞 {end.telefone}</p>
                                             )}
                                         </div>
-                                        <Navigation className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                                        <div className="flex flex-col gap-1">
+                                            <Navigation className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                                            {end.fonte?.includes("Google") && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-xs border-purple-400 text-purple-600 hover:bg-purple-50"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const novaTransportadora = {
+                                                            razao_social: end.nome_empresa,
+                                                            nome_fantasia: end.nome_empresa,
+                                                            endereco: end.endereco,
+                                                            bairro: end.bairro,
+                                                            cidade: end.cidade,
+                                                            uf: end.estado,
+                                                            cep: end.cep,
+                                                            telefone: end.telefone,
+                                                            status: "ativo"
+                                                        };
+                                                        createTransportadoraMutation.mutate(novaTransportadora);
+                                                    }}
+                                                    disabled={createTransportadoraMutation.isPending}
+                                                >
+                                                    {createTransportadoraMutation.isPending ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Building2 className="w-3 h-3 mr-1" />
+                                                            Cadastrar
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -11,8 +11,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, MessageCircle
+    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, MessageCircle, IdCard
 } from "lucide-react";
+import CrachaMotorista from "@/components/motorista/CrachaMotorista";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -22,6 +23,8 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
     const [form, setForm] = useState({
         nome: motorista?.nome || "",
         cpf: motorista?.cpf || "",
+        rg: motorista?.rg || "",
+        data_nascimento: motorista?.data_nascimento || "",
         cnh: motorista?.cnh || "",
         categoria_cnh: motorista?.categoria_cnh || "B",
         validade_cnh: motorista?.validade_cnh || "",
@@ -29,6 +32,7 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
         telefone: motorista?.telefone || "",
         email: motorista?.email || "",
         endereco: motorista?.endereco || "",
+        funcao: motorista?.funcao || "Motorista",
         data_admissao: motorista?.data_admissao || "",
         status: motorista?.status || "ativo",
         foto_url: motorista?.foto_url || "",
@@ -193,12 +197,39 @@ function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
                             />
                         </div>
                         <div className="space-y-2">
+                            <Label>Função/Cargo</Label>
+                            <Input
+                                value={form.funcao}
+                                onChange={(e) => setForm({ ...form, funcao: e.target.value })}
+                                placeholder="Motorista"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label>RG</Label>
+                            <Input
+                                value={form.rg}
+                                onChange={(e) => setForm({ ...form, rg: e.target.value })}
+                                placeholder="00.000.000-0"
+                            />
+                        </div>
+                        <div className="space-y-2">
                             <Label>CPF *</Label>
                             <Input
                                 value={form.cpf}
                                 onChange={(e) => setForm({ ...form, cpf: e.target.value })}
                                 placeholder="000.000.000-00"
                                 required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Data de Nascimento</Label>
+                            <Input
+                                type="date"
+                                value={form.data_nascimento}
+                                onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })}
                             />
                         </div>
                     </div>
@@ -388,6 +419,7 @@ export default function Motoristas() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [showCracha, setShowCracha] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: motoristas = [], isLoading } = useQuery({
@@ -399,6 +431,13 @@ export default function Motoristas() {
         queryKey: ["usuarios"],
         queryFn: () => base44.entities.User.list()
     });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const config = configs[0] || {};
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Motorista.create(data),
@@ -543,6 +582,14 @@ export default function Motoristas() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        onClick={() => setShowCracha(mot)}
+                                                        title="Gerar Crachá"
+                                                    >
+                                                        <IdCard className="w-4 h-4 text-emerald-600" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => { setEditing(mot); setShowForm(true); }}
                                                     >
                                                         <Pencil className="w-4 h-4 text-blue-600" />
@@ -579,6 +626,14 @@ export default function Motoristas() {
                     />
                 </DialogContent>
             </Dialog>
+
+            {showCracha && (
+                <CrachaMotorista 
+                    motorista={showCracha} 
+                    config={config}
+                    onClose={() => setShowCracha(null)} 
+                />
+            )}
         </div>
     );
 }

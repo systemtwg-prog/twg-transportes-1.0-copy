@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,12 @@ export default function CrachaIdentificacao() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("ativo");
     const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
+    const [meuCracha, setMeuCracha] = useState(null);
+
+    const { data: currentUser } = useQuery({
+        queryKey: ["current-user"],
+        queryFn: () => base44.auth.me()
+    });
 
     const { data: motoristas = [], isLoading } = useQuery({
         queryKey: ["motoristas-cracha"],
@@ -25,6 +31,16 @@ export default function CrachaIdentificacao() {
     });
 
     const config = configs[0] || {};
+
+    // Encontrar o colaborador vinculado ao usuário logado
+    const motoristaVinculado = motoristas.find(m => m.usuario_vinculado === currentUser?.id);
+
+    // Abrir automaticamente o crachá do usuário vinculado
+    useEffect(() => {
+        if (motoristaVinculado && !meuCracha) {
+            setMeuCracha(motoristaVinculado);
+        }
+    }, [motoristaVinculado]);
 
     const filtered = motoristas.filter(m => {
         const matchSearch = m.nome?.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,6 +62,58 @@ export default function CrachaIdentificacao() {
                         <p className="text-slate-500">Gere crachás para os colaboradores</p>
                     </div>
                 </div>
+
+                {/* Botão Meu Crachá */}
+                {motoristaVinculado && (
+                    <Button 
+                        onClick={() => setMotoristaSelecionado(motoristaVinculado)}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 h-12 px-6"
+                    >
+                        <IdCard className="w-5 h-5 mr-2" />
+                        Meu Crachá
+                    </Button>
+                )}
+
+                {/* Crachá do Usuário Vinculado */}
+                {motoristaVinculado && (
+                    <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-lg">
+                        <CardContent className="p-4">
+                            <div className="flex items-center gap-4">
+                                {motoristaVinculado.foto_url ? (
+                                    <img 
+                                        src={motoristaVinculado.foto_url} 
+                                        alt={motoristaVinculado.nome}
+                                        className="w-20 h-20 rounded-full object-cover border-4 border-emerald-500"
+                                    />
+                                ) : (
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                                        <span className="text-white text-2xl font-bold">
+                                            {motoristaVinculado.nome?.charAt(0) || "?"}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <p className="text-sm text-emerald-600 font-medium">Seu Crachá</p>
+                                    <h3 className="text-xl font-bold text-slate-800">{motoristaVinculado.nome}</h3>
+                                    <p className="text-slate-500">{motoristaVinculado.funcao || "Colaborador"}</p>
+                                    <div className="flex gap-2 mt-2">
+                                        {motoristaVinculado.categoria_cnh && (
+                                            <Badge className="bg-blue-100 text-blue-700">CNH {motoristaVinculado.categoria_cnh}</Badge>
+                                        )}
+                                        <Badge className="bg-emerald-100 text-emerald-700">{motoristaVinculado.status || "ativo"}</Badge>
+                                    </div>
+                                </div>
+                                <Button 
+                                    onClick={() => setMotoristaSelecionado(motoristaVinculado)}
+                                    className="bg-emerald-500 hover:bg-emerald-600 h-12 px-6"
+                                >
+                                    <Printer className="w-5 h-5 mr-2" />
+                                    Imprimir
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Filtros */}
                 <Card className="bg-white/80 border-0 shadow-lg">

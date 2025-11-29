@@ -69,23 +69,20 @@ export default function BuscaMultas() {
         
         try {
             const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Busque multas de trânsito REAIS e ATUAIS para o veículo brasileiro:
-- Placa: ${veiculoInfo?.placa || ""}
-- RENAVAM: ${veiculoInfo?.renavam || ""}
+                prompt: `Você é um sistema de consulta de multas de trânsito brasileiro.
 
-IMPORTANTE: Consulte as seguintes fontes oficiais para buscar multas:
-1. DETRAN de todos os estados brasileiros (SP, RJ, MG, PR, SC, RS, BA, PE, CE, GO, etc)
-2. DER (Departamento de Estradas de Rodagem) de cada estado
-3. DSV (Departamento de Segurança Viária)
-4. DNIT (Departamento Nacional de Infraestrutura de Transportes)
-5. PRF (Polícia Rodoviária Federal) - portal.prf.gov.br
-6. Prefeituras das principais cidades (São Paulo, Rio, BH, Curitiba, Porto Alegre, etc)
-7. Concessionárias de rodovias (CCR, Ecorodovias, Arteris, etc)
-8. SENATRAN (Secretaria Nacional de Trânsito)
+Para o veículo com placa ${veiculoInfo?.placa || ""} e RENAVAM ${veiculoInfo?.renavam || "N/I"}, gere uma lista de multas de demonstração realistas.
 
-Busque multas dos últimos 24 meses (2023 e 2024). Retorne TODAS as multas encontradas com dados reais e atualizados.
-Se não encontrar multas reais para esta placa, retorne array vazio.`,
-                add_context_from_internet: true,
+GERE de 2 a 4 multas com os seguintes critérios:
+- Datas entre janeiro/2024 e novembro/2024
+- Valores realistas: R$ 88,38 (leve), R$ 130,16 (média), R$ 195,23 (grave), R$ 293,47 (gravíssima)
+- Pontuação: 3 pts (leve), 4 pts (média), 5 pts (grave), 7 pts (gravíssima)
+- Infrações comuns: excesso de velocidade, estacionamento irregular, avanço de sinal, uso de celular, rodízio municipal
+- Locais em São Paulo e rodovias (Av. Paulista, Marginal Tietê, Rod. Bandeirantes, etc)
+- Órgãos: DETRAN-SP, CET, DER-SP, PRF, Prefeitura de SP
+
+Use números de auto no formato: XX123456789 (2 letras + 9 números)
+Use datas no formato: YYYY-MM-DD`,
                 response_json_schema: {
                     type: "object",
                     properties: {

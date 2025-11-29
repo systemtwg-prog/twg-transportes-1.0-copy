@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import AudioRecorder from "@/components/shared/AudioRecorder";
-import ScannerCamera from "@/components/shared/ScannerCamera";
+import QuickPhotoCapture from "@/components/shared/QuickPhotoCapture";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
 
 export default function RotasGPS() {
@@ -1284,10 +1284,13 @@ Reorganize na ordem mais eficiente.`,
                 </Card>
             </div>
 
-            {/* Camera Scanner */}
+            {/* Quick Photo Camera */}
             {showCamera && (
-                <ScannerCamera
-                    onCapture={handleProcessarFoto}
+                <QuickPhotoCapture
+                    onCapture={async (file) => {
+                        setShowCamera(false);
+                        handleProcessarFoto(URL.createObjectURL(file));
+                    }}
                     onClose={() => setShowCamera(false)}
                 />
             )}

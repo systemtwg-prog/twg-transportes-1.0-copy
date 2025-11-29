@@ -483,6 +483,217 @@ IMPORTANTE:
         }
     };
 
+    // Funções de gravação de áudio
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    audioChunksRef.current.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+                const url = URL.createObjectURL(audioBlob);
+                setAudioUrl(url);
+
+                // Upload do áudio
+                const file = new File([audioBlob], "audio_busca.webm", { type: "audio/webm" });
+                const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                setAudioFileUrl(file_url);
+
+                // Transcrever áudio
+                setIsTranscribing(true);
+                try {
+                    const result = await base44.integrations.Core.InvokeLLM({
+                        prompt: "Transcreva o áudio anexado. Retorne apenas o texto transcrito, sem comentários adicionais.",
+                        file_urls: [file_url],
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                transcricao: { type: "string" }
+                            }
+                        }
+                    });
+                    const texto = result.transcricao || "";
+                    setTranscription(texto);
+                } catch (err) {
+                    console.error("Erro na transcrição:", err);
+                    toast.error("Erro ao transcrever áudio");
+                }
+                setIsTranscribing(false);
+
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Erro ao acessar microfone:", err);
+            toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const togglePlayback = () => {
+        if (audioRef.current) {
+            if (isPlaying) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    // Buscar dados online com base na transcrição
+    const buscarDadosOnlineAudio = async () => {
+        if (!transcription.trim()) {
+            toast.error("Grave um áudio primeiro");
+            return;
+        }
+
+        setBuscandoOnline(true);
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analise o texto abaixo e busque informações REAIS e ATUAIS na internet sobre o que foi mencionado.
+
+TEXTO TRANSCRITO DO ÁUDIO:
+"${transcription}"
+
+INSTRUÇÕES:
+1. Identifique o que o usuário está buscando (empresa, transportadora, cliente, endereço, etc)
+2. Busque informações REAIS na internet sobre o assunto
+3. Retorne os dados encontrados de forma estruturada
+
+FONTES DE PESQUISA:
+- Google Maps / Google Meu Negócio
+- Bing Places
+- Páginas Amarelas
+- Sites oficiais das empresas
+- Receita Federal (CNPJ)
+- LinkedIn
+
+Retorne os dados encontrados no formato estruturado.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        tipo_dado: { type: "string", description: "Tipo: transportadora, cliente, nota_fiscal, endereco, outro" },
+                        razao_social: { type: "string" },
+                        nome_fantasia: { type: "string" },
+                        cnpj: { type: "string" },
+                        telefone: { type: "string" },
+                        email: { type: "string" },
+                        endereco: { type: "string" },
+                        bairro: { type: "string" },
+                        cidade: { type: "string" },
+                        uf: { type: "string" },
+                        cep: { type: "string" },
+                        observacoes: { type: "string" },
+                        numero_nf: { type: "string" },
+                        destinatario: { type: "string" },
+                        peso: { type: "string" },
+                        volume: { type: "string" }
+                    }
+                }
+            });
+
+            if (result) {
+                setDadosExtraidos(result);
+                toast.success("Dados encontrados! Escolha onde cadastrar.");
+            } else {
+                toast.warning("Não foi possível encontrar dados relevantes.");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar dados:", error);
+            toast.error("Erro ao buscar dados online.");
+        }
+        setBuscandoOnline(false);
+    };
+
+    // Cadastrar dados extraídos
+    const cadastrarDados = async () => {
+        if (!dadosExtraidos || !destinoSelecionado) {
+            toast.error("Selecione onde deseja cadastrar");
+            return;
+        }
+
+        try {
+            if (destinoSelecionado === "nota_fiscal") {
+                await base44.entities.NotaFiscal.create({
+                    numero_nf: dadosExtraidos.numero_nf || "",
+                    destinatario: dadosExtraidos.destinatario || dadosExtraidos.razao_social || "",
+                    peso: dadosExtraidos.peso || "",
+                    volume: dadosExtraidos.volume || "",
+                    transportadora: dadosExtraidos.nome_fantasia || "",
+                    data: format(new Date(), "yyyy-MM-dd"),
+                    observacoes: dadosExtraidos.observacoes || ""
+                });
+                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+                toast.success("Nota fiscal cadastrada!");
+            } else if (destinoSelecionado === "transportadora") {
+                await base44.entities.Transportadora.create({
+                    razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
+                    nome_fantasia: dadosExtraidos.nome_fantasia || "",
+                    cnpj: dadosExtraidos.cnpj || "",
+                    telefone: dadosExtraidos.telefone || "",
+                    email: dadosExtraidos.email || "",
+                    endereco: dadosExtraidos.endereco || "",
+                    bairro: dadosExtraidos.bairro || "",
+                    cidade: dadosExtraidos.cidade || "",
+                    uf: dadosExtraidos.uf || "",
+                    cep: dadosExtraidos.cep || "",
+                    status: "ativo"
+                });
+                queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+                toast.success("Transportadora cadastrada!");
+            } else if (destinoSelecionado === "cliente") {
+                await base44.entities.Cliente.create({
+                    razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
+                    nome_fantasia: dadosExtraidos.nome_fantasia || "",
+                    cnpj_cpf: dadosExtraidos.cnpj || "",
+                    telefone: dadosExtraidos.telefone || "",
+                    email: dadosExtraidos.email || "",
+                    endereco: dadosExtraidos.endereco || "",
+                    bairro: dadosExtraidos.bairro || "",
+                    cidade: dadosExtraidos.cidade || "",
+                    uf: dadosExtraidos.uf || "",
+                    cep: dadosExtraidos.cep || "",
+                    tipo: "ambos"
+                });
+                queryClient.invalidateQueries({ queryKey: ["clientes"] });
+                toast.success("Cliente cadastrado!");
+            }
+
+            // Limpar e fechar
+            resetAudioDialog();
+        } catch (error) {
+            console.error("Erro ao cadastrar:", error);
+            toast.error("Erro ao cadastrar dados.");
+        }
+    };
+
+    const resetAudioDialog = () => {
+        setShowAudioDialog(false);
+        setAudioUrl(null);
+        setTranscription("");
+        setDadosExtraidos(null);
+        setDestinoSelecionado("");
+        setAudioFileUrl("");
+    };
+
     const filtered = notas.filter(n =>
         n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
         n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
     Car, Search, AlertTriangle, FileText, DollarSign, 
-    Calendar, MapPin, CheckCircle, Clock, Loader2
+    Calendar, MapPin, CheckCircle, Clock, Loader2, Printer, Share2, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";

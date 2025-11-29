@@ -15,11 +15,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
     const streamRef = useRef(null);
 
     useEffect(() => {
-        if (!showReview) {
-            startCamera();
-        }
+        startCamera();
         return () => stopCamera();
-    }, [facingMode, showReview]);
+    }, [facingMode]);
 
     const startCamera = async () => {
         try {
@@ -86,23 +84,10 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             return prev.filter(f => f.id !== id);
         });
         toast.info("Foto removida");
-        if (previewFoto?.id === id) {
-            setPreviewFoto(null);
-        }
     };
 
-    const goToReview = () => {
-        if (fotos.length === 0) {
-            toast.error("Tire pelo menos uma foto");
-            return;
-        }
-        stopCamera();
-        setShowReview(true);
-    };
-
-    const backToCamera = () => {
-        setShowReview(false);
-        setPreviewFoto(null);
+    const updateNotaFiscal = (id, valor) => {
+        setFotos(prev => prev.map(f => f.id === id ? { ...f, notaFiscal: valor } : f));
     };
 
     const handleFinish = async () => {

@@ -697,20 +697,20 @@ export default function ComprovantesInternos() {
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
 
-            {/* Scanner Camera */}
-            {showScanner && (
+            {/* Quick Photo Camera */}
+            {showCamera && (
                 <div className="fixed inset-0 z-[100]">
-                    <ScannerCamera
+                    <QuickPhotoCapture
                         onCapture={async (file) => {
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                                if (scannerTarget === 'form') {
+                                if (cameraTarget === 'form') {
                                     setForm(prev => ({
                                         ...prev,
                                         arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
                                     }));
                                     toast.success("Foto adicionada!");
-                                } else if (scannerTarget === 'massa') {
+                                } else if (cameraTarget === 'massa') {
                                     setItensMassa(prev => [...prev, {
                                         id: Date.now() + Math.random(),
                                         nota_fiscal: "",
@@ -724,9 +724,9 @@ export default function ComprovantesInternos() {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");
                             }
-                            setShowScanner(false);
+                            setShowCamera(false);
                         }}
-                        onClose={() => setShowScanner(false)}
+                        onClose={() => setShowCamera(false)}
                     />
                 </div>
             )}

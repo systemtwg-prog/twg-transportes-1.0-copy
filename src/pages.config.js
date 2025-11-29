@@ -25,6 +25,7 @@ import ComprovantesInternos from './pages/ComprovantesInternos';
 import Home from './pages/Home';
 import BuscaMultas from './pages/BuscaMultas';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
+import ExtratorGoogle from './pages/ExtratorGoogle';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "Home": Home,
     "BuscaMultas": BuscaMultas,
     "CrachaIdentificacao": CrachaIdentificacao,
+    "ExtratorGoogle": ExtratorGoogle,
 }
 
 export const pagesConfig = {

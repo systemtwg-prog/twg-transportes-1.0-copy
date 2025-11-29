@@ -1,0 +1,278 @@
+import React, { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Printer, Download } from "lucide-react";
+
+export default function CrachaMotorista({ motorista, config, onClose }) {
+    const crachaRef = useRef();
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "-";
+        try {
+            const [year, month, day] = dateStr.split("-");
+            return `${day}/${month}/${year}`;
+        } catch {
+            return dateStr;
+        }
+    };
+
+    const handlePrint = () => {
+        const winPrint = window.open('', '', 'width=500,height=700');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
+
+        winPrint.document.write(`
+            <html>
+            <head>
+                <title>Crachá - ${motorista.nome}</title>
+                <style>
+                    @media print {
+                        @page { margin: 5mm; size: 85mm 125mm; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        min-height: 100vh;
+                        background: #f0f0f0;
+                    }
+                    .cracha {
+                        width: 85mm;
+                        height: 125mm;
+                        background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+                        border-radius: 10px;
+                        padding: 8mm;
+                        color: white;
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    }
+                    .header {
+                        text-align: center;
+                        padding-bottom: 5mm;
+                        border-bottom: 2px solid rgba(255,255,255,0.3);
+                        margin-bottom: 5mm;
+                    }
+                    .logo {
+                        max-height: 15mm;
+                        max-width: 40mm;
+                        margin-bottom: 2mm;
+                    }
+                    .empresa {
+                        font-size: 14px;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    .foto-container {
+                        text-align: center;
+                        margin-bottom: 5mm;
+                    }
+                    .foto {
+                        width: 30mm;
+                        height: 35mm;
+                        border-radius: 5px;
+                        object-fit: cover;
+                        border: 3px solid white;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                    }
+                    .foto-placeholder {
+                        width: 30mm;
+                        height: 35mm;
+                        border-radius: 5px;
+                        background: rgba(255,255,255,0.2);
+                        border: 3px solid white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        margin: 0 auto;
+                    }
+                    .nome {
+                        text-align: center;
+                        font-size: 16px;
+                        font-weight: bold;
+                        margin-bottom: 2mm;
+                        text-transform: uppercase;
+                    }
+                    .funcao {
+                        text-align: center;
+                        font-size: 12px;
+                        background: rgba(255,255,255,0.2);
+                        padding: 2mm 4mm;
+                        border-radius: 15px;
+                        display: inline-block;
+                        margin: 0 auto 4mm;
+                        width: 100%;
+                    }
+                    .dados {
+                        font-size: 9px;
+                        background: rgba(255,255,255,0.15);
+                        padding: 3mm;
+                        border-radius: 5px;
+                    }
+                    .dado-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 1.5mm;
+                        padding-bottom: 1mm;
+                        border-bottom: 1px solid rgba(255,255,255,0.1);
+                    }
+                    .dado-row:last-child {
+                        border-bottom: none;
+                        margin-bottom: 0;
+                    }
+                    .dado-label {
+                        font-weight: bold;
+                        opacity: 0.8;
+                    }
+                    .dado-value {
+                        text-align: right;
+                    }
+                    .footer {
+                        position: absolute;
+                        bottom: 3mm;
+                        left: 0;
+                        right: 0;
+                        text-align: center;
+                        font-size: 7px;
+                        opacity: 0.7;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="cracha">
+                    <div class="header">
+                        ${config?.logo_url ? `<img src="${config.logo_url}" class="logo" />` : ''}
+                        <div class="empresa">${config?.nome_empresa || "TWG TRANSPORTES"}</div>
+                    </div>
+                    
+                    <div class="foto-container">
+                        ${motorista.foto_url 
+                            ? `<img src="${motorista.foto_url}" class="foto" />`
+                            : `<div class="foto-placeholder">SEM FOTO</div>`
+                        }
+                    </div>
+                    
+                    <div class="nome">${motorista.nome}</div>
+                    <div class="funcao">${motorista.funcao || "MOTORISTA"}</div>
+                    
+                    <div class="dados">
+                        <div class="dado-row">
+                            <span class="dado-label">RG:</span>
+                            <span class="dado-value">${motorista.rg || "-"}</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="dado-label">CPF:</span>
+                            <span class="dado-value">${motorista.cpf || "-"}</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="dado-label">CNH:</span>
+                            <span class="dado-value">${motorista.cnh || "-"} (${motorista.categoria_cnh || "-"})</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="dado-label">NASCIMENTO:</span>
+                            <span class="dado-value">${formatDate(motorista.data_nascimento)}</span>
+                        </div>
+                        <div class="dado-row">
+                            <span class="dado-label">ENDEREÇO:</span>
+                            <span class="dado-value" style="max-width: 35mm; font-size: 8px;">${(motorista.endereco || "-").substring(0, 40)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        ${config?.endereco || ""} | ${config?.telefone || ""}
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        winPrint.document.close();
+        setTimeout(() => {
+            winPrint.print();
+        }, 500);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-slate-800">Crachá de Identificação</h2>
+                    <Button variant="ghost" size="sm" onClick={onClose}>✕</Button>
+                </div>
+
+                {/* Preview do Crachá */}
+                <div 
+                    ref={crachaRef}
+                    className="mx-auto w-[85mm] h-[125mm] bg-gradient-to-br from-sky-500 to-sky-700 rounded-xl p-4 text-white relative overflow-hidden shadow-xl"
+                    style={{ transform: "scale(0.85)", transformOrigin: "top center" }}
+                >
+                    {/* Header */}
+                    <div className="text-center pb-3 border-b border-white/30 mb-3">
+                        {config?.logo_url && (
+                            <img src={config.logo_url} alt="Logo" className="h-10 mx-auto mb-1 object-contain" />
+                        )}
+                        <p className="text-xs font-bold tracking-wider">{config?.nome_empresa || "TWG TRANSPORTES"}</p>
+                    </div>
+
+                    {/* Foto */}
+                    <div className="text-center mb-3">
+                        {motorista.foto_url ? (
+                            <img 
+                                src={motorista.foto_url} 
+                                alt="Foto" 
+                                className="w-20 h-24 mx-auto rounded-lg object-cover border-2 border-white shadow-lg"
+                            />
+                        ) : (
+                            <div className="w-20 h-24 mx-auto rounded-lg bg-white/20 border-2 border-white flex items-center justify-center text-xs">
+                                SEM FOTO
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Nome e Função */}
+                    <p className="text-center font-bold text-sm mb-1 uppercase">{motorista.nome}</p>
+                    <p className="text-center text-xs bg-white/20 rounded-full py-1 px-3 mb-3">
+                        {motorista.funcao || "MOTORISTA"}
+                    </p>
+
+                    {/* Dados */}
+                    <div className="bg-white/15 rounded-lg p-2 text-xs space-y-1">
+                        <div className="flex justify-between">
+                            <span className="opacity-80">RG:</span>
+                            <span>{motorista.rg || "-"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="opacity-80">CPF:</span>
+                            <span>{motorista.cpf || "-"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="opacity-80">CNH:</span>
+                            <span>{motorista.cnh} ({motorista.categoria_cnh})</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="opacity-80">Nasc:</span>
+                            <span>{formatDate(motorista.data_nascimento)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Botões */}
+                <div className="flex gap-2">
+                    <Button onClick={handlePrint} className="flex-1 bg-sky-600 hover:bg-sky-700">
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir Crachá
+                    </Button>
+                    <Button variant="outline" onClick={onClose}>
+                        Fechar
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}

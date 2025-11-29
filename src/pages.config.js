@@ -23,6 +23,7 @@ import ComprovantesCtes from './pages/ComprovantesCtes';
 import RotasGPS from './pages/RotasGPS';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import Home from './pages/Home';
+import BuscaMultas from './pages/BuscaMultas';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "RotasGPS": RotasGPS,
     "ComprovantesInternos": ComprovantesInternos,
     "Home": Home,
+    "BuscaMultas": BuscaMultas,
 }
 
 export const pagesConfig = {

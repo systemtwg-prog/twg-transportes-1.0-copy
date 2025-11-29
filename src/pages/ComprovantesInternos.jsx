@@ -133,8 +133,8 @@ export default function ComprovantesInternos() {
     const [itensMassa, setItensMassa] = useState([]);
     const [uploadingMassa, setUploadingMassa] = useState(false);
     const [salvandoMassa, setSalvandoMassa] = useState(false);
-    const [showScanner, setShowScanner] = useState(false);
-    const [scannerTarget, setScannerTarget] = useState(null);
+    const [showCamera, setShowCamera] = useState(false);
+    const [cameraTarget, setCameraTarget] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({

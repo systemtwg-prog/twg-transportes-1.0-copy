@@ -99,6 +99,9 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
 
     const handleClose = () => {
         stopCamera();
+        if (capturedImage) {
+            URL.revokeObjectURL(capturedImage);
+        }
         onClose();
     };
 
@@ -109,21 +112,34 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                 <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/20">
                     <X className="w-6 h-6" />
                 </Button>
-                <span className="text-white text-sm">Toque para capturar</span>
-                <Button variant="ghost" size="icon" onClick={switchCamera} className="text-white hover:bg-white/20">
-                    <RotateCcw className="w-6 h-6" />
-                </Button>
+                <span className="text-white text-sm font-medium">
+                    {capturedImage ? "Confirme a foto" : "Toque para capturar"}
+                </span>
+                {!capturedImage && (
+                    <Button variant="ghost" size="icon" onClick={switchCamera} className="text-white hover:bg-white/20">
+                        <RotateCcw className="w-6 h-6" />
+                    </Button>
+                )}
+                {capturedImage && <div className="w-10" />}
             </div>
 
-            {/* Camera View */}
+            {/* Camera View ou Preview da Foto */}
             <div className="flex-1 flex items-center justify-center">
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                />
+                {capturedImage ? (
+                    <img 
+                        src={capturedImage} 
+                        alt="Foto capturada" 
+                        className="w-full h-full object-contain"
+                    />
+                ) : (
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                    />
+                )}
             </div>
 
             {/* Canvas oculto para processamento */}
@@ -131,17 +147,41 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
 
             {/* Footer Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center gap-6 bg-gradient-to-t from-black/70 to-transparent">
-                <Button
-                    onClick={capturePhoto}
-                    disabled={processing}
-                    className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black shadow-lg"
-                >
-                    {processing ? (
-                        <div className="animate-spin w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full" />
-                    ) : (
+                {capturedImage ? (
+                    <>
+                        {/* Botão Tirar Outra */}
+                        <Button
+                            onClick={retakePhoto}
+                            disabled={processing}
+                            variant="outline"
+                            className="h-16 px-6 rounded-full bg-white/20 border-white text-white hover:bg-white/30"
+                        >
+                            <RotateCcw className="w-6 h-6 mr-2" />
+                            Tirar Outra
+                        </Button>
+                        
+                        {/* Botão Confirmar */}
+                        <Button
+                            onClick={confirmPhoto}
+                            disabled={processing}
+                            className="h-20 w-20 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg"
+                        >
+                            {processing ? (
+                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                            ) : (
+                                <Check className="w-10 h-10" />
+                            )}
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        onClick={capturePhoto}
+                        disabled={processing}
+                        className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black shadow-lg"
+                    >
                         <Camera className="w-10 h-10" />
-                    )}
-                </Button>
+                    </Button>
+                )}
             </div>
 
             {/* Indicador de processamento */}

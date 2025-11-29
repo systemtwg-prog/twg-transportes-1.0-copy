@@ -20,6 +20,7 @@ const menuItems = [
     { name: "Transportadoras", href: "Transportadoras", icon: Package },
     { name: "Colaboradores", href: "Motoristas", icon: User },
     { name: "Veículos", href: "Veiculos", icon: Car },
+    { name: "Busca de Multas", href: "BuscaMultas", icon: Car },
     { name: "Avisos", href: "Avisos", icon: Bell },
     { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
     { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },

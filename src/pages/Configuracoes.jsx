@@ -24,6 +24,7 @@ export default function Configuracoes() {
     const [form, setForm] = useState({
         nome_empresa: "",
         logo_url: "",
+        logo_tamanho: 100,
         endereco: "",
         telefone: "",
         cnpj: "",
@@ -39,6 +40,7 @@ export default function Configuracoes() {
             setForm({
                 nome_empresa: config.nome_empresa || "",
                 logo_url: config.logo_url || "",
+                logo_tamanho: config.logo_tamanho || 100,
                 endereco: config.endereco || "",
                 telefone: config.telefone || "",
                 cnpj: config.cnpj || "",
@@ -148,6 +150,26 @@ export default function Configuracoes() {
                                             onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
                                             placeholder="https://..."
                                         />
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label>Tamanho do Logo: {form.logo_tamanho}%</Label>
+                                        <p className="text-sm text-slate-500 mb-2">
+                                            Ajuste o tamanho do logotipo nos crachás e impressões
+                                        </p>
+                                        <input
+                                            type="range"
+                                            min="50"
+                                            max="200"
+                                            value={form.logo_tamanho}
+                                            onChange={(e) => setForm({ ...form, logo_tamanho: parseInt(e.target.value) })}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                            <span>50%</span>
+                                            <span>100%</span>
+                                            <span>150%</span>
+                                            <span>200%</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Camera, X, Check, RotateCcw, Zap, Sun } from "lucide-react";
 
 export default function QuickPhotoCapture({ onCapture, onClose }) {
-    const [capturedImage, setCapturedImage] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [facingMode, setFacingMode] = useState("environment");
     const videoRef = useRef(null);

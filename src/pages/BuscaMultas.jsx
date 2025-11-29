@@ -538,6 +538,7 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                         <TableHead>Descrição</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Valor</TableHead>
+                                        <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

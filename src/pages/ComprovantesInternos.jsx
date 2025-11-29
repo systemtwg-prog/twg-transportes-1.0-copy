@@ -709,8 +709,8 @@ export default function ComprovantesInternos() {
                 <div className="fixed inset-0 z-[100]">
                     <QuickPhotoCapture
                         onCapture={async (file) => {
-                            setShowCamera(false);
-                            toast.info("Processando foto...");
+                            // NÃO fecha a câmera aqui - deixa o componente mostrar o loading
+                            // A câmera será fechada após o processamento completo
                             try {
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                                 
@@ -722,7 +722,6 @@ export default function ComprovantesInternos() {
                                     }));
                                     
                                     // Tenta extrair número da nota fiscal da imagem
-                                    toast.info("Lendo número da nota...");
                                     try {
                                         const resultado = await base44.integrations.Core.InvokeLLM({
                                             prompt: `Analise esta imagem de um comprovante/nota fiscal e extraia APENAS o número da nota fiscal. 
@@ -741,12 +740,13 @@ export default function ComprovantesInternos() {
                                             setForm(prev => ({ ...prev, nota_fiscal: resultado.numero_nota }));
                                             toast.success(`NF identificada: ${resultado.numero_nota}`);
                                         } else {
-                                            toast.info("Não foi possível identificar o número da nota");
+                                            toast.success("Foto adicionada!");
                                         }
                                     } catch (err) {
                                         console.error("Erro ao ler nota:", err);
-                                        toast.info("Foto adicionada. Digite o número da nota manualmente.");
+                                        toast.success("Foto adicionada!");
                                     }
+                                    setShowCamera(false);
                                 } else if (cameraTarget === 'massa') {
                                     // Adiciona em massa e tenta ler o número
                                     const novoItem = {
@@ -776,10 +776,13 @@ export default function ComprovantesInternos() {
                                                 item.id === novoItem.id ? { ...item, nota_fiscal: resultado.numero_nota } : item
                                             ));
                                             toast.success(`NF identificada: ${resultado.numero_nota}`);
+                                        } else {
+                                            toast.success("Foto adicionada!");
                                         }
                                     } catch (err) {
-                                        toast.info("Foto adicionada. Digite o número manualmente.");
+                                        toast.success("Foto adicionada!");
                                     }
+                                    setShowCamera(false);
                                 } else {
                                     // Salva direto como comprovante novo e tenta ler número
                                     let numeroNota = "";
@@ -806,10 +809,12 @@ export default function ComprovantesInternos() {
                                     });
                                     queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
                                     toast.success(numeroNota ? `Comprovante salvo! NF: ${numeroNota}` : "Comprovante salvo!");
+                                    setShowCamera(false);
                                 }
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");
+                                setShowCamera(false);
                             }
                         }}
                         onClose={() => setShowCamera(false)}

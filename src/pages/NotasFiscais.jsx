@@ -567,25 +567,42 @@ IMPORTANTE:
         setBuscandoOnline(true);
         try {
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise o texto abaixo e busque informações REAIS e ATUAIS na internet sobre o que foi mencionado.
+                prompt: `Você é um assistente de busca de dados empresariais. Analise o texto transcrito e busque informações COMPLETAS e REAIS na internet.
 
 TEXTO TRANSCRITO DO ÁUDIO:
 "${transcription}"
 
-INSTRUÇÕES:
-1. Identifique o que o usuário está buscando (empresa, transportadora, cliente, endereço, etc)
-2. Busque informações REAIS na internet sobre o assunto
-3. Retorne os dados encontrados de forma estruturada
+INSTRUÇÕES DE BUSCA:
+1. Identifique EXATAMENTE o que o usuário está procurando (nome de empresa, transportadora, cliente, endereço, etc)
+2. Faça uma busca AMPLA em MÚLTIPLAS fontes online
+3. Priorize dados OFICIAIS e ATUALIZADOS
 
-FONTES DE PESQUISA:
+FONTES DE PESQUISA OBRIGATÓRIAS:
 - Google Maps / Google Meu Negócio
-- Bing Places
-- Páginas Amarelas
+- Bing Places / Bing Maps
+- Yahoo Local
+- Páginas Amarelas / TeleListas
+- Receita Federal (consulta CNPJ)
 - Sites oficiais das empresas
-- Receita Federal (CNPJ)
-- LinkedIn
+- LinkedIn Companies
+- Reclame Aqui
+- Guia Mais / Apontador
+- iLocal
+- Para transportes: ANTT, NTC, SETCESP, FETCESP
 
-Retorne os dados encontrados no formato estruturado.`,
+EXTRAIA TODOS OS DADOS DISPONÍVEIS:
+- Nome completo / Razão Social
+- Nome Fantasia
+- CNPJ formatado
+- Telefones (todos encontrados)
+- Email comercial
+- Endereço completo com número
+- Bairro, Cidade, UF, CEP
+- Site oficial
+- Horário de funcionamento
+- Ramo de atividade
+
+IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto mais dados melhor.`,
                 add_context_from_internet: true,
                 response_json_schema: {
                     type: "object",
@@ -595,12 +612,16 @@ Retorne os dados encontrados no formato estruturado.`,
                         nome_fantasia: { type: "string" },
                         cnpj: { type: "string" },
                         telefone: { type: "string" },
+                        telefone2: { type: "string" },
                         email: { type: "string" },
+                        site: { type: "string" },
                         endereco: { type: "string" },
                         bairro: { type: "string" },
                         cidade: { type: "string" },
                         uf: { type: "string" },
                         cep: { type: "string" },
+                        horario_funcionamento: { type: "string" },
+                        ramo_atividade: { type: "string" },
                         observacoes: { type: "string" },
                         numero_nf: { type: "string" },
                         destinatario: { type: "string" },

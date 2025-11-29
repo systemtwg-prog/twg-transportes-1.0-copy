@@ -1,20 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X, RotateCcw } from "lucide-react";
+import { Camera, X, RotateCcw, Check } from "lucide-react";
 
 export default function QuickPhotoCapture({ onCapture, onClose }) {
     const [processing, setProcessing] = useState(false);
     const [facingMode, setFacingMode] = useState("environment");
+    const [capturedImage, setCapturedImage] = useState(null);
+    const [capturedBlob, setCapturedBlob] = useState(null);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
 
     useEffect(() => {
-        startCamera();
+        if (!capturedImage) {
+            startCamera();
+        }
         return () => {
             stopCamera();
         };
-    }, [facingMode]);
+    }, [facingMode, capturedImage]);
 
     const startCamera = async () => {
         try {
@@ -54,7 +58,6 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
     const capturePhoto = () => {
         if (!videoRef.current || !canvasRef.current) return;
 
-        setProcessing(true);
         const video = videoRef.current;
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
@@ -67,17 +70,31 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Upload direto sem preview para ser mais rápido
+        // Mostrar preview da foto capturada
         canvas.toBlob((blob) => {
             if (blob) {
-                const file = new File([blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
+                const imageUrl = URL.createObjectURL(blob);
+                setCapturedImage(imageUrl);
+                setCapturedBlob(blob);
                 stopCamera();
-                // Chama onCapture mas NÃO desativa processing
-                // O componente pai vai fechar a câmera quando terminar o processamento
-                onCapture(file);
             }
-            // NÃO desativa processing aqui - deixa o indicador visível
         }, "image/jpeg", 0.85);
+    };
+
+    const retakePhoto = () => {
+        if (capturedImage) {
+            URL.revokeObjectURL(capturedImage);
+        }
+        setCapturedImage(null);
+        setCapturedBlob(null);
+    };
+
+    const confirmPhoto = () => {
+        if (!capturedBlob) return;
+        
+        setProcessing(true);
+        const file = new File([capturedBlob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
+        onCapture(file);
     };
 
     const handleClose = () => {

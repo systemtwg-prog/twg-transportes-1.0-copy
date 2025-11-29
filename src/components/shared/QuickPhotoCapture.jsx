@@ -72,9 +72,11 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
             if (blob) {
                 const file = new File([blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
                 stopCamera();
+                // Chama onCapture mas NÃO desativa processing
+                // O componente pai vai fechar a câmera quando terminar o processamento
                 onCapture(file);
             }
-            setProcessing(false);
+            // NÃO desativa processing aqui - deixa o indicador visível
         }, "image/jpeg", 0.85);
     };
 

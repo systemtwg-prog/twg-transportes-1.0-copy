@@ -559,8 +559,10 @@ export default function ComprovantesInternos() {
                     <QuickPhotoCapture
                         onCapture={async (file) => {
                             try {
-                                toast.info("Enviando foto...");
                                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                
+                                // Fecha a câmera primeiro
+                                setShowCamera(false);
                                 
                                 // Adiciona foto ao formulário
                                 setForm(prev => ({
@@ -568,8 +570,7 @@ export default function ComprovantesInternos() {
                                     arquivos: [...(prev.arquivos || []), { nome: file.name, url: file_url, tipo: file.type }]
                                 }));
                                 
-                                setShowCamera(false);
-                                toast.success("Foto adicionada!");
+                                toast.success("Foto anexada!");
                                 
                                 // Processa com IA após adicionar
                                 await processarFotoComIA(file_url);

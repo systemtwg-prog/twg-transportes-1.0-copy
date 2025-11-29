@@ -788,12 +788,12 @@ export default function ComprovantesInternos() {
                                     </label>
                                 </div>
                                 <div 
-                                    className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-500 transition-colors cursor-pointer"
-                                    onClick={() => { setScannerTarget('form'); setShowScanner(true); }}
+                                    className="border-2 border-dashed border-sky-400 rounded-lg p-4 text-center hover:border-sky-500 hover:bg-sky-50 transition-colors cursor-pointer"
+                                    onClick={() => { setCameraTarget('form'); setShowCamera(true); }}
                                 >
                                     <div className="flex flex-col items-center gap-2">
-                                        <Camera className="w-8 h-8 text-slate-400" />
-                                        <span className="text-sm text-slate-600">Scanner</span>
+                                        <Camera className="w-8 h-8 text-sky-500" />
+                                        <span className="text-sm text-sky-600 font-medium">Foto Rápida</span>
                                     </div>
                                 </div>
                             </div>

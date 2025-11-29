@@ -358,6 +358,13 @@ export default function ComprovantesInternos() {
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button 
+                            onClick={() => setShowCameraMassa(true)}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                        >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Fotos em Massa
+                        </Button>
+                        <Button 
                             onClick={atualizarDashboards}
                             variant="outline"
                             className="border-green-500 text-green-600 hover:bg-green-50"

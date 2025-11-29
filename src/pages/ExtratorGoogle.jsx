@@ -76,10 +76,12 @@ Para cada empresa encontrada, retorne:
 - segmento: Tipo específico de negócio
 
 IMPORTANTE: 
-- Retorne o MÁXIMO de empresas possível (15 a 30 empresas)
+- Retorne TODAS as empresas encontradas, SEM LIMITE de quantidade
+- Quanto mais empresas melhor, busque o máximo possível
 - Priorize empresas com dados completos e verificáveis
 - Inclua empresas de todos os portes (pequenas, médias e grandes)
-- Busque dados ATUALIZADOS e REAIS`,
+- Busque dados ATUALIZADOS e REAIS
+- NÃO limite a quantidade, traga todos os resultados disponíveis`,
                 add_context_from_internet: true,
                 response_json_schema: {
                     type: "object",

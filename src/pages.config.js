@@ -26,6 +26,7 @@ import Home from './pages/Home';
 import BuscaMultas from './pages/BuscaMultas';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import ExtratorGoogle from './pages/ExtratorGoogle';
+import HomeDesktop from './pages/HomeDesktop';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "BuscaMultas": BuscaMultas,
     "CrachaIdentificacao": CrachaIdentificacao,
     "ExtratorGoogle": ExtratorGoogle,
+    "HomeDesktop": HomeDesktop,
 }
 
 export const pagesConfig = {

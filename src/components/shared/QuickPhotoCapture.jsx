@@ -89,12 +89,18 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         setCapturedBlob(null);
     };
 
-    const confirmPhoto = () => {
+    const confirmPhoto = async () => {
         if (!capturedBlob) return;
         
         setProcessing(true);
         const file = new File([capturedBlob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
-        onCapture(file);
+        
+        try {
+            await onCapture(file);
+        } catch (error) {
+            console.error("Erro ao processar foto:", error);
+            setProcessing(false);
+        }
     };
 
     const handleClose = () => {

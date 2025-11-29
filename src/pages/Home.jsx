@@ -8,19 +8,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
-          Truck, Package, FileText, Users, Car, 
-          ClipboardList, Settings, BarChart3,
-          Navigation, Building2, Upload,
-          Camera, ChevronRight, Bell, Printer
-      } from "lucide-react";
+        Truck, Package, FileText, Users, Car, 
+        ClipboardList, Settings, BarChart3,
+        Navigation, Building2, Upload,
+        Camera, ChevronRight, Bell, Printer, Settings2
+    } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import WeatherWidget from "@/components/shared/WeatherWidget";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
 
 export default function Home() {
     const [placaSelecionada, setPlacaSelecionada] = useState(null);
     const [showNotasDialog, setShowNotasDialog] = useState(false);
+    const [showPrintConfig, setShowPrintConfig] = useState(false);
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user"],
@@ -184,12 +186,30 @@ export default function Home() {
         gerarImpressaoNotas(winPrint, placaSelecionada, veiculo, todasNotas.length, Object.keys(notasAgrupadas).length, notasHtml);
     };
 
-    const handlePrintTodosDashboard = () => {
+    const handlePrintTodosDashboard = (printConfig = {}) => {
         const winPrint = window.open('', '_blank', 'width=800,height=600');
         if (!winPrint) {
             alert("Permita pop-ups para imprimir.");
             return;
         }
+
+        const cfg = {
+            marginTop: printConfig.marginTop ?? 5,
+            marginBottom: printConfig.marginBottom ?? 5,
+            marginLeft: printConfig.marginLeft ?? 5,
+            marginRight: printConfig.marginRight ?? 5,
+            showHeader: printConfig.showHeader ?? true,
+            showFooter: printConfig.showFooter ?? true,
+            showLogo: printConfig.showLogo ?? true,
+            showDate: printConfig.showDate ?? true,
+            showCompanyInfo: printConfig.showCompanyInfo ?? true,
+            fontSize: printConfig.fontSize ?? 9,
+            columns: printConfig.columns ?? 2,
+            headerHeight: printConfig.headerHeight ?? 50,
+            footerHeight: printConfig.footerHeight ?? 20,
+            cardPadding: printConfig.cardPadding ?? 4,
+            cardGap: printConfig.cardGap ?? 4
+        };
 
         // Gerar HTML para todos os veículos
         let todosVeiculosHtml = '';
@@ -243,25 +263,26 @@ export default function Home() {
                 <title>Dashboard Pendências</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 5px; color: #1e293b; font-size: 9px; }
-                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 6px; }
-                    .logo { width: 50px; margin-right: 8px; }
+                    body { font-family: Arial, sans-serif; padding: ${cfg.marginTop}mm ${cfg.marginRight}mm ${cfg.marginBottom}mm ${cfg.marginLeft}mm; color: #1e293b; font-size: ${cfg.fontSize}px; }
+                    .header { display: ${cfg.showHeader ? 'flex' : 'none'}; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 6px; min-height: ${cfg.headerHeight}px; }
+                    .logo { display: ${cfg.showLogo ? 'block' : 'none'}; width: 50px; margin-right: 8px; }
                     .logo img { max-width: 100%; max-height: 35px; object-fit: contain; }
-                    .company-name { font-size: 11px; font-weight: bold; color: #1e293b; }
-                    .company-details { font-size: 8px; color: #64748b; }
-                    .title { text-align: center; font-size: 10px; font-weight: bold; color: #1e40af; margin: 4px 0; padding: 3px; background: #eff6ff; border-radius: 3px; }
+                    .company-name { font-size: ${cfg.fontSize + 2}px; font-weight: bold; color: #1e293b; display: ${cfg.showCompanyInfo ? 'block' : 'none'}; }
+                    .company-details { font-size: ${cfg.fontSize - 1}px; color: #64748b; display: ${cfg.showCompanyInfo ? 'block' : 'none'}; }
+                    .title { text-align: center; font-size: ${cfg.fontSize + 1}px; font-weight: bold; color: #1e40af; margin: 4px 0; padding: 3px; background: #eff6ff; border-radius: 3px; }
+                    .title-date { display: ${cfg.showDate ? 'inline' : 'none'}; }
                     .summary { display: flex; justify-content: center; gap: 15px; background: #f8fafc; padding: 4px; border-radius: 3px; margin-bottom: 6px; }
                     .summary-item { text-align: center; }
-                    .summary-label { color: #64748b; text-transform: uppercase; font-size: 7px; }
-                    .summary-value { font-size: 11px; font-weight: bold; color: #1e40af; }
-                    .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+                    .summary-label { color: #64748b; text-transform: uppercase; font-size: ${cfg.fontSize - 2}px; }
+                    .summary-value { font-size: ${cfg.fontSize + 2}px; font-weight: bold; color: #1e40af; }
+                    .grid-container { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: ${cfg.cardGap}px; }
                     .veiculo-card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
-                    .veiculo-header { background: #2563eb; color: white; padding: 3px 6px; font-weight: bold; font-size: 9px; }
-                    .transp-header { background: #eff6ff; padding: 2px 6px; font-size: 8px; font-weight: 600; color: #1e40af; border-bottom: 1px solid #e2e8f0; }
-                    .notas-list { padding: 2px 6px 4px; font-size: 7px; }
+                    .veiculo-header { background: #2563eb; color: white; padding: ${cfg.cardPadding}px 6px; font-weight: bold; font-size: ${cfg.fontSize}px; }
+                    .transp-header { background: #eff6ff; padding: 2px 6px; font-size: ${cfg.fontSize - 1}px; font-weight: 600; color: #1e40af; border-bottom: 1px solid #e2e8f0; }
+                    .notas-list { padding: 2px 6px ${cfg.cardPadding}px; font-size: ${cfg.fontSize - 2}px; }
                     .nota-item { display: inline-block; background: #f1f5f9; padding: 1px 4px; border-radius: 2px; margin: 1px; }
-                    .footer { margin-top: 6px; padding-top: 3px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 7px; color: #94a3b8; }
-                    @media print { body { padding: 3px; } @page { margin: 5mm; } }
+                    .footer { display: ${cfg.showFooter ? 'block' : 'none'}; margin-top: 6px; padding-top: 3px; border-top: 1px solid #e2e8f0; text-align: center; font-size: ${cfg.fontSize - 2}px; color: #94a3b8; min-height: ${cfg.footerHeight}px; }
+                    @media print { body { padding: ${cfg.marginTop}mm ${cfg.marginRight}mm ${cfg.marginBottom}mm ${cfg.marginLeft}mm; } @page { margin: 0; } }
                 </style>
             </head>
             <body>
@@ -275,7 +296,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div class="title">PENDÊNCIAS POR VEÍCULO - ${format(new Date(), "dd/MM/yyyy")}</div>
+                <div class="title">PENDÊNCIAS POR VEÍCULO<span class="title-date"> - ${format(new Date(), "dd/MM/yyyy")}</span></div>
 
                 <div class="summary">
                     <div class="summary-item">
@@ -423,14 +444,24 @@ export default function Home() {
                                     </div>
                                     Pendências por Veículo
                                 </CardTitle>
-                                <Button 
-                                    onClick={handlePrintTodosDashboard}
-                                    size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                    <Printer className="w-4 h-4 mr-1" />
-                                    Imprimir Todos
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={() => setShowPrintConfig(true)}
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-blue-500 text-blue-600"
+                                    >
+                                        <Settings className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                        onClick={() => handlePrintTodosDashboard()}
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        <Printer className="w-4 h-4 mr-1" />
+                                        Imprimir Todos
+                                    </Button>
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-3">
@@ -521,6 +552,14 @@ export default function Home() {
                     </div>
                 )}
             </div>
+
+            {/* Dialog Configuração de Impressão */}
+            <PrintConfigDialog
+                open={showPrintConfig}
+                onOpenChange={setShowPrintConfig}
+                onPrint={handlePrintTodosDashboard}
+                configKey="homeDashboardPrint"
+            />
 
             {/* Dialog Notas por Transportadora */}
             <Dialog open={showNotasDialog} onOpenChange={setShowNotasDialog}>

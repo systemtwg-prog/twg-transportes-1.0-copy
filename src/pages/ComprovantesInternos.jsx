@@ -595,6 +595,74 @@ export default function ComprovantesInternos() {
                 </div>
             )}
 
+            {/* Camera para Fotos em Massa */}
+            {showCameraMassa && (
+                <div className="fixed inset-0 z-[100] bg-black">
+                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/70 to-transparent">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => {
+                                if (fotosMassa.length > 0 && !processandoMassa) {
+                                    // Salvar fotos capturadas
+                                    processarFotosMassa();
+                                } else {
+                                    setShowCameraMassa(false);
+                                    setFotosMassa([]);
+                                }
+                            }} 
+                            className="text-white hover:bg-white/20"
+                        >
+                            <X className="w-6 h-6" />
+                        </Button>
+                        <div className="text-white text-center">
+                            <span className="text-lg font-bold">Fotos em Massa</span>
+                            <p className="text-xs text-white/70">{fotosMassa.length} foto(s) capturada(s)</p>
+                        </div>
+                        {fotosMassa.length > 0 && !processandoMassa && (
+                            <Button 
+                                onClick={processarFotosMassa}
+                                className="bg-green-500 hover:bg-green-600 text-white"
+                            >
+                                <Save className="w-4 h-4 mr-1" />
+                                Salvar ({fotosMassa.length})
+                            </Button>
+                        )}
+                        {fotosMassa.length === 0 && <div className="w-24" />}
+                    </div>
+                    
+                    {processandoMassa ? (
+                        <div className="flex-1 flex items-center justify-center h-full">
+                            <div className="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
+                                <div className="animate-spin w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full" />
+                                <span className="text-slate-700 font-medium text-lg">Processando {fotosMassa.length} fotos...</span>
+                                <p className="text-sm text-slate-500">Identificando notas fiscais com IA</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <QuickPhotoCapture
+                            onCapture={async (file) => {
+                                try {
+                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                    setFotosMassa(prev => [...prev, { nome: file.name, url: file_url, tipo: file.type }]);
+                                    toast.success(`Foto ${fotosMassa.length + 1} capturada!`);
+                                } catch (error) {
+                                    console.error("Erro ao fazer upload:", error);
+                                    toast.error("Erro ao salvar foto");
+                                }
+                            }}
+                            onClose={() => {
+                                if (fotosMassa.length > 0) {
+                                    processarFotosMassa();
+                                } else {
+                                    setShowCameraMassa(false);
+                                }
+                            }}
+                        />
+                    )}
+                </div>
+            )}
+
             {/* Form Dialog - Novo Comprovante */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

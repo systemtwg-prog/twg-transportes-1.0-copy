@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Fingerprint, Unlock, KeyRound, AlertCircle, Smartphone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 
 export default function BiometricLock({ onUnlock }) {
     const [showPinInput, setShowPinInput] = useState(false);
@@ -12,27 +11,25 @@ export default function BiometricLock({ onUnlock }) {
     const [error, setError] = useState("");
     const [biometricAvailable, setBiometricAvailable] = useState(false);
     const [authenticating, setAuthenticating] = useState(false);
+    const [config, setConfig] = useState({});
     const [ready, setReady] = useState(false);
 
-    const { data: configs = [], isLoading: loadingConfig } = useQuery({
-        queryKey: ["configuracoes-lock"],
-        queryFn: async () => {
+    // Carregar config de forma segura
+    useEffect(() => {
+        const loadConfig = async () => {
             try {
-                return await base44.entities.Configuracoes.list();
+                const configs = await base44.entities.Configuracoes.list();
+                if (configs && configs.length > 0) {
+                    setConfig(configs[0]);
+                }
             } catch (e) {
                 console.log("Erro ao carregar config:", e);
-                return [];
             }
-        }
-    });
-    const config = configs[0] || {};
+            setReady(true);
+        };
 
-    // Verificar se biometria está disponível
-    useEffect(() => {
+        loadConfig();
         checkBiometricAvailability();
-        // Garantir que o componente está pronto após 1 segundo
-        const timer = setTimeout(() => setReady(true), 500);
-        return () => clearTimeout(timer);
     }, []);
 
     const checkBiometricAvailability = async () => {
@@ -40,7 +37,6 @@ export default function BiometricLock({ onUnlock }) {
             if (window.PublicKeyCredential) {
                 const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
                 setBiometricAvailable(available);
-                // Não autenticar automaticamente para evitar problemas
             }
         } catch (e) {
             console.log("Biometria não suportada:", e);
@@ -141,7 +137,7 @@ export default function BiometricLock({ onUnlock }) {
     };
 
     // Mostrar loading enquanto não está pronto
-    if (!ready && loadingConfig) {
+    if (!ready) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
                 <div className="animate-spin w-10 h-10 border-4 border-blue-400 border-t-transparent rounded-full" />

@@ -147,7 +147,7 @@ export default function Home() {
         { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600" },
     ];
 
-    const bigButton = { name: "Busca de Multas", href: "BuscaMultas", icon: Car, color: "from-red-500 via-orange-500 to-amber-500" };
+    const bigButton = { name: "Crachá de Identificação", href: "CrachaIdentificacao", icon: Users, color: "from-emerald-500 via-teal-500 to-cyan-500" };
 
     const quickButtons = [
         { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },

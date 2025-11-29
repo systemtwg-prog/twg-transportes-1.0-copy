@@ -24,6 +24,7 @@ import RotasGPS from './pages/RotasGPS';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import Home from './pages/Home';
 import BuscaMultas from './pages/BuscaMultas';
+import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "ComprovantesInternos": ComprovantesInternos,
     "Home": Home,
     "BuscaMultas": BuscaMultas,
+    "CrachaIdentificacao": CrachaIdentificacao,
 }
 
 export const pagesConfig = {

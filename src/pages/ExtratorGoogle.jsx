@@ -36,24 +36,50 @@ export default function ExtratorGoogle() {
 
         try {
             const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Busque empresas do segmento "${segmento}" na cidade de "${cidade}", Brasil.
+                prompt: `Faça uma busca AMPLA e COMPLETA de empresas do segmento "${segmento}" na cidade de "${cidade}", Brasil.
 
-Para cada empresa encontrada, retorne as seguintes informações:
-- nome: Nome da empresa/estabelecimento
-- nome_fantasia: Nome fantasia (se diferente)
-- endereco: Endereço completo
+FONTES DE PESQUISA (use todas):
+1. Google Maps / Google Meu Negócio
+2. Bing Places
+3. Yahoo Local
+4. Páginas Amarelas
+5. TeleListas
+6. Guia Mais
+7. Apontador
+8. iLocal
+9. Sites de associações do setor (ANTT, NTC, SETCESP, FETCESP, CNT para transportes)
+10. Portais de empresas e diretórios comerciais
+11. LinkedIn Companies
+12. Reclame Aqui (para validar empresas)
+13. Receita Federal (CNPJ)
+14. Juntas Comerciais estaduais
+
+TERMOS DE BUSCA EXPANDIDOS para "${segmento}":
+- "${segmento} em ${cidade}"
+- "${segmento} ${cidade} telefone"
+- "empresas de ${segmento} ${cidade}"
+- "lista ${segmento} ${cidade}"
+- Sinônimos e variações do segmento
+
+Para cada empresa encontrada, retorne:
+- nome: Nome da empresa/estabelecimento (razão social)
+- nome_fantasia: Nome fantasia
+- endereco: Endereço completo com número
 - bairro: Bairro
 - cidade: Cidade
 - uf: Estado (sigla)
-- cep: CEP
-- telefone: Telefone principal
-- email: Email (se disponível)
-- site: Website (se disponível)
-- cnpj: CNPJ (se disponível)
-- segmento: Tipo de negócio/segmento
+- cep: CEP (formato 00000-000)
+- telefone: Telefone principal com DDD
+- email: Email comercial
+- site: Website oficial
+- cnpj: CNPJ formatado
+- segmento: Tipo específico de negócio
 
-Retorne de 5 a 15 empresas REAIS e ATUAIS com dados verdadeiros encontrados na internet.
-Priorize empresas com mais informações disponíveis.`,
+IMPORTANTE: 
+- Retorne o MÁXIMO de empresas possível (15 a 30 empresas)
+- Priorize empresas com dados completos e verificáveis
+- Inclua empresas de todos os portes (pequenas, médias e grandes)
+- Busque dados ATUALIZADOS e REAIS`,
                 add_context_from_internet: true,
                 response_json_schema: {
                     type: "object",

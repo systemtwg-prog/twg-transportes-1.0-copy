@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell, HomeIcon
+    Navigation, Award, Settings, LayoutGrid, UserCheck, ArrowLeft, LogOut, Bell, HomeIcon, Search
 } from "lucide-react";
 
 const menuItems = [
@@ -18,6 +18,7 @@ const menuItems = [
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
     { name: "Clientes", href: "Clientes", icon: Users },
     { name: "Transportadoras", href: "Transportadoras", icon: Package },
+    { name: "Extrator Google", href: "ExtratorGoogle", icon: Search },
     { name: "Colaboradores", href: "Motoristas", icon: User },
     { name: "Veículos", href: "Veiculos", icon: Car },
     { name: "Busca de Multas", href: "BuscaMultas", icon: Car },

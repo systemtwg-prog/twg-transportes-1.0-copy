@@ -127,6 +127,7 @@ export default function ComprovantesInternos() {
     const [editingEmpresa, setEditingEmpresa] = useState(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
+    const [showCameraMassa, setShowCameraMassa] = useState(false);
     const [processandoIA, setProcessandoIA] = useState(false);
     const queryClient = useQueryClient();
 

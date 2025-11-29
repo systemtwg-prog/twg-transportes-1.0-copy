@@ -14,6 +14,7 @@ import {
     Plus, Search, Pencil, Trash2, Truck, X, Save, Building2, Phone, Mail, MapPin, ClipboardPaste, Sparkles, RefreshCw, Loader2, FileText
 } from "lucide-react";
 import { toast } from "sonner";
+import CepInput from "@/components/shared/CepInput";
 
 function TransportadoraForm({ transportadora, onSubmit, onCancel }) {
     const [form, setForm] = useState({
@@ -137,11 +138,10 @@ function TransportadoraForm({ transportadora, onSubmit, onCancel }) {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>CEP</Label>
-                            <Input
+                            <CepInput
                                 value={form.cep}
-                                onChange={(e) => setForm({ ...form, cep: e.target.value.replace(/\D/g, "") })}
-                                onBlur={buscarCep}
-                                maxLength={8}
+                                onChange={(val) => setForm({ ...form, cep: val })}
+                                onAddressFound={(addr) => setForm({ ...form, ...addr })}
                             />
                         </div>
                         <div className="space-y-2 md:col-span-2">

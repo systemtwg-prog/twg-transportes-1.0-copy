@@ -438,13 +438,6 @@ export default function ComprovantesInternos() {
                             Em Massa
                         </Button>
                         <Button 
-                            onClick={() => { setCameraTarget(null); setShowCamera(true); }}
-                            className="bg-gradient-to-r from-green-500 to-emerald-600 h-14 px-6 text-lg"
-                        >
-                            <Camera className="w-6 h-6 mr-2" />
-                            Foto Rápida
-                        </Button>
-                        <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-sky-500 to-cyan-600 h-14 px-8 text-lg"
                         >

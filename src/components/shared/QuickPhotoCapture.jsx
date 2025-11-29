@@ -108,10 +108,7 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                 <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/20">
                     <X className="w-6 h-6" />
                 </Button>
-                <div className="flex items-center gap-2 text-white text-sm">
-                    <Sun className="w-4 h-4" />
-                    <span>Foto com melhoria automática</span>
-                </div>
+                <span className="text-white text-sm">Toque para capturar</span>
                 <Button variant="ghost" size="icon" onClick={switchCamera} className="text-white hover:bg-white/20">
                     <RotateCcw className="w-6 h-6" />
                 </Button>

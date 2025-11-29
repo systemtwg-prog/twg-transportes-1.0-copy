@@ -61,7 +61,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "BuscaMultas",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };

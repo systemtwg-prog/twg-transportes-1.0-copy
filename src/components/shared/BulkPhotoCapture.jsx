@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, RotateCcw, Check, Trash2, Loader2 } from "lucide-react";
+import { X, RotateCcw, Check, Loader2, Camera } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -68,8 +68,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
         canvas.toBlob((blob) => {
             if (blob) {
                 const imageUrl = URL.createObjectURL(blob);
-                setFotos(prev => [...prev, { blob, url: imageUrl, id: Date.now() }]);
-                toast.success(`Foto ${fotos.length + 1} capturada!`);
+                const novaFoto = { blob, url: imageUrl, id: Date.now() };
+                setFotos(prev => [...prev, novaFoto]);
+                toast.success(`Foto ${fotos.length + 1} adicionada!`);
             }
             setCapturing(false);
         }, "image/jpeg", 0.7);
@@ -81,6 +82,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             if (foto) URL.revokeObjectURL(foto.url);
             return prev.filter(f => f.id !== id);
         });
+        toast.info("Foto removida");
     };
 
     const handleFinish = async () => {
@@ -99,11 +101,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             toast.info(`Processando foto ${i + 1} de ${fotos.length}...`);
 
             try {
-                // Upload da foto
                 const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-                // Processar com IA
                 const resultado = await base44.integrations.Core.InvokeLLM({
                     prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
                     Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).
@@ -134,9 +134,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             }
         }
 
-        // Limpar URLs
         fotos.forEach(f => URL.revokeObjectURL(f.url));
-
         setProcessing(false);
         onComplete(resultados);
     };
@@ -154,20 +152,22 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                 <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/20 h-12 w-12">
                     <X className="w-8 h-8" />
                 </Button>
-                <span className="text-white text-lg font-bold">
-                    Fotos em Massa ({fotos.length})
-                </span>
+                <div className="text-center">
+                    <span className="text-white text-lg font-bold block">Fotos em Massa</span>
+                    <span className="text-white/70 text-sm">{fotos.length} foto(s) capturada(s)</span>
+                </div>
                 <Button variant="ghost" size="icon" onClick={switchCamera} className="text-white hover:bg-white/20 h-12 w-12">
                     <RotateCcw className="w-7 h-7" />
                 </Button>
             </div>
 
             {/* Camera View */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center pt-20 pb-48">
                 {processing ? (
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="w-16 h-16 text-white animate-spin" />
                         <span className="text-white text-xl font-medium">Processando fotos com IA...</span>
+                        <span className="text-white/70 text-sm">Identificando números das notas fiscais</span>
                     </div>
                 ) : (
                     <video
@@ -182,54 +182,67 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
             <canvas ref={canvasRef} className="hidden" />
 
-            {/* Miniaturas das fotos */}
+            {/* Miniaturas das fotos capturadas */}
             {fotos.length > 0 && !processing && (
-                <div className="absolute top-20 left-0 right-0 px-4">
-                    <div className="flex gap-2 overflow-x-auto py-2">
-                        {fotos.map((foto, idx) => (
-                            <div key={foto.id} className="relative flex-shrink-0">
-                                <img src={foto.url} alt={`Foto ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg border-2 border-white" />
-                                <button
-                                    onClick={() => removePhoto(foto.id)}
-                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"
-                                >
-                                    <X className="w-4 h-4 text-white" />
-                                </button>
-                                <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs text-center rounded-b-lg">
-                                    {idx + 1}
-                                </span>
-                            </div>
-                        ))}
+                <div className="absolute top-24 left-0 right-0 px-4 z-20">
+                    <div className="bg-black/60 rounded-xl p-3">
+                        <p className="text-white text-xs mb-2 font-medium">Fotos capturadas (toque para remover):</p>
+                        <div className="flex gap-3 overflow-x-auto pb-1">
+                            {fotos.map((foto, idx) => (
+                                <div key={foto.id} className="relative flex-shrink-0 group">
+                                    <img 
+                                        src={foto.url} 
+                                        alt={`Foto ${idx + 1}`} 
+                                        className="w-20 h-20 object-cover rounded-lg border-2 border-white shadow-lg" 
+                                    />
+                                    <button
+                                        onClick={() => removePhoto(foto.id)}
+                                        className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg"
+                                    >
+                                        <X className="w-4 h-4 text-white" />
+                                    </button>
+                                    <span className="absolute bottom-1 left-1 right-1 bg-black/80 text-white text-xs text-center rounded py-0.5 font-bold">
+                                        #{idx + 1}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Footer Controls */}
             {!processing && (
-                <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center items-center gap-6 bg-gradient-to-t from-black/80 to-transparent">
-                    {/* Botão de Captura */}
-                    <button
-                        onClick={capturePhoto}
-                        disabled={capturing}
-                        className="w-32 h-32 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-8 border-sky-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
-                    >
-                        {capturing ? (
-                            <div className="animate-spin w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full" />
-                        ) : (
-                            <div className="w-24 h-24 rounded-full bg-sky-500" />
-                        )}
-                    </button>
-
-                    {/* Botão Finalizar */}
-                    {fotos.length > 0 && (
-                        <Button
-                            onClick={handleFinish}
-                            className="h-20 px-8 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl text-lg font-bold"
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+                    <div className="flex justify-center items-center gap-6">
+                        {/* Botão de Captura Grande */}
+                        <button
+                            onClick={capturePhoto}
+                            disabled={capturing}
+                            className="w-28 h-28 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-[6px] border-orange-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
                         >
-                            <Check className="w-8 h-8 mr-2" />
-                            Salvar ({fotos.length})
-                        </Button>
-                    )}
+                            {capturing ? (
+                                <div className="animate-spin w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full" />
+                            ) : (
+                                <Camera className="w-14 h-14 text-orange-500" />
+                            )}
+                        </button>
+
+                        {/* Botão Finalizar */}
+                        {fotos.length > 0 && (
+                            <Button
+                                onClick={handleFinish}
+                                className="h-20 px-6 rounded-2xl bg-green-500 hover:bg-green-600 text-white shadow-2xl text-lg font-bold flex flex-col items-center"
+                            >
+                                <Check className="w-8 h-8" />
+                                <span className="text-sm">Salvar ({fotos.length})</span>
+                            </Button>
+                        )}
+                    </div>
+                    
+                    <p className="text-center text-white/60 text-sm mt-4">
+                        Tire as fotos e depois clique em Salvar
+                    </p>
                 </div>
             )}
         </div>

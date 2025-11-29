@@ -133,37 +133,17 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
 
             {/* Footer Controls */}
             <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center gap-6 bg-gradient-to-t from-black/70 to-transparent">
-                {capturedImage ? (
-                    <>
-                        <Button 
-                            onClick={retakePhoto}
-                            variant="outline"
-                            className="h-14 px-6 border-white text-white hover:bg-white/20"
-                        >
-                            <RotateCcw className="w-5 h-5 mr-2" />
-                            Tirar Outra
-                        </Button>
-                        <Button 
-                            onClick={confirmPhoto}
-                            className="h-14 px-8 bg-green-500 hover:bg-green-600"
-                        >
-                            <Check className="w-5 h-5 mr-2" />
-                            Usar Foto
-                        </Button>
-                    </>
-                ) : (
-                    <Button
-                        onClick={capturePhoto}
-                        disabled={processing}
-                        className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black shadow-lg"
-                    >
-                        {processing ? (
-                            <div className="animate-spin w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full" />
-                        ) : (
-                            <Camera className="w-10 h-10" />
-                        )}
-                    </Button>
-                )}
+                <Button
+                    onClick={capturePhoto}
+                    disabled={processing}
+                    className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black shadow-lg"
+                >
+                    {processing ? (
+                        <div className="animate-spin w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full" />
+                    ) : (
+                        <Camera className="w-10 h-10" />
+                    )}
+                </Button>
             </div>
 
             {/* Indicador de melhoria */}

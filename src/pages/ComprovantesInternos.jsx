@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -129,6 +129,9 @@ export default function ComprovantesInternos() {
     const [showCamera, setShowCamera] = useState(false);
     const [showCameraMassa, setShowCameraMassa] = useState(false);
     const [processandoIA, setProcessandoIA] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [showBulkEdit, setShowBulkEdit] = useState(false);
+    const [bulkEditData, setBulkEditData] = useState({ data: "", empresa: "" });
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -225,6 +228,48 @@ export default function ComprovantesInternos() {
         mutationFn: (id) => base44.entities.ComprovanteInterno.delete(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] })
     });
+
+    const bulkUpdateMutation = useMutation({
+        mutationFn: async ({ ids, data }) => {
+            for (const id of ids) {
+                await base44.entities.ComprovanteInterno.update(id, data);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+            setSelectedIds([]);
+            setShowBulkEdit(false);
+            setBulkEditData({ data: "", empresa: "" });
+            toast.success("Comprovantes atualizados!");
+        }
+    });
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === filtered.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filtered.map(c => c.id));
+        }
+    };
+
+    const handleBulkEdit = () => {
+        const updateData = {};
+        if (bulkEditData.data) updateData.data = bulkEditData.data;
+        if (bulkEditData.empresa) updateData.empresa = bulkEditData.empresa;
+
+        if (Object.keys(updateData).length === 0) {
+            toast.error("Selecione pelo menos um campo para alterar");
+            return;
+        }
+
+        bulkUpdateMutation.mutate({ ids: selectedIds, data: updateData });
+    };
 
     const resetForm = () => {
         setForm({
@@ -391,10 +436,57 @@ export default function ComprovantesInternos() {
                     Novo Comprovante
                 </Button>
 
+                {/* Barra de Seleção */}
+                {selectedIds.length > 0 && (
+                    <Card className="bg-gradient-to-r from-sky-500 to-cyan-600 border-0 shadow-lg">
+                        <CardContent className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Badge className="bg-white text-sky-700 text-lg px-3 py-1">
+                                    {selectedIds.length} selecionado(s)
+                                </Badge>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => setSelectedIds([])}
+                                    className="text-white hover:bg-white/20"
+                                >
+                                    <X className="w-4 h-4 mr-1" /> Limpar
+                                </Button>
+                            </div>
+                            <Button 
+                                onClick={() => setShowBulkEdit(true)}
+                                className="bg-white text-sky-700 hover:bg-sky-50"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar em Massa
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Selecionar Todos */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500">Seleção</Label>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={toggleSelectAll}
+                                    className="w-full h-10"
+                                >
+                                    {selectedIds.length === filtered.length && filtered.length > 0 ? (
+                                        <>
+                                            <X className="w-4 h-4 mr-2" /> Desmarcar Todos
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="w-4 h-4 mr-2" /> Selecionar Todos ({filtered.length})
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" /> Filtrar por Data
@@ -476,11 +568,19 @@ export default function ComprovantesInternos() {
                         filtered.map((comprovante) => (
                             <Card 
                                 key={comprovante.id} 
-                                className="bg-white/90 border-0 shadow-md hover:shadow-lg transition-shadow"
+                                className={`bg-white/90 border-2 shadow-md hover:shadow-lg transition-all cursor-pointer ${selectedIds.includes(comprovante.id) ? 'border-sky-500 ring-2 ring-sky-200' : 'border-transparent'}`}
+                                onClick={() => toggleSelect(comprovante.id)}
                             >
                                 <CardContent className="p-5">
                                     <div className="flex items-start justify-between mb-3">
-                                        <div>
+                                        <div className="flex items-start gap-3">
+                                            {/* Checkbox de seleção */}
+                                            <div 
+                                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedIds.includes(comprovante.id) ? 'bg-sky-500 border-sky-500' : 'border-slate-300'}`}
+                                            >
+                                                {selectedIds.includes(comprovante.id) && <Check className="w-4 h-4 text-white" />}
+                                            </div>
+                                            <div>
                                             <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
                                             {comprovante.empresa && (
                                                 <div className="flex items-center gap-1.5">
@@ -522,7 +622,7 @@ export default function ComprovantesInternos() {
                                         <p className="text-sm text-slate-600 line-clamp-2 mb-3">{comprovante.observacoes}</p>
                                     )}
 
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between" onClick={(e) => e.stopPropagation()}>
                                         <Button 
                                             variant="ghost" 
                                             size="sm" 
@@ -550,6 +650,7 @@ export default function ComprovantesInternos() {
                                             </Button>
                                         </div>
                                     </div>
+                                        </div>
                                 </CardContent>
                             </Card>
                         ))
@@ -774,6 +875,73 @@ export default function ComprovantesInternos() {
                             )}
                         </Button>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Edição em Massa */}
+            <Dialog open={showBulkEdit} onOpenChange={setShowBulkEdit}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="w-5 h-5 text-sky-600" />
+                            Editar {selectedIds.length} Comprovante(s)
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-500">
+                            Preencha apenas os campos que deseja alterar. Campos vazios não serão modificados.
+                        </p>
+
+                        <div className="space-y-2">
+                            <Label>Nova Data</Label>
+                            <Input
+                                type="date"
+                                value={bulkEditData.data}
+                                onChange={(e) => setBulkEditData({ ...bulkEditData, data: e.target.value })}
+                                className="h-12"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Nova Empresa</Label>
+                            <Select 
+                                value={bulkEditData.empresa} 
+                                onValueChange={(v) => setBulkEditData({ ...bulkEditData, empresa: v })}
+                            >
+                                <SelectTrigger className="h-12">
+                                    <SelectValue placeholder="Selecione a empresa" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {empresasCadastradas.map(emp => (
+                                        <SelectItem key={emp.id} value={emp.nome}>
+                                            <div className="flex items-center gap-2">
+                                                {emp.logo_url && <img src={emp.logo_url} alt="" className="w-5 h-5 object-contain" />}
+                                                {emp.nome}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Button 
+                            onClick={handleBulkEdit}
+                            disabled={bulkUpdateMutation.isPending}
+                            className="w-full h-14 text-lg bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700"
+                        >
+                            {bulkUpdateMutation.isPending ? (
+                                <>
+                                    <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                                    Atualizando...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-6 h-6 mr-2" />
+                                    Aplicar Alterações
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </DialogContent>
             </Dialog>
 

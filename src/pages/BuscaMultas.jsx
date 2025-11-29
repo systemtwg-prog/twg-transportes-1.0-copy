@@ -10,9 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { 
     Car, Search, AlertTriangle, FileText, DollarSign, 
-    Calendar, MapPin, CheckCircle, Clock, Loader2, Printer, Share2, Eye
+    Calendar, MapPin, CheckCircle, Clock, Loader2, Printer, Share2, Eye,
+    User, ChevronDown, ChevronUp, Filter, X, UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -23,9 +25,16 @@ export default function BuscaMultas() {
     const [consultando, setConsultando] = useState(false);
     const [multasEncontradas, setMultasEncontradas] = useState([]);
     const [showResultados, setShowResultados] = useState(false);
+    const [multaDetalhes, setMultaDetalhes] = useState(null);
+    const [showDetalhes, setShowDetalhes] = useState(false);
+    const [filtroStatus, setFiltroStatus] = useState("todos");
+    const [multasSelecionadasImpressao, setMultasSelecionadasImpressao] = useState([]);
+    const [showIndicacao, setShowIndicacao] = useState(false);
+    const [multaIndicacao, setMultaIndicacao] = useState(null);
+    const [motoristaIndicado, setMotoristaIndicado] = useState("");
     const queryClient = useQueryClient();
 
-    const { data: veiculos = [], isLoading } = useQuery({
+    const { data: veiculos = [] } = useQuery({
         queryKey: ["veiculos-multas"],
         queryFn: () => base44.entities.Veiculo.list()
     });
@@ -33,6 +42,11 @@ export default function BuscaMultas() {
     const { data: multas = [] } = useQuery({
         queryKey: ["multas"],
         queryFn: () => base44.entities.Multa.list("-created_date")
+    });
+
+    const { data: motoristas = [] } = useQuery({
+        queryKey: ["motoristas-multas"],
+        queryFn: () => base44.entities.Motorista.list()
     });
 
     const { data: configs = [] } = useQuery({
@@ -54,6 +68,7 @@ export default function BuscaMultas() {
         mutationFn: ({ id, data }) => base44.entities.Multa.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["multas"] });
+            toast.success("Multa atualizada!");
         }
     });
 
@@ -83,8 +98,6 @@ GERE de 4 a 6 multas com os seguintes critérios:
 - Locais em São Paulo e rodovias (Av. Paulista, Marginal Tietê, Rod. Bandeirantes, Rod. Anhanguera, etc)
 - Órgãos: DETRAN-SP, CET, DER-SP, PRF, Prefeitura de SP
 
-IMPORTANTE: Gere pelo menos 2 multas de 2025, sendo 1 vencida e 1 a vencer.
-
 Use números de auto no formato: XX123456789 (2 letras + 9 números)
 Use datas no formato: YYYY-MM-DD`,
                 response_json_schema: {
@@ -101,12 +114,12 @@ Use datas no formato: YYYY-MM-DD`,
                                     local: { type: "string" },
                                     valor: { type: "number" },
                                     pontos: { type: "number" },
-                                    data_vencimento: { type: "string" }
+                                    data_vencimento: { type: "string" },
+                                    orgao: { type: "string" },
+                                    gravidade: { type: "string" }
                                 }
                             }
-                        },
-                        total_multas: { type: "number" },
-                        valor_total: { type: "number" }
+                        }
                     }
                 }
             });
@@ -142,6 +155,12 @@ Use datas no formato: YYYY-MM-DD`,
         ));
     };
 
+    const toggleMultaImpressao = (multaId) => {
+        setMultasSelecionadasImpressao(prev => 
+            prev.includes(multaId) ? prev.filter(id => id !== multaId) : [...prev, multaId]
+        );
+    };
+
     const marcarComoReconhecida = async () => {
         const selecionadas = multasEncontradas.filter(m => m.selecionada);
         if (selecionadas.length === 0) {
@@ -158,6 +177,26 @@ Use datas no formato: YYYY-MM-DD`,
 
         setMultasEncontradas(prev => prev.filter(m => !m.selecionada));
         toast.success(`${selecionadas.length} multa(s) marcada(s) como reconhecida(s)`);
+    };
+
+    const handleIndicarMotorista = () => {
+        if (!multaIndicacao || !motoristaIndicado) {
+            toast.error("Selecione um motorista");
+            return;
+        }
+
+        const motorista = motoristas.find(m => m.id === motoristaIndicado);
+        updateMultaMutation.mutate({
+            id: multaIndicacao.id,
+            data: { 
+                motorista_id: motoristaIndicado,
+                motorista_responsavel: motorista?.nome || ""
+            }
+        });
+
+        setShowIndicacao(false);
+        setMultaIndicacao(null);
+        setMotoristaIndicado("");
     };
 
     const formatDate = (dateStr) => {
@@ -177,20 +216,24 @@ Use datas no formato: YYYY-MM-DD`,
         pendente: "bg-yellow-100 text-yellow-800",
         reconhecida: "bg-blue-100 text-blue-800",
         paga: "bg-green-100 text-green-800",
-        recorrida: "bg-purple-100 text-purple-800"
+        recorrida: "bg-purple-100 text-purple-800",
+        finalizada: "bg-slate-100 text-slate-800"
     };
 
     const statusLabels = {
         pendente: "Pendente",
         reconhecida: "Reconhecida",
         paga: "Paga",
-        recorrida: "Recorrida"
+        recorrida: "Recorrida",
+        finalizada: "Finalizada"
     };
 
-    // Multas cadastradas por veículo
-    const multasPorVeiculo = veiculoSelecionado 
-        ? multas.filter(m => m.veiculo_id === veiculoSelecionado || m.placa === veiculoInfo?.placa)
-        : [];
+    // Multas filtradas
+    const multasFiltradas = multas.filter(m => {
+        const matchVeiculo = !veiculoSelecionado || m.veiculo_id === veiculoSelecionado || m.placa === veiculoInfo?.placa;
+        const matchStatus = filtroStatus === "todos" || m.status === filtroStatus;
+        return matchVeiculo && matchStatus;
+    });
 
     const handlePrintMulta = (multa) => {
         const veiculo = veiculos.find(v => v.id === multa.veiculo_id) || veiculoInfo;
@@ -201,37 +244,117 @@ Use datas no formato: YYYY-MM-DD`,
             return;
         }
 
-        winPrint.document.write(`
+        winPrint.document.write(gerarHtmlImpressao([multa], veiculo));
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
+
+    const handlePrintSelecionadas = () => {
+        if (multasSelecionadasImpressao.length === 0) {
+            toast.error("Selecione ao menos uma multa para imprimir");
+            return;
+        }
+
+        const multasParaImprimir = multas.filter(m => multasSelecionadasImpressao.includes(m.id));
+        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        if (!winPrint) {
+            alert("Permita pop-ups para imprimir.");
+            return;
+        }
+
+        winPrint.document.write(gerarHtmlImpressao(multasParaImprimir));
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
+
+    const gerarHtmlImpressao = (multasImprimir, veiculoParam = null) => {
+        const multasHtml = multasImprimir.map(multa => {
+            const veiculo = veiculoParam || veiculos.find(v => v.id === multa.veiculo_id);
+            return `
+                <div class="multa-item" style="page-break-inside: avoid; margin-bottom: 30px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="background: #fef2f2; padding: 12px 15px; border-bottom: 2px solid #dc2626;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-weight: bold; color: #dc2626; font-size: 14px;">AUTO Nº ${multa.numero_auto || '-'}</span>
+                            </div>
+                            <span style="padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; background: ${statusColors[multa.status]?.includes('yellow') ? '#fef3c7' : statusColors[multa.status]?.includes('green') ? '#dcfce7' : statusColors[multa.status]?.includes('blue') ? '#dbeafe' : statusColors[multa.status]?.includes('purple') ? '#f3e8ff' : '#f1f5f9'}; color: ${statusColors[multa.status]?.includes('yellow') ? '#92400e' : statusColors[multa.status]?.includes('green') ? '#166534' : statusColors[multa.status]?.includes('blue') ? '#1e40af' : statusColors[multa.status]?.includes('purple') ? '#6b21a8' : '#475569'};">
+                                ${statusLabels[multa.status] || 'Pendente'}
+                            </span>
+                        </div>
+                    </div>
+                    <div style="padding: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Veículo</div>
+                                <div style="font-size: 13px; font-weight: 600;">${veiculo?.placa || multa.placa || '-'} - ${veiculo?.modelo || ''}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">RENAVAM</div>
+                                <div style="font-size: 13px; font-weight: 600;">${veiculo?.renavam || multa.renavam || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Data Infração</div>
+                                <div style="font-size: 13px; font-weight: 600;">${formatDate(multa.data_infracao)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Vencimento</div>
+                                <div style="font-size: 13px; font-weight: 600;">${formatDate(multa.data_vencimento)}</div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Descrição</div>
+                            <div style="font-size: 13px; font-weight: 600;">${multa.descricao || '-'}</div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Local</div>
+                            <div style="font-size: 13px;">${multa.local || '-'}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Pontos</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #dc2626;">${multa.pontos || 0} pts</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Motorista</div>
+                                <div style="font-size: 13px; font-weight: 600;">${multa.motorista_responsavel || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">Valor</div>
+                                <div style="font-size: 16px; font-weight: bold; color: #dc2626;">${formatCurrency(multa.valor)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const valorTotal = multasImprimir.reduce((acc, m) => acc + (m.valor || 0), 0);
+        const pontosTotal = multasImprimir.reduce((acc, m) => acc + (m.pontos || 0), 0);
+
+        return `
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Multa - ${multa.numero_auto || 'N/I'}</title>
+                <title>Relatório de Multas</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1e293b; }
                     .header { display: flex; align-items: center; border-bottom: 3px solid #dc2626; padding-bottom: 15px; margin-bottom: 20px; }
                     .logo { width: 100px; margin-right: 20px; }
                     .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
                     .company-info { flex: 1; }
                     .company-name { font-size: 22px; font-weight: bold; color: #1e293b; }
-                    .company-address { font-size: 12px; color: #64748b; }
-                    .title { text-align: center; font-size: 24px; font-weight: bold; color: #dc2626; margin: 20px 0; padding: 10px; background: #fef2f2; border-radius: 8px; }
-                    .section { margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6; }
-                    .section-title { font-size: 14px; font-weight: bold; color: #3b82f6; margin-bottom: 10px; text-transform: uppercase; }
-                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-                    .field { margin-bottom: 8px; }
-                    .field-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
-                    .field-value { font-size: 14px; font-weight: 600; color: #1e293b; }
-                    .highlight { background: #fef2f2; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px; }
-                    .highlight .label { font-size: 12px; color: #64748b; }
-                    .highlight .value { font-size: 28px; font-weight: bold; color: #dc2626; }
-                    .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-                    .status-pendente { background: #fef3c7; color: #92400e; }
-                    .status-reconhecida { background: #dbeafe; color: #1e40af; }
-                    .status-paga { background: #dcfce7; color: #166534; }
-                    .status-recorrida { background: #f3e8ff; color: #6b21a8; }
+                    .company-details { font-size: 11px; color: #64748b; margin-top: 4px; }
+                    .title { text-align: center; font-size: 20px; font-weight: bold; color: #dc2626; margin: 20px 0; padding: 10px; background: #fef2f2; border-radius: 8px; }
+                    .summary { display: flex; justify-content: space-around; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                    .summary-item { text-align: center; }
+                    .summary-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+                    .summary-value { font-size: 20px; font-weight: bold; color: #dc2626; }
                     .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
-                    @media print { body { padding: 0; } }
+                    @media print { 
+                        body { padding: 0; } 
+                        .multa-item { break-inside: avoid; }
+                    }
                 </style>
             </head>
             <body>
@@ -241,91 +364,36 @@ Use datas no formato: YYYY-MM-DD`,
                     </div>
                     <div class="company-info">
                         <p class="company-name">${config.nome_empresa || 'TWG TRANSPORTES'}</p>
-                        <p class="company-address">${config.endereco || ''}</p>
-                        <p class="company-address">${config.telefone ? 'Tel: ' + config.telefone : ''} ${config.cnpj ? ' | CNPJ: ' + config.cnpj : ''}</p>
+                        <p class="company-details">${config.endereco || ''}</p>
+                        <p class="company-details">${config.cnpj ? 'CNPJ: ' + config.cnpj : ''} ${config.telefone ? ' | Tel: ' + config.telefone : ''} ${config.email ? ' | ' + config.email : ''}</p>
                     </div>
                 </div>
 
-                <div class="title">NOTIFICAÇÃO DE MULTA DE TRÂNSITO</div>
+                <div class="title">RELATÓRIO DE MULTAS DE TRÂNSITO</div>
 
-                <div class="section">
-                    <div class="section-title">Dados do Veículo</div>
-                    <div class="grid">
-                        <div class="field">
-                            <div class="field-label">Placa</div>
-                            <div class="field-value">${veiculo?.placa || multa.placa || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">RENAVAM</div>
-                            <div class="field-value">${veiculo?.renavam || multa.renavam || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Modelo</div>
-                            <div class="field-value">${veiculo?.modelo || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Ano</div>
-                            <div class="field-value">${veiculo?.ano || '-'}</div>
-                        </div>
+                <div class="summary">
+                    <div class="summary-item">
+                        <div class="summary-label">Total de Multas</div>
+                        <div class="summary-value">${multasImprimir.length}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total de Pontos</div>
+                        <div class="summary-value">${pontosTotal} pts</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Valor Total</div>
+                        <div class="summary-value">${formatCurrency(valorTotal)}</div>
                     </div>
                 </div>
 
-                <div class="section">
-                    <div class="section-title">Dados da Infração</div>
-                    <div class="grid">
-                        <div class="field">
-                            <div class="field-label">Número do Auto</div>
-                            <div class="field-value">${multa.numero_auto || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Data da Infração</div>
-                            <div class="field-value">${formatDate(multa.data_infracao)}</div>
-                        </div>
-                        <div class="field" style="grid-column: span 2;">
-                            <div class="field-label">Descrição</div>
-                            <div class="field-value">${multa.descricao || '-'}</div>
-                        </div>
-                        <div class="field" style="grid-column: span 2;">
-                            <div class="field-label">Local</div>
-                            <div class="field-value">${multa.local || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Pontuação</div>
-                            <div class="field-value">${multa.pontos || 0} pontos</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Data de Vencimento</div>
-                            <div class="field-value">${formatDate(multa.data_vencimento)}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Motorista Responsável</div>
-                            <div class="field-value">${multa.motorista_responsavel || '-'}</div>
-                        </div>
-                        <div class="field">
-                            <div class="field-label">Status</div>
-                            <div class="field-value">
-                                <span class="status status-${multa.status || 'pendente'}">${statusLabels[multa.status] || 'Pendente'}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="highlight">
-                    <div class="label">VALOR DA MULTA</div>
-                    <div class="value">${formatCurrency(multa.valor)}</div>
-                </div>
-
-                ${multa.observacoes ? '<div class="section"><div class="section-title">Observações</div><p style="font-size:13px;color:#475569;">' + multa.observacoes + '</p></div>' : ''}
+                ${multasHtml}
 
                 <div class="footer">
                     Documento gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </div>
             </body>
             </html>
-        `);
-
-        winPrint.document.close();
-        setTimeout(() => winPrint.print(), 500);
+        `;
     };
 
     const handleShareWhatsApp = (multa) => {
@@ -343,6 +411,7 @@ Use datas no formato: YYYY-MM-DD`,
 • Local: ${multa.local || '-'}
 • Pontos: ${multa.pontos || 0}
 • Vencimento: ${formatDate(multa.data_vencimento)}
+${multa.motorista_responsavel ? '• Motorista: ' + multa.motorista_responsavel : ''}
 
 💰 *Valor:* ${formatCurrency(multa.valor)}
 📊 *Status:* ${statusLabels[multa.status] || 'Pendente'}
@@ -353,18 +422,31 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
         window.open(url, '_blank');
     };
 
+    const abrirDetalhes = (multa) => {
+        setMultaDetalhes(multa);
+        setShowDetalhes(true);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-amber-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl shadow-lg">
-                        <AlertTriangle className="w-8 h-8 text-white" />
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl shadow-lg">
+                            <AlertTriangle className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-800">Gestão de Multas</h1>
+                            <p className="text-slate-500">Consulte e gerencie multas de trânsito</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800">Busca de Multas</h1>
-                        <p className="text-slate-500">Consulte multas de trânsito dos veículos</p>
-                    </div>
+                    {multasSelecionadasImpressao.length > 0 && (
+                        <Button onClick={handlePrintSelecionadas} className="bg-blue-600 hover:bg-blue-700">
+                            <Printer className="w-4 h-4 mr-2" />
+                            Imprimir Selecionadas ({multasSelecionadasImpressao.length})
+                        </Button>
+                    )}
                 </div>
 
                 {/* Seleção de Veículo */}
@@ -430,7 +512,7 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                             ) : (
                                 <>
                                     <Search className="w-5 h-5 mr-2" />
-                                    Consultar Multas
+                                    Consultar Multas Online
                                 </>
                             )}
                         </Button>
@@ -471,9 +553,10 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                     {multasEncontradas.map((multa, index) => (
                                         <TableRow 
                                             key={index} 
-                                            className={`hover:bg-slate-50 ${multa.selecionada ? "bg-blue-50" : ""}`}
+                                            className={`hover:bg-slate-50 cursor-pointer ${multa.selecionada ? "bg-blue-50" : ""}`}
+                                            onClick={() => abrirDetalhes(multa)}
                                         >
-                                            <TableCell>
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <Checkbox 
                                                     checked={multa.selecionada}
                                                     onCheckedChange={() => toggleMultaSelecionada(index)}
@@ -521,32 +604,79 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                     </Card>
                 )}
 
-                {/* Multas Cadastradas */}
-                {veiculoSelecionado && multasPorVeiculo.length > 0 && (
-                    <Card className="bg-white/90 border-0 shadow-lg">
-                        <CardHeader>
+                {/* Histórico de Multas */}
+                <Card className="bg-white/90 border-0 shadow-lg">
+                    <CardHeader>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <CardTitle className="flex items-center gap-2 text-lg">
                                 <Clock className="w-5 h-5 text-blue-600" />
-                                Histórico de Multas ({multasPorVeiculo.length})
+                                Histórico de Multas ({multasFiltradas.length})
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-slate-400" />
+                                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                                    <SelectTrigger className="w-40">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todos">Todos os Status</SelectItem>
+                                        <SelectItem value="pendente">Pendente</SelectItem>
+                                        <SelectItem value="reconhecida">Reconhecida</SelectItem>
+                                        <SelectItem value="paga">Paga</SelectItem>
+                                        <SelectItem value="recorrida">Recorrida</SelectItem>
+                                        <SelectItem value="finalizada">Finalizada</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {filtroStatus !== "todos" && (
+                                    <Button variant="ghost" size="icon" onClick={() => setFiltroStatus("todos")}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {multasFiltradas.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500">
+                                <AlertTriangle className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                <p>Nenhuma multa encontrada</p>
+                            </div>
+                        ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50">
+                                        <TableHead className="w-10"></TableHead>
+                                        <TableHead>Placa</TableHead>
                                         <TableHead>Data</TableHead>
                                         <TableHead>Descrição</TableHead>
+                                        <TableHead>Motorista</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Valor</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {multasPorVeiculo.map((multa) => (
-                                        <TableRow key={multa.id} className="hover:bg-slate-50">
+                                    {multasFiltradas.map((multa) => (
+                                        <TableRow 
+                                            key={multa.id} 
+                                            className="hover:bg-slate-50 cursor-pointer"
+                                            onClick={() => abrirDetalhes(multa)}
+                                        >
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <Checkbox 
+                                                    checked={multasSelecionadasImpressao.includes(multa.id)}
+                                                    onCheckedChange={() => toggleMultaImpressao(multa.id)}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-bold">{multa.placa}</TableCell>
                                             <TableCell>{formatDate(multa.data_infracao)}</TableCell>
-                                            <TableCell>{multa.descricao}</TableCell>
+                                            <TableCell className="max-w-xs truncate">{multa.descricao}</TableCell>
                                             <TableCell>
+                                                {multa.motorista_responsavel || (
+                                                    <span className="text-slate-400 italic">Não indicado</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <Select 
                                                     value={multa.status}
                                                     onValueChange={(v) => updateMultaMutation.mutate({ id: multa.id, data: { status: v } })}
@@ -561,14 +691,23 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                                         <SelectItem value="reconhecida">Reconhecida</SelectItem>
                                                         <SelectItem value="paga">Paga</SelectItem>
                                                         <SelectItem value="recorrida">Recorrida</SelectItem>
+                                                        <SelectItem value="finalizada">Finalizada</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </TableCell>
                                             <TableCell className="text-right font-bold">
                                                 {formatCurrency(multa.valor)}
                                             </TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-1">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon"
+                                                        onClick={() => { setMultaIndicacao(multa); setMotoristaIndicado(multa.motorista_id || ""); setShowIndicacao(true); }}
+                                                        title="Indicar Motorista"
+                                                    >
+                                                        <UserPlus className="w-4 h-4 text-purple-600" />
+                                                    </Button>
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon"
@@ -591,10 +730,157 @@ ${config.nome_empresa || 'TWG TRANSPORTES'}`;
                                     ))}
                                 </TableBody>
                             </Table>
-                        </CardContent>
-                    </Card>
-                )}
+                        )}
+                    </CardContent>
+                </Card>
             </div>
+
+            {/* Dialog Detalhes da Multa */}
+            <Dialog open={showDetalhes} onOpenChange={setShowDetalhes}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-red-600" />
+                            Detalhes da Multa
+                        </DialogTitle>
+                    </DialogHeader>
+                    {multaDetalhes && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-slate-500">Auto de Infração</span>
+                                    <Badge className={statusColors[multaDetalhes.status]}>
+                                        {statusLabels[multaDetalhes.status]}
+                                    </Badge>
+                                </div>
+                                <p className="text-xl font-bold text-red-700 mt-1">{multaDetalhes.numero_auto || "-"}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-xs text-slate-500">Placa</Label>
+                                    <p className="font-bold">{multaDetalhes.placa}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-500">RENAVAM</Label>
+                                    <p className="font-bold">{multaDetalhes.renavam || "-"}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-500">Data Infração</Label>
+                                    <p className="font-semibold">{formatDate(multaDetalhes.data_infracao)}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-500">Vencimento</Label>
+                                    <p className="font-semibold">{formatDate(multaDetalhes.data_vencimento)}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label className="text-xs text-slate-500">Descrição</Label>
+                                <p className="font-medium">{multaDetalhes.descricao}</p>
+                            </div>
+
+                            <div>
+                                <Label className="text-xs text-slate-500">Local</Label>
+                                <p className="text-sm">{multaDetalhes.local}</p>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label className="text-xs text-slate-500">Pontos</Label>
+                                    <p className="font-bold text-red-600">{multaDetalhes.pontos || 0} pts</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-500">Gravidade</Label>
+                                    <p className="font-medium">{multaDetalhes.gravidade || "-"}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-500">Órgão</Label>
+                                    <p className="font-medium">{multaDetalhes.orgao || "-"}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label className="text-xs text-slate-500">Motorista Responsável</Label>
+                                <p className="font-medium">{multaDetalhes.motorista_responsavel || "Não indicado"}</p>
+                            </div>
+
+                            <div className="p-4 bg-slate-50 rounded-xl text-center">
+                                <Label className="text-xs text-slate-500">Valor da Multa</Label>
+                                <p className="text-3xl font-bold text-red-600">{formatCurrency(multaDetalhes.valor)}</p>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => { setMultaIndicacao(multaDetalhes); setMotoristaIndicado(multaDetalhes.motorista_id || ""); setShowIndicacao(true); setShowDetalhes(false); }}
+                                    variant="outline"
+                                    className="flex-1"
+                                >
+                                    <UserPlus className="w-4 h-4 mr-2" />
+                                    Indicar Motorista
+                                </Button>
+                                <Button 
+                                    onClick={() => handlePrintMulta(multaDetalhes)}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Printer className="w-4 h-4 mr-2" />
+                                    Imprimir
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Indicação de Motorista */}
+            <Dialog open={showIndicacao} onOpenChange={setShowIndicacao}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-purple-600" />
+                            Indicar Motorista da Autuação
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {multaIndicacao && (
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <p className="text-sm text-slate-500">Multa</p>
+                                <p className="font-bold">{multaIndicacao.numero_auto || "N/I"}</p>
+                                <p className="text-sm">{multaIndicacao.descricao}</p>
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label>Selecione o Motorista Responsável</Label>
+                            <Select value={motoristaIndicado} onValueChange={setMotoristaIndicado}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um motorista..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {motoristas.filter(m => m.status === "ativo").map(m => (
+                                        <SelectItem key={m.id} value={m.id}>
+                                            {m.nome} - CNH: {m.cnh || "N/I"}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setShowIndicacao(false)} className="flex-1">
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleIndicarMotorista}
+                                disabled={!motoristaIndicado}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            >
+                                Confirmar Indicação
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

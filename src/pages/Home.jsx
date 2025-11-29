@@ -215,17 +215,15 @@ export default function Home() {
             if (Object.keys(agrupadas).length === 0) return;
 
             todosVeiculosHtml += `
-                <div style="margin-bottom: 15px; border: 2px solid #2563eb; border-radius: 8px; overflow: hidden; page-break-inside: avoid;">
-                    <div style="background: #2563eb; color: white; padding: 8px 12px; font-weight: bold; font-size: 13px;">
-                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} (${notas.length} notas)
+                <div class="veiculo-card">
+                    <div class="veiculo-header">
+                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} (${notas.length})
                     </div>
                     ${Object.entries(agrupadas).map(([transp, notasT]) => `
-                        <div style="border-bottom: 1px solid #e2e8f0;">
-                            <div style="background: #eff6ff; padding: 6px 12px; font-size: 11px; font-weight: 600; color: #1e40af;">
-                                ${transp} (${notasT.length})
-                            </div>
-                            <div style="padding: 6px 12px; font-size: 10px;">
-                                ${notasT.map(n => `<span style="display: inline-block; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin: 2px;">${n.numero_nf || '-'} → ${(n.destinatario || '-').substring(0, 25)}</span>`).join(' ')}
+                        <div>
+                            <div class="transp-header">${transp} (${notasT.length})</div>
+                            <div class="notas-list">
+                                ${notasT.map(n => `<span class="nota-item">${n.numero_nf || '-'} → ${(n.destinatario || '-').substring(0, 20)}</span>`).join('')}
                             </div>
                         </div>
                     `).join('')}
@@ -240,20 +238,25 @@ export default function Home() {
                 <title>Dashboard Pendências</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 15px; color: #1e293b; }
-                    .header { display: flex; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px; }
-                    .logo { width: 80px; margin-right: 15px; }
-                    .logo img { max-width: 100%; max-height: 60px; object-fit: contain; }
-                    .company-info { flex: 1; }
-                    .company-name { font-size: 16px; font-weight: bold; color: #1e293b; }
-                    .company-details { font-size: 10px; color: #64748b; }
-                    .title { text-align: center; font-size: 14px; font-weight: bold; color: #1e40af; margin: 10px 0; padding: 8px; background: #eff6ff; border-radius: 6px; }
-                    .summary { display: flex; justify-content: center; gap: 30px; background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 15px; font-size: 11px; }
+                    body { font-family: Arial, sans-serif; padding: 5px; color: #1e293b; font-size: 9px; }
+                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 6px; }
+                    .logo { width: 50px; margin-right: 8px; }
+                    .logo img { max-width: 100%; max-height: 35px; object-fit: contain; }
+                    .company-name { font-size: 11px; font-weight: bold; color: #1e293b; }
+                    .company-details { font-size: 8px; color: #64748b; }
+                    .title { text-align: center; font-size: 10px; font-weight: bold; color: #1e40af; margin: 4px 0; padding: 3px; background: #eff6ff; border-radius: 3px; }
+                    .summary { display: flex; justify-content: center; gap: 15px; background: #f8fafc; padding: 4px; border-radius: 3px; margin-bottom: 6px; }
                     .summary-item { text-align: center; }
-                    .summary-label { color: #64748b; text-transform: uppercase; font-size: 9px; }
-                    .summary-value { font-size: 16px; font-weight: bold; color: #1e40af; }
-                    .footer { margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 9px; color: #94a3b8; }
-                    @media print { body { padding: 10px; } @page { margin: 10mm; } }
+                    .summary-label { color: #64748b; text-transform: uppercase; font-size: 7px; }
+                    .summary-value { font-size: 11px; font-weight: bold; color: #1e40af; }
+                    .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+                    .veiculo-card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
+                    .veiculo-header { background: #2563eb; color: white; padding: 3px 6px; font-weight: bold; font-size: 9px; }
+                    .transp-header { background: #eff6ff; padding: 2px 6px; font-size: 8px; font-weight: 600; color: #1e40af; border-bottom: 1px solid #e2e8f0; }
+                    .notas-list { padding: 2px 6px 4px; font-size: 7px; }
+                    .nota-item { display: inline-block; background: #f1f5f9; padding: 1px 4px; border-radius: 2px; margin: 1px; }
+                    .footer { margin-top: 6px; padding-top: 3px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 7px; color: #94a3b8; }
+                    @media print { body { padding: 3px; } @page { margin: 5mm; } }
                 </style>
             </head>
             <body>
@@ -261,13 +264,13 @@ export default function Home() {
                     <div class="logo">
                         ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}
                     </div>
-                    <div class="company-info">
+                    <div>
                         <p class="company-name">${config.nome_empresa || 'TWG TRANSPORTES'}</p>
-                        <p class="company-details">${config.cnpj ? 'CNPJ: ' + config.cnpj : ''} ${config.telefone ? ' | ' + config.telefone : ''}</p>
+                        <p class="company-details">${config.cnpj ? config.cnpj : ''} ${config.telefone ? ' | ' + config.telefone : ''}</p>
                     </div>
                 </div>
 
-                <div class="title">PENDÊNCIAS POR VEÍCULO</div>
+                <div class="title">PENDÊNCIAS POR VEÍCULO - ${format(new Date(), "dd/MM/yyyy")}</div>
 
                 <div class="summary">
                     <div class="summary-item">
@@ -284,10 +287,12 @@ export default function Home() {
                     </div>
                 </div>
 
-                ${todosVeiculosHtml}
+                <div class="grid-container">
+                    ${todosVeiculosHtml}
+                </div>
 
                 <div class="footer">
-                    Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                 </div>
             </body>
             </html>

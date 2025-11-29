@@ -1,17 +1,29 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Check, RotateCcw, Zap, Sun } from "lucide-react";
 
 export default function QuickPhotoCapture({ onCapture, onClose }) {
-    const [stream, setStream] = useState(null);
     const [capturedImage, setCapturedImage] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [facingMode, setFacingMode] = useState("environment");
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null);
 
-    const startCamera = useCallback(async () => {
+    useEffect(() => {
+        startCamera();
+        return () => {
+            stopCamera();
+        };
+    }, [facingMode]);
+
+    const startCamera = async () => {
         try {
+            // Parar stream anterior se existir
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+            
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: facingMode,
@@ -19,7 +31,7 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
                     height: { ideal: 1080 }
                 }
             });
-            setStream(mediaStream);
+            streamRef.current = mediaStream;
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
             }
@@ -27,83 +39,35 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
             console.error("Erro ao acessar câmera:", err);
             alert("Não foi possível acessar a câmera. Verifique as permissões.");
         }
-    }, [facingMode]);
-
-    React.useEffect(() => {
-        startCamera();
-        return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-        };
-    }, [facingMode]);
+    };
 
     const stopCamera = () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
     };
 
     const switchCamera = () => {
-        stopCamera();
         setFacingMode(prev => prev === "environment" ? "user" : "environment");
     };
 
-    // Aplicar filtros de melhoria na imagem
+    // Aplicar filtros de melhoria na imagem (simplificado para performance)
     const enhanceImage = (ctx, width, height) => {
         const imageData = ctx.getImageData(0, 0, width, height);
         const data = imageData.data;
 
         // Aumentar brilho e contraste
-        const brightness = 15; // Aumento de brilho
-        const contrast = 1.2; // Fator de contraste
+        const brightness = 10;
+        const contrast = 1.15;
 
         for (let i = 0; i < data.length; i += 4) {
-            // Aplicar contraste
-            data[i] = ((data[i] - 128) * contrast + 128) + brightness;     // R
-            data[i + 1] = ((data[i + 1] - 128) * contrast + 128) + brightness; // G
-            data[i + 2] = ((data[i + 2] - 128) * contrast + 128) + brightness; // B
-
-            // Limitar valores entre 0 e 255
-            data[i] = Math.max(0, Math.min(255, data[i]));
-            data[i + 1] = Math.max(0, Math.min(255, data[i + 1]));
-            data[i + 2] = Math.max(0, Math.min(255, data[i + 2]));
+            data[i] = Math.max(0, Math.min(255, ((data[i] - 128) * contrast + 128) + brightness));
+            data[i + 1] = Math.max(0, Math.min(255, ((data[i + 1] - 128) * contrast + 128) + brightness));
+            data[i + 2] = Math.max(0, Math.min(255, ((data[i + 2] - 128) * contrast + 128) + brightness));
         }
 
-        // Aplicar nitidez (sharpening)
         ctx.putImageData(imageData, 0, 0);
-        
-        // Filtro de nitidez usando convolução simples
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(ctx.canvas, 0, 0);
-        
-        const sharpenedData = ctx.getImageData(0, 0, width, height);
-        const origData = tempCtx.getImageData(0, 0, width, height);
-        
-        const sharpenAmount = 0.3;
-        
-        for (let y = 1; y < height - 1; y++) {
-            for (let x = 1; x < width - 1; x++) {
-                const idx = (y * width + x) * 4;
-                
-                for (let c = 0; c < 3; c++) {
-                    const center = origData.data[idx + c];
-                    const top = origData.data[((y - 1) * width + x) * 4 + c];
-                    const bottom = origData.data[((y + 1) * width + x) * 4 + c];
-                    const left = origData.data[(y * width + (x - 1)) * 4 + c];
-                    const right = origData.data[(y * width + (x + 1)) * 4 + c];
-                    
-                    const laplacian = 4 * center - top - bottom - left - right;
-                    sharpenedData.data[idx + c] = Math.max(0, Math.min(255, center + laplacian * sharpenAmount));
-                }
-            }
-        }
-        
-        ctx.putImageData(sharpenedData, 0, 0);
     };
 
     const capturePhoto = () => {
@@ -114,30 +78,33 @@ export default function QuickPhotoCapture({ onCapture, onClose }) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
-        // Usar resolução alta
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
 
-        // Desenhar frame do vídeo
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Aplicar melhorias de imagem (mais claro e nítido)
-        enhanceImage(ctx, canvas.width, canvas.height);
+        // Aplicar melhorias de imagem
+        try {
+            enhanceImage(ctx, canvas.width, canvas.height);
+        } catch (e) {
+            console.warn("Não foi possível aplicar melhorias:", e);
+        }
 
-        // Converter para blob com alta qualidade
         canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            setCapturedImage({ url, blob });
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                setCapturedImage({ url, blob });
+            }
             setProcessing(false);
-        }, "image/jpeg", 0.95);
+        }, "image/jpeg", 0.92);
     };
 
-    const confirmPhoto = async () => {
+    const confirmPhoto = () => {
         if (!capturedImage) return;
         
         const file = new File([capturedImage.blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" });
-        onCapture(file);
         stopCamera();
+        onCapture(file);
     };
 
     const retakePhoto = () => {

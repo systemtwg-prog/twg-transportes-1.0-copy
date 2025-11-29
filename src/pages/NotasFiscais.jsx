@@ -1262,17 +1262,32 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                         {dadosExtraidos.telefone && (
                                             <div><span className="text-slate-500">Telefone:</span> <strong>{dadosExtraidos.telefone}</strong></div>
                                         )}
+                                        {dadosExtraidos.telefone2 && (
+                                            <div><span className="text-slate-500">Telefone 2:</span> <strong>{dadosExtraidos.telefone2}</strong></div>
+                                        )}
                                         {dadosExtraidos.email && (
                                             <div><span className="text-slate-500">Email:</span> <strong>{dadosExtraidos.email}</strong></div>
                                         )}
+                                        {dadosExtraidos.site && (
+                                            <div><span className="text-slate-500">Site:</span> <strong>{dadosExtraidos.site}</strong></div>
+                                        )}
                                         {dadosExtraidos.endereco && (
                                             <div className="col-span-2"><span className="text-slate-500">Endereço:</span> <strong>{dadosExtraidos.endereco}</strong></div>
+                                        )}
+                                        {dadosExtraidos.bairro && (
+                                            <div><span className="text-slate-500">Bairro:</span> <strong>{dadosExtraidos.bairro}</strong></div>
                                         )}
                                         {dadosExtraidos.cidade && dadosExtraidos.uf && (
                                             <div><span className="text-slate-500">Cidade:</span> <strong>{dadosExtraidos.cidade}/{dadosExtraidos.uf}</strong></div>
                                         )}
                                         {dadosExtraidos.cep && (
                                             <div><span className="text-slate-500">CEP:</span> <strong>{dadosExtraidos.cep}</strong></div>
+                                        )}
+                                        {dadosExtraidos.horario_funcionamento && (
+                                            <div className="col-span-2"><span className="text-slate-500">Horário:</span> <strong>{dadosExtraidos.horario_funcionamento}</strong></div>
+                                        )}
+                                        {dadosExtraidos.ramo_atividade && (
+                                            <div className="col-span-2"><span className="text-slate-500">Ramo:</span> <strong>{dadosExtraidos.ramo_atividade}</strong></div>
                                         )}
                                     </div>
                                 </div>

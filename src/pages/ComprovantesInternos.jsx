@@ -298,6 +298,50 @@ export default function ComprovantesInternos() {
         return matchData && matchNF && matchEmpresa;
     });
 
+    // Função para processar fotos em massa
+    const processarFotosMassa = async () => {
+        if (fotosMassa.length === 0) return;
+        
+        setProcessandoMassa(true);
+        
+        try {
+            for (const foto of fotosMassa) {
+                // Processar cada foto com IA para extrair NF
+                const resultado = await base44.integrations.Core.InvokeLLM({
+                    prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
+                    Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).
+                    Retorne apenas o número encontrado.`,
+                    file_urls: [foto.url],
+                    response_json_schema: {
+                        type: "object",
+                        properties: {
+                            numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
+                            observacoes: { type: "string", description: "Outras informações relevantes" }
+                        }
+                    }
+                });
+
+                // Criar comprovante para cada foto
+                await base44.entities.ComprovanteInterno.create({
+                    nota_fiscal: resultado?.numero_nota || "A identificar",
+                    data: format(new Date(), "yyyy-MM-dd"),
+                    arquivos: [foto],
+                    observacoes: resultado?.observacoes || ""
+                });
+            }
+            
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-internos"] });
+            toast.success(`${fotosMassa.length} comprovante(s) criado(s)!`);
+            setFotosMassa([]);
+            setShowCameraMassa(false);
+        } catch (error) {
+            console.error("Erro ao processar fotos:", error);
+            toast.error("Erro ao processar algumas fotos");
+        }
+        
+        setProcessandoMassa(false);
+    };
+
     // Função para processar foto com IA
     const processarFotoComIA = async (file_url) => {
         setProcessandoIA(true);

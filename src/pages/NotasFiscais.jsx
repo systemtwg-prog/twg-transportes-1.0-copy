@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -715,6 +715,33 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         setAudioFileUrl("");
     };
 
+    // Substituir Washington Gonzales pela transportadora = destinatário
+    const handleSubstituirWashington = async () => {
+        const notasWashington = notas.filter(n => 
+            n.transportadora?.toUpperCase().includes("WASHINGTON GONZALES")
+        );
+
+        if (notasWashington.length === 0) {
+            toast.info("Nenhuma nota com transportadora WASHINGTON GONZALES encontrada");
+            return;
+        }
+
+        if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s)?`)) {
+            return;
+        }
+
+        let atualizadas = 0;
+        for (const nota of notasWashington) {
+            await base44.entities.NotaFiscal.update(nota.id, {
+                transportadora: nota.destinatario || "SEM TRANSPORTADORA"
+            });
+            atualizadas++;
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+        toast.success(`${atualizadas} nota(s) atualizada(s)!`);
+    };
+
     const filtered = notas.filter(n =>
         n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
         n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
@@ -784,6 +811,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         >
                             <Mic className="w-4 h-4 mr-2" />
                             Gravar Áudio
+                        </Button>
+                        <Button 
+                            onClick={handleSubstituirWashington}
+                            variant="outline"
+                            className="border-orange-500 text-orange-700 hover:bg-orange-50"
+                            title="Substituir WASHINGTON GONZALES pelo destinatário"
+                        >
+                            <Replace className="w-4 h-4 mr-2" />
+                            Subst. Washington
                         </Button>
                         <Button 
                             onClick={() => { resetForm(); setShowForm(true); }}

@@ -785,14 +785,14 @@ export default function ComprovantesInternos() {
                                     </label>
                                 </div>
 
-                                {/* Tirar Foto */}
+                                {/* Foto Rápida */}
                                 <div 
                                     className="border-2 border-dashed border-sky-400 rounded-xl p-6 text-center hover:border-sky-500 hover:bg-sky-50 transition-colors cursor-pointer"
                                     onClick={() => setShowCamera(true)}
                                 >
                                     <div className="flex flex-col items-center gap-2">
                                         <Camera className="w-10 h-10 text-sky-500" />
-                                        <span className="text-sm text-sky-600 font-medium">Tirar Foto</span>
+                                        <span className="text-sm text-sky-600 font-medium">Foto Rápida</span>
                                     </div>
                                 </div>
                             </div>

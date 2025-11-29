@@ -181,6 +181,47 @@ export default function Home() {
             </div>
         `).join('');
 
+        gerarImpressaoNotas(winPrint, placaSelecionada, veiculo, todasNotas.length, Object.keys(notasAgrupadas).length, notasHtml);
+    };
+
+    const handlePrintTodosDashboard = () => {
+        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        if (!winPrint) {
+            alert("Permita pop-ups para imprimir.");
+            return;
+        }
+
+        const notasHtml = Object.entries(notasAgrupadas).map(([transportadora, notas]) => `
+            <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                <div style="background: #eff6ff; padding: 10px 15px; border-bottom: 1px solid #dbeafe;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; color: #1e40af; font-size: 14px;">${transportadora}</span>
+                        <span style="background: #dbeafe; color: #1e40af; padding: 2px 10px; border-radius: 10px; font-size: 12px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background: #f8fafc;">
+                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">NF</th>
+                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Destinatário</th>
+                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Volume</th>
+                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Peso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${notas.map(nota => `
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #2563eb;">${nota.numero_nf || '-'}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${nota.destinatario || '-'}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.volume || '-'}</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.peso || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `).join('');
+
         winPrint.document.write(`
             <html>
             <head>
@@ -216,20 +257,20 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div class="title">NOTAS DO VEÍCULO ${placaSelecionada} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</div>
+                <div class="title">NOTAS DO VEÍCULO ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</div>
 
                 <div class="summary">
                     <div class="summary-item">
                         <div class="summary-label">Total de Notas</div>
-                        <div class="summary-value">${todasNotas.length}</div>
+                        <div class="summary-value">${totalNotas}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Transportadoras</div>
-                        <div class="summary-value">${Object.keys(notasAgrupadas).length}</div>
+                        <div class="summary-value">${totalTransp}</div>
                     </div>
                 </div>
 
-                ${notasHtml}
+                ${notasHtmlLocal}
 
                 <div class="footer">
                     Documento gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
@@ -351,12 +392,22 @@ export default function Home() {
                 {Object.keys(dashboardPorVeiculo).length > 0 && (
                     <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
                         <CardHeader className="pb-2 border-b border-slate-100">
-                            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
-                                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                                    <BarChart3 className="w-4 h-4 text-white" />
-                                </div>
-                                Pendências por Veículo
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                                    <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                                        <BarChart3 className="w-4 h-4 text-white" />
+                                    </div>
+                                    Pendências por Veículo
+                                </CardTitle>
+                                <Button 
+                                    onClick={handlePrintTodosDashboard}
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Printer className="w-4 h-4 mr-1" />
+                                    Imprimir Todos
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-3">
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

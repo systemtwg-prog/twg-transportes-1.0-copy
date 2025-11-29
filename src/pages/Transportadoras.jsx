@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-    Plus, Search, Pencil, Trash2, Truck, X, Save, Building2, Phone, Mail, MapPin, ClipboardPaste, Sparkles
+    Plus, Search, Pencil, Trash2, Truck, X, Save, Building2, Phone, Mail, MapPin, ClipboardPaste, Sparkles, RefreshCw, Loader2, FileText
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -226,6 +226,137 @@ export default function Transportadoras() {
         queryFn: () => base44.entities.Transportadora.list("-created_date")
     });
 
+    const { data: notasFiscais = [] } = useQuery({
+        queryKey: ["notas-fiscais-transp"],
+        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
+    });
+
+    const [importandoNFs, setImportandoNFs] = useState(false);
+    const [showImportNFs, setShowImportNFs] = useState(false);
+    const [transportadorasNFs, setTransportadorasNFs] = useState([]);
+    const [atualizandoTransp, setAtualizandoTransp] = useState(null);
+    const [filiaisEncontradas, setFiliaisEncontradas] = useState([]);
+    const [showSelecionarFilial, setShowSelecionarFilial] = useState(false);
+    const [transpParaAtualizar, setTranspParaAtualizar] = useState(null);
+
+    // Extrair transportadoras das notas fiscais
+    const extrairTransportadorasNFs = () => {
+        const transpUnicas = new Set();
+        notasFiscais.forEach(nf => {
+            if (nf.transportadora?.trim()) {
+                transpUnicas.add(nf.transportadora.trim().toUpperCase());
+            }
+        });
+
+        // Filtrar as que já estão cadastradas
+        const jaCadastradas = transportadoras.map(t => 
+            (t.razao_social || "").toUpperCase().trim()
+        );
+        
+        const novas = Array.from(transpUnicas).filter(t => 
+            !jaCadastradas.some(c => c.includes(t) || t.includes(c))
+        );
+
+        setTransportadorasNFs(novas);
+        setShowImportNFs(true);
+    };
+
+    const cadastrarTransportadoraNF = async (nome) => {
+        await base44.entities.Transportadora.create({
+            razao_social: nome,
+            status: "ativo"
+        });
+        queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
+        setTransportadorasNFs(prev => prev.filter(t => t !== nome));
+        toast.success(`Transportadora "${nome}" cadastrada!`);
+    };
+
+    const atualizarDadosOnline = async (transp) => {
+        setAtualizandoTransp(transp.id);
+        
+        try {
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Busque informações da transportadora "${transp.razao_social}" no Google.
+Priorize filiais em SÃO PAULO (SP).
+Retorne até 3 filiais/endereços encontrados.`,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        encontrado: { type: "boolean" },
+                        filiais: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    nome: { type: "string" },
+                                    cnpj: { type: "string" },
+                                    endereco: { type: "string" },
+                                    bairro: { type: "string" },
+                                    cidade: { type: "string" },
+                                    uf: { type: "string" },
+                                    cep: { type: "string" },
+                                    telefone: { type: "string" },
+                                    tipo: { type: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (resultado?.encontrado && resultado?.filiais?.length > 0) {
+                if (resultado.filiais.length === 1) {
+                    // Atualizar direto
+                    const filial = resultado.filiais[0];
+                    await base44.entities.Transportadora.update(transp.id, {
+                        cnpj: filial.cnpj || transp.cnpj,
+                        endereco: filial.endereco || transp.endereco,
+                        bairro: filial.bairro || transp.bairro,
+                        cidade: filial.cidade || transp.cidade,
+                        uf: filial.uf || transp.uf,
+                        cep: filial.cep || transp.cep,
+                        telefone: filial.telefone || transp.telefone
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
+                    toast.success("Dados atualizados!");
+                } else {
+                    // Mostrar opções de filial
+                    setTranspParaAtualizar(transp);
+                    setFiliaisEncontradas(resultado.filiais);
+                    setShowSelecionarFilial(true);
+                }
+            } else {
+                toast.error("Não foi possível encontrar informações online");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar dados:", error);
+            toast.error("Erro ao buscar dados online");
+        }
+
+        setAtualizandoTransp(null);
+    };
+
+    const selecionarFilial = async (filial) => {
+        if (!transpParaAtualizar) return;
+        
+        await base44.entities.Transportadora.update(transpParaAtualizar.id, {
+            cnpj: filial.cnpj || transpParaAtualizar.cnpj,
+            endereco: filial.endereco || transpParaAtualizar.endereco,
+            bairro: filial.bairro || transpParaAtualizar.bairro,
+            cidade: filial.cidade || transpParaAtualizar.cidade,
+            uf: filial.uf || transpParaAtualizar.uf,
+            cep: filial.cep || transpParaAtualizar.cep,
+            telefone: filial.telefone || transpParaAtualizar.telefone
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
+        setShowSelecionarFilial(false);
+        setTranspParaAtualizar(null);
+        setFiliaisEncontradas([]);
+        toast.success("Dados da filial vinculados!");
+    };
+
     // Função para verificar CNPJ duplicado
     const cnpjJaCadastrado = (cnpj) => {
         if (!cnpj) return false;
@@ -386,7 +517,15 @@ IMPORTANTE:
                             <p className="text-slate-500">Gerencie transportadoras parceiras</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                        <Button 
+                            onClick={extrairTransportadorasNFs}
+                            variant="outline"
+                            className="border-blue-500 text-blue-700 hover:bg-blue-50"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Importar das NFs
+                        </Button>
                         <Button 
                             onClick={() => setShowPasteForm(true)}
                             variant="outline"
@@ -487,6 +626,19 @@ IMPORTANTE:
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        onClick={() => atualizarDadosOnline(trans)}
+                                                        disabled={atualizandoTransp === trans.id}
+                                                        title="Atualizar dados online"
+                                                    >
+                                                        {atualizandoTransp === trans.id ? (
+                                                            <Loader2 className="w-4 h-4 text-green-600 animate-spin" />
+                                                        ) : (
+                                                            <RefreshCw className="w-4 h-4 text-green-600" />
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => { setEditing(trans); setShowForm(true); }}
                                                     >
                                                         <Pencil className="w-4 h-4 text-blue-600" />
@@ -573,6 +725,82 @@ Telefone: (11) 99999-9999"
                         onSubmit={handleSubmit}
                         onCancel={() => { setShowForm(false); setEditing(null); }}
                     />
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Importar das NFs */}
+            <Dialog open={showImportNFs} onOpenChange={setShowImportNFs}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            Transportadoras das Notas Fiscais
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {transportadorasNFs.length === 0 ? (
+                            <p className="text-center text-slate-500 py-4">
+                                Todas as transportadoras das NFs já estão cadastradas!
+                            </p>
+                        ) : (
+                            <>
+                                <p className="text-sm text-slate-600">
+                                    Encontradas {transportadorasNFs.length} transportadora(s) não cadastrada(s):
+                                </p>
+                                <div className="space-y-2 max-h-80 overflow-y-auto">
+                                    {transportadorasNFs.map((nome, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                            <span className="font-medium">{nome}</span>
+                                            <Button 
+                                                size="sm"
+                                                onClick={() => cadastrarTransportadoraNF(nome)}
+                                                className="bg-violet-500 hover:bg-violet-600"
+                                            >
+                                                <Plus className="w-4 h-4 mr-1" />
+                                                Cadastrar
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Selecionar Filial */}
+            <Dialog open={showSelecionarFilial} onOpenChange={setShowSelecionarFilial}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-green-600" />
+                            Selecione a Filial
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Encontramos {filiaisEncontradas.length} filiais. Escolha qual vincular:
+                        </p>
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                            {filiaisEncontradas.map((filial, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className="p-3 bg-slate-50 rounded-lg border-2 border-transparent hover:border-green-500 cursor-pointer transition-all"
+                                    onClick={() => selecionarFilial(filial)}
+                                >
+                                    <p className="font-medium text-slate-800">{filial.nome || transpParaAtualizar?.razao_social}</p>
+                                    <p className="text-sm text-slate-600">
+                                        {[filial.endereco, filial.bairro, filial.cidade, filial.uf].filter(Boolean).join(", ")}
+                                    </p>
+                                    {filial.cnpj && <p className="text-xs text-slate-500">CNPJ: {filial.cnpj}</p>}
+                                    {filial.telefone && <p className="text-xs text-slate-500">Tel: {filial.telefone}</p>}
+                                    {filial.tipo && (
+                                        <Badge className="bg-blue-100 text-blue-700 mt-1">{filial.tipo}</Badge>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

@@ -174,79 +174,92 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             </div>
 
             {/* Camera View */}
-            <div className="flex-1 flex items-center justify-center pt-20 pb-52">
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                />
+            <div className={`flex-1 flex items-center justify-center pt-20 ${fotos.length > 0 ? 'pb-80' : 'pb-52'}`}>
+                {processing ? (
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-16 h-16 text-white animate-spin" />
+                        <span className="text-white text-xl font-medium">Salvando comprovantes...</span>
+                        <span className="text-white/70 text-sm">Identificando notas fiscais com IA</span>
+                    </div>
+                ) : (
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                    />
+                )}
             </div>
 
             <canvas ref={canvasRef} className="hidden" />
 
-            {/* Miniaturas das fotos capturadas */}
-            {fotos.length > 0 && (
-                <div className="absolute top-24 left-0 right-0 px-4 z-20">
-                    <div className="bg-black/60 rounded-xl p-3">
-                        <p className="text-white text-xs mb-2 font-medium">Fotos capturadas:</p>
-                        <div className="flex gap-3 overflow-x-auto pb-1">
-                            {fotos.map((foto, idx) => (
-                                <div key={foto.id} className="relative flex-shrink-0">
-                                    <img 
-                                        src={foto.url} 
-                                        alt={`Foto ${idx + 1}`} 
-                                        className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-lg" 
+            {/* Lista de fotos capturadas com campo de NF */}
+            {fotos.length > 0 && !processing && (
+                <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[40%] overflow-y-auto">
+                    <div className="bg-black/80 rounded-xl p-3 space-y-2">
+                        <p className="text-white text-sm font-bold mb-2">Fotos capturadas ({fotos.length}):</p>
+                        {fotos.map((foto, idx) => (
+                            <div key={foto.id} className="flex items-center gap-2 bg-white/10 rounded-lg p-2">
+                                <img 
+                                    src={foto.url} 
+                                    alt={`Foto ${idx + 1}`} 
+                                    className="w-14 h-14 object-cover rounded-lg border border-white/50 flex-shrink-0" 
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <Input
+                                        placeholder={`NF da foto ${idx + 1}`}
+                                        value={foto.notaFiscal || ""}
+                                        onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
+                                        className="h-10 bg-white text-slate-800 text-sm"
                                     />
-                                    <button
-                                        onClick={() => removePhoto(foto.id)}
-                                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg"
-                                    >
-                                        <X className="w-3 h-3 text-white" />
-                                    </button>
-                                    <span className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-xs text-center rounded-b-lg font-bold">
-                                        {idx + 1}
-                                    </span>
                                 </div>
-                            ))}
-                        </div>
+                                <button
+                                    onClick={() => removePhoto(foto.id)}
+                                    className="w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                >
+                                    <X className="w-4 h-4 text-white" />
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
 
             {/* Footer Controls */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
-                <div className="flex justify-center items-center gap-6">
-                    {/* Botão de Captura Grande */}
-                    <button
-                        onClick={capturePhoto}
-                        disabled={capturing}
-                        className="w-28 h-28 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-[6px] border-orange-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
-                    >
-                        {capturing ? (
-                            <div className="animate-spin w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full" />
-                        ) : (
-                            <Camera className="w-14 h-14 text-orange-500" />
-                        )}
-                    </button>
-
-                    {/* Botão Revisar e Salvar */}
-                    {fotos.length > 0 && (
-                        <Button
-                            onClick={goToReview}
-                            className="h-20 px-6 rounded-2xl bg-green-500 hover:bg-green-600 text-white shadow-2xl text-lg font-bold flex flex-col items-center"
+            {!processing && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+                    <div className="flex justify-center items-center gap-4">
+                        {/* Botão de Captura */}
+                        <button
+                            onClick={capturePhoto}
+                            disabled={capturing}
+                            className="w-24 h-24 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-[6px] border-orange-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
                         >
-                            <Eye className="w-7 h-7" />
-                            <span className="text-sm">Revisar ({fotos.length})</span>
-                        </Button>
-                    )}
+                            {capturing ? (
+                                <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+                            ) : (
+                                <Camera className="w-12 h-12 text-orange-500" />
+                            )}
+                        </button>
+
+                        {/* Botão Salvar */}
+                        {fotos.length > 0 && (
+                            <Button
+                                onClick={handleFinish}
+                                className="h-20 px-8 rounded-2xl bg-green-500 hover:bg-green-600 text-white shadow-2xl text-lg font-bold"
+                            >
+                                <Save className="w-7 h-7 mr-2" />
+                                Salvar ({fotos.length})
+                            </Button>
+                        )}
+                    </div>
+                    
+                    <p className="text-center text-white/60 text-sm mt-3">
+                        {fotos.length === 0 ? "Tire as fotos dos comprovantes" : "Preencha as NFs e clique em Salvar"}
+                    </p>
                 </div>
-                
-                <p className="text-center text-white/60 text-sm mt-4">
-                    {fotos.length === 0 ? "Tire as fotos dos comprovantes" : "Clique em Revisar para verificar as fotos"}
-                </p>
-            </div>
+            )}
         </div>
     );
 }

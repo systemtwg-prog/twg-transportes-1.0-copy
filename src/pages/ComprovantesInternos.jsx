@@ -35,10 +35,21 @@ function FlipbookViewer({ files, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
+            {/* Header com botão Voltar */}
             <div className="flex items-center justify-between p-4 bg-black/50">
-                <div className="text-white">
+                <Button 
+                    variant="ghost" 
+                    onClick={onClose} 
+                    className="text-white hover:bg-white/20 h-12 px-4"
+                >
+                    <ChevronLeft className="w-6 h-6 mr-1" />
+                    Voltar
+                </Button>
+                <div className="text-white text-center">
                     <span className="font-medium">{currentFile?.nome}</span>
-                    <span className="text-white/60 ml-2">({currentPage + 1} de {files.length})</span>
+                    {files.length > 1 && (
+                        <span className="text-white/60 ml-2">({currentPage + 1} de {files.length})</span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} className="text-white hover:bg-white/20">
@@ -58,9 +69,6 @@ function FlipbookViewer({ files, onClose }) {
                             <Download className="w-5 h-5" />
                         </Button>
                     </a>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">
-                        <X className="w-5 h-5" />
-                    </Button>
                 </div>
             </div>
 
@@ -601,22 +609,25 @@ export default function ComprovantesInternos() {
                                         </Badge>
                                     </div>
 
-                                    {comprovante.arquivos?.length > 0 && (
-                                        <div className="mb-3">
-                                            <div 
-                                                className="w-full h-40 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
-                                                onClick={() => setViewFiles(comprovante.arquivos)}
-                                            >
-                                                {comprovante.arquivos[0]?.tipo?.startsWith("image/") ? (
-                                                    <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <File className="w-12 h-12 text-slate-400" />
-                                                    </div>
-                                                )}
-                                            </div>
+                                    {/* Preview da imagem sempre visível */}
+                                    <div className="mb-3">
+                                        <div 
+                                            className="w-full h-32 bg-slate-100 rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (comprovante.arquivos?.length > 0) setViewFiles(comprovante.arquivos);
+                                            }}
+                                        >
+                                            {comprovante.arquivos?.[0]?.tipo?.startsWith("image/") || comprovante.arquivos?.[0]?.url ? (
+                                                <img src={comprovante.arquivos[0].url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <File className="w-10 h-10 text-slate-300" />
+                                                    <span className="text-slate-400 text-sm ml-2">Sem imagem</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
 
                                     {comprovante.observacoes && (
                                         <p className="text-sm text-slate-600 line-clamp-2 mb-3">{comprovante.observacoes}</p>

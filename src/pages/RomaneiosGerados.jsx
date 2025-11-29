@@ -1053,6 +1053,68 @@ export default function RomaneiosGerados() {
                 configKey="romaneiosGeradosDashboardPrint"
             />
 
+            {/* Dialog Resultado da Busca */}
+            <Dialog open={showResultadoBusca} onOpenChange={setShowResultadoBusca}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-amber-600" />
+                            Endereço Encontrado
+                        </DialogTitle>
+                    </DialogHeader>
+                    {resultadoBusca && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                <p className="font-semibold text-amber-800 text-lg">{resultadoBusca.nome_empresa}</p>
+                                <p className="text-slate-700 mt-2">{resultadoBusca.enderecoCompleto}</p>
+                                {resultadoBusca.telefone && (
+                                    <p className="text-sm text-slate-600 mt-1">📞 {resultadoBusca.telefone}</p>
+                                )}
+                                {resultadoBusca.site && (
+                                    <a href={resultadoBusca.site} target="_blank" className="text-sm text-blue-600 hover:underline mt-1 block">
+                                        🌐 {resultadoBusca.site}
+                                    </a>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaWaze(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    className="flex-1 bg-blue-500 hover:bg-blue-600"
+                                >
+                                    <Navigation className="w-5 h-5 mr-2" />
+                                    Waze
+                                </Button>
+                                <Button 
+                                    onClick={() => {
+                                        abrirRotaGoogleMaps(resultadoBusca.enderecoCompleto);
+                                        setShowResultadoBusca(false);
+                                    }}
+                                    variant="outline"
+                                    className="flex-1 border-green-500 text-green-600"
+                                >
+                                    <MapPin className="w-5 h-5 mr-2" />
+                                    Maps
+                                </Button>
+                            </div>
+                            <Button variant="outline" onClick={() => setShowResultadoBusca(false)} className="w-full">
+                                Fechar
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Print Config Dialog */}
+            <PrintConfigDialog
+                open={showPrintConfig}
+                onOpenChange={setShowPrintConfig}
+                onPrint={handlePrintDashboard}
+                configKey="romaneiosGeradosDashboardPrint"
+            />
+
             {/* Dialog Editar Romaneio */}
             <Dialog open={showEdit} onOpenChange={setShowEdit}>
                 <DialogContent className="max-w-md">

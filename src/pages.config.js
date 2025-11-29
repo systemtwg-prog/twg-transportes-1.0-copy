@@ -61,7 +61,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Clientes",
+    mainPage: "BuscaMultas",
     Pages: PAGES,
     Layout: __Layout,
 };

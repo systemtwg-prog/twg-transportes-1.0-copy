@@ -19,9 +19,18 @@ const ENTITIES = [
     { name: "Motorista", label: "Colaboradores" },
     { name: "Veiculo", label: "Veículos" },
     { name: "Romaneio", label: "Romaneios" },
+    { name: "RomaneioGerado", label: "Romaneios Gerados" },
+    { name: "NotaFiscal", label: "Notas Fiscais" },
     { name: "NotaDeposito", label: "Notas Depósito" },
     { name: "ComprovanteInterno", label: "Comprovantes Internos" },
+    { name: "ComprovanteCTE", label: "Comprovantes CTEs" },
     { name: "Comprovante", label: "Comprovantes" },
+    { name: "Transportadora", label: "Transportadoras" },
+    { name: "EmpresaRemetente", label: "Empresas Remetentes" },
+    { name: "EmpresaComprovante", label: "Empresas Comprovante" },
+    { name: "StatusCTE", label: "Status CTEs" },
+    { name: "Multa", label: "Multas" },
+    { name: "Notificacao", label: "Notificações" },
     { name: "Aviso", label: "Avisos" },
     { name: "Configuracoes", label: "Configurações" }
 ];
@@ -90,7 +99,13 @@ export default function Backup() {
             return;
         }
 
-        if (!confirm("ATENÇÃO: Isso irá adicionar todos os dados do backup ao sistema. Deseja continuar?")) {
+        const importMode = confirm(
+            "Escolha o modo de importação:\n\n" +
+            "OK = SUBSTITUIR (apaga dados atuais e importa o backup)\n" +
+            "Cancelar = ADICIONAR (mantém dados atuais e adiciona o backup)"
+        );
+
+        if (importMode && !confirm("ATENÇÃO: Isso irá APAGAR todos os dados atuais e substituir pelo backup. Tem certeza?")) {
             return;
         }
 
@@ -104,14 +119,34 @@ export default function Backup() {
             }
 
             let totalImported = 0;
+            let totalDeleted = 0;
 
             for (const entity of ENTITIES) {
                 const entityData = backup.data[entity.name];
+                
+                // Se modo substituir, deletar dados existentes primeiro
+                if (importMode && entityData && Array.isArray(entityData)) {
+                    try {
+                        const existing = await base44.entities[entity.name].list();
+                        for (const item of existing) {
+                            try {
+                                await base44.entities[entity.name].delete(item.id);
+                                totalDeleted++;
+                            } catch (e) {
+                                console.warn(`Erro ao deletar item de ${entity.name}:`, e);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Erro ao listar ${entity.name} para exclusão:`, e);
+                    }
+                }
+
+                // Importar dados do backup
                 if (entityData && Array.isArray(entityData) && entityData.length > 0) {
                     for (const item of entityData) {
                         try {
                             // Remover campos do sistema
-                            const { id, created_date, updated_date, created_by, ...cleanData } = item;
+                            const { id, created_date, updated_date, created_by, created_by_id, entity_name, app_id, is_sample, is_deleted, deleted_date, ...cleanData } = item;
                             await base44.entities[entity.name].create(cleanData);
                             totalImported++;
                         } catch (e) {
@@ -121,7 +156,7 @@ export default function Backup() {
                 }
             }
 
-            toast.success(`Backup restaurado! ${totalImported} registros importados.`);
+            toast.success(`Backup restaurado! ${totalImported} registros importados.${importMode ? ` ${totalDeleted} registros anteriores removidos.` : ''}`);
             setImportFile(null);
         } catch (error) {
             toast.error("Erro ao importar backup: " + error.message);
@@ -166,7 +201,7 @@ export default function Backup() {
                             <p className="font-semibold text-amber-800">Importante</p>
                             <p className="text-sm text-amber-700">
                                 Faça backups regularmente para evitar perda de dados. 
-                                A restauração irá ADICIONAR dados, não substituir os existentes.
+                                Na restauração você pode escolher entre ADICIONAR (mantém dados atuais) ou SUBSTITUIR (apaga e importa).
                             </p>
                         </div>
                     </CardContent>

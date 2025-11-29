@@ -1182,8 +1182,9 @@ Reorganize na ordem mais eficiente.`,
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         const novaTransportadora = {
-                                                            razao_social: end.nome_empresa,
+                                                            razao_social: end.nome_empresa || "N/I",
                                                             nome_fantasia: end.nome_empresa,
+                                                            cnpj: "00.000.000/0001-00",
                                                             endereco: end.endereco,
                                                             bairro: end.bairro,
                                                             cidade: end.cidade,

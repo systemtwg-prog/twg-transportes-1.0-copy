@@ -110,10 +110,11 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === fotos.length) {
+        const pendentes = fotos.filter(f => !f.confirmado);
+        if (selectedIds.length === pendentes.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(fotos.map(f => f.id));
+            setSelectedIds(pendentes.map(f => f.id));
         }
     };
 
@@ -123,11 +124,17 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             return;
         }
         setFotos(prev => prev.map(f => 
-            selectedIds.includes(f.id) ? { ...f, empresa: empresaMassa } : f
+            selectedIds.includes(f.id) ? { ...f, empresa: empresaMassa, confirmado: true } : f
         ));
-        toast.success(`Empresa aplicada em ${selectedIds.length} foto(s)`);
+        toast.success(`Empresa aplicada e ${selectedIds.length} foto(s) confirmada(s)`);
         setSelectedIds([]);
         setEmpresaMassa("");
+    };
+
+    const confirmarFoto = (id) => {
+        setFotos(prev => prev.map(f => f.id === id ? { ...f, confirmado: true } : f));
+        setSelectedIds(prev => prev.filter(i => i !== id));
+        toast.success("Foto confirmada!");
     };
 
     const handleFinish = async () => {
@@ -211,21 +218,25 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             <canvas ref={canvasRef} className="hidden" />
 
             {/* Lista de fotos capturadas com campo de NF e Empresa */}
-            {fotos.length > 0 && !processing && (
+            {fotos.filter(f => !f.confirmado).length > 0 && !processing && (
                 <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[50%] overflow-y-auto">
                     <div className="bg-black/90 rounded-xl p-3 space-y-2">
                         {/* Header com seleção em massa */}
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-white text-sm font-bold">Fotos ({fotos.length}):</p>
-                            <Button
-                                onClick={toggleSelectAll}
-                                size="sm"
-                                variant="ghost"
-                                className="text-white hover:bg-white/20 h-8 text-xs"
-                            >
-                                <CheckSquare className="w-4 h-4 mr-1" />
-                                {selectedIds.length === fotos.length ? "Desmarcar" : "Selecionar Tudo"}
-                            </Button>
+                            <p className="text-white text-sm font-bold">
+                                Pendentes ({fotos.filter(f => !f.confirmado).length}) | Confirmadas ({fotos.filter(f => f.confirmado).length})
+                            </p>
+                            {fotos.filter(f => !f.confirmado).length > 0 && (
+                                <Button
+                                    onClick={toggleSelectAll}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-white hover:bg-white/20 h-8 text-xs"
+                                >
+                                    <CheckSquare className="w-4 h-4 mr-1" />
+                                    {selectedIds.length === fotos.filter(f => !f.confirmado).length ? "Desmarcar" : "Selecionar"}
+                                </Button>
+                            )}
                         </div>
 
                         {/* Edição em massa */}
@@ -258,7 +269,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                         )}
 
                         {/* Cards das fotos */}
-                        {fotos.map((foto, idx) => (
+                        {fotos.filter(f => !f.confirmado).map((foto, idx) => (
                             <div 
                                 key={foto.id} 
                                 className={`flex items-center gap-2 rounded-lg p-2 ${selectedIds.includes(foto.id) ? 'bg-sky-500/30 ring-1 ring-sky-400' : 'bg-white/10'}`}
@@ -299,6 +310,13 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                {/* Botão OK para confirmar */}
+                                <button
+                                    onClick={() => confirmarFoto(foto.id)}
+                                    className="w-7 h-7 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                >
+                                    <Check className="w-4 h-4 text-white" />
+                                </button>
                                 <button
                                     onClick={() => removePhoto(foto.id)}
                                     className="w-7 h-7 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"

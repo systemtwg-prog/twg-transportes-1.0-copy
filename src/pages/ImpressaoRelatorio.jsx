@@ -13,8 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { 
     Printer, ClipboardPaste, FileText, Calendar, 
     Check, X, AlertTriangle, Plus, Search, Trash2,
-    Download, CheckCircle, XCircle, Building2
+    Download, CheckCircle, XCircle, Building2, FileSpreadsheet
 } from "lucide-react";
+import ImportadorRelatorio from "@/components/relatorio/ImportadorRelatorio";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,6 +30,7 @@ export default function ImpressaoRelatorio() {
     const [notasSelecionadasImportar, setNotasSelecionadasImportar] = useState([]);
     const [notaManual, setNotaManual] = useState({ numero_nf: "", destinatario: "", transportadora: "" });
     const [showAddManual, setShowAddManual] = useState(false);
+    const [showImportadorArquivo, setShowImportadorArquivo] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: configs = [] } = useQuery({
@@ -339,6 +341,14 @@ Retorne todas as notas encontradas.`,
                                 <Download className="w-4 h-4 mr-2" />
                                 Importar NFs
                             </Button>
+                            <Button 
+                                onClick={() => setShowImportadorArquivo(true)}
+                                variant="outline"
+                                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                            >
+                                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                                Importar Arquivo
+                            </Button>
                             {notasAdicionadas.length > 0 && (
                                 <Button 
                                     onClick={limparTodas}
@@ -469,6 +479,14 @@ Retorne todas as notas encontradas.`,
                                     <Download className="w-4 h-4 mr-2" />
                                     Importar NFs
                                 </Button>
+                                <Button 
+                                    onClick={() => setShowImportadorArquivo(true)} 
+                                    variant="outline"
+                                    className="border-emerald-500 text-emerald-600"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                                    Importar Arquivo
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -555,6 +573,15 @@ Retorne todas as notas encontradas.`,
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Importador de Arquivos */}
+            <ImportadorRelatorio 
+                open={showImportadorArquivo} 
+                onClose={() => setShowImportadorArquivo(false)}
+                onImportSuccess={(notas) => {
+                    setNotasAdicionadas(prev => [...prev, ...notas]);
+                }}
+            />
 
             {/* Dialog Importar */}
             <Dialog open={showImportar} onOpenChange={setShowImportar}>

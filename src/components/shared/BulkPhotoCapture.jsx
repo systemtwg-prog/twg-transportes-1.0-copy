@@ -75,12 +75,56 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        canvas.toBlob((blob) => {
+        canvas.toBlob(async (blob) => {
             if (blob) {
                 const imageUrl = URL.createObjectURL(blob);
-                const novaFoto = { blob, url: imageUrl, id: Date.now() };
+                const fotoId = Date.now();
+                const novaFoto = { blob, url: imageUrl, id: fotoId, identificando: true };
                 setFotos(prev => [...prev, novaFoto]);
-                toast.success(`Foto ${fotos.length + 1} capturada!`);
+                toast.success(`Foto ${fotos.length + 1} capturada! Identificando NF...`);
+                
+                // Fazer upload e identificar NF com IA
+                try {
+                    const file = new File([blob], `foto_${fotoId}.jpg`, { type: "image/jpeg" });
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                    
+                    const resultado = await base44.integrations.Core.InvokeLLM({
+                        prompt: `Analise esta imagem de uma DANFE (Documento Auxiliar da Nota Fiscal Eletrônica).
+                        O número da nota fiscal geralmente está:
+                        - No topo lado direito, em um campo destacado
+                        - Ou no centro, logo abaixo da palavra "DANFE"
+                        - Geralmente é um número de 9 dígitos
+                        
+                        Procure por campos como "NF-e", "Nº", "NÚMERO", "N°" seguido de números.
+                        
+                        Retorne APENAS o número da nota fiscal encontrado.`,
+                        file_urls: [file_url],
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                numero_nota: { type: "string", description: "Número da nota fiscal encontrado na DANFE" }
+                            }
+                        }
+                    });
+                    
+                    setFotos(prev => prev.map(f => 
+                        f.id === fotoId 
+                            ? { ...f, notaFiscal: resultado?.numero_nota || "", uploadedUrl: file_url, identificando: false }
+                            : f
+                    ));
+                    
+                    if (resultado?.numero_nota) {
+                        toast.success(`NF identificada: ${resultado.numero_nota}`);
+                    } else {
+                        toast.info("NF não identificada, preencha manualmente");
+                    }
+                } catch (err) {
+                    console.error("Erro ao identificar NF:", err);
+                    setFotos(prev => prev.map(f => 
+                        f.id === fotoId ? { ...f, identificando: false } : f
+                    ));
+                    toast.error("Erro ao identificar NF");
+                }
             }
             setCapturing(false);
         }, "image/jpeg", 0.7);
@@ -150,11 +194,17 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
         for (let i = 0; i < fotos.length; i++) {
             const foto = fotos[i];
-            toast.info(`Enviando foto ${i + 1} de ${fotos.length}...`);
+            toast.info(`Salvando foto ${i + 1} de ${fotos.length}...`);
 
             try {
-                const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
-                const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                // Se já fez upload antes (durante identificação), usa a URL existente
+                let file_url = foto.uploadedUrl;
+                
+                if (!file_url) {
+                    const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
+                    const upload = await base44.integrations.Core.UploadFile({ file });
+                    file_url = upload.file_url;
+                }
 
                 resultados.push({
                     url: file_url,
@@ -288,12 +338,20 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                     className="w-12 h-12 object-cover rounded-lg border border-white/50 flex-shrink-0" 
                                 />
                                 <div className="flex-1 min-w-0 space-y-1">
-                                    <Input
-                                        placeholder="Nº Nota Fiscal"
-                                        value={foto.notaFiscal || ""}
-                                        onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
-                                        className="h-8 bg-white text-slate-800 text-xs"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            placeholder="Nº Nota Fiscal"
+                                            value={foto.notaFiscal || ""}
+                                            onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
+                                            className="h-8 bg-white text-slate-800 text-xs"
+                                            disabled={foto.identificando}
+                                        />
+                                        {foto.identificando && (
+                                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                                <Loader2 className="w-4 h-4 animate-spin text-sky-500" />
+                                            </div>
+                                        )}
+                                    </div>
                                     <Select value={foto.empresa || ""} onValueChange={(v) => updateEmpresa(foto.id, v)}>
                                         <SelectTrigger className="h-8 bg-white text-slate-800 text-xs">
                                             <SelectValue placeholder="Empresa" />

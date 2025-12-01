@@ -90,19 +90,27 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                     
                     const resultado = await base44.integrations.Core.InvokeLLM({
                         prompt: `Analise esta imagem de uma DANFE (Documento Auxiliar da Nota Fiscal Eletrônica).
-                        O número da nota fiscal geralmente está:
-                        - No topo lado direito, em um campo destacado
-                        - Ou no centro, logo abaixo da palavra "DANFE"
-                        - Geralmente é um número de 9 dígitos
                         
-                        Procure por campos como "NF-e", "Nº", "NÚMERO", "N°" seguido de números.
+                        O NÚMERO DA NOTA FISCAL está localizado:
+                        - No TOPO da página, LADO DIREITO
+                        - Ou no CENTRO, logo abaixo da palavra "DANFE"
+                        - Está ACIMA do campo "SÉRIE"
+                        - O formato é "N. 000000000" ou "Nº 000000000" (geralmente 9 dígitos)
                         
-                        Retorne APENAS o número da nota fiscal encontrado.`,
+                        IMPORTANTE: Procure especificamente por:
+                        - "N." seguido de números (ex: N.000123456)
+                        - "Nº" seguido de números
+                        - "NF-e Nº" seguido de números
+                        - Um número grande em destaque acima da palavra "SÉRIE"
+                        
+                        Extraia APENAS os dígitos numéricos do número da nota, removendo zeros à esquerda se houver.
+                        
+                        Exemplo: Se encontrar "N.000123456", retorne "123456"`,
                         file_urls: [file_url],
                         response_json_schema: {
                             type: "object",
                             properties: {
-                                numero_nota: { type: "string", description: "Número da nota fiscal encontrado na DANFE" }
+                                numero_nota: { type: "string", description: "Número da nota fiscal (apenas dígitos)" }
                             }
                         }
                     });

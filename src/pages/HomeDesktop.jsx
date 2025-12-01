@@ -242,10 +242,18 @@ export default function HomeDesktop() {
             const qtdTranspVeiculo = Object.keys(agrupadas).length;
             const qtdNotas = dados.totalNotas || notas.length;
             const qtdEntregas = dados.entregas || 0;
+            
+            // Calcular peso total do veículo
+            const pesoVeiculo = notas.reduce((acc, nota) => {
+                const pesoStr = nota.peso || "";
+                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                return acc + pesoNum;
+            }, 0);
+            
             todosVeiculosHtml += `
                 <div class="veiculo-card">
                     <div class="veiculo-header">
-                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${qtdNotas} NFs | ${qtdEntregas} Entregas | ${qtdTranspVeiculo} Transp.
+                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${qtdNotas} NFs | ${qtdEntregas} Ent. | ${pesoVeiculo.toFixed(1)}kg
                     </div>
                     ${Object.entries(agrupadas).map(([transp, notasT]) => `
                         <div>
@@ -285,6 +293,12 @@ export default function HomeDesktop() {
                     .notas-list { padding: 2px 6px ${cfg.cardPadding}px; font-size: ${cfg.fontSize - 2}px; }
                     .nota-item { display: inline-block; background: #f1f5f9; padding: 1px 4px; border-radius: 2px; margin: 1px; }
                     .footer { display: ${cfg.showFooter ? 'block' : 'none'}; margin-top: 6px; padding-top: 3px; border-top: 1px solid #e2e8f0; text-align: center; font-size: ${cfg.fontSize - 2}px; color: #94a3b8; min-height: ${cfg.footerHeight}px; }
+                    .filial-section { background: #f0fdf4; border: 1px solid #86efac; border-radius: 4px; padding: 6px; margin-bottom: 6px; }
+                    .filial-title { font-size: ${cfg.fontSize}px; font-weight: bold; color: #166534; margin-bottom: 4px; }
+                    .filial-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+                    .filial-item { background: white; padding: 3px 8px; border-radius: 4px; border: 1px solid #bbf7d0; display: flex; gap: 6px; align-items: center; }
+                    .filial-nome { font-size: ${cfg.fontSize - 1}px; color: #166534; }
+                    .filial-qtd { font-size: ${cfg.fontSize}px; font-weight: bold; color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 3px; }
                     @media print { body { padding: ${cfg.marginTop}mm ${cfg.marginRight}mm ${cfg.marginBottom}mm ${cfg.marginLeft}mm; } @page { margin: 0; } }
                 </style>
             </head>
@@ -319,6 +333,26 @@ export default function HomeDesktop() {
                         <div class="summary-value">${totalTransportadoras.size}</div>
                     </div>
                 </div>
+
+                ${(() => {
+                    // Agrupar notas por filial
+                    const porFilial = {};
+                    Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
+                        if (placa === "COLETAS") return;
+                        (dados.notas || []).forEach(nota => {
+                            const filial = nota.filial || "SEM FILIAL";
+                            if (!porFilial[filial]) porFilial[filial] = 0;
+                            porFilial[filial]++;
+                        });
+                    });
+                    
+                    if (Object.keys(porFilial).length === 0) return '';
+                    
+                    return '<div class="filial-section"><div class="filial-title">📍 Notas por Filial</div><div class="filial-grid">' + 
+                        Object.entries(porFilial).map(([filial, qtd]) => 
+                            '<div class="filial-item"><span class="filial-nome">' + filial + '</span><span class="filial-qtd">' + qtd + '</span></div>'
+                        ).join('') + '</div></div>';
+                })()}
 
                 <div class="grid-container">
                     ${todosVeiculosHtml}

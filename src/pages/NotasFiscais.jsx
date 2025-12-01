@@ -35,6 +35,7 @@ export default function NotasFiscais() {
         filial: [],
         placa: []
     });
+    const [filterFilial, setFilterFilial] = useState("");
     const [importing, setImporting] = useState(false);
     const [selecionados, setSelecionados] = useState([]);
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -758,6 +759,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
             n.transportadora?.toLowerCase().includes(search.toLowerCase());
 
+        // Filtro de filial (select)
+        const matchFilialSelect = !filterFilial || filterFilial === "todas" || n.filial === filterFilial;
+
         // Filtros de coluna
         const matchDestinatario = columnFilters.destinatario.length === 0 || 
             columnFilters.destinatario.includes(n.destinatario || "");
@@ -768,7 +772,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         const matchPlaca = columnFilters.placa.length === 0 || 
             columnFilters.placa.includes(n.placa || "");
 
-        return matchSearch && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
+        return matchSearch && matchFilialSelect && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
     });
 
     return (
@@ -856,6 +860,17 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     className="pl-10 bg-white"
                                 />
                             </div>
+                            <Select value={filterFilial} onValueChange={setFilterFilial}>
+                                <SelectTrigger className="w-40 bg-white">
+                                    <SelectValue placeholder="Filial" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todas">Todas Filiais</SelectItem>
+                                    {[...new Set(notas.map(n => n.filial).filter(Boolean))].map(filial => (
+                                        <SelectItem key={filial} value={filial}>{filial}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             <div className="flex gap-2 flex-wrap">
                                 <Button variant="outline" onClick={selecionarTodos}>
                                     {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}

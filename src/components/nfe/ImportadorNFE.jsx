@@ -170,7 +170,22 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
 
         setSaving(true);
         try {
+            // Buscar notas existentes para verificar duplicados
+            const notasExistentes = await base44.entities.NotaFiscal.list("-created_date", 1000);
+            const numerosExistentes = new Set(notasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean));
+            
+            let importadas = 0;
+            let duplicadas = 0;
+            
             for (const row of rowsToSave) {
+                const numeroNf = (row.numero_nf || "").toLowerCase().trim();
+                
+                // Verificar se já existe
+                if (numeroNf && numerosExistentes.has(numeroNf)) {
+                    duplicadas++;
+                    continue;
+                }
+                
                 await base44.entities.NotaFiscal.create({
                     numero_nf: row.numero_nf || "",
                     destinatario: row.destinatario || "",
@@ -183,8 +198,17 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
                     data: row.data || format(new Date(), "yyyy-MM-dd"),
                     observacoes: row.observacoes || ""
                 });
+                importadas++;
+                
+                // Adicionar ao set para evitar duplicados dentro do próprio lote
+                if (numeroNf) numerosExistentes.add(numeroNf);
             }
-            toast.success(`${rowsToSave.length} nota(s) fiscal(is) importada(s) com sucesso!`);
+            
+            if (duplicadas > 0) {
+                toast.warning(`${importadas} nota(s) importada(s). ${duplicadas} ignorada(s) (duplicadas).`);
+            } else {
+                toast.success(`${importadas} nota(s) fiscal(is) importada(s) com sucesso!`);
+            }
             onImportSuccess();
             handleClose();
         } catch (err) {

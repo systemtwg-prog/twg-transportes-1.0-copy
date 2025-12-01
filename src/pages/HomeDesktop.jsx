@@ -36,6 +36,7 @@ const allModules = [
     { id: "clientes", name: "Clientes", href: "Clientes", icon: Users, color: "from-purple-500 to-indigo-600" },
     { id: "transportadoras", name: "Transportadoras", href: "Transportadoras", icon: Building2, color: "from-slate-500 to-gray-600" },
     { id: "motoristas", name: "Motoristas", href: "Motoristas", icon: Users, color: "from-teal-500 to-cyan-600" },
+    { id: "comprovantes_cte", name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText, color: "from-amber-500 to-yellow-600" },
 ];
 
 export default function HomeDesktop() {

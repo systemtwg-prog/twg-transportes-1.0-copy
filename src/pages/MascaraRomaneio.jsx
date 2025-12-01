@@ -291,7 +291,9 @@ export default function MascaraRomaneio() {
             const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
                 ? destinatarioNota 
                 : transportadoraOriginal;
-            const volumeNota = nota.volume ? nota.volume + " vol" : "";
+            const volumeRaw = nota.volume || "";
+            const volumeNum = parseInt(volumeRaw.replace(/\D/g, "")) || "";
+            const volumeNota = volumeNum ? volumeNum + " vol" : "";
                     
                     rowsHtml += '<tr class="nota-row">';
                     rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
@@ -432,7 +434,7 @@ export default function MascaraRomaneio() {
                         font-weight: bold;
                         text-align: center;
                         vertical-align: middle;
-                        border-bottom: 2px solid #000;
+                        border-bottom: 1px solid #999;
                     }
                     .nota-row .destinatario { 
                         text-align: center; 
@@ -440,7 +442,7 @@ export default function MascaraRomaneio() {
                         font-size: 18px; 
                         padding: 6px 8px;
                         vertical-align: middle;
-                        border-bottom: 2px solid #000;
+                        border-bottom: 1px solid #999;
                     }
                     .nota-row .nfe { 
                         text-align: center; 
@@ -448,7 +450,7 @@ export default function MascaraRomaneio() {
                         font-size: 20px; 
                         padding: 6px 8px;
                         vertical-align: middle;
-                        border-bottom: 2px solid #000;
+                        border-bottom: 1px solid #999;
                     }
                     .nota-row .carimbo { 
                         min-height: ${layoutConfig.alturaLinha * 2}px;

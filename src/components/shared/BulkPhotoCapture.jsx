@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, RotateCcw, Check, Loader2, Camera, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X, RotateCcw, Check, Loader2, Camera, Save, CheckSquare, Building2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function BulkPhotoCapture({ onComplete, onClose }) {
@@ -10,9 +12,16 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
     const [fotos, setFotos] = useState([]);
     const [capturing, setCapturing] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [empresaMassa, setEmpresaMassa] = useState("");
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
+
+    const { data: empresasCadastradas = [] } = useQuery({
+        queryKey: ["empresas-comprovante"],
+        queryFn: () => base44.entities.EmpresaComprovante.list()
+    });
 
     useEffect(() => {
         startCamera();
@@ -90,6 +99,37 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
         setFotos(prev => prev.map(f => f.id === id ? { ...f, notaFiscal: valor } : f));
     };
 
+    const updateEmpresa = (id, valor) => {
+        setFotos(prev => prev.map(f => f.id === id ? { ...f, empresa: valor } : f));
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === fotos.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(fotos.map(f => f.id));
+        }
+    };
+
+    const aplicarEmpresaMassa = () => {
+        if (!empresaMassa) {
+            toast.error("Selecione uma empresa");
+            return;
+        }
+        setFotos(prev => prev.map(f => 
+            selectedIds.includes(f.id) ? { ...f, empresa: empresaMassa } : f
+        ));
+        toast.success(`Empresa aplicada em ${selectedIds.length} foto(s)`);
+        setSelectedIds([]);
+        setEmpresaMassa("");
+    };
+
     const handleFinish = async () => {
         if (fotos.length === 0) {
             toast.error("Tire pelo menos uma foto");
@@ -109,35 +149,11 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                 const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-                // Se usuário já informou a NF, usa ela, senão tenta identificar com IA
-                let numero_nota = foto.notaFiscal || "";
-                let observacoes = "";
-
-                if (!numero_nota) {
-                    try {
-                        const resultado = await base44.integrations.Core.InvokeLLM({
-                            prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
-                            Extraia o número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas).`,
-                            file_urls: [file_url],
-                            response_json_schema: {
-                                type: "object",
-                                properties: {
-                                    numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
-                                    observacoes: { type: "string", description: "Outras informações relevantes" }
-                                }
-                            }
-                        });
-                        numero_nota = resultado?.numero_nota || "";
-                        observacoes = resultado?.observacoes || "";
-                    } catch (err) {
-                        console.error("Erro IA:", err);
-                    }
-                }
-
                 resultados.push({
                     url: file_url,
-                    numero_nota: numero_nota || "Pendente",
-                    observacoes
+                    numero_nota: foto.notaFiscal || "Pendente",
+                    empresa: foto.empresa || "",
+                    observacoes: ""
                 });
 
             } catch (error) {
@@ -194,29 +210,98 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
             <canvas ref={canvasRef} className="hidden" />
 
-            {/* Lista de fotos capturadas com campo de NF */}
+            {/* Lista de fotos capturadas com campo de NF e Empresa */}
             {fotos.length > 0 && !processing && (
-                <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[40%] overflow-y-auto">
-                    <div className="bg-black/80 rounded-xl p-3 space-y-2">
-                        <p className="text-white text-sm font-bold mb-2">Fotos capturadas ({fotos.length}):</p>
+                <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[50%] overflow-y-auto">
+                    <div className="bg-black/90 rounded-xl p-3 space-y-2">
+                        {/* Header com seleção em massa */}
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-white text-sm font-bold">Fotos ({fotos.length}):</p>
+                            <Button
+                                onClick={toggleSelectAll}
+                                size="sm"
+                                variant="ghost"
+                                className="text-white hover:bg-white/20 h-8 text-xs"
+                            >
+                                <CheckSquare className="w-4 h-4 mr-1" />
+                                {selectedIds.length === fotos.length ? "Desmarcar" : "Selecionar Tudo"}
+                            </Button>
+                        </div>
+
+                        {/* Edição em massa */}
+                        {selectedIds.length > 0 && (
+                            <div className="flex items-center gap-2 p-2 bg-sky-500/30 rounded-lg mb-2">
+                                <span className="text-white text-xs font-medium">{selectedIds.length} selecionado(s)</span>
+                                <Select value={empresaMassa} onValueChange={setEmpresaMassa}>
+                                    <SelectTrigger className="h-8 bg-white text-slate-800 text-xs flex-1">
+                                        <SelectValue placeholder="Empresa" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {empresasCadastradas.map(emp => (
+                                            <SelectItem key={emp.id} value={emp.nome}>
+                                                <div className="flex items-center gap-2">
+                                                    {emp.logo_url && <img src={emp.logo_url} alt="" className="w-4 h-4 object-contain" />}
+                                                    {emp.nome}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    onClick={aplicarEmpresaMassa}
+                                    size="sm"
+                                    className="h-8 bg-sky-500 hover:bg-sky-600 text-xs"
+                                >
+                                    Aplicar
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Cards das fotos */}
                         {fotos.map((foto, idx) => (
-                            <div key={foto.id} className="flex items-center gap-2 bg-white/10 rounded-lg p-2">
+                            <div 
+                                key={foto.id} 
+                                className={`flex items-center gap-2 rounded-lg p-2 ${selectedIds.includes(foto.id) ? 'bg-sky-500/30 ring-1 ring-sky-400' : 'bg-white/10'}`}
+                            >
+                                {/* Checkbox */}
+                                <button
+                                    onClick={() => toggleSelect(foto.id)}
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedIds.includes(foto.id) ? 'bg-sky-500 border-sky-500' : 'border-white/50'}`}
+                                >
+                                    {selectedIds.includes(foto.id) && <Check className="w-4 h-4 text-white" />}
+                                </button>
+
                                 <img 
                                     src={foto.url} 
                                     alt={`Foto ${idx + 1}`} 
-                                    className="w-14 h-14 object-cover rounded-lg border border-white/50 flex-shrink-0" 
+                                    className="w-12 h-12 object-cover rounded-lg border border-white/50 flex-shrink-0" 
                                 />
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 space-y-1">
                                     <Input
-                                        placeholder={`NF da foto ${idx + 1}`}
+                                        placeholder="Nº Nota Fiscal"
                                         value={foto.notaFiscal || ""}
                                         onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
-                                        className="h-10 bg-white text-slate-800 text-sm"
+                                        className="h-8 bg-white text-slate-800 text-xs"
                                     />
+                                    <Select value={foto.empresa || ""} onValueChange={(v) => updateEmpresa(foto.id, v)}>
+                                        <SelectTrigger className="h-8 bg-white text-slate-800 text-xs">
+                                            <SelectValue placeholder="Empresa" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {empresasCadastradas.map(emp => (
+                                                <SelectItem key={emp.id} value={emp.nome}>
+                                                    <div className="flex items-center gap-2">
+                                                        {emp.logo_url && <img src={emp.logo_url} alt="" className="w-4 h-4 object-contain" />}
+                                                        {emp.nome}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <button
                                     onClick={() => removePhoto(foto.id)}
-                                    className="w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-7 h-7 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
                                 >
                                     <X className="w-4 h-4 text-white" />
                                 </button>

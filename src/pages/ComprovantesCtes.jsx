@@ -14,7 +14,7 @@ import {
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
     Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, 
     Save, Share2, Building2, Calendar, RotateCw, ClipboardPaste, AlertTriangle,
-    CheckCircle, Package, Loader2, Printer, Car
+    CheckCircle, Package, Loader2, Printer, Car, Calculator, FileSpreadsheet
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -144,6 +144,10 @@ export default function ComprovantesCtes() {
     const [showVeiculoNotas, setShowVeiculoNotas] = useState(null);
     const [showScanner, setShowScanner] = useState(false);
     const [scannerTarget, setScannerTarget] = useState(null); // 'form' ou 'upload'
+    const [showCalculadora, setShowCalculadora] = useState(false);
+    const [calcInput, setCalcInput] = useState("");
+    const [calcResult, setCalcResult] = useState("");
+    const [uploadingExcel, setUploadingExcel] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -400,7 +404,24 @@ export default function ComprovantesCtes() {
 
     const handleEdit = (comprovante) => {
         setForm({
-            ...comprovante,
+            numero_cte: comprovante.numero_cte || "",
+            remetente: comprovante.remetente || "",
+            destinatario: comprovante.destinatario || "",
+            nfe: comprovante.nfe || "",
+            valor_nf: comprovante.valor_nf || "",
+            volume: comprovante.volume || "",
+            peso: comprovante.peso || "",
+            frete_peso: comprovante.frete_peso || "",
+            coleta: comprovante.coleta || "",
+            seguro: comprovante.seguro || "",
+            pedagio: comprovante.pedagio || "",
+            outros: comprovante.outros || "",
+            valor_cobrado: comprovante.valor_cobrado || "",
+            porcentagem: comprovante.porcentagem || "",
+            mdfe: comprovante.mdfe || "",
+            data: comprovante.data || format(new Date(), "yyyy-MM-dd"),
+            arquivos: comprovante.arquivos || [],
+            observacoes: comprovante.observacoes || "",
             status: comprovante.status || "pendente"
         });
         setEditing(comprovante);
@@ -658,6 +679,76 @@ export default function ComprovantesCtes() {
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Cadastro Status
                         </Button>
+                        <Button 
+                            onClick={() => setShowCalculadora(true)}
+                            variant="outline"
+                            className="border-green-500 text-green-600 hover:bg-green-50"
+                        >
+                            <Calculator className="w-4 h-4 mr-2" />
+                            Calculadora
+                        </Button>
+                        <Button 
+                            onClick={() => document.getElementById("excel-upload").click()}
+                            variant="outline"
+                            className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                            disabled={uploadingExcel}
+                        >
+                            {uploadingExcel ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+                            Importar Excel
+                        </Button>
+                        <input
+                            type="file"
+                            id="excel-upload"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                setUploadingExcel(true);
+                                try {
+                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+                                        file_url,
+                                        json_schema: {
+                                            type: "array",
+                                            items: {
+                                                type: "object",
+                                                properties: {
+                                                    data: { type: "string" },
+                                                    numero_cte: { type: "string" },
+                                                    remetente: { type: "string" },
+                                                    destinatario: { type: "string" },
+                                                    nfe: { type: "string" },
+                                                    valor_nf: { type: "string" },
+                                                    volume: { type: "string" },
+                                                    peso: { type: "string" },
+                                                    frete_peso: { type: "string" },
+                                                    coleta: { type: "string" },
+                                                    seguro: { type: "string" },
+                                                    pedagio: { type: "string" },
+                                                    outros: { type: "string" },
+                                                    valor_cobrado: { type: "string" },
+                                                    porcentagem: { type: "string" },
+                                                    mdfe: { type: "string" }
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (result?.status === "success" && result.output?.length > 0) {
+                                        setExtractedCTEs(result.output.map((r, i) => ({ ...r, id: Date.now() + i, selected: true })));
+                                        setShowPasteDialog(true);
+                                        toast.success(`${result.output.length} CTE(s) encontrado(s) no Excel!`);
+                                    } else {
+                                        toast.error("Nenhum dado encontrado no arquivo");
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    toast.error("Erro ao processar arquivo Excel");
+                                }
+                                setUploadingExcel(false);
+                                e.target.value = "";
+                            }}
+                        />
                         <Button 
                             onClick={() => { setPasteText(""); setExtractedCTEs([]); setShowPasteDialog(true); }}
                             variant="outline"
@@ -1399,6 +1490,73 @@ export default function ComprovantesCtes() {
                                 className="bg-orange-500 hover:bg-orange-600"
                             >
                                 {bulkEditMutation.isPending ? "Salvando..." : "Aplicar"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Calculadora */}
+            <Dialog open={showCalculadora} onOpenChange={setShowCalculadora}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Calculator className="w-5 h-5 text-green-600" />
+                            Calculadora
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Input
+                            value={calcInput}
+                            onChange={(e) => setCalcInput(e.target.value)}
+                            placeholder="Digite a expressão (ex: 100+50*2)"
+                            className="text-lg font-mono"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    try {
+                                        const result = eval(calcInput.replace(/,/g, "."));
+                                        setCalcResult(String(result));
+                                    } catch {
+                                        setCalcResult("Erro");
+                                    }
+                                }
+                            }}
+                        />
+                        {calcResult && (
+                            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                                <p className="text-sm text-green-600 mb-1">Resultado:</p>
+                                <p className="text-2xl font-bold text-green-700">{calcResult}</p>
+                            </div>
+                        )}
+                        <div className="grid grid-cols-4 gap-2">
+                            {["7","8","9","/","4","5","6","*","1","2","3","-","0",".","=","+"].map(btn => (
+                                <Button
+                                    key={btn}
+                                    variant={btn === "=" ? "default" : "outline"}
+                                    className={btn === "=" ? "bg-green-500 hover:bg-green-600" : ""}
+                                    onClick={() => {
+                                        if (btn === "=") {
+                                            try {
+                                                const result = eval(calcInput.replace(/,/g, "."));
+                                                setCalcResult(String(result));
+                                            } catch {
+                                                setCalcResult("Erro");
+                                            }
+                                        } else {
+                                            setCalcInput(prev => prev + btn);
+                                        }
+                                    }}
+                                >
+                                    {btn}
+                                </Button>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" className="flex-1" onClick={() => { setCalcInput(""); setCalcResult(""); }}>
+                                Limpar
+                            </Button>
+                            <Button variant="outline" className="flex-1" onClick={() => setCalcInput(prev => prev.slice(0, -1))}>
+                                ← Apagar
                             </Button>
                         </div>
                     </div>

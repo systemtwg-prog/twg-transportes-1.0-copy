@@ -270,7 +270,7 @@ export default function ColetasDiarias() {
                     ${avisosAtivos.length > 0 ? `
                         <div class="avisos">
                             <h3>📢 AVISOS</h3>
-                            ${avisosAtivos.map(aviso => `<strong>${aviso.titulo}:</strong> ${aviso.mensagem} `).join(' | ')}
+                            ${avisosAtivos.map(aviso => `<div style="margin-bottom: 5px;"><strong>${aviso.titulo}:</strong> ${aviso.mensagem}</div>`).join('')}
                         </div>
                     ` : ''}
                     <div class="linhas-anotacao">

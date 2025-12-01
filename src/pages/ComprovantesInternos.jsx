@@ -745,6 +745,7 @@ export default function ComprovantesInternos() {
                                     try {
                                         await base44.entities.ComprovanteInterno.create({
                                             nota_fiscal: resultado.numero_nota || "Pendente",
+                                            empresa: resultado.empresa || "",
                                             data: format(new Date(), "yyyy-MM-dd"),
                                             arquivos: [{ nome: "foto.jpg", url: resultado.url, tipo: "image/jpeg" }],
                                             observacoes: resultado.observacoes || ""

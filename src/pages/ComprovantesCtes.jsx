@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import ScannerCamera from "@/components/shared/ScannerCamera";
+import ImportadorCTE from "@/components/cte/ImportadorCTE";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -147,7 +148,7 @@ export default function ComprovantesCtes() {
     const [showCalculadora, setShowCalculadora] = useState(false);
     const [calcInput, setCalcInput] = useState("");
     const [calcResult, setCalcResult] = useState("");
-    const [uploadingExcel, setUploadingExcel] = useState(false);
+    const [showImportador, setShowImportador] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -688,67 +689,13 @@ export default function ComprovantesCtes() {
                             Calculadora
                         </Button>
                         <Button 
-                            onClick={() => document.getElementById("excel-upload").click()}
+                            onClick={() => setShowImportador(true)}
                             variant="outline"
                             className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                            disabled={uploadingExcel}
                         >
-                            {uploadingExcel ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
-                            Importar Excel
+                            <FileSpreadsheet className="w-4 h-4 mr-2" />
+                            Importar Arquivo
                         </Button>
-                        <input
-                            type="file"
-                            id="excel-upload"
-                            accept=".xlsx,.xls,.csv"
-                            className="hidden"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                setUploadingExcel(true);
-                                try {
-                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                                    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-                                        file_url,
-                                        json_schema: {
-                                            type: "array",
-                                            items: {
-                                                type: "object",
-                                                properties: {
-                                                    data: { type: "string" },
-                                                    numero_cte: { type: "string" },
-                                                    remetente: { type: "string" },
-                                                    destinatario: { type: "string" },
-                                                    nfe: { type: "string" },
-                                                    valor_nf: { type: "string" },
-                                                    volume: { type: "string" },
-                                                    peso: { type: "string" },
-                                                    frete_peso: { type: "string" },
-                                                    coleta: { type: "string" },
-                                                    seguro: { type: "string" },
-                                                    pedagio: { type: "string" },
-                                                    outros: { type: "string" },
-                                                    valor_cobrado: { type: "string" },
-                                                    porcentagem: { type: "string" },
-                                                    mdfe: { type: "string" }
-                                                }
-                                            }
-                                        }
-                                    });
-                                    if (result?.status === "success" && result.output?.length > 0) {
-                                        setExtractedCTEs(result.output.map((r, i) => ({ ...r, id: Date.now() + i, selected: true })));
-                                        setShowPasteDialog(true);
-                                        toast.success(`${result.output.length} CTE(s) encontrado(s) no Excel!`);
-                                    } else {
-                                        toast.error("Nenhum dado encontrado no arquivo");
-                                    }
-                                } catch (err) {
-                                    console.error(err);
-                                    toast.error("Erro ao processar arquivo Excel");
-                                }
-                                setUploadingExcel(false);
-                                e.target.value = "";
-                            }}
-                        />
                         <Button 
                             onClick={() => { setPasteText(""); setExtractedCTEs([]); setShowPasteDialog(true); }}
                             variant="outline"
@@ -1103,6 +1050,13 @@ export default function ComprovantesCtes() {
             {viewFiles && (
                 <FlipbookViewer files={viewFiles} onClose={() => setViewFiles(null)} />
             )}
+
+            {/* Importador de Arquivos */}
+            <ImportadorCTE 
+                open={showImportador} 
+                onClose={() => setShowImportador(false)}
+                onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] })}
+            />
 
             {/* Scanner Camera */}
             {showScanner && (

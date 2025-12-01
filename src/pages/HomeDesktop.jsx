@@ -127,9 +127,12 @@ export default function HomeDesktop() {
             if (r.status === "gerado" || r.status === "em_transito") {
                 const placa = r.placa || "SEM_PLACA";
                 if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, coletas: 0, notas: [], notasIds: [] };
+                    porVeiculo[placa] = { entregas: 0, totalNotas: 0, coletas: 0, notas: [], notasIds: [] };
                 }
-                porVeiculo[placa].entregas += r.total_entregas || r.total_notas || 0;
+                // Contar entregas (destinatários únicos)
+                porVeiculo[placa].entregas += r.total_entregas || (r.destinatarios?.length || 0);
+                // Contar notas
+                porVeiculo[placa].totalNotas += r.total_notas || (r.notas_ids?.length || 0);
                 if (r.notas_ids) {
                     porVeiculo[placa].notasIds = [...porVeiculo[placa].notasIds, ...r.notas_ids];
                 }
@@ -141,12 +144,16 @@ export default function HomeDesktop() {
                 porVeiculo[placa].notasIds.includes(n.id) || n.placa === placa
             );
             porVeiculo[placa].notas = notasDoVeiculo;
+            // Atualizar totalNotas baseado nas notas reais encontradas
+            if (notasDoVeiculo.length > 0) {
+                porVeiculo[placa].totalNotas = notasDoVeiculo.length;
+            }
         });
 
         const coletasPendentes = coletasDiarias.filter(c => c.status === "pendente").length;
         if (coletasPendentes > 0) {
             if (!porVeiculo["COLETAS"]) {
-                porVeiculo["COLETAS"] = { entregas: 0, coletas: coletasPendentes, notas: [] };
+                porVeiculo["COLETAS"] = { entregas: 0, totalNotas: 0, coletas: coletasPendentes, notas: [] };
             } else {
                 porVeiculo["COLETAS"].coletas = coletasPendentes;
             }
@@ -207,6 +214,7 @@ export default function HomeDesktop() {
 
         let todosVeiculosHtml = '';
         let totalNotas = 0;
+        let totalEntregas = 0;
         let totalTransportadoras = new Set();
 
         Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
@@ -214,7 +222,8 @@ export default function HomeDesktop() {
             
             const veiculo = veiculos.find(v => v.placa === placa);
             const notas = dados.notas || [];
-            totalNotas += notas.length;
+            totalNotas += dados.totalNotas || notas.length;
+            totalEntregas += dados.entregas || 0;
 
             const agrupadas = {};
             notas.forEach(nota => {
@@ -230,10 +239,12 @@ export default function HomeDesktop() {
             if (Object.keys(agrupadas).length === 0) return;
 
             const qtdTranspVeiculo = Object.keys(agrupadas).length;
+            const qtdNotas = dados.totalNotas || notas.length;
+            const qtdEntregas = dados.entregas || 0;
             todosVeiculosHtml += `
                 <div class="veiculo-card">
                     <div class="veiculo-header">
-                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${notas.length} NFs | ${qtdTranspVeiculo} Transp.
+                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${qtdNotas} NFs | ${qtdEntregas} Entregas | ${qtdTranspVeiculo} Transp.
                     </div>
                     ${Object.entries(agrupadas).map(([transp, notasT]) => `
                         <div>
@@ -297,6 +308,10 @@ export default function HomeDesktop() {
                     <div class="summary-item">
                         <div class="summary-label">Total Notas</div>
                         <div class="summary-value">${totalNotas}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total Entregas</div>
+                        <div class="summary-value">${totalEntregas}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Transportadoras</div>
@@ -526,16 +541,25 @@ export default function HomeDesktop() {
                                                         <p className="text-xs text-slate-500 mb-2">{veiculo.modelo}</p>
                                                     )}
                                                     <div className="flex gap-4">
+                                                        {dados.totalNotas > 0 && (
+                                                            <div className="flex items-center gap-1" title="Quantidade de Notas">
+                                                                <FileText className="w-4 h-4 text-blue-500" />
+                                                                <span className="font-bold text-blue-600">{dados.totalNotas}</span>
+                                                                <span className="text-xs text-slate-400">NFs</span>
+                                                            </div>
+                                                        )}
                                                         {dados.entregas > 0 && (
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-1" title="Quantidade de Entregas">
                                                                 <Package className="w-4 h-4 text-orange-500" />
                                                                 <span className="font-bold text-orange-600">{dados.entregas}</span>
+                                                                <span className="text-xs text-slate-400">Ent.</span>
                                                             </div>
                                                         )}
                                                         {dados.coletas > 0 && (
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-1" title="Coletas Pendentes">
                                                                 <Truck className="w-4 h-4 text-emerald-500" />
                                                                 <span className="font-bold text-emerald-600">{dados.coletas}</span>
+                                                                <span className="text-xs text-slate-400">Col.</span>
                                                             </div>
                                                         )}
                                                     </div>

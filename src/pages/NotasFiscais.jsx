@@ -13,6 +13,7 @@ import {
     Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
+import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -54,6 +55,7 @@ export default function NotasFiscais() {
     const [buscandoOnline, setBuscandoOnline] = useState(false);
     const [dadosExtraidos, setDadosExtraidos] = useState(null);
     const [destinoSelecionado, setDestinoSelecionado] = useState("");
+    const [showImportador, setShowImportador] = useState(false);
     const mediaRecorderRef = React.useRef(null);
     const audioChunksRef = React.useRef([]);
     const audioRef = React.useRef(null);
@@ -798,25 +800,14 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         </Link>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <label className="cursor-pointer">
-                            <input
-                                type="file"
-                                accept=".xlsx,.xls,.csv,.pdf"
-                                onChange={handleImportFile}
-                                className="hidden"
-                                disabled={importing}
-                            />
-                            <Button variant="outline" className="border-blue-500 text-blue-700 hover:bg-blue-50" asChild disabled={importing}>
-                                <span>
-                                    {importing ? (
-                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-blue-500 border-t-transparent rounded-full" />
-                                    ) : (
-                                        <Upload className="w-4 h-4 mr-2" />
-                                    )}
-                                    {importing ? "Importando..." : "Importar PDF/Excel"}
-                                </span>
-                            </Button>
-                        </label>
+                        <Button 
+                            onClick={() => setShowImportador(true)}
+                            variant="outline" 
+                            className="border-blue-500 text-blue-700 hover:bg-blue-50"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Importar Arquivo
+                        </Button>
                         <Button 
                             onClick={() => setShowPasteForm(true)}
                             variant="outline"
@@ -1446,6 +1437,13 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Importador de Arquivos */}
+            <ImportadorNFE 
+                open={showImportador} 
+                onClose={() => setShowImportador(false)}
+                onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] })}
+            />
 
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>

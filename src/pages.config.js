@@ -28,6 +28,7 @@ import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import ExtratorGoogle from './pages/ExtratorGoogle';
 import HomeDesktop from './pages/HomeDesktop';
 import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
+import ServicosSNF from './pages/ServicosSNF';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +63,7 @@ export const PAGES = {
     "ExtratorGoogle": ExtratorGoogle,
     "HomeDesktop": HomeDesktop,
     "ImpressaoRelatorio": ImpressaoRelatorio,
+    "ServicosSNF": ServicosSNF,
 }
 
 export const pagesConfig = {

@@ -268,10 +268,23 @@ export default function ColetasDiarias() {
                         </tbody>
                     </table>
                     ${avisosAtivos.length > 0 ? `
-                        <div class="avisos">
-                            <h3>📢 AVISOS</h3>
-                            ${avisosAtivos.map(aviso => `<div style="margin-bottom: 5px;"><strong>${aviso.titulo}:</strong> ${aviso.mensagem}</div>`).join('')}
-                        </div>
+                        <div class="title" style="margin-top: 20px;">📢 AVISOS</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%;">TÍTULO</th>
+                                    <th>MENSAGEM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${avisosAtivos.map(aviso => `
+                                    <tr class="${aviso.tipo === 'urgente' ? 'priority' : ''}">
+                                        <td><strong>${aviso.tipo === 'urgente' ? '⚠️ ' : aviso.tipo === 'alerta' ? '⚡ ' : 'ℹ️ '}${aviso.titulo}</strong></td>
+                                        <td>${aviso.mensagem}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     ` : ''}
                     <div class="linhas-anotacao">
                         <div class="linha"></div>

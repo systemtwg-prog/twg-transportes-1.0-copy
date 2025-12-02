@@ -611,6 +611,23 @@ export default function ComprovantesCtes() {
         setExtracting(false);
     };
 
+    // Função para converter data DD/MM/YYYY para YYYY-MM-DD
+    const parseDataBR = (dataStr) => {
+        if (!dataStr) return format(new Date(), "yyyy-MM-dd");
+        // Se já está no formato YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dataStr)) return dataStr;
+        // Se está no formato DD/MM/YYYY ou DD/MM/YY
+        const match = dataStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if (match) {
+            const dia = match[1].padStart(2, '0');
+            const mes = match[2].padStart(2, '0');
+            let ano = match[3];
+            if (ano.length === 2) ano = '20' + ano;
+            return `${ano}-${mes}-${dia}`;
+        }
+        return format(new Date(), "yyyy-MM-dd");
+    };
+
     const handleSaveExtractedCTEs = async () => {
         const ctesToSave = extractedCTEs.filter(c => c.selected);
         if (ctesToSave.length === 0) {
@@ -638,7 +655,7 @@ export default function ComprovantesCtes() {
                     valor_cobrado: cte.valor_cobrado || "",
                     porcentagem: cte.porcentagem || "",
                     mdfe: cte.mdfe || "",
-                    data: format(new Date(), "yyyy-MM-dd"),
+                    data: parseDataBR(cte.data),
                     status: "pendente",
                     arquivos: []
                 });

@@ -952,39 +952,27 @@ export default function ComprovantesCtes() {
                 {/* Tabela */}
                 <Card className="bg-white/90 border-0 shadow-lg overflow-hidden">
                     <CardContent className="p-0">
-                        {/* Container com scroll horizontal e vertical */}
+                        {/* Barra de scroll horizontal superior (dummy) */}
                         <div 
-                            className="overflow-x-scroll overflow-y-auto cte-table-container" 
-                            style={{ 
-                                maxHeight: '65vh'
+                            className="overflow-x-scroll bg-slate-200" 
+                            style={{ height: '18px' }}
+                            onScroll={(e) => {
+                                const tableContainer = e.target.nextSibling;
+                                if (tableContainer) tableContainer.scrollLeft = e.target.scrollLeft;
                             }}
                         >
-                            {/* Barra de scroll horizontal superior */}
-                            <style>{`
-                                .cte-table-container {
-                                    scrollbar-width: auto;
-                                    scrollbar-color: #64748b #e2e8f0;
-                                }
-                                .cte-table-container::-webkit-scrollbar {
-                                    height: 16px;
-                                    width: 16px;
-                                }
-                                .cte-table-container::-webkit-scrollbar-track {
-                                    background: #e2e8f0;
-                                    border-radius: 8px;
-                                }
-                                .cte-table-container::-webkit-scrollbar-thumb {
-                                    background: linear-gradient(135deg, #64748b, #475569);
-                                    border-radius: 8px;
-                                    border: 3px solid #e2e8f0;
-                                }
-                                .cte-table-container::-webkit-scrollbar-thumb:hover {
-                                    background: linear-gradient(135deg, #475569, #334155);
-                                }
-                                .cte-table-container::-webkit-scrollbar-corner {
-                                    background: #e2e8f0;
-                                }
-                            `}</style>
+                            <div style={{ width: '2400px', height: '1px' }}></div>
+                        </div>
+                        
+                        {/* Container com scroll horizontal e vertical */}
+                        <div 
+                            className="overflow-x-scroll overflow-y-auto" 
+                            style={{ maxHeight: '60vh' }}
+                            onScroll={(e) => {
+                                const topScroll = e.target.previousSibling;
+                                if (topScroll) topScroll.scrollLeft = e.target.scrollLeft;
+                            }}
+                        >
                             <Table style={{ minWidth: '2400px', tableLayout: 'fixed' }}>
                                 <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">

@@ -30,6 +30,7 @@ import HomeDesktop from './pages/HomeDesktop';
 import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
 import ServicosSNF from './pages/ServicosSNF';
 import ClientesSNF from './pages/ClientesSNF';
+import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "ImpressaoRelatorio": ImpressaoRelatorio,
     "ServicosSNF": ServicosSNF,
     "ClientesSNF": ClientesSNF,
+    "ConfiguracaoModulos": ConfiguracaoModulos,
 }
 
 export const pagesConfig = {

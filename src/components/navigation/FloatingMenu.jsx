@@ -8,6 +8,7 @@ import {
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const menuItems = [
     { name: "Home", href: "Home", icon: Home },
@@ -39,10 +40,19 @@ const menuItems = [
     { name: "Backup", href: "Backup", icon: Database },
     { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
     { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
+    { name: "Configuração Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid },
 ];
 
 export default function FloatingMenu({ currentPage }) {
     const [open, setOpen] = React.useState(false);
+
+    const { data: config } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const modulosAtivos = config?.[0]?.modulos_ativos || menuItems.map(m => m.href);
+    const menuFiltrado = menuItems.filter(item => modulosAtivos.includes(item.href));
 
     const handleLogout = () => {
         // Limpar sessão de desbloqueio ao sair
@@ -82,7 +92,7 @@ export default function FloatingMenu({ currentPage }) {
                         <p className="text-sm text-slate-400">Navegação rápida</p>
                     </div>
                     <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-100px)]">
-                        {menuItems.map((item) => (
+                        {menuFiltrado.map((item) => (
                             <Link
                                 key={item.href}
                                 to={createPageUrl(item.href)}

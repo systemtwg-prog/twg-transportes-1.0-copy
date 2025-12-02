@@ -24,6 +24,8 @@ const menuItems = [
     { name: "Busca de Multas", href: "BuscaMultas", icon: Car },
     { name: "Avisos", href: "Avisos", icon: Bell },
     { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
+    { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText },
+    { name: "Clientes S/NF", href: "ClientesSNF", icon: Users },
     { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
     { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package },
     { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer },

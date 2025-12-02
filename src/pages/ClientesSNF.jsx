@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-    Plus, Search, Pencil, Trash2, Users, Building2, Upload, Loader2, X, Save
+    Plus, Search, Pencil, Trash2, Users, Building2, Upload, Loader2, X, Save, CheckSquare
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import ImportadorClientesSNF from "@/components/clientes/ImportadorClientesSNF";
@@ -20,6 +22,9 @@ export default function ClientesSNF() {
     const [showImportador, setShowImportador] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
+    const [selecionados, setSelecionados] = useState([]);
+    const [showEditMassa, setShowEditMassa] = useState(false);
+    const [editMassaData, setEditMassaData] = useState({ cidade: "", uf: "" });
     const queryClient = useQueryClient();
 
     const [form, setForm] = useState({
@@ -68,6 +73,52 @@ export default function ClientesSNF() {
             toast.success("Cliente excluído!");
         }
     });
+
+    // Mutations em massa
+    const deleteEmMassaMutation = useMutation({
+        mutationFn: async (ids) => {
+            for (const id of ids) {
+                await base44.entities.ClienteSNF.delete(id);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["clientes-snf"] });
+            setSelecionados([]);
+            toast.success("Clientes excluídos!");
+        }
+    });
+
+    const updateEmMassaMutation = useMutation({
+        mutationFn: async ({ ids, data }) => {
+            const updateData = {};
+            if (data.cidade) updateData.cidade = data.cidade;
+            if (data.uf) updateData.uf = data.uf;
+            for (const id of ids) {
+                await base44.entities.ClienteSNF.update(id, updateData);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["clientes-snf"] });
+            setSelecionados([]);
+            setShowEditMassa(false);
+            setEditMassaData({ cidade: "", uf: "" });
+            toast.success("Clientes atualizados!");
+        }
+    });
+
+    const toggleSelecionado = (id) => {
+        setSelecionados(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selecionarTodos = () => {
+        if (selecionados.length === filtered.length) {
+            setSelecionados([]);
+        } else {
+            setSelecionados(filtered.map(c => c.id));
+        }
+    };
 
     const resetForm = () => {
         setForm({
@@ -166,14 +217,44 @@ export default function ClientesSNF() {
                 {/* Search */}
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <Input
-                                placeholder="Buscar por razão social ou CNPJ..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 bg-white"
-                            />
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                                    placeholder="Buscar por razão social ou CNPJ..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 bg-white"
+                                />
+                            </div>
+                            <Button variant="outline" onClick={selecionarTodos}>
+                                <CheckSquare className="w-4 h-4 mr-2" />
+                                {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar" : "Selecionar"} Todos
+                            </Button>
+                            {selecionados.length > 0 && (
+                                <>
+                                    <Button 
+                                        variant="outline" 
+                                        className="border-blue-500 text-blue-700"
+                                        onClick={() => setShowEditMassa(true)}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar ({selecionados.length})
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        className="border-red-500 text-red-700"
+                                        onClick={() => {
+                                            if (confirm(`Excluir ${selecionados.length} cliente(s)?`)) {
+                                                deleteEmMassaMutation.mutate(selecionados);
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Excluir ({selecionados.length})
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -185,6 +266,12 @@ export default function ClientesSNF() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50">
+                                        <TableHead className="w-10">
+                                            <Checkbox 
+                                                checked={selecionados.length === filtered.length && filtered.length > 0}
+                                                onCheckedChange={selecionarTodos}
+                                            />
+                                        </TableHead>
                                         <TableHead>CNPJ</TableHead>
                                         <TableHead>Razão Social</TableHead>
                                         <TableHead>Cidade/UF</TableHead>
@@ -196,13 +283,13 @@ export default function ClientesSNF() {
                                     <AnimatePresence>
                                         {isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center py-12">
+                                                <TableCell colSpan={6} className="text-center py-12">
                                                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : filtered.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                                                     Nenhum cliente encontrado
                                                 </TableCell>
                                             </TableRow>
@@ -212,8 +299,14 @@ export default function ClientesSNF() {
                                                     key={cliente.id}
                                                     initial={{ opacity: 0 }}
                                                     animate={{ opacity: 1 }}
-                                                    className="hover:bg-slate-50"
+                                                    className={`hover:bg-slate-50 ${selecionados.includes(cliente.id) ? "bg-indigo-50" : ""}`}
                                                 >
+                                                    <TableCell>
+                                                        <Checkbox 
+                                                            checked={selecionados.includes(cliente.id)}
+                                                            onCheckedChange={() => toggleSelecionado(cliente.id)}
+                                                        />
+                                                    </TableCell>
                                                     <TableCell className="font-mono text-sm">{cliente.cnpj}</TableCell>
                                                     <TableCell className="font-medium">
                                                         <div>
@@ -356,6 +449,50 @@ export default function ClientesSNF() {
                 onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["clientes-snf"] })}
                 clientesExistentes={clientes}
             />
+
+            {/* Dialog Edição em Massa */}
+            <Dialog open={showEditMassa} onOpenChange={setShowEditMassa}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Editar {selecionados.length} Cliente(s)</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Cidade</Label>
+                            <Input 
+                                value={editMassaData.cidade} 
+                                onChange={(e) => setEditMassaData({ ...editMassaData, cidade: e.target.value })}
+                                placeholder="Nova cidade..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>UF</Label>
+                            <Input 
+                                value={editMassaData.uf} 
+                                onChange={(e) => setEditMassaData({ ...editMassaData, uf: e.target.value })}
+                                placeholder="SP, RJ, MG..."
+                                maxLength={2}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditMassa(false)}>Cancelar</Button>
+                            <Button 
+                                onClick={() => {
+                                    if (editMassaData.cidade || editMassaData.uf) {
+                                        updateEmMassaMutation.mutate({ ids: selecionados, data: editMassaData });
+                                    } else {
+                                        toast.error("Preencha ao menos um campo");
+                                    }
+                                }}
+                                disabled={updateEmMassaMutation.isPending}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                {updateEmMassaMutation.isPending ? "Salvando..." : "Salvar"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

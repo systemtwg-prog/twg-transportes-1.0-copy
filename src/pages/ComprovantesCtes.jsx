@@ -952,35 +952,42 @@ export default function ComprovantesCtes() {
                 {/* Tabela */}
                 <Card className="bg-white/90 border-0 shadow-lg overflow-hidden">
                     <CardContent className="p-0">
-                        <div className="overflow-auto max-h-[600px]" style={{ overflowX: 'auto', overflowY: 'auto' }}>
-                            <Table className="min-w-[2200px]">
+                        {/* Container com scroll horizontal e vertical */}
+                        <div 
+                            className="overflow-x-auto overflow-y-auto" 
+                            style={{ 
+                                maxHeight: '65vh',
+                                scrollbarWidth: 'auto',
+                                scrollbarColor: '#94a3b8 #e2e8f0'
+                            }}
+                        >
+                            <Table style={{ minWidth: '2400px', tableLayout: 'fixed' }}>
                                 <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">
-                                        <TableHead className="w-12 text-white sticky left-0 bg-slate-700 z-20">
+                                        <TableHead style={{ width: '50px' }} className="text-white text-center">
                                             <Checkbox 
                                                 checked={selecionados.length === filtered.length && filtered.length > 0}
                                                 onCheckedChange={selecionarTodos}
                                             />
                                         </TableHead>
-                                        <TableHead className="text-white font-bold min-w-[100px]">DATA</TableHead>
-                                        <TableHead className="text-white font-bold min-w-[200px]">FORNECEDOR</TableHead>
-                                        <TableHead className="text-white font-bold min-w-[200px]">CLIENTE</TableHead>
-                                        <TableHead className="text-white font-bold min-w-[180px]">TOMADOR</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[100px]">NFE</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[100px]">CTE</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[120px]">VALOR NF</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[70px]">VOL</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[80px]">PESO</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[100px]">FRETE PESO</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[90px]">COLETA</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[90px]">SEGURO</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[90px]">PEDÁGIO</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[90px]">OUTROS</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[130px]">VALOR COBRADO</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[60px]">%</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[100px]">MDFE</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[120px]">STATUS</TableHead>
-                                        <TableHead className="text-white font-bold text-center min-w-[140px] sticky right-0 bg-slate-700 z-20">AÇÕES</TableHead>
+                                        <TableHead style={{ width: '95px' }} className="text-white font-bold text-xs">DATA</TableHead>
+                                        <TableHead style={{ width: '180px' }} className="text-white font-bold text-xs">FORNECEDOR</TableHead>
+                                        <TableHead style={{ width: '180px' }} className="text-white font-bold text-xs">CLIENTE</TableHead>
+                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">NFE</TableHead>
+                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">CTE</TableHead>
+                                        <TableHead style={{ width: '110px' }} className="text-white font-bold text-xs text-center">VALOR NF</TableHead>
+                                        <TableHead style={{ width: '60px' }} className="text-white font-bold text-xs text-center">VOL</TableHead>
+                                        <TableHead style={{ width: '80px' }} className="text-white font-bold text-xs text-center">PESO</TableHead>
+                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">FRETE/PESO</TableHead>
+                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">COLETA</TableHead>
+                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">SEGURO</TableHead>
+                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">PEDÁGIO</TableHead>
+                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">OUTROS</TableHead>
+                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">TOTAL</TableHead>
+                                        <TableHead style={{ width: '60px' }} className="text-white font-bold text-xs text-center">%</TableHead>
+                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">MDFE</TableHead>
+                                        <TableHead style={{ width: '120px' }} className="text-white font-bold text-xs text-center">STATUS</TableHead>
+                                        <TableHead style={{ width: '130px' }} className="text-white font-bold text-xs text-center">AÇÕES</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1000,69 +1007,66 @@ export default function ComprovantesCtes() {
                                     ) : (
                                         filtered.map((cte) => (
                                             <TableRow key={cte.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                                <TableCell className="sticky left-0 bg-white z-10">
+                                                <TableCell className="text-center p-2">
                                                     <Checkbox 
                                                         checked={selecionados.includes(cte.id)}
                                                         onCheckedChange={() => toggleSelecionado(cte.id)}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="whitespace-nowrap text-sm">
+                                                <TableCell className="text-xs p-2">
                                                     {formatDate(cte.data)}
                                                 </TableCell>
-                                                <TableCell className="font-medium text-slate-800 whitespace-nowrap">
+                                                <TableCell className="font-medium text-slate-800 text-xs p-2 truncate" title={cte.remetente || cte.empresa}>
                                                     {cte.remetente || cte.empresa || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-slate-600 whitespace-nowrap">
+                                                <TableCell className="text-slate-600 text-xs p-2 truncate" title={cte.destinatario}>
                                                     {cte.destinatario || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-slate-600 whitespace-nowrap">
-                                                    {cte.tomador || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.nfe || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center font-medium text-amber-600 whitespace-nowrap">
+                                                <TableCell className="text-center font-medium text-amber-600 text-xs p-2">
                                                     {cte.numero_cte || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
-                                                    {cte.valor_nf ? `R$ ${cte.valor_nf}` : "-"}
+                                                <TableCell className="text-center text-xs p-2 font-medium">
+                                                    {cte.valor_nf || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.volume || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.peso || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.frete_peso || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.coleta || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.seguro || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.pedagio || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.outros || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm font-medium text-green-600 whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2 font-medium text-green-600">
                                                     {cte.valor_cobrado || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm whitespace-nowrap">
+                                                <TableCell className="text-center text-xs p-2">
                                                     {cte.mdfe || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center p-2">
                                                     <Select 
                                                         value={cte.status || "pendente"} 
                                                         onValueChange={(v) => updateMutation.mutate({ id: cte.id, data: { status: v } })}
                                                     >
-                                                        <SelectTrigger className={`h-7 w-24 text-xs ${getStatusColor(cte.status)}`}>
+                                                        <SelectTrigger className={`h-6 w-full text-xs ${getStatusColor(cte.status)}`}>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1080,16 +1084,13 @@ export default function ComprovantesCtes() {
                                                             )}
                                                         </SelectContent>
                                                     </Select>
-                                                    {cte.arquivos && cte.arquivos.length > 0 && (
-                                                        <span className="ml-1 text-xs text-slate-400">📎</span>
-                                                    )}
                                                 </TableCell>
-                                                <TableCell className="sticky right-0 bg-white z-10">
+                                                <TableCell className="p-2">
                                                     <div className="flex justify-center gap-1">
                                                         <Button 
                                                             variant="outline" 
                                                             size="icon"
-                                                            className="h-7 w-7 border-amber-500 text-amber-600 hover:bg-amber-50"
+                                                            className="h-6 w-6 border-amber-500 text-amber-600 hover:bg-amber-50"
                                                             onClick={() => {
                                                                 setUploadingCTE(cte);
                                                                 setShowUploadDialog(true);
@@ -1101,16 +1102,16 @@ export default function ComprovantesCtes() {
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="icon"
-                                                                className="h-7 w-7"
+                                                                className="h-6 w-6"
                                                                 onClick={() => setViewFiles(cte.arquivos)}
                                                             >
                                                                 <Eye className="w-3 h-3" />
                                                             </Button>
                                                         )}
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(cte)}>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(cte)}>
                                                             <Pencil className="w-3 h-3" />
                                                         </Button>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                                                             if (confirm("Excluir este CTE?")) deleteMutation.mutate(cte.id);
                                                         }}>
                                                             <Trash2 className="w-3 h-3 text-red-600" />

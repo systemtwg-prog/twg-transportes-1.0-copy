@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
     Plus, Search, Pencil, Trash2, FileText, Truck, 
-    Upload, X, DollarSign, Calendar, Loader2, Users, Save, Link as LinkIcon
+    Upload, X, DollarSign, Calendar, Loader2, Users, Save, Printer, History
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
@@ -30,7 +31,7 @@ export default function ServicosSNF() {
     const [showImportador, setShowImportador] = useState(false);
     const queryClient = useQueryClient();
 
-    const [form, setForm] = useState({
+    const initialForm = {
         numero: "",
         data: format(new Date(), "yyyy-MM-dd"),
         remetente_id: "",
@@ -39,6 +40,7 @@ export default function ServicosSNF() {
         destinatario_id: "",
         destinatario_cnpj: "",
         destinatario_nome: "",
+        tomador: "", // remetente, destinatario
         pagador_frete_id: "",
         pagador_frete_cnpj: "",
         pagador_frete_nome: "",
@@ -54,7 +56,9 @@ export default function ServicosSNF() {
         porcentagem: "",
         status: "pendente",
         observacoes: ""
-    });
+    };
+
+    const [form, setForm] = useState(initialForm);
 
     const { data: servicos = [], isLoading } = useQuery({
         queryKey: ["servicos-snf"],
@@ -66,13 +70,29 @@ export default function ServicosSNF() {
         queryFn: () => base44.entities.ClienteSNF.list()
     });
 
+    // Gerar próximo número automaticamente
+    const proximoNumero = useMemo(() => {
+        if (servicos.length === 0) return "1";
+        const numeros = servicos
+            .map(s => parseInt(s.numero) || 0)
+            .filter(n => !isNaN(n));
+        const maiorNumero = Math.max(...numeros, 0);
+        return String(maiorNumero + 1);
+    }, [servicos]);
+
+    // Histórico de serviços do pagador para o remetente atual
+    const historicoServicos = useMemo(() => {
+        if (!form.pagador_frete_cnpj || !form.remetente_cnpj) return [];
+        return servicos.filter(s => 
+            s.pagador_frete_cnpj === form.pagador_frete_cnpj &&
+            s.remetente_cnpj === form.remetente_cnpj
+        ).slice(0, 10);
+    }, [servicos, form.pagador_frete_cnpj, form.remetente_cnpj]);
+
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.ServicoSNF.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["servicos-snf"] });
-            setShowForm(false);
-            resetForm();
-            toast.success("Serviço cadastrado!");
         }
     });
 
@@ -96,35 +116,14 @@ export default function ServicosSNF() {
     });
 
     const resetForm = () => {
-        setForm({
-            numero: "",
-            data: format(new Date(), "yyyy-MM-dd"),
-            remetente_id: "",
-            remetente_cnpj: "",
-            remetente_nome: "",
-            destinatario_id: "",
-            destinatario_cnpj: "",
-            destinatario_nome: "",
-            pagador_frete_id: "",
-            pagador_frete_cnpj: "",
-            pagador_frete_nome: "",
-            nfe: "",
-            peso: "",
-            volume: "",
-            valor_nfe: "",
-            tabela_peso: "",
-            seguro: "",
-            pedagio: "",
-            coleta: "",
-            total: "",
-            porcentagem: "",
-            status: "pendente",
-            observacoes: ""
-        });
+        setForm(initialForm);
     };
 
-    const handleClienteChange = (tipo, clienteId) => {
-        const cliente = clientesSNF.find(c => c.id === clienteId);
+    // Buscar cliente por CNPJ
+    const buscarClientePorCnpj = (cnpj, tipo) => {
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        const cliente = clientesSNF.find(c => c.cnpj?.replace(/\D/g, "") === cnpjLimpo);
+        
         if (cliente) {
             if (tipo === "remetente") {
                 setForm(prev => ({
@@ -140,16 +139,73 @@ export default function ServicosSNF() {
                     destinatario_cnpj: cliente.cnpj,
                     destinatario_nome: cliente.razao_social
                 }));
-            } else if (tipo === "pagador") {
-                setForm(prev => ({
-                    ...prev,
-                    pagador_frete_id: cliente.id,
-                    pagador_frete_cnpj: cliente.cnpj,
-                    pagador_frete_nome: cliente.razao_social
-                }));
             }
+            toast.success(`${tipo === "remetente" ? "Remetente" : "Destinatário"} encontrado!`);
+        } else {
+            toast.error("Cliente não encontrado com este CNPJ");
         }
     };
+
+    // Quando seleciona o tomador, atualiza pagador do frete
+    const handleTomadorChange = (tomador) => {
+        setForm(prev => {
+            let pagadorData = {};
+            if (tomador === "remetente" && prev.remetente_id) {
+                pagadorData = {
+                    pagador_frete_id: prev.remetente_id,
+                    pagador_frete_cnpj: prev.remetente_cnpj,
+                    pagador_frete_nome: prev.remetente_nome
+                };
+            } else if (tomador === "destinatario" && prev.destinatario_id) {
+                pagadorData = {
+                    pagador_frete_id: prev.destinatario_id,
+                    pagador_frete_cnpj: prev.destinatario_cnpj,
+                    pagador_frete_nome: prev.destinatario_nome
+                };
+            }
+            return { ...prev, tomador, ...pagadorData };
+        });
+    };
+
+    // Calcular seguro automaticamente (valor_nfe * 0.5%)
+    useEffect(() => {
+        const valorNfe = parseNumber(form.valor_nfe);
+        if (valorNfe > 0) {
+            const seguro = valorNfe * 0.005;
+            setForm(prev => ({ ...prev, seguro: seguro.toFixed(2) }));
+        }
+    }, [form.valor_nfe]);
+
+    // Calcular pedágio automaticamente (peso / 100 * 1.40)
+    useEffect(() => {
+        const peso = parseNumber(form.peso);
+        if (peso > 0) {
+            const pedagio = (peso / 100) * 1.40;
+            setForm(prev => ({ ...prev, pedagio: pedagio.toFixed(2) }));
+        }
+    }, [form.peso]);
+
+    // Calcular total automaticamente
+    useEffect(() => {
+        const tabelaPeso = parseNumber(form.tabela_peso);
+        const seguro = parseNumber(form.seguro);
+        const pedagio = parseNumber(form.pedagio);
+        const coleta = parseNumber(form.coleta);
+        const total = tabelaPeso + seguro + pedagio + coleta;
+        if (total > 0) {
+            setForm(prev => ({ ...prev, total: total.toFixed(2) }));
+        }
+    }, [form.tabela_peso, form.seguro, form.pedagio, form.coleta]);
+
+    // Calcular porcentagem automaticamente
+    useEffect(() => {
+        const valorNfe = parseNumber(form.valor_nfe);
+        const total = parseNumber(form.total);
+        if (valorNfe > 0 && total > 0) {
+            const porcentagem = (total / valorNfe) * 100;
+            setForm(prev => ({ ...prev, porcentagem: porcentagem.toFixed(2) }));
+        }
+    }, [form.valor_nfe, form.total]);
 
     const parseNumber = (val) => {
         if (!val) return 0;
@@ -157,10 +213,11 @@ export default function ServicosSNF() {
         return parseFloat(cleaned) || 0;
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = async (e, salvarEImprimir = false) => {
+        e?.preventDefault();
         const data = {
             ...form,
+            numero: editingServico ? form.numero : proximoNumero,
             peso: parseNumber(form.peso),
             volume: parseNumber(form.volume),
             valor_nfe: parseNumber(form.valor_nfe),
@@ -175,8 +232,26 @@ export default function ServicosSNF() {
         if (editingServico) {
             updateMutation.mutate({ id: editingServico.id, data });
         } else {
-            createMutation.mutate(data);
+            await createMutation.mutateAsync(data);
+            toast.success("Serviço cadastrado!");
+            
+            if (salvarEImprimir) {
+                toast.info("Funcionalidade de impressão será implementada em breve!");
+                // TODO: Implementar impressão da máscara
+            }
+            
+            setShowForm(false);
+            resetForm();
         }
+    };
+
+    const handleNovoServico = () => {
+        setEditingServico(null);
+        setForm({
+            ...initialForm,
+            numero: proximoNumero
+        });
+        setShowForm(true);
     };
 
     const handleEdit = (servico) => {
@@ -190,6 +265,8 @@ export default function ServicosSNF() {
             destinatario_id: servico.destinatario_id || "",
             destinatario_cnpj: servico.destinatario_cnpj || "",
             destinatario_nome: servico.destinatario_nome || "",
+            tomador: servico.pagador_frete_cnpj === servico.remetente_cnpj ? "remetente" : 
+                     servico.pagador_frete_cnpj === servico.destinatario_cnpj ? "destinatario" : "",
             pagador_frete_id: servico.pagador_frete_id || "",
             pagador_frete_cnpj: servico.pagador_frete_cnpj || "",
             pagador_frete_nome: servico.pagador_frete_nome || "",
@@ -282,7 +359,7 @@ export default function ServicosSNF() {
                             Importar
                         </Button>
                         <Button 
-                            onClick={() => { setEditingServico(null); resetForm(); setShowForm(true); }}
+                            onClick={handleNovoServico}
                             className="bg-gradient-to-r from-purple-500 to-purple-600"
                         >
                             <Plus className="w-5 h-5 mr-2" />
@@ -467,18 +544,67 @@ export default function ServicosSNF() {
 
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <FileText className="w-5 h-5 text-purple-600" />
-                            {editingServico ? "Editar Serviço" : "Novo Serviço S/NF"}
+                            {editingServico ? "Editar Serviço" : `Novo Serviço S/NF - Nº ${proximoNumero}`}
                         </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-3 gap-4">
+
+                    {/* Histórico de serviços do pagador */}
+                    {historicoServicos.length > 0 && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center gap-2 mb-2">
+                                <History className="w-4 h-4 text-blue-600" />
+                                <span className="font-semibold text-blue-800 text-sm">
+                                    Últimos serviços deste fornecedor para este cliente
+                                </span>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-blue-100">
+                                            <TableHead className="text-xs py-1">Nº</TableHead>
+                                            <TableHead className="text-xs py-1">Remetente</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Peso</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Vol</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Valor NFE</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Tab. Peso</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Seg</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Ped</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Coleta</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">Total</TableHead>
+                                            <TableHead className="text-xs py-1 text-right">%</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {historicoServicos.map(s => (
+                                            <TableRow key={s.id} className="text-xs">
+                                                <TableCell className="py-1 font-bold">{s.numero}</TableCell>
+                                                <TableCell className="py-1 truncate max-w-[100px]">{s.remetente_nome}</TableCell>
+                                                <TableCell className="py-1 text-right">{s.peso}</TableCell>
+                                                <TableCell className="py-1 text-right">{s.volume}</TableCell>
+                                                <TableCell className="py-1 text-right">{formatCurrency(s.valor_nfe)}</TableCell>
+                                                <TableCell className="py-1 text-right">{formatCurrency(s.tabela_peso)}</TableCell>
+                                                <TableCell className="py-1 text-right">{formatCurrency(s.seguro)}</TableCell>
+                                                <TableCell className="py-1 text-right">{formatCurrency(s.pedagio)}</TableCell>
+                                                <TableCell className="py-1 text-right">{formatCurrency(s.coleta)}</TableCell>
+                                                <TableCell className="py-1 text-right font-bold text-green-600">{formatCurrency(s.total)}</TableCell>
+                                                <TableCell className="py-1 text-right">{s.porcentagem}%</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
+                        <div className="grid grid-cols-4 gap-4">
                             <div className="space-y-2">
-                                <Label>Nº</Label>
-                                <Input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} />
+                                <Label>Nº (Automático)</Label>
+                                <Input value={editingServico ? form.numero : proximoNumero} disabled className="bg-slate-100 font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Data *</Label>
@@ -488,6 +614,18 @@ export default function ServicosSNF() {
                                 <Label>NFE</Label>
                                 <Input value={form.nfe} onChange={(e) => setForm({ ...form, nfe: e.target.value })} />
                             </div>
+                            <div className="space-y-2">
+                                <Label>Status</Label>
+                                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pendente">Pendente</SelectItem>
+                                        <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                        <SelectItem value="finalizado">Finalizado</SelectItem>
+                                        <SelectItem value="cancelado">Cancelado</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {/* Remetente */}
@@ -495,21 +633,20 @@ export default function ServicosSNF() {
                             <Label className="text-amber-800 font-bold">Remetente</Label>
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <Label className="text-xs">Selecionar Cliente</Label>
-                                    <Select value={form.remetente_id} onValueChange={(v) => handleClienteChange("remetente", v)}>
-                                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {clientesSNF.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Label className="text-xs">CNPJ (Digite e pressione Enter para buscar)</Label>
+                                    <Input 
+                                        value={form.remetente_cnpj} 
+                                        onChange={(e) => setForm({ ...form, remetente_cnpj: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                buscarClientePorCnpj(form.remetente_cnpj, "remetente");
+                                            }
+                                        }}
+                                        placeholder="00.000.000/0001-00"
+                                    />
                                 </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs">CNPJ</Label>
-                                    <Input value={form.remetente_cnpj} onChange={(e) => setForm({ ...form, remetente_cnpj: e.target.value })} />
-                                </div>
-                                <div className="space-y-1">
+                                <div className="col-span-2 space-y-1">
                                     <Label className="text-xs">Nome</Label>
                                     <Input value={form.remetente_nome} onChange={(e) => setForm({ ...form, remetente_nome: e.target.value })} />
                                 </div>
@@ -521,49 +658,47 @@ export default function ServicosSNF() {
                             <Label className="text-emerald-800 font-bold">Destinatário</Label>
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <Label className="text-xs">Selecionar Cliente</Label>
-                                    <Select value={form.destinatario_id} onValueChange={(v) => handleClienteChange("destinatario", v)}>
-                                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {clientesSNF.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Label className="text-xs">CNPJ (Digite e pressione Enter para buscar)</Label>
+                                    <Input 
+                                        value={form.destinatario_cnpj} 
+                                        onChange={(e) => setForm({ ...form, destinatario_cnpj: e.target.value })}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                buscarClientePorCnpj(form.destinatario_cnpj, "destinatario");
+                                            }
+                                        }}
+                                        placeholder="00.000.000/0001-00"
+                                    />
                                 </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs">CNPJ</Label>
-                                    <Input value={form.destinatario_cnpj} onChange={(e) => setForm({ ...form, destinatario_cnpj: e.target.value })} />
-                                </div>
-                                <div className="space-y-1">
+                                <div className="col-span-2 space-y-1">
                                     <Label className="text-xs">Nome</Label>
                                     <Input value={form.destinatario_nome} onChange={(e) => setForm({ ...form, destinatario_nome: e.target.value })} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Pagador Frete */}
+                        {/* Tomador / Pagador do Frete */}
                         <div className="p-4 bg-blue-50 rounded-lg space-y-3">
-                            <Label className="text-blue-800 font-bold">Pagador do Frete</Label>
-                            <div className="grid grid-cols-3 gap-3">
+                            <Label className="text-blue-800 font-bold">Tomador / Pagador do Frete</Label>
+                            <div className="grid grid-cols-4 gap-3">
                                 <div className="space-y-1">
-                                    <Label className="text-xs">Selecionar Cliente</Label>
-                                    <Select value={form.pagador_frete_id} onValueChange={(v) => handleClienteChange("pagador", v)}>
+                                    <Label className="text-xs">Tomador</Label>
+                                    <Select value={form.tomador} onValueChange={handleTomadorChange}>
                                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                                         <SelectContent>
-                                            {clientesSNF.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
-                                            ))}
+                                            <SelectItem value="remetente">Remetente</SelectItem>
+                                            <SelectItem value="destinatario">Destinatário</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-xs">CNPJ</Label>
-                                    <Input value={form.pagador_frete_cnpj} onChange={(e) => setForm({ ...form, pagador_frete_cnpj: e.target.value })} />
+                                    <Label className="text-xs">CNPJ Pagador</Label>
+                                    <Input value={form.pagador_frete_cnpj} readOnly className="bg-slate-100" />
                                 </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs">Nome</Label>
-                                    <Input value={form.pagador_frete_nome} onChange={(e) => setForm({ ...form, pagador_frete_nome: e.target.value })} />
+                                <div className="col-span-2 space-y-1">
+                                    <Label className="text-xs">Nome Pagador</Label>
+                                    <Input value={form.pagador_frete_nome} readOnly className="bg-slate-100" />
                                 </div>
                             </div>
                         </div>
@@ -587,15 +722,15 @@ export default function ServicosSNF() {
                                 <Input value={form.tabela_peso} onChange={(e) => setForm({ ...form, tabela_peso: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs">Seguro</Label>
-                                <Input value={form.seguro} onChange={(e) => setForm({ ...form, seguro: e.target.value })} />
+                                <Label className="text-xs">Seguro (0,5% NFE)</Label>
+                                <Input value={form.seguro} onChange={(e) => setForm({ ...form, seguro: e.target.value })} className="bg-green-50" />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-5 gap-3">
                             <div className="space-y-1">
-                                <Label className="text-xs">Pedágio</Label>
-                                <Input value={form.pedagio} onChange={(e) => setForm({ ...form, pedagio: e.target.value })} />
+                                <Label className="text-xs">Pedágio (Peso/100*1,40)</Label>
+                                <Input value={form.pedagio} onChange={(e) => setForm({ ...form, pedagio: e.target.value })} className="bg-green-50" />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs">Coleta</Label>
@@ -603,23 +738,11 @@ export default function ServicosSNF() {
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs">Total</Label>
-                                <Input value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} className="font-bold" />
+                                <Input value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} className="font-bold bg-yellow-50" />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs">%</Label>
-                                <Input value={form.porcentagem} onChange={(e) => setForm({ ...form, porcentagem: e.target.value })} />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs">Status</Label>
-                                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="pendente">Pendente</SelectItem>
-                                        <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                                        <SelectItem value="finalizado">Finalizado</SelectItem>
-                                        <SelectItem value="cancelado">Cancelado</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Input value={form.porcentagem} onChange={(e) => setForm({ ...form, porcentagem: e.target.value })} className="bg-blue-50" />
                             </div>
                         </div>
 
@@ -633,8 +756,17 @@ export default function ServicosSNF() {
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
                             <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
-                                <Save className="w-4 h-4 mr-1" /> {editingServico ? "Atualizar" : "Cadastrar"}
+                                <Save className="w-4 h-4 mr-1" /> {editingServico ? "Atualizar" : "Salvar"}
                             </Button>
+                            {!editingServico && (
+                                <Button 
+                                    type="button" 
+                                    onClick={(e) => handleSubmit(e, true)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    <Printer className="w-4 h-4 mr-1" /> Salvar e Imprimir
+                                </Button>
+                            )}
                         </div>
                     </form>
                 </DialogContent>

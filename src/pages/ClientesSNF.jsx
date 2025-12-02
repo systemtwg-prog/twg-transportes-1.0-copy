@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import ImportadorClientesSNF from "@/components/clientes/ImportadorClientesSNF";
 
 export default function ClientesSNF() {
     const [showForm, setShowForm] = useState(false);
+    const [showImportador, setShowImportador] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
-    const [importing, setImporting] = useState(false);
     const queryClient = useQueryClient();
 
     const [form, setForm] = useState({
@@ -109,65 +110,6 @@ export default function ClientesSNF() {
         setShowForm(true);
     };
 
-    const handleImportFile = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setImporting(true);
-        try {
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            
-            const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-                file_url,
-                json_schema: {
-                    type: "object",
-                    properties: {
-                        clientes: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    razao_social: { type: "string" },
-                                    nome_fantasia: { type: "string" },
-                                    cnpj: { type: "string" },
-                                    endereco: { type: "string" },
-                                    cidade: { type: "string" },
-                                    uf: { type: "string" },
-                                    telefone: { type: "string" },
-                                    email: { type: "string" }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (result.status === "success" && result.output?.clientes) {
-                let importados = 0;
-                const cnpjsExistentes = new Set(clientes.map(c => c.cnpj?.replace(/\D/g, "")));
-                
-                for (const cliente of result.output.clientes) {
-                    if (cliente.razao_social && cliente.cnpj) {
-                        const cnpjLimpo = cliente.cnpj.replace(/\D/g, "");
-                        if (!cnpjsExistentes.has(cnpjLimpo)) {
-                            await base44.entities.ClienteSNF.create(cliente);
-                            cnpjsExistentes.add(cnpjLimpo);
-                            importados++;
-                        }
-                    }
-                }
-                
-                queryClient.invalidateQueries({ queryKey: ["clientes-snf"] });
-                toast.success(`${importados} cliente(s) importado(s)!`);
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao importar arquivo");
-        }
-        setImporting(false);
-        e.target.value = "";
-    };
-
     const filtered = clientes.filter(c => 
         c.razao_social?.toLowerCase().includes(search.toLowerCase()) ||
         c.cnpj?.includes(search)
@@ -188,21 +130,14 @@ export default function ClientesSNF() {
                         </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <label className="cursor-pointer">
-                            <input
-                                type="file"
-                                accept=".xlsx,.xls,.csv,.pdf"
-                                onChange={handleImportFile}
-                                className="hidden"
-                                disabled={importing}
-                            />
-                            <Button variant="outline" className="border-indigo-500 text-indigo-700" asChild disabled={importing}>
-                                <span>
-                                    {importing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                                    Importar
-                                </span>
-                            </Button>
-                        </label>
+                        <Button 
+                            onClick={() => setShowImportador(true)}
+                            variant="outline" 
+                            className="border-indigo-500 text-indigo-700"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Importar Arquivo
+                        </Button>
                         <Button 
                             onClick={() => { setEditing(null); resetForm(); setShowForm(true); }}
                             className="bg-gradient-to-r from-indigo-500 to-purple-600"
@@ -413,6 +348,14 @@ export default function ClientesSNF() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Importador */}
+            <ImportadorClientesSNF 
+                open={showImportador} 
+                onClose={() => setShowImportador(false)} 
+                onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["clientes-snf"] })}
+                clientesExistentes={clientes}
+            />
         </div>
     );
 }

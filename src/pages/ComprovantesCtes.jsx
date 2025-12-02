@@ -150,6 +150,9 @@ export default function ComprovantesCtes() {
     const [calcInput, setCalcInput] = useState("");
     const [calcResult, setCalcResult] = useState("");
     const [showImportador, setShowImportador] = useState(false);
+    const [showTomadorDialog, setShowTomadorDialog] = useState(false);
+    const [tomadorForm, setTomadorForm] = useState({ nome: "", cnpj: "", endereco: "", cidade: "", uf: "", telefone: "" });
+    const [editingTomador, setEditingTomador] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -166,6 +169,39 @@ export default function ComprovantesCtes() {
     const { data: statusList = [] } = useQuery({
         queryKey: ["status-cte"],
         queryFn: () => base44.entities.StatusCTE.list("ordem")
+    });
+
+    const { data: tomadores = [] } = useQuery({
+        queryKey: ["tomadores-cte"],
+        queryFn: () => base44.entities.TomadorCTE.list()
+    });
+
+    const createTomadorMutation = useMutation({
+        mutationFn: (data) => base44.entities.TomadorCTE.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tomadores-cte"] });
+            setTomadorForm({ nome: "", cnpj: "", endereco: "", cidade: "", uf: "", telefone: "" });
+            setEditingTomador(null);
+            toast.success("Tomador cadastrado!");
+        }
+    });
+
+    const updateTomadorMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.TomadorCTE.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tomadores-cte"] });
+            setTomadorForm({ nome: "", cnpj: "", endereco: "", cidade: "", uf: "", telefone: "" });
+            setEditingTomador(null);
+            toast.success("Tomador atualizado!");
+        }
+    });
+
+    const deleteTomadorMutation = useMutation({
+        mutationFn: (id) => base44.entities.TomadorCTE.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tomadores-cte"] });
+            toast.success("Tomador excluído!");
+        }
     });
 
     const createStatusMutation = useMutation({
@@ -205,6 +241,8 @@ export default function ComprovantesCtes() {
         numero_cte: "",
         remetente: "",
         destinatario: "",
+        tomador: "",
+        tomador_id: "",
         nfe: "",
         valor_nf: "",
         volume: "",
@@ -282,6 +320,8 @@ export default function ComprovantesCtes() {
             numero_cte: "",
             remetente: "",
             destinatario: "",
+            tomador: "",
+            tomador_id: "",
             nfe: "",
             valor_nf: "",
             volume: "",
@@ -409,6 +449,8 @@ export default function ComprovantesCtes() {
             numero_cte: comprovante.numero_cte || "",
             remetente: comprovante.remetente || "",
             destinatario: comprovante.destinatario || "",
+            tomador: comprovante.tomador || "",
+            tomador_id: comprovante.tomador_id || "",
             nfe: comprovante.nfe || "",
             valor_nf: comprovante.valor_nf || "",
             volume: comprovante.volume || "",
@@ -678,6 +720,14 @@ export default function ComprovantesCtes() {
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button 
+                            onClick={() => setShowTomadorDialog(true)}
+                            variant="outline"
+                            className="border-teal-500 text-teal-600 hover:bg-teal-50"
+                        >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Cadastro Tomador
+                        </Button>
+                        <Button 
                             onClick={() => setShowStatusDialog(true)}
                             variant="outline"
                             className="border-blue-500 text-blue-600 hover:bg-blue-50"
@@ -903,7 +953,7 @@ export default function ComprovantesCtes() {
                 <Card className="bg-white/90 border-0 shadow-lg overflow-hidden">
                     <CardContent className="p-0">
                         <div className="overflow-auto max-h-[600px]" style={{ overflowX: 'auto', overflowY: 'auto' }}>
-                            <Table className="min-w-[2000px]">
+                            <Table className="min-w-[2200px]">
                                 <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">
                                         <TableHead className="w-12 text-white sticky left-0 bg-slate-700 z-20">
@@ -915,6 +965,7 @@ export default function ComprovantesCtes() {
                                         <TableHead className="text-white font-bold min-w-[100px]">DATA</TableHead>
                                         <TableHead className="text-white font-bold min-w-[200px]">FORNECEDOR</TableHead>
                                         <TableHead className="text-white font-bold min-w-[200px]">CLIENTE</TableHead>
+                                        <TableHead className="text-white font-bold min-w-[180px]">TOMADOR</TableHead>
                                         <TableHead className="text-white font-bold text-center min-w-[100px]">NFE</TableHead>
                                         <TableHead className="text-white font-bold text-center min-w-[100px]">CTE</TableHead>
                                         <TableHead className="text-white font-bold text-center min-w-[120px]">VALOR NF</TableHead>
@@ -958,49 +1009,52 @@ export default function ComprovantesCtes() {
                                                 <TableCell className="whitespace-nowrap text-sm">
                                                     {formatDate(cte.data)}
                                                 </TableCell>
-                                                <TableCell className="font-medium text-slate-800">
+                                                <TableCell className="font-medium text-slate-800 whitespace-nowrap">
                                                     {cte.remetente || cte.empresa || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-slate-600">
+                                                <TableCell className="text-slate-600 whitespace-nowrap">
                                                     {cte.destinatario || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-slate-600 whitespace-nowrap">
+                                                    {cte.tomador || "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.nfe || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center font-medium text-amber-600">
+                                                <TableCell className="text-center font-medium text-amber-600 whitespace-nowrap">
                                                     {cte.numero_cte || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.valor_nf ? `R$ ${cte.valor_nf}` : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.volume || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.peso || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.frete_peso || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.coleta || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.seguro || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.pedagio || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.outros || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm font-medium text-green-600">
+                                                <TableCell className="text-center text-sm font-medium text-green-600 whitespace-nowrap">
                                                     {cte.valor_cobrado || "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center text-sm">
+                                                <TableCell className="text-center text-sm whitespace-nowrap">
                                                     {cte.mdfe || "-"}
                                                 </TableCell>
                                                 <TableCell className="text-center">
@@ -1418,6 +1472,7 @@ export default function ComprovantesCtes() {
                                 <SelectContent>
                                     <SelectItem value="remetente">Fornecedor</SelectItem>
                                     <SelectItem value="destinatario">Cliente</SelectItem>
+                                    <SelectItem value="tomador">Tomador</SelectItem>
                                     <SelectItem value="frete_peso">Frete Peso</SelectItem>
                                     <SelectItem value="coleta">Coleta</SelectItem>
                                     <SelectItem value="seguro">Seguro</SelectItem>
@@ -1451,6 +1506,17 @@ export default function ComprovantesCtes() {
                                             )}
                                         </SelectContent>
                                     </Select>
+                                ) : editMassaField === "tomador" ? (
+                                    <Select value={editMassaValue} onValueChange={setEditMassaValue}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione o tomador..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {tomadores.map(t => (
+                                                <SelectItem key={t.id} value={t.nome}>{t.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 ) : (
                                     <Input
                                         value={editMassaValue}
@@ -1471,6 +1537,130 @@ export default function ComprovantesCtes() {
                             >
                                 {bulkEditMutation.isPending ? "Salvando..." : "Aplicar"}
                             </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Cadastro Tomador */}
+            <Dialog open={showTomadorDialog} onOpenChange={setShowTomadorDialog}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-teal-600" />
+                            Cadastro de Tomadores
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {tomadores.length > 0 && (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                <Label className="text-xs text-slate-500">Tomadores Cadastrados</Label>
+                                {tomadores.map(t => (
+                                    <div key={t.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-sm">{t.nome}</p>
+                                            <p className="text-xs text-slate-500">{t.cnpj} {t.cidade && `- ${t.cidade}/${t.uf}`}</p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { 
+                                                    setTomadorForm({ nome: t.nome, cnpj: t.cnpj || "", endereco: t.endereco || "", cidade: t.cidade || "", uf: t.uf || "", telefone: t.telefone || "" }); 
+                                                    setEditingTomador(t); 
+                                                }}
+                                            >
+                                                <Pencil className="w-3 h-3" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-7 w-7"
+                                                onClick={() => { if(confirm("Excluir este tomador?")) deleteTomadorMutation.mutate(t.id); }}
+                                            >
+                                                <Trash2 className="w-3 h-3 text-red-600" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="border-t pt-4 space-y-4">
+                            <h4 className="font-medium text-sm">{editingTomador ? "Editar Tomador" : "Novo Tomador"}</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="col-span-2 space-y-1">
+                                    <Label className="text-xs">Nome *</Label>
+                                    <Input
+                                        value={tomadorForm.nome}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, nome: e.target.value })}
+                                        placeholder="Nome do tomador"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">CNPJ</Label>
+                                    <Input
+                                        value={tomadorForm.cnpj}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, cnpj: e.target.value })}
+                                        placeholder="00.000.000/0000-00"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Telefone</Label>
+                                    <Input
+                                        value={tomadorForm.telefone}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, telefone: e.target.value })}
+                                        placeholder="(00) 0000-0000"
+                                    />
+                                </div>
+                                <div className="col-span-2 space-y-1">
+                                    <Label className="text-xs">Endereço</Label>
+                                    <Input
+                                        value={tomadorForm.endereco}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, endereco: e.target.value })}
+                                        placeholder="Endereço completo"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Cidade</Label>
+                                    <Input
+                                        value={tomadorForm.cidade}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, cidade: e.target.value })}
+                                        placeholder="Cidade"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">UF</Label>
+                                    <Input
+                                        value={tomadorForm.uf}
+                                        onChange={(e) => setTomadorForm({ ...tomadorForm, uf: e.target.value })}
+                                        placeholder="SP"
+                                        maxLength={2}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                {editingTomador && (
+                                    <Button variant="ghost" onClick={() => { setEditingTomador(null); setTomadorForm({ nome: "", cnpj: "", endereco: "", cidade: "", uf: "", telefone: "" }); }}>
+                                        Cancelar
+                                    </Button>
+                                )}
+                                <Button 
+                                    onClick={() => {
+                                        if (editingTomador) {
+                                            updateTomadorMutation.mutate({ id: editingTomador.id, data: tomadorForm });
+                                        } else {
+                                            createTomadorMutation.mutate(tomadorForm);
+                                        }
+                                    }}
+                                    disabled={!tomadorForm.nome}
+                                    className="bg-teal-500 hover:bg-teal-600"
+                                >
+                                    <Save className="w-4 h-4 mr-1" />
+                                    {editingTomador ? "Atualizar" : "Cadastrar"}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </DialogContent>
@@ -1553,7 +1743,7 @@ export default function ComprovantesCtes() {
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                             <div className="space-y-2">
                                 <Label>Data</Label>
                                 <Input
@@ -1577,6 +1767,25 @@ export default function ComprovantesCtes() {
                                     onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
                                     placeholder="Nome do cliente"
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Tomador</Label>
+                                <Select 
+                                    value={form.tomador_id} 
+                                    onValueChange={(v) => {
+                                        const tomador = tomadores.find(t => t.id === v);
+                                        setForm({ ...form, tomador_id: v, tomador: tomador?.nome || "" });
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o tomador..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {tomadores.map(t => (
+                                            <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 

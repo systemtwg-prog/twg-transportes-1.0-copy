@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
     Plus, Search, Pencil, Trash2, FileText, Truck, 
-    Upload, X, DollarSign, Calendar, Loader2, Users, Save, Printer, History
+    Upload, X, DollarSign, Calendar, Loader2, Users, Save, Printer, History, CheckSquare
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { format } from "date-fns";
@@ -29,6 +30,9 @@ export default function ServicosSNF() {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
     const [showImportador, setShowImportador] = useState(false);
+    const [selecionados, setSelecionados] = useState([]);
+    const [showEditMassa, setShowEditMassa] = useState(false);
+    const [editMassaData, setEditMassaData] = useState({ status: "" });
     const queryClient = useQueryClient();
 
     const initialForm = {
@@ -114,6 +118,49 @@ export default function ServicosSNF() {
             toast.success("Serviço excluído!");
         }
     });
+
+    // Mutations em massa
+    const deleteEmMassaMutation = useMutation({
+        mutationFn: async (ids) => {
+            for (const id of ids) {
+                await base44.entities.ServicoSNF.delete(id);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["servicos-snf"] });
+            setSelecionados([]);
+            toast.success("Serviços excluídos!");
+        }
+    });
+
+    const updateEmMassaMutation = useMutation({
+        mutationFn: async ({ ids, data }) => {
+            for (const id of ids) {
+                await base44.entities.ServicoSNF.update(id, data);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["servicos-snf"] });
+            setSelecionados([]);
+            setShowEditMassa(false);
+            setEditMassaData({ status: "" });
+            toast.success("Serviços atualizados!");
+        }
+    });
+
+    const toggleSelecionado = (id) => {
+        setSelecionados(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selecionarTodos = () => {
+        if (selecionados.length === filteredServicos.length) {
+            setSelecionados([]);
+        } else {
+            setSelecionados(filteredServicos.map(s => s.id));
+        }
+    };
 
     const resetForm = () => {
         setForm(initialForm);
@@ -441,6 +488,34 @@ export default function ServicosSNF() {
                                     <SelectItem value="cancelado">Cancelado</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <Button variant="outline" onClick={selecionarTodos}>
+                                <CheckSquare className="w-4 h-4 mr-2" />
+                                {selecionados.length === filteredServicos.length && filteredServicos.length > 0 ? "Desmarcar" : "Selecionar"} Todos
+                            </Button>
+                            {selecionados.length > 0 && (
+                                <>
+                                    <Button 
+                                        variant="outline" 
+                                        className="border-blue-500 text-blue-700"
+                                        onClick={() => setShowEditMassa(true)}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar ({selecionados.length})
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        className="border-red-500 text-red-700"
+                                        onClick={() => {
+                                            if (confirm(`Excluir ${selecionados.length} serviço(s)?`)) {
+                                                deleteEmMassaMutation.mutate(selecionados);
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Excluir ({selecionados.length})
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -452,6 +527,12 @@ export default function ServicosSNF() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gradient-to-r from-purple-600 to-indigo-600">
+                                        <TableHead className="text-white w-10">
+                                            <Checkbox 
+                                                checked={selecionados.length === filteredServicos.length && filteredServicos.length > 0}
+                                                onCheckedChange={selecionarTodos}
+                                            />
+                                        </TableHead>
                                         <TableHead className="text-white font-bold">Nº</TableHead>
                                         <TableHead className="text-white font-bold">Data</TableHead>
                                         <TableHead className="text-white font-bold">CNPJ Rem.</TableHead>
@@ -478,13 +559,13 @@ export default function ServicosSNF() {
                                     <AnimatePresence>
                                         {isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={20} className="text-center py-12">
+                                                <TableCell colSpan={21} className="text-center py-12">
                                                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-500" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : filteredServicos.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={20} className="text-center py-12 text-slate-500">
+                                                <TableCell colSpan={21} className="text-center py-12 text-slate-500">
                                                     Nenhum serviço encontrado
                                                 </TableCell>
                                             </TableRow>
@@ -494,8 +575,14 @@ export default function ServicosSNF() {
                                                     key={s.id}
                                                     initial={{ opacity: 0 }}
                                                     animate={{ opacity: 1 }}
-                                                    className="hover:bg-slate-50 text-sm"
+                                                    className={`hover:bg-slate-50 text-sm ${selecionados.includes(s.id) ? "bg-purple-50" : ""}`}
                                                 >
+                                                    <TableCell>
+                                                        <Checkbox 
+                                                            checked={selecionados.includes(s.id)}
+                                                            onCheckedChange={() => toggleSelecionado(s.id)}
+                                                        />
+                                                    </TableCell>
                                                     <TableCell className="font-bold text-purple-600">{s.numero || "-"}</TableCell>
                                                     <TableCell>{formatDate(s.data)}</TableCell>
                                                     <TableCell className="font-mono text-xs">{s.remetente_cnpj || "-"}</TableCell>
@@ -680,26 +767,24 @@ export default function ServicosSNF() {
 
                         {/* Tomador / Pagador do Frete */}
                         <div className="p-4 bg-blue-50 rounded-lg space-y-3">
-                            <Label className="text-blue-800 font-bold">Tomador / Pagador do Frete</Label>
-                            <div className="grid grid-cols-4 gap-3">
-                                <div className="space-y-1">
-                                    <Label className="text-xs">Tomador</Label>
-                                    <Select value={form.tomador} onValueChange={handleTomadorChange}>
-                                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="remetente">Remetente</SelectItem>
-                                            <SelectItem value="destinatario">Destinatário</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label className="text-xs">CNPJ Pagador</Label>
-                                    <Input value={form.pagador_frete_cnpj} readOnly className="bg-slate-100" />
-                                </div>
-                                <div className="col-span-2 space-y-1">
-                                    <Label className="text-xs">Nome Pagador</Label>
-                                    <Input value={form.pagador_frete_nome} readOnly className="bg-slate-100" />
-                                </div>
+                            <Label className="text-blue-800 font-bold">Tomador do Frete</Label>
+                            <div className="flex gap-4">
+                                <Button
+                                    type="button"
+                                    variant={form.tomador === "remetente" ? "default" : "outline"}
+                                    onClick={() => handleTomadorChange("remetente")}
+                                    className={form.tomador === "remetente" ? "bg-amber-500 hover:bg-amber-600" : ""}
+                                >
+                                    Remetente
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={form.tomador === "destinatario" ? "default" : "outline"}
+                                    onClick={() => handleTomadorChange("destinatario")}
+                                    className={form.tomador === "destinatario" ? "bg-emerald-500 hover:bg-emerald-600" : ""}
+                                >
+                                    Destinatário
+                                </Button>
                             </div>
                         </div>
 
@@ -778,6 +863,45 @@ export default function ServicosSNF() {
                 onClose={() => setShowImportador(false)} 
                 onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["servicos-snf"] })}
             />
+
+            {/* Dialog Edição em Massa */}
+            <Dialog open={showEditMassa} onOpenChange={setShowEditMassa}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Editar {selecionados.length} Serviço(s)</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select value={editMassaData.status} onValueChange={(v) => setEditMassaData({ ...editMassaData, status: v })}>
+                                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                    <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditMassa(false)}>Cancelar</Button>
+                            <Button 
+                                onClick={() => {
+                                    if (editMassaData.status) {
+                                        updateEmMassaMutation.mutate({ ids: selecionados, data: editMassaData });
+                                    } else {
+                                        toast.error("Selecione um status");
+                                    }
+                                }}
+                                disabled={updateEmMassaMutation.isPending}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {updateEmMassaMutation.isPending ? "Salvando..." : "Salvar"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

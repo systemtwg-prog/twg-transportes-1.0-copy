@@ -29,6 +29,7 @@ import ExtratorGoogle from './pages/ExtratorGoogle';
 import HomeDesktop from './pages/HomeDesktop';
 import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
 import ServicosSNF from './pages/ServicosSNF';
+import ClientesSNF from './pages/ClientesSNF';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +65,7 @@ export const PAGES = {
     "HomeDesktop": HomeDesktop,
     "ImpressaoRelatorio": ImpressaoRelatorio,
     "ServicosSNF": ServicosSNF,
+    "ClientesSNF": ClientesSNF,
 }
 
 export const pagesConfig = {

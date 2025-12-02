@@ -15,16 +15,25 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const CAMPOS_SERVICO = [
-    { key: "numero", label: "Número", aliases: ["numero", "num", "nº", "código", "cod"] },
+    { key: "numero", label: "Nº", aliases: ["numero", "num", "nº", "n", "código", "cod"] },
     { key: "data", label: "Data", aliases: ["data", "dt", "date"] },
-    { key: "cliente", label: "Cliente", aliases: ["cliente", "razao social", "nome", "empresa"] },
-    { key: "descricao", label: "Descrição", aliases: ["descricao", "descrição", "desc", "servico", "serviço"] },
-    { key: "origem", label: "Origem", aliases: ["origem", "de", "from", "local origem"] },
-    { key: "destino", label: "Destino", aliases: ["destino", "para", "to", "local destino"] },
-    { key: "valor", label: "Valor", aliases: ["valor", "preco", "preço", "total", "vlr"] },
-    { key: "motorista_nome", label: "Motorista", aliases: ["motorista", "mot", "condutor"] },
-    { key: "veiculo_placa", label: "Placa", aliases: ["placa", "veiculo", "veículo"] },
-    { key: "observacoes", label: "Observações", aliases: ["observacoes", "observações", "obs", "notas"] }
+    { key: "remetente_cnpj", label: "CNPJ Remetente", aliases: ["cnpj remetente", "cnpj rem", "remetente cnpj"] },
+    { key: "remetente_nome", label: "Remetente", aliases: ["remetente", "rem", "nome remetente"] },
+    { key: "destinatario_cnpj", label: "CNPJ Destinatário", aliases: ["cnpj destinatario", "cnpj dest", "destinatario cnpj", "cnpj destinatário"] },
+    { key: "destinatario_nome", label: "Destinatário", aliases: ["destinatario", "destinatário", "dest", "nome destinatario"] },
+    { key: "pagador_frete_cnpj", label: "CNPJ Pagador", aliases: ["cnpj pagador", "pagador cnpj", "cnpj pagador frete"] },
+    { key: "pagador_frete_nome", label: "Pagador Frete", aliases: ["pagador frete", "pagador", "nome pagador"] },
+    { key: "nfe", label: "NFE", aliases: ["nfe", "nf", "nota fiscal", "nota"] },
+    { key: "peso", label: "Peso", aliases: ["peso", "kg", "peso kg"] },
+    { key: "volume", label: "Vol", aliases: ["volume", "vol", "volumes", "qtd"] },
+    { key: "valor_nfe", label: "Valor NFE", aliases: ["valor nfe", "valor nf", "valor nota"] },
+    { key: "tabela_peso", label: "Tabela Peso", aliases: ["tabela peso", "tabela", "frete peso"] },
+    { key: "seguro", label: "Seg", aliases: ["seguro", "seg", "valor seguro"] },
+    { key: "pedagio", label: "Ped", aliases: ["pedagio", "pedágio", "ped", "valor pedagio"] },
+    { key: "coleta", label: "Coleta", aliases: ["coleta", "valor coleta"] },
+    { key: "total", label: "Total", aliases: ["total", "valor total", "vlr total"] },
+    { key: "porcentagem", label: "%", aliases: ["porcentagem", "%", "percentual", "perc"] },
+    { key: "observacoes", label: "Observação", aliases: ["observacao", "observação", "obs", "observacoes"] }
 ];
 
 export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
@@ -59,8 +68,10 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
             const headerLower = header?.toString().toLowerCase().trim() || "";
             for (const campo of CAMPOS_SERVICO) {
                 if (campo.aliases.some(alias => headerLower.includes(alias.toLowerCase()))) {
-                    mapping[index] = campo.key;
-                    break;
+                    if (!Object.values(mapping).includes(campo.key)) {
+                        mapping[index] = campo.key;
+                        break;
+                    }
                 }
             }
         });
@@ -161,6 +172,12 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
         setEditingCell(null);
     };
 
+    const parseNumber = (val) => {
+        if (!val) return 0;
+        const cleaned = val.toString().replace(/[^\d.,-]/g, "").replace(",", ".");
+        return parseFloat(cleaned) || 0;
+    };
+
     const handleSave = async () => {
         const rowsToSave = mappedData.filter(r => selectedRows.includes(r.id));
         if (rowsToSave.length === 0) {
@@ -176,14 +193,23 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
                 await base44.entities.ServicoSNF.create({
                     numero: row.numero || "",
                     data: row.data || format(new Date(), "yyyy-MM-dd"),
-                    cliente: row.cliente || "",
-                    descricao: row.descricao || "",
-                    origem: row.origem || "",
-                    destino: row.destino || "",
-                    valor: parseFloat(row.valor?.replace(/[^\d.,]/g, "").replace(",", ".")) || 0,
-                    motorista_nome: row.motorista_nome || "",
-                    veiculo_placa: row.veiculo_placa || "",
-                    status: "pendente",
+                    remetente_cnpj: row.remetente_cnpj || "",
+                    remetente_nome: row.remetente_nome || "",
+                    destinatario_cnpj: row.destinatario_cnpj || "",
+                    destinatario_nome: row.destinatario_nome || "",
+                    pagador_frete_cnpj: row.pagador_frete_cnpj || "",
+                    pagador_frete_nome: row.pagador_frete_nome || "",
+                    nfe: row.nfe || "",
+                    peso: parseNumber(row.peso),
+                    volume: parseNumber(row.volume),
+                    valor_nfe: parseNumber(row.valor_nfe),
+                    tabela_peso: parseNumber(row.tabela_peso),
+                    seguro: parseNumber(row.seguro),
+                    pedagio: parseNumber(row.pedagio),
+                    coleta: parseNumber(row.coleta),
+                    total: parseNumber(row.total),
+                    porcentagem: parseNumber(row.porcentagem),
+                    status: row.observacoes?.toLowerCase().includes("finalizado") ? "finalizado" : "pendente",
                     observacoes: row.observacoes || ""
                 });
                 importados++;
@@ -200,32 +226,33 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
     };
 
     const downloadModelo = () => {
-        const headers = CAMPOS_SERVICO.map(c => c.label).join(",");
-        const exemplo = "001,01/12/2024,Cliente Exemplo,Transporte de mercadorias,São Paulo,Rio de Janeiro,500.00,João Silva,ABC-1234,Observação";
+        const headers = "Nº,Data,CNPJ Remetente,Remetente,CNPJ Destinatário,Destinatário,CNPJ Pagador Frete,Pagador Frete,NFE,Peso,Vol,Valor NFE,Tabela Peso,Seg,Ped,Coleta,Total,%,Observação";
+        const exemplo = "5399,20/02/2025,33.391.434/0001-19,Brenntag Quimica Brasil Ltda,47.241.520/0001-50,Maxcolors Resinas,47.241.520/0001-50,Maxcolors Resinas,870883,20.3,1,1711.83,140.00,0,0,0,140.00,8.18,Finalizado";
         const csvContent = `${headers}\n${exemplo}`;
         
         const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "modelo_importacao_servicos.csv";
+        link.download = "modelo_importacao_servicos_snf.csv";
         link.click();
         URL.revokeObjectURL(url);
         toast.success("Arquivo modelo baixado!");
     };
 
+    const camposVisiveis = CAMPOS_SERVICO.slice(0, 10);
+
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <FileSpreadsheet className="w-5 h-5 text-purple-600" />
-                        Importar Serviços S/NF - {step === 1 ? "Upload" : step === 2 ? "Mapeamento de Colunas" : "Revisão dos Dados"}
+                        Importar Serviços S/NF - {step === 1 ? "Upload" : step === 2 ? "Mapeamento" : "Revisão"}
                     </DialogTitle>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto">
-                    {/* Step 1: Upload */}
                     {step === 1 && (
                         <div className="space-y-6 p-4">
                             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
@@ -253,13 +280,12 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
                                         {uploading ? (
                                             <div className="flex flex-col items-center gap-3">
                                                 <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
-                                                <span className="text-purple-600 font-medium">Processando arquivo...</span>
+                                                <span className="text-purple-600 font-medium">Processando...</span>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-3">
                                                 <Upload className="w-12 h-12 text-purple-400" />
-                                                <span className="text-lg font-medium text-purple-600">Clique para selecionar arquivo</span>
-                                                <span className="text-sm text-slate-500">ou arraste e solte aqui</span>
+                                                <span className="text-lg font-medium text-purple-600">Clique para selecionar</span>
                                             </div>
                                         )}
                                     </label>
@@ -267,33 +293,26 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
 
                                 <Button variant="outline" onClick={downloadModelo} className="border-purple-500 text-purple-600">
                                     <Download className="w-4 h-4 mr-2" />
-                                    Baixar Arquivo Modelo
+                                    Baixar Modelo
                                 </Button>
                             </div>
                         </div>
                     )}
 
-                    {/* Step 2: Mapeamento */}
                     {step === 2 && (
                         <div className="space-y-4 p-4">
-                            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                                <p className="text-sm text-purple-700">
-                                    <strong>Mapeie as colunas:</strong> Associe cada coluna do seu arquivo ao campo correspondente.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                                 {headers.map((header, index) => (
                                     <div key={index} className="space-y-1">
                                         <Label className="text-xs text-slate-500 truncate block" title={header}>
-                                            Coluna: {header || `(vazia ${index + 1})`}
+                                            {header || `Col ${index + 1}`}
                                         </Label>
                                         <Select 
                                             value={columnMapping[index] || ""} 
                                             onValueChange={(v) => setColumnMapping(prev => ({ ...prev, [index]: v }))}
                                         >
-                                            <SelectTrigger className="h-9">
-                                                <SelectValue placeholder="Selecione..." />
+                                            <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="..." />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="ignorar">❌ Ignorar</SelectItem>
@@ -308,70 +327,29 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
                                 ))}
                             </div>
 
-                            <div className="mt-4">
-                                <h4 className="font-medium text-sm text-slate-600 mb-2">Prévia dos dados (3 primeiras linhas):</h4>
-                                <div className="overflow-x-auto border rounded-lg">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-slate-100">
-                                                {headers.map((h, i) => (
-                                                    <TableHead key={i} className="text-xs whitespace-nowrap">
-                                                        {h || `-`}
-                                                        {columnMapping[i] && columnMapping[i] !== "ignorar" && (
-                                                            <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs">
-                                                                → {CAMPOS_SERVICO.find(c => c.key === columnMapping[i])?.label}
-                                                            </Badge>
-                                                        )}
-                                                    </TableHead>
-                                                ))}
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {rawData.slice(0, 3).map((row, rowIndex) => (
-                                                <TableRow key={rowIndex}>
-                                                    {row.map((cell, cellIndex) => (
-                                                        <TableCell key={cellIndex} className="text-xs whitespace-nowrap">
-                                                            {cell || "-"}
-                                                        </TableCell>
-                                                    ))}
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </div>
-
                             <div className="flex justify-between pt-4">
                                 <Button variant="outline" onClick={() => setStep(1)}>
-                                    <RefreshCw className="w-4 h-4 mr-2" />
-                                    Voltar
+                                    <RefreshCw className="w-4 h-4 mr-2" /> Voltar
                                 </Button>
                                 <Button onClick={applyMapping} className="bg-purple-600 hover:bg-purple-700">
-                                    Aplicar Mapeamento
-                                    <CheckCircle className="w-4 h-4 ml-2" />
+                                    Aplicar <CheckCircle className="w-4 h-4 ml-2" />
                                 </Button>
                             </div>
                         </div>
                     )}
 
-                    {/* Step 3: Revisão */}
                     {step === 3 && (
                         <div className="space-y-4 p-4">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Badge className="bg-purple-100 text-purple-700">
-                                        {selectedRows.length} de {mappedData.length} selecionado(s)
-                                    </Badge>
-                                    <Button variant="outline" size="sm" onClick={toggleSelectAll}>
-                                        {selectedRows.length === mappedData.length ? "Desmarcar Todos" : "Selecionar Todos"}
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-slate-500">
-                                    Clique em uma célula para editar
-                                </p>
+                                <Badge className="bg-purple-100 text-purple-700">
+                                    {selectedRows.length} de {mappedData.length} selecionado(s)
+                                </Badge>
+                                <Button variant="outline" size="sm" onClick={toggleSelectAll}>
+                                    {selectedRows.length === mappedData.length ? "Desmarcar" : "Selecionar"} Todos
+                                </Button>
                             </div>
 
-                            <div className="overflow-x-auto border rounded-lg max-h-96">
+                            <div className="overflow-x-auto border rounded-lg max-h-80">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-700">
@@ -381,7 +359,7 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
                                                     onCheckedChange={toggleSelectAll}
                                                 />
                                             </TableHead>
-                                            {CAMPOS_SERVICO.slice(0, 8).map(campo => (
+                                            {camposVisiveis.map(campo => (
                                                 <TableHead key={campo.key} className="text-white text-xs whitespace-nowrap">
                                                     {campo.label}
                                                 </TableHead>
@@ -390,34 +368,30 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
                                     </TableHeader>
                                     <TableBody>
                                         {mappedData.map((row) => (
-                                            <TableRow 
-                                                key={row.id} 
-                                                className={selectedRows.includes(row.id) ? "bg-purple-50" : "bg-slate-50"}
-                                            >
+                                            <TableRow key={row.id} className={selectedRows.includes(row.id) ? "bg-purple-50" : ""}>
                                                 <TableCell>
                                                     <Checkbox 
                                                         checked={selectedRows.includes(row.id)}
                                                         onCheckedChange={() => toggleRowSelection(row.id)}
                                                     />
                                                 </TableCell>
-                                                {CAMPOS_SERVICO.slice(0, 8).map(campo => (
+                                                {camposVisiveis.map(campo => (
                                                     <TableCell key={campo.key} className="p-1">
                                                         {editingCell === `${row.id}-${campo.key}` ? (
                                                             <Input
                                                                 value={row[campo.key] || ""}
                                                                 onChange={(e) => updateCellValue(row.id, campo.key, e.target.value)}
                                                                 onBlur={() => setEditingCell(null)}
-                                                                onKeyDown={(e) => e.key === "Enter" && setEditingCell(null)}
                                                                 autoFocus
                                                                 className="h-7 text-xs"
                                                             />
                                                         ) : (
                                                             <div 
-                                                                className="text-xs p-1 min-h-[28px] cursor-pointer hover:bg-white rounded border border-transparent hover:border-slate-300 truncate max-w-[120px]"
+                                                                className="text-xs p-1 cursor-pointer hover:bg-white rounded truncate max-w-[100px]"
                                                                 onClick={() => setEditingCell(`${row.id}-${campo.key}`)}
-                                                                title={row[campo.key] || "Clique para editar"}
+                                                                title={row[campo.key] || ""}
                                                             >
-                                                                {row[campo.key] || <span className="text-slate-400">-</span>}
+                                                                {row[campo.key] || "-"}
                                                             </div>
                                                         )}
                                                     </TableCell>
@@ -430,25 +404,15 @@ export default function ImportadorServicos({ open, onClose, onImportSuccess }) {
 
                             <div className="flex justify-between pt-4">
                                 <Button variant="outline" onClick={() => setStep(2)}>
-                                    <RefreshCw className="w-4 h-4 mr-2" />
-                                    Voltar ao Mapeamento
+                                    <RefreshCw className="w-4 h-4 mr-2" /> Voltar
                                 </Button>
                                 <Button 
                                     onClick={handleSave} 
                                     disabled={saving || selectedRows.length === 0}
                                     className="bg-purple-600 hover:bg-purple-700"
                                 >
-                                    {saving ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Salvando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4 mr-2" />
-                                            Importar {selectedRows.length} Serviço(s)
-                                        </>
-                                    )}
+                                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                    Importar {selectedRows.length}
                                 </Button>
                             </div>
                         </div>

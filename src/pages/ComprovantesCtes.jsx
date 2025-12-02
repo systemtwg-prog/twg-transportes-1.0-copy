@@ -954,13 +954,37 @@ export default function ComprovantesCtes() {
                     <CardContent className="p-0">
                         {/* Container com scroll horizontal e vertical */}
                         <div 
-                            className="overflow-x-auto overflow-y-auto" 
+                            className="overflow-x-scroll overflow-y-auto cte-table-container" 
                             style={{ 
-                                maxHeight: '65vh',
-                                scrollbarWidth: 'auto',
-                                scrollbarColor: '#94a3b8 #e2e8f0'
+                                maxHeight: '65vh'
                             }}
                         >
+                            {/* Barra de scroll horizontal superior */}
+                            <style>{`
+                                .cte-table-container {
+                                    scrollbar-width: auto;
+                                    scrollbar-color: #64748b #e2e8f0;
+                                }
+                                .cte-table-container::-webkit-scrollbar {
+                                    height: 16px;
+                                    width: 16px;
+                                }
+                                .cte-table-container::-webkit-scrollbar-track {
+                                    background: #e2e8f0;
+                                    border-radius: 8px;
+                                }
+                                .cte-table-container::-webkit-scrollbar-thumb {
+                                    background: linear-gradient(135deg, #64748b, #475569);
+                                    border-radius: 8px;
+                                    border: 3px solid #e2e8f0;
+                                }
+                                .cte-table-container::-webkit-scrollbar-thumb:hover {
+                                    background: linear-gradient(135deg, #475569, #334155);
+                                }
+                                .cte-table-container::-webkit-scrollbar-corner {
+                                    background: #e2e8f0;
+                                }
+                            `}</style>
                             <Table style={{ minWidth: '2400px', tableLayout: 'fixed' }}>
                                 <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">

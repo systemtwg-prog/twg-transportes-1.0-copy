@@ -169,6 +169,23 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
         setEditingCell(null);
     };
 
+    // Função para converter data DD/MM/YYYY para YYYY-MM-DD
+    const parseDataBR = (dataStr) => {
+        if (!dataStr) return format(new Date(), "yyyy-MM-dd");
+        // Se já está no formato YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dataStr)) return dataStr;
+        // Se está no formato DD/MM/YYYY ou DD/MM/YY
+        const match = dataStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if (match) {
+            const dia = match[1].padStart(2, '0');
+            const mes = match[2].padStart(2, '0');
+            let ano = match[3];
+            if (ano.length === 2) ano = '20' + ano;
+            return `${ano}-${mes}-${dia}`;
+        }
+        return format(new Date(), "yyyy-MM-dd");
+    };
+
     const handleSave = async () => {
         const rowsToSave = mappedData.filter(r => selectedRows.includes(r.id));
         if (rowsToSave.length === 0) {
@@ -195,7 +212,7 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
                     valor_cobrado: row.valor_cobrado || "",
                     porcentagem: row.porcentagem || "",
                     mdfe: row.mdfe || "",
-                    data: row.data || format(new Date(), "yyyy-MM-dd"),
+                    data: parseDataBR(row.data),
                     status: "pendente",
                     arquivos: []
                 });

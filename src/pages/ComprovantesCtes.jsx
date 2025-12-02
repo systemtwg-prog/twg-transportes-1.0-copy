@@ -122,6 +122,7 @@ export default function ComprovantesCtes() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [filterData, setFilterData] = useState("");
+    const [filterAno, setFilterAno] = useState("");
     const [filterCTE, setFilterCTE] = useState("");
     const [filterFornecedor, setFilterFornecedor] = useState("");
     const [filterCliente, setFilterCliente] = useState("");
@@ -638,6 +639,7 @@ export default function ComprovantesCtes() {
 
     const filtered = comprovantes.filter(c => {
         const matchData = !filterData || c.data === filterData;
+        const matchAno = !filterAno || (c.data && c.data.startsWith(filterAno));
         const matchCTE = !filterCTE || 
             c.numero_cte?.toLowerCase().includes(filterCTE.toLowerCase()) ||
             c.nfe?.toLowerCase().includes(filterCTE.toLowerCase());
@@ -649,8 +651,11 @@ export default function ComprovantesCtes() {
             (filterStatus === "pendente" && (!c.status || c.status === "pendente")) ||
             (filterStatus === "finalizado" && c.status === "finalizado") ||
             (filterStatus === "sem_comprovante" && (!c.arquivos || c.arquivos.length === 0));
-        return matchData && matchCTE && matchFornecedor && matchCliente && matchStatus;
+        return matchData && matchAno && matchCTE && matchFornecedor && matchCliente && matchStatus;
     });
+
+    // Anos disponíveis
+    const anosDisponiveis = [...new Set(comprovantes.map(c => c.data?.substring(0, 4)).filter(Boolean))].sort((a, b) => b - a);
 
     const statusColors = {
         pendente: "bg-amber-100 text-amber-700",
@@ -766,7 +771,28 @@ export default function ComprovantesCtes() {
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" /> Ano
+                                </Label>
+                                <Select value={filterAno} onValueChange={setFilterAno}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Todos" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os Anos</SelectItem>
+                                        {anosDisponiveis.map(ano => (
+                                            <SelectItem key={ano} value={ano}>{ano}</SelectItem>
+                                        ))}
+                                        <SelectItem value="2024">2024</SelectItem>
+                                        <SelectItem value="2023">2023</SelectItem>
+                                        <SelectItem value="2022">2022</SelectItem>
+                                        <SelectItem value="2021">2021</SelectItem>
+                                        <SelectItem value="2020">2020</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" /> Data
@@ -876,34 +902,34 @@ export default function ComprovantesCtes() {
                 {/* Tabela */}
                 <Card className="bg-white/90 border-0 shadow-lg overflow-hidden">
                     <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
+                        <div className="overflow-auto max-h-[600px]" style={{ overflowX: 'auto', overflowY: 'auto' }}>
+                            <Table className="min-w-[2000px]">
+                                <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">
-                                        <TableHead className="w-10 text-white">
+                                        <TableHead className="w-12 text-white sticky left-0 bg-slate-700 z-20">
                                             <Checkbox 
                                                 checked={selecionados.length === filtered.length && filtered.length > 0}
                                                 onCheckedChange={selecionarTodos}
                                             />
                                         </TableHead>
-                                        <TableHead className="text-white font-bold">DATA</TableHead>
-                                        <TableHead className="text-white font-bold">FORNECEDOR</TableHead>
-                                        <TableHead className="text-white font-bold">CLIENTE</TableHead>
-                                        <TableHead className="text-white font-bold text-center">NFE</TableHead>
-                                        <TableHead className="text-white font-bold text-center">CTE</TableHead>
-                                        <TableHead className="text-white font-bold text-center">VALOR NF</TableHead>
-                                        <TableHead className="text-white font-bold text-center">VOL</TableHead>
-                                        <TableHead className="text-white font-bold text-center">PESO</TableHead>
-                                        <TableHead className="text-white font-bold text-center">FRETE PESO</TableHead>
-                                        <TableHead className="text-white font-bold text-center">COLETA</TableHead>
-                                        <TableHead className="text-white font-bold text-center">SEGURO</TableHead>
-                                        <TableHead className="text-white font-bold text-center">PEDÁGIO</TableHead>
-                                        <TableHead className="text-white font-bold text-center">OUTROS</TableHead>
-                                        <TableHead className="text-white font-bold text-center">VALOR COBRADO</TableHead>
-                                        <TableHead className="text-white font-bold text-center">%</TableHead>
-                                        <TableHead className="text-white font-bold text-center">MDFE</TableHead>
-                                        <TableHead className="text-white font-bold text-center">STATUS</TableHead>
-                                        <TableHead className="text-white font-bold text-center w-32">AÇÕES</TableHead>
+                                        <TableHead className="text-white font-bold min-w-[100px]">DATA</TableHead>
+                                        <TableHead className="text-white font-bold min-w-[200px]">FORNECEDOR</TableHead>
+                                        <TableHead className="text-white font-bold min-w-[200px]">CLIENTE</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[100px]">NFE</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[100px]">CTE</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[120px]">VALOR NF</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[70px]">VOL</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[80px]">PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[100px]">FRETE PESO</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[90px]">COLETA</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[90px]">SEGURO</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[90px]">PEDÁGIO</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[90px]">OUTROS</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[130px]">VALOR COBRADO</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[60px]">%</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[100px]">MDFE</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[120px]">STATUS</TableHead>
+                                        <TableHead className="text-white font-bold text-center min-w-[140px] sticky right-0 bg-slate-700 z-20">AÇÕES</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -923,7 +949,7 @@ export default function ComprovantesCtes() {
                                     ) : (
                                         filtered.map((cte) => (
                                             <TableRow key={cte.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                                <TableCell>
+                                                <TableCell className="sticky left-0 bg-white z-10">
                                                     <Checkbox 
                                                         checked={selecionados.includes(cte.id)}
                                                         onCheckedChange={() => toggleSelecionado(cte.id)}
@@ -1004,7 +1030,7 @@ export default function ComprovantesCtes() {
                                                         <span className="ml-1 text-xs text-slate-400">📎</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="sticky right-0 bg-white z-10">
                                                     <div className="flex justify-center gap-1">
                                                         <Button 
                                                             variant="outline" 

@@ -341,6 +341,9 @@ export default function ColetasDiarias() {
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${coleta.prioridade ? "bg-yellow-400 text-yellow-900" : "bg-sky-100 text-sky-700"}`}>
                             {index + 1}
                         </span>
+                        <span className="text-xs text-slate-500">
+                            {coleta.created_date ? format(new Date(coleta.created_date), "dd/MM", { locale: ptBR }) : ""}
+                        </span>
                         {coleta.prioridade && (
                             <Badge className="bg-yellow-400 text-yellow-900 text-xs">PRIORIDADE</Badge>
                         )}

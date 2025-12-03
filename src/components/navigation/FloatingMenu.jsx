@@ -51,8 +51,11 @@ export default function FloatingMenu({ currentPage }) {
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
-    const modulosAtivos = config?.[0]?.modulos_ativos || menuItems.map(m => m.href);
-    const menuFiltrado = menuItems.filter(item => modulosAtivos.includes(item.href));
+    // Se não houver módulos configurados, mostrar todos
+    const modulosAtivos = config?.[0]?.modulos_ativos;
+    const menuFiltrado = modulosAtivos && modulosAtivos.length > 0 
+        ? menuItems.filter(item => modulosAtivos.includes(item.href))
+        : menuItems;
 
     const handleLogout = () => {
         // Limpar sessão de desbloqueio ao sair

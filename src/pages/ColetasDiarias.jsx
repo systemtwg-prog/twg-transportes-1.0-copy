@@ -251,14 +251,14 @@ export default function ColetasDiarias() {
                         </thead>
                         <tbody>
                             ${coletasParaImprimir.map((c, idx) => {
-                                const endereco = [c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
+                                const enderecoCompleto = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade, c.remetente_cep].filter(Boolean).join(" - ");
                                 const dataCadastro = c.created_date ? format(new Date(c.created_date), "dd/MM", { locale: ptBR }) : "";
                                 return `
                                     <tr class="${c.prioridade ? 'priority' : ''}">
                                         <td class="num">${idx + 1}<br><span style="font-size:9px;color:#64748b;">${dataCadastro}</span></td>
                                         <td>
                                             <strong>${c.remetente_fantasia || c.remetente_nome || ""} / ${c.destinatario_fantasia || c.destinatario_nome || ""}</strong>${c.prioridade ? ' ⚡' : ''}<br>
-                                            ${endereco ? endereco + " | " : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "| " + c.remetente_horario : ""}
+                                            ${enderecoCompleto ? `📍 ${enderecoCompleto}<br>` : ""}${c.remetente_telefone ? `📞 ${c.remetente_telefone}` : ""} ${c.remetente_horario ? `| ⏰ ${c.remetente_horario}` : ""} ${c.remetente_intervalo ? `| Intervalo: ${c.remetente_intervalo}` : ""}
                                             ${c.recado ? `<br>📝 ${c.recado}` : ""}
                                         </td>
                                         <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>

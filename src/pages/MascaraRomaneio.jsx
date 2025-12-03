@@ -291,9 +291,7 @@ export default function MascaraRomaneio() {
             const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
                 ? destinatarioNota 
                 : transportadoraOriginal;
-            const volumeRaw = nota.volume || "";
-            const volumeNum = parseInt(volumeRaw.replace(/\D/g, "")) || "";
-            const volumeNota = volumeNum ? volumeNum + " vol" : "";
+            const volumeNota = nota.volume ? nota.volume + " vol" : "";
                     
                     rowsHtml += '<tr class="nota-row">';
                     rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';

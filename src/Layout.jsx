@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import FloatingMenu from "@/components/navigation/FloatingMenu";
+import DesktopSidebar from "@/components/navigation/DesktopSidebar";
+import DesktopTabs from "@/components/navigation/DesktopTabs";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import BiometricLock from "@/components/auth/BiometricLock";
@@ -8,6 +10,7 @@ export default function Layout({ children, currentPageName }) {
     const [isDesktop, setIsDesktop] = useState(null);
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [checkingBiometric, setCheckingBiometric] = useState(true);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const navigate = useNavigate();
 
     // Verificar se já desbloqueou nesta sessão
@@ -15,6 +18,10 @@ export default function Layout({ children, currentPageName }) {
         const unlocked = sessionStorage.getItem("appUnlocked");
         if (unlocked === "true") {
             setIsUnlocked(true);
+        }
+        const collapsed = localStorage.getItem("sidebarCollapsed");
+        if (collapsed === "true") {
+            setSidebarCollapsed(true);
         }
         setCheckingBiometric(false);
     }, []);
@@ -31,14 +38,11 @@ export default function Layout({ children, currentPageName }) {
 
     // Redirecionar para Home/HomeDesktop baseado no dispositivo
     useEffect(() => {
-        // Aguardar detecção do dispositivo
         if (isDesktop === null) return;
         
-        // Se estiver no desktop e na Home mobile, redirecionar para HomeDesktop
         if (isDesktop && currentPageName === "Home") {
             navigate(createPageUrl("HomeDesktop"));
         }
-        // Se estiver no mobile e na HomeDesktop, redirecionar para Home
         if (!isDesktop && currentPageName === "HomeDesktop") {
             navigate(createPageUrl("Home"));
         }
@@ -47,6 +51,24 @@ export default function Layout({ children, currentPageName }) {
     const handleUnlock = () => {
         setIsUnlocked(true);
         sessionStorage.setItem("appUnlocked", "true");
+    };
+
+    const handleTabChange = (pageId) => {
+        navigate(createPageUrl(pageId));
+    };
+
+    const handleToggleSidebar = () => {
+        const newValue = !sidebarCollapsed;
+        setSidebarCollapsed(newValue);
+        localStorage.setItem("sidebarCollapsed", String(newValue));
+    };
+
+    const handleNewTab = () => {
+        // Abre o menu lateral se estiver colapsado
+        if (sidebarCollapsed) {
+            setSidebarCollapsed(false);
+            localStorage.setItem("sidebarCollapsed", "false");
+        }
     };
 
     // Aguardar verificação de biometria
@@ -63,7 +85,30 @@ export default function Layout({ children, currentPageName }) {
         return <BiometricLock onUnlock={handleUnlock} />;
     }
 
-    // Todas as páginas usam apenas o menu flutuante
+    // Layout Desktop com Sidebar e Tabs
+    if (isDesktop) {
+        return (
+            <div className="h-screen flex overflow-hidden">
+                <DesktopSidebar 
+                    currentPage={currentPageName} 
+                    collapsed={sidebarCollapsed}
+                    onToggle={handleToggleSidebar}
+                />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <DesktopTabs 
+                        currentPage={currentPageName}
+                        onTabChange={handleTabChange}
+                        onNewTab={handleNewTab}
+                    />
+                    <main className="flex-1 overflow-auto bg-slate-100">
+                        {children}
+                    </main>
+                </div>
+            </div>
+        );
+    }
+
+    // Layout Mobile com menu flutuante
     return (
         <div className="min-h-screen">
             <FloatingMenu currentPage={currentPageName} />

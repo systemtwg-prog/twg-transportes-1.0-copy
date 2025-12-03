@@ -64,8 +64,11 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
-    const modulosAtivos = config?.[0]?.modulos_ativos || menuItems.map(m => m.href);
-    const menuFiltrado = menuItems.filter(item => modulosAtivos.includes(item.href) || item.href === "HomeDesktop");
+    // Se não houver módulos configurados, mostrar todos
+    const modulosAtivos = config?.[0]?.modulos_ativos;
+    const menuFiltrado = modulosAtivos && modulosAtivos.length > 0 
+        ? menuItems.filter(item => modulosAtivos.includes(item.href) || item.href === "HomeDesktop")
+        : menuItems;
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

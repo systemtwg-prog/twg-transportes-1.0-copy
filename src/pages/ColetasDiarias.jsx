@@ -252,9 +252,10 @@ export default function ColetasDiarias() {
                         <tbody>
                             ${coletasParaImprimir.map((c, idx) => {
                                 const endereco = [c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
+                                const dataCadastro = c.created_date ? format(new Date(c.created_date), "dd/MM", { locale: ptBR }) : "";
                                 return `
                                     <tr class="${c.prioridade ? 'priority' : ''}">
-                                        <td class="num">${idx + 1}</td>
+                                        <td class="num">${idx + 1}<br><span style="font-size:9px;color:#64748b;">${dataCadastro}</span></td>
                                         <td>
                                             <strong>${c.remetente_fantasia || c.remetente_nome || ""} / ${c.destinatario_fantasia || c.destinatario_nome || ""}</strong>${c.prioridade ? ' ⚡' : ''}<br>
                                             ${endereco ? endereco + " | " : ""}${c.remetente_telefone || ""} ${c.remetente_horario ? "| " + c.remetente_horario : ""}

@@ -261,7 +261,7 @@ export default function ColetasDiarias() {
                                             ${enderecoCompleto ? `📍 ${enderecoCompleto}<br>` : ""}${c.remetente_telefone ? `📞 ${c.remetente_telefone}` : ""} ${c.remetente_horario ? `| ⏰ ${c.remetente_horario}` : ""} ${c.remetente_intervalo ? `| Intervalo: ${c.remetente_intervalo}` : ""}
                                             ${c.recado ? `<br>📝 ${c.recado}` : ""}
                                         </td>
-                                        <td class="carga">${c.volume ? parseInt(c.volume) : "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
+                                        <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
                                         <td class="status">${c.status === 'realizado' ? '✅' : c.status === 'cancelado' ? '❌' : '⬜'}</td>
                                     </tr>
                                 `;

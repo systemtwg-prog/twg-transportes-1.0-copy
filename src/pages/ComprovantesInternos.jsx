@@ -677,8 +677,6 @@ export default function ComprovantesInternos() {
                                 }));
                                 
                                 toast.success("Foto anexada!");
-                                
-                                await processarFotoComIA(file_url);
                             } catch (error) {
                                 console.error("Erro ao fazer upload:", error);
                                 toast.error("Erro ao salvar foto");

@@ -79,60 +79,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             if (blob) {
                 const imageUrl = URL.createObjectURL(blob);
                 const fotoId = Date.now();
-                const novaFoto = { blob, url: imageUrl, id: fotoId, identificando: true };
+                const novaFoto = { blob, url: imageUrl, id: fotoId };
                 setFotos(prev => [...prev, novaFoto]);
-                toast.success(`Foto ${fotos.length + 1} capturada! Identificando NF...`);
-                
-                // Fazer upload e identificar NF com IA
-                try {
-                    const file = new File([blob], `foto_${fotoId}.jpg`, { type: "image/jpeg" });
-                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                    
-                    const resultado = await base44.integrations.Core.InvokeLLM({
-                        prompt: `Analise esta imagem de uma DANFE (Documento Auxiliar da Nota Fiscal Eletrônica).
-                        
-                        O NÚMERO DA NOTA FISCAL está localizado:
-                        - No TOPO da página, LADO DIREITO
-                        - Ou no CENTRO, logo abaixo da palavra "DANFE"
-                        - Está ACIMA do campo "SÉRIE"
-                        - O formato é "N. 000000000" ou "Nº 000000000" (geralmente 9 dígitos)
-                        
-                        IMPORTANTE: Procure especificamente por:
-                        - "N." seguido de números (ex: N.000123456)
-                        - "Nº" seguido de números
-                        - "NF-e Nº" seguido de números
-                        - Um número grande em destaque acima da palavra "SÉRIE"
-                        
-                        Extraia APENAS os dígitos numéricos do número da nota, removendo zeros à esquerda se houver.
-                        
-                        Exemplo: Se encontrar "N.000123456", retorne "123456"`,
-                        file_urls: [file_url],
-                        response_json_schema: {
-                            type: "object",
-                            properties: {
-                                numero_nota: { type: "string", description: "Número da nota fiscal (apenas dígitos)" }
-                            }
-                        }
-                    });
-                    
-                    setFotos(prev => prev.map(f => 
-                        f.id === fotoId 
-                            ? { ...f, notaFiscal: resultado?.numero_nota || "", uploadedUrl: file_url, identificando: false }
-                            : f
-                    ));
-                    
-                    if (resultado?.numero_nota) {
-                        toast.success(`NF identificada: ${resultado.numero_nota}`);
-                    } else {
-                        toast.info("NF não identificada, preencha manualmente");
-                    }
-                } catch (err) {
-                    console.error("Erro ao identificar NF:", err);
-                    setFotos(prev => prev.map(f => 
-                        f.id === fotoId ? { ...f, identificando: false } : f
-                    ));
-                    toast.error("Erro ao identificar NF");
-                }
+                toast.success(`Foto ${fotos.length + 1} capturada!`);
             }
             setCapturing(false);
         }, "image/jpeg", 0.7);

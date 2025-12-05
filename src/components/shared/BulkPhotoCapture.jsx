@@ -154,14 +154,8 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
             toast.info(`Salvando foto ${i + 1} de ${fotos.length}...`);
 
             try {
-                // Se já fez upload antes (durante identificação), usa a URL existente
-                let file_url = foto.uploadedUrl;
-                
-                if (!file_url) {
-                    const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
-                    const upload = await base44.integrations.Core.UploadFile({ file });
-                    file_url = upload.file_url;
-                }
+                const file = new File([foto.blob], `foto_${foto.id}.jpg`, { type: "image/jpeg" });
+                const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
                 resultados.push({
                     url: file_url,

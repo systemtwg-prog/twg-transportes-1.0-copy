@@ -381,49 +381,7 @@ export default function ComprovantesInternos() {
         return matchData && matchNF && matchEmpresa;
     });
 
-    // Função para processar foto com IA
-    const processarFotoComIA = async (file_url) => {
-        setProcessandoIA(true);
-        try {
-            const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Analise esta imagem de um comprovante de entrega ou nota fiscal. 
-                Extraia as seguintes informações:
-                1. Número da nota fiscal (procure por "NF", "NOTA FISCAL", "NFe", "Número", "Nº" ou sequências numéricas)
-                2. Qualquer informação relevante como destinatário, data, valor, observações
 
-                Retorne os dados encontrados de forma estruturada.`,
-                file_urls: [file_url],
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        numero_nota: { type: "string", description: "Número da nota fiscal encontrado" },
-                        observacoes: { type: "string", description: "Outras informações relevantes encontradas na imagem" }
-                    }
-                }
-            });
-
-            if (resultado?.numero_nota) {
-                setForm(prev => ({ 
-                    ...prev, 
-                    nota_fiscal: prev.nota_fiscal || resultado.numero_nota 
-                }));
-                toast.success(`NF identificada: ${resultado.numero_nota}`);
-            }
-            
-            if (resultado?.observacoes) {
-                setForm(prev => ({ 
-                    ...prev, 
-                    observacoes: prev.observacoes 
-                        ? `${prev.observacoes}\n${resultado.observacoes}` 
-                        : resultado.observacoes 
-                }));
-            }
-        } catch (err) {
-            console.error("Erro ao processar imagem com IA:", err);
-            toast.info("Não foi possível ler a imagem automaticamente");
-        }
-        setProcessandoIA(false);
-    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">

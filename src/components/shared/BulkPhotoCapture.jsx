@@ -289,20 +289,12 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                     className="w-12 h-12 object-cover rounded-lg border border-white/50 flex-shrink-0" 
                                 />
                                 <div className="flex-1 min-w-0 space-y-1">
-                                    <div className="relative">
-                                        <Input
-                                            placeholder="Nº Nota Fiscal"
-                                            value={foto.notaFiscal || ""}
-                                            onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
-                                            className="h-8 bg-white text-slate-800 text-xs"
-                                            disabled={foto.identificando}
-                                        />
-                                        {foto.identificando && (
-                                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                                                <Loader2 className="w-4 h-4 animate-spin text-sky-500" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Input
+                                        placeholder="Nº Nota Fiscal"
+                                        value={foto.notaFiscal || ""}
+                                        onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
+                                        className="h-8 bg-white text-slate-800 text-xs"
+                                    />
                                     <Select value={foto.empresa || ""} onValueChange={(v) => updateEmpresa(foto.id, v)}>
                                         <SelectTrigger className="h-8 bg-white text-slate-800 text-xs">
                                             <SelectValue placeholder="Empresa" />

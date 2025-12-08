@@ -186,52 +186,81 @@ IMPORTANTE:
                     properties: {
                         clientes: {
                             type: "array",
-                            description: "Lista de clientes extraídos do documento",
+                            description: "Lista de clientes extraídos do documento. Extraia TODOS os clientes encontrados no arquivo.",
                             items: {
                                 type: "object",
                                 properties: {
-                                    codigo: { type: "string", description: "Código do cliente" },
-                                    razao_social: { type: "string", description: "Razão social ou nome do cliente" },
-                                    nome_fantasia: { type: "string", description: "Nome fantasia" },
-                                    cnpj_cpf: { type: "string", description: "CNPJ ou CPF" },
-                                    tipo: { type: "string", description: "Tipo: remetente, destinatario ou ambos" },
-                                    contato: { type: "string", description: "Nome do contato" },
-                                    telefone: { type: "string", description: "Telefone" },
-                                    email: { type: "string", description: "Email" },
-                                    cep: { type: "string", description: "CEP" },
-                                    endereco: { type: "string", description: "Endereço completo" },
+                                    codigo: { type: "string", description: "Código do cliente se houver" },
+                                    razao_social: { type: "string", description: "Razão social ou nome do cliente - OBRIGATÓRIO" },
+                                    nome_fantasia: { type: "string", description: "Nome fantasia da empresa" },
+                                    cnpj_cpf: { type: "string", description: "CNPJ ou CPF do cliente" },
+                                    tipo: { type: "string", description: "Tipo: remetente, destinatario ou ambos. Use 'ambos' se não souber" },
+                                    contato: { type: "string", description: "Nome da pessoa de contato" },
+                                    telefone: { type: "string", description: "Telefone principal" },
+                                    email: { type: "string", description: "Email de contato" },
+                                    cep: { type: "string", description: "CEP do endereço" },
+                                    endereco: { type: "string", description: "Rua, número e complemento" },
                                     bairro: { type: "string", description: "Bairro" },
-                                    cidade: { type: "string", description: "Cidade" },
-                                    uf: { type: "string", description: "Estado/UF" }
-                                }
+                                    cidade: { type: "string", description: "Nome da cidade" },
+                                    uf: { type: "string", description: "Sigla do estado (SP, RJ, MG, etc)" },
+                                    horario_funcionamento_inicio: { type: "string", description: "Horário de abertura (ex: 08:00)" },
+                                    horario_funcionamento_fim: { type: "string", description: "Horário de fechamento (ex: 18:00)" },
+                                    horario_almoco_inicio: { type: "string", description: "Início do horário de almoço" },
+                                    horario_almoco_fim: { type: "string", description: "Fim do horário de almoço" },
+                                    observacoes: { type: "string", description: "Observações ou informações adicionais" }
+                                },
+                                required: ["razao_social"]
                             }
                         }
-                    }
+                    },
+                    required: ["clientes"]
                 }
             });
 
             if (result.status === "success" && result.output) {
                 const clientesImport = result.output.clientes || (Array.isArray(result.output) ? result.output : [result.output]);
+                
+                if (!clientesImport || clientesImport.length === 0) {
+                    toast.error("Nenhum cliente encontrado no arquivo.");
+                    setImporting(false);
+                    e.target.value = "";
+                    return;
+                }
+
                 let importados = 0;
+                let duplicados = 0;
                 
                 for (const cliente of clientesImport) {
                     if (cliente.razao_social) {
+                        // Verificar CNPJ/CPF duplicado
+                        if (cliente.cnpj_cpf && cnpjCpfJaCadastrado(cliente.cnpj_cpf)) {
+                            duplicados++;
+                            continue;
+                        }
+                        
                         await base44.entities.Cliente.create({
                             ...cliente,
-                            tipo: cliente.tipo?.toLowerCase() || "remetente"
+                            tipo: cliente.tipo?.toLowerCase() || "ambos"
                         });
                         importados++;
                     }
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["clientes"] });
-                toast.success(`✅ Importado com sucesso! ${importados} cliente(s) adicionado(s).`);
+                
+                if (importados === 0 && duplicados > 0) {
+                    toast.warning(`Nenhum cliente criado. ${duplicados} ignorado(s) por CNPJ/CPF duplicado.`);
+                } else if (duplicados > 0) {
+                    toast.warning(`✅ ${importados} cliente(s) importado(s). ${duplicados} ignorado(s) por CNPJ/CPF duplicado.`);
+                } else {
+                    toast.success(`✅ Importado com sucesso! ${importados} cliente(s) adicionado(s).`);
+                }
             } else {
-                toast.error("Erro ao processar arquivo. Verifique o formato.");
+                toast.error("Erro ao processar arquivo: " + (result?.details || "Formato não suportado"));
             }
         } catch (error) {
             console.error("Erro na importação:", error);
-            toast.error("Erro ao importar arquivo. Tente novamente.");
+            toast.error("Erro ao importar arquivo. Verifique o formato e tente novamente.");
         }
         
         setImporting(false);
@@ -309,7 +338,7 @@ IMPORTANTE:
                         <label className="cursor-pointer">
                             <input
                                 type="file"
-                                accept=".xlsx,.xls,.csv,.pdf"
+                                accept=".xlsx,.xls,.csv,.pdf,image/*"
                                 onChange={handleImportFile}
                                 className="hidden"
                                 disabled={importing}
@@ -321,7 +350,7 @@ IMPORTANTE:
                                     ) : (
                                         <Upload className="w-4 h-4 mr-2" />
                                     )}
-                                    {importing ? "Importando..." : "Importar Arquivo"}
+                                    {importing ? "Importando..." : "Importar (Excel/CSV/PDF/Foto)"}
                                 </span>
                             </Button>
                         </label>

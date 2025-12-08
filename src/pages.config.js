@@ -31,7 +31,6 @@ import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
 import ServicosSNF from './pages/ServicosSNF';
 import ClientesSNF from './pages/ClientesSNF';
 import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
-import WhatsAppWeb from './pages/WhatsAppWeb';
 import __Layout from './Layout.jsx';
 
 
@@ -69,7 +68,6 @@ export const PAGES = {
     "ServicosSNF": ServicosSNF,
     "ClientesSNF": ClientesSNF,
     "ConfiguracaoModulos": ConfiguracaoModulos,
-    "WhatsAppWeb": WhatsAppWeb,
 }
 
 export const pagesConfig = {

@@ -398,13 +398,6 @@ export default function ComprovantesInternos() {
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button 
-                            onClick={() => setShowCameraMassa(true)}
-                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
-                        >
-                            <Camera className="w-4 h-4 mr-2" />
-                            Fotos em Massa
-                        </Button>
-                        <Button 
                             onClick={atualizarDashboards}
                             variant="outline"
                             className="border-green-500 text-green-600 hover:bg-green-50"
@@ -423,14 +416,23 @@ export default function ComprovantesInternos() {
                     </div>
                 </div>
 
-                {/* Botão Grande Novo Comprovante */}
-                <Button 
-                    onClick={() => { resetForm(); setShowForm(true); }}
-                    className="w-full h-20 text-xl bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-xl"
-                >
-                    <Plus className="w-8 h-8 mr-3" />
-                    Novo Comprovante
-                </Button>
+                {/* Botões Grandes - Novo Comprovante e Fotos em Massa */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button 
+                        onClick={() => { resetForm(); setShowForm(true); }}
+                        className="w-full h-20 text-xl bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 shadow-xl"
+                    >
+                        <Plus className="w-8 h-8 mr-3" />
+                        Novo Comprovante
+                    </Button>
+                    <Button 
+                        onClick={() => setShowCameraMassa(true)}
+                        className="w-full h-20 text-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-xl"
+                    >
+                        <Camera className="w-8 h-8 mr-3" />
+                        Fotos em Massa
+                    </Button>
+                </div>
 
                 {/* Barra de Seleção */}
                 {selectedIds.length > 0 && (

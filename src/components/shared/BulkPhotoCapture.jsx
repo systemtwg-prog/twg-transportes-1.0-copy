@@ -220,8 +220,8 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
 
             {/* Lista de fotos capturadas com campo de NF e Empresa */}
             {fotos.filter(f => !f.confirmado).length > 0 && !processing && (
-                <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[50%] overflow-y-auto">
-                    <div className="bg-black/90 rounded-xl p-3 space-y-2">
+                <div className="absolute top-20 left-0 right-0 px-3 z-20 max-h-[60%] overflow-y-auto">
+                    <div className="bg-black/95 rounded-2xl p-4 space-y-3">
                         {/* Header com seleção em massa */}
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-white text-sm font-bold">
@@ -273,37 +273,37 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                         {fotos.filter(f => !f.confirmado).map((foto, idx) => (
                             <div 
                                 key={foto.id} 
-                                className={`flex items-center gap-2 rounded-lg p-2 ${selectedIds.includes(foto.id) ? 'bg-sky-500/30 ring-1 ring-sky-400' : 'bg-white/10'}`}
+                                className={`flex items-center gap-3 rounded-xl p-3 ${selectedIds.includes(foto.id) ? 'bg-sky-500/30 ring-2 ring-sky-400' : 'bg-white/10'}`}
                             >
                                 {/* Checkbox */}
                                 <button
                                     onClick={() => toggleSelect(foto.id)}
-                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedIds.includes(foto.id) ? 'bg-sky-500 border-sky-500' : 'border-white/50'}`}
+                                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedIds.includes(foto.id) ? 'bg-sky-500 border-sky-500' : 'border-white/50'}`}
                                 >
-                                    {selectedIds.includes(foto.id) && <Check className="w-4 h-4 text-white" />}
+                                    {selectedIds.includes(foto.id) && <Check className="w-5 h-5 text-white" />}
                                 </button>
 
                                 <img 
                                     src={foto.url} 
                                     alt={`Foto ${idx + 1}`} 
-                                    className="w-12 h-12 object-cover rounded-lg border border-white/50 flex-shrink-0" 
+                                    className="w-16 h-16 object-cover rounded-lg border-2 border-white/50 flex-shrink-0" 
                                 />
-                                <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex-1 min-w-0 space-y-2">
                                     <Input
                                         placeholder="Nº Nota Fiscal"
                                         value={foto.notaFiscal || ""}
                                         onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
-                                        className="h-8 bg-white text-slate-800 text-xs"
+                                        className="h-11 bg-white text-slate-800 text-base font-medium"
                                     />
                                     <Select value={foto.empresa || ""} onValueChange={(v) => updateEmpresa(foto.id, v)}>
-                                        <SelectTrigger className="h-8 bg-white text-slate-800 text-xs">
+                                        <SelectTrigger className="h-11 bg-white text-slate-800 text-base">
                                             <SelectValue placeholder="Empresa" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {empresasCadastradas.map(emp => (
                                                 <SelectItem key={emp.id} value={emp.nome}>
                                                     <div className="flex items-center gap-2">
-                                                        {emp.logo_url && <img src={emp.logo_url} alt="" className="w-4 h-4 object-contain" />}
+                                                        {emp.logo_url && <img src={emp.logo_url} alt="" className="w-5 h-5 object-contain" />}
                                                         {emp.nome}
                                                     </div>
                                                 </SelectItem>
@@ -314,15 +314,15 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                 {/* Botão OK para confirmar */}
                                 <button
                                     onClick={() => confirmarFoto(foto.id)}
-                                    className="w-7 h-7 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-9 h-9 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0"
                                 >
-                                    <Check className="w-4 h-4 text-white" />
+                                    <Check className="w-5 h-5 text-white" />
                                 </button>
                                 <button
                                     onClick={() => removePhoto(foto.id)}
-                                    className="w-7 h-7 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-9 h-9 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
                                 >
-                                    <X className="w-4 h-4 text-white" />
+                                    <X className="w-5 h-5 text-white" />
                                 </button>
                             </div>
                         ))}

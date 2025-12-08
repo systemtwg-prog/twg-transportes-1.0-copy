@@ -9,7 +9,7 @@ import {
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, 
     Search, Database, Printer, ChevronLeft, ChevronRight, Truck, Building2,
-    Camera, ClipboardList, AlertTriangle, Upload
+    Camera, ClipboardList, AlertTriangle, Upload, MessageCircle
 } from "lucide-react";
 
 const menuItems = [
@@ -43,6 +43,7 @@ const menuItems = [
     { name: "Backup", href: "Backup", icon: Database, category: "admin" },
     { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid, category: "admin" },
     { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
+    { name: "WhatsApp Web", href: "WhatsAppWeb", icon: MessageCircle, category: "comunicacao" },
 ];
 
 const categories = [
@@ -51,6 +52,7 @@ const categories = [
     { id: "documentos", name: "Documentos" },
     { id: "cadastros", name: "Cadastros" },
     { id: "monitoramento", name: "Monitoramento" },
+    { id: "comunicacao", name: "Comunicação" },
     { id: "ferramentas", name: "Ferramentas" },
     { id: "relatorios", name: "Relatórios" },
     { id: "admin", name: "Administração" },

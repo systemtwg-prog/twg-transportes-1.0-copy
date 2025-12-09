@@ -155,6 +155,7 @@ export default function ComprovantesCtes() {
     const [editingTomador, setEditingTomador] = useState(null);
     const [showDuplicados, setShowDuplicados] = useState(false);
     const [duplicados, setDuplicados] = useState([]);
+    const [duplicadosSelecionados, setDuplicadosSelecionados] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -337,7 +338,43 @@ export default function ComprovantesCtes() {
         }
 
         setDuplicados(duplicadosEncontrados);
+        setDuplicadosSelecionados([]);
         setShowDuplicados(true);
+    };
+
+    const toggleDuplicadoSelecionado = (id) => {
+        setDuplicadosSelecionados(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const excluirDuplicadosSelecionados = async () => {
+        if (duplicadosSelecionados.length === 0) return;
+        
+        if (!confirm(`Excluir ${duplicadosSelecionados.length} registro(s) selecionado(s)?`)) return;
+
+        for (const id of duplicadosSelecionados) {
+            await base44.entities.ComprovanteCTE.delete(id);
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
+        
+        // Atualizar lista de duplicados
+        setDuplicados(prev => {
+            const updated = prev.map(g => ({
+                ...g,
+                ctes: g.ctes.filter(c => !duplicadosSelecionados.includes(c.id))
+            })).filter(g => g.ctes.length > 1);
+            
+            if (updated.length === 0) {
+                setShowDuplicados(false);
+                toast.success("Todos os duplicados foram resolvidos!");
+            }
+            return updated;
+        });
+
+        setDuplicadosSelecionados([]);
+        toast.success(`${duplicadosSelecionados.length} registro(s) excluído(s)!`);
     };
 
     const resetForm = () => {
@@ -1813,6 +1850,21 @@ export default function ComprovantesCtes() {
                             </p>
                         </div>
 
+                        {duplicadosSelecionados.length > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-slate-100 border border-slate-300 rounded-lg">
+                                <Badge className="bg-blue-100 text-blue-700 text-base px-3 py-1">
+                                    {duplicadosSelecionados.length} selecionado(s)
+                                </Badge>
+                                <Button 
+                                    onClick={excluirDuplicadosSelecionados}
+                                    className="bg-red-600 hover:bg-red-700"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir Selecionados
+                                </Button>
+                            </div>
+                        )}
+
                         {duplicados.map((grupo, index) => (
                             <Card key={index} className="border-2 border-red-200">
                                 <CardHeader className="bg-red-50 pb-3">
@@ -1826,7 +1878,19 @@ export default function ComprovantesCtes() {
                                 </CardHeader>
                                 <CardContent className="p-4 space-y-3">
                                     {grupo.ctes.map((cte, cteIndex) => (
-                                        <div key={cte.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border">
+                                        <div 
+                                            key={cte.id} 
+                                            className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-colors ${
+                                                duplicadosSelecionados.includes(cte.id) 
+                                                    ? 'bg-blue-50 border-blue-500' 
+                                                    : 'bg-slate-50 border-slate-200'
+                                            }`}
+                                        >
+                                            <Checkbox 
+                                                checked={duplicadosSelecionados.includes(cte.id)}
+                                                onCheckedChange={() => toggleDuplicadoSelecionado(cte.id)}
+                                                className="mt-1"
+                                            />
                                             <div className="flex-1 space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className="text-xs">#{cteIndex + 1}</Badge>

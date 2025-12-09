@@ -22,6 +22,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import ScannerCamera from "@/components/shared/ScannerCamera";
 import ImportadorCTE from "@/components/cte/ImportadorCTE";
+import ImportadorXML from "@/components/cte/ImportadorXML";
 import ConsultaSEFAZ from "@/components/cte/ConsultaSEFAZ";
 
 function FlipbookViewer({ files, onClose }) {
@@ -159,6 +160,7 @@ export default function ComprovantesCtes() {
     const [duplicadosSelecionados, setDuplicadosSelecionados] = useState([]);
     const [showConsultaSEFAZ, setShowConsultaSEFAZ] = useState(false);
     const [tipoConsulta, setTipoConsulta] = useState("cte");
+    const [showImportadorXML, setShowImportadorXML] = useState(false);
     const [columnWidths, setColumnWidths] = useState({});
     const [columnOrder, setColumnOrder] = useState([]);
     const [resizingColumn, setResizingColumn] = useState(null);
@@ -1002,7 +1004,15 @@ export default function ComprovantesCtes() {
                             className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                         >
                             <FileSpreadsheet className="w-4 h-4 mr-2" />
-                            Importar Arquivo
+                            Importar Planilha
+                        </Button>
+                        <Button 
+                            onClick={() => setShowImportadorXML(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Importar XML
                         </Button>
                         <Button 
                             onClick={() => { setPasteText(""); setExtractedCTEs([]); setShowPasteDialog(true); }}
@@ -1531,6 +1541,13 @@ export default function ComprovantesCtes() {
             <ImportadorCTE 
                 open={showImportador} 
                 onClose={() => setShowImportador(false)}
+                onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] })}
+            />
+
+            {/* Importador XML */}
+            <ImportadorXML 
+                open={showImportadorXML} 
+                onClose={() => setShowImportadorXML(false)}
                 onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] })}
             />
 

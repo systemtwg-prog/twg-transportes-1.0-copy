@@ -156,6 +156,10 @@ export default function ComprovantesCtes() {
     const [showDuplicados, setShowDuplicados] = useState(false);
     const [duplicados, setDuplicados] = useState([]);
     const [duplicadosSelecionados, setDuplicadosSelecionados] = useState([]);
+    const [columnWidths, setColumnWidths] = useState({});
+    const [columnOrder, setColumnOrder] = useState([]);
+    const [resizingColumn, setResizingColumn] = useState(null);
+    const [draggedColumn, setDraggedColumn] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -178,6 +182,140 @@ export default function ComprovantesCtes() {
         queryKey: ["tomadores-cte"],
         queryFn: () => base44.entities.TomadorCTE.list()
     });
+
+    // Definição das colunas
+    const defaultColumns = [
+        { id: 'select', label: '', width: 50, fixed: true },
+        { id: 'data', label: 'DATA', width: 95 },
+        { id: 'remetente', label: 'FORNECEDOR', width: 180 },
+        { id: 'destinatario', label: 'CLIENTE', width: 180 },
+        { id: 'nfe', label: 'NFE', width: 100 },
+        { id: 'numero_cte', label: 'CTE', width: 90 },
+        { id: 'valor_nf', label: 'VALOR NF', width: 110 },
+        { id: 'volume', label: 'VOL', width: 60 },
+        { id: 'peso', label: 'PESO', width: 80 },
+        { id: 'frete_peso', label: 'FRETE/PESO', width: 100 },
+        { id: 'coleta', label: 'COLETA', width: 90 },
+        { id: 'seguro', label: 'SEGURO', width: 90 },
+        { id: 'pedagio', label: 'PEDÁGIO', width: 90 },
+        { id: 'outros', label: 'OUTROS', width: 90 },
+        { id: 'valor_cobrado', label: 'TOTAL', width: 100 },
+        { id: 'porcentagem', label: '%', width: 60 },
+        { id: 'mdfe', label: 'MDFE', width: 100 },
+        { id: 'status', label: 'STATUS', width: 120 },
+        { id: 'acoes', label: 'AÇÕES', width: 130, fixed: true }
+    ];
+
+    // Carregar configurações salvas
+    React.useEffect(() => {
+        const savedWidths = localStorage.getItem('cte-column-widths');
+        const savedOrder = localStorage.getItem('cte-column-order');
+        
+        if (savedWidths) {
+            setColumnWidths(JSON.parse(savedWidths));
+        }
+        
+        if (savedOrder) {
+            setColumnOrder(JSON.parse(savedOrder));
+        } else {
+            setColumnOrder(defaultColumns.map(c => c.id));
+        }
+    }, []);
+
+    // Salvar configurações
+    const saveColumnConfig = (widths, order) => {
+        if (widths) {
+            localStorage.setItem('cte-column-widths', JSON.stringify(widths));
+        }
+        if (order) {
+            localStorage.setItem('cte-column-order', JSON.stringify(order));
+        }
+    };
+
+    // Resetar colunas
+    const resetColumns = () => {
+        setColumnWidths({});
+        setColumnOrder(defaultColumns.map(c => c.id));
+        localStorage.removeItem('cte-column-widths');
+        localStorage.removeItem('cte-column-order');
+        toast.success("Colunas resetadas!");
+    };
+
+    // Obter colunas ordenadas
+    const orderedColumns = React.useMemo(() => {
+        if (columnOrder.length === 0) return defaultColumns;
+        
+        return columnOrder
+            .map(id => defaultColumns.find(c => c.id === id))
+            .filter(Boolean);
+    }, [columnOrder]);
+
+    // Handlers para resize
+    const handleResizeStart = (columnId, e) => {
+        e.preventDefault();
+        setResizingColumn({ id: columnId, startX: e.clientX });
+    };
+
+    React.useEffect(() => {
+        if (!resizingColumn) return;
+
+        const handleMouseMove = (e) => {
+            const diff = e.clientX - resizingColumn.startX;
+            const column = orderedColumns.find(c => c.id === resizingColumn.id);
+            const currentWidth = columnWidths[resizingColumn.id] || column?.width || 100;
+            const newWidth = Math.max(50, currentWidth + diff);
+            
+            setColumnWidths(prev => {
+                const updated = { ...prev, [resizingColumn.id]: newWidth };
+                saveColumnConfig(updated, null);
+                return updated;
+            });
+            
+            setResizingColumn({ ...resizingColumn, startX: e.clientX });
+        };
+
+        const handleMouseUp = () => {
+            setResizingColumn(null);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [resizingColumn, columnWidths, orderedColumns]);
+
+    // Handlers para drag and drop
+    const handleDragStart = (columnId, e) => {
+        if (defaultColumns.find(c => c.id === columnId)?.fixed) {
+            e.preventDefault();
+            return;
+        }
+        setDraggedColumn(columnId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (columnId, e) => {
+        e.preventDefault();
+        if (!draggedColumn || draggedColumn === columnId) return;
+        if (defaultColumns.find(c => c.id === columnId)?.fixed) return;
+
+        const newOrder = [...columnOrder];
+        const draggedIndex = newOrder.indexOf(draggedColumn);
+        const targetIndex = newOrder.indexOf(columnId);
+        
+        newOrder.splice(draggedIndex, 1);
+        newOrder.splice(targetIndex, 0, draggedColumn);
+        
+        setColumnOrder(newOrder);
+        saveColumnConfig(null, newOrder);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedColumn(null);
+    };
 
     const createTomadorMutation = useMutation({
         mutationFn: (data) => base44.entities.TomadorCTE.create(data),
@@ -999,6 +1137,10 @@ export default function ComprovantesCtes() {
                                 <Button variant="outline" size="sm" onClick={selecionarTodos}>
                                     {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar" : "Selecionar Tudo"}
                                 </Button>
+                                <Button variant="outline" size="sm" onClick={resetColumns} className="border-purple-500 text-purple-600">
+                                    <RotateCw className="w-3 h-3 mr-1" />
+                                    Resetar Colunas
+                                </Button>
                                 {selecionados.length > 0 && (
                                     <>
                                         <Button 
@@ -1063,30 +1205,56 @@ export default function ComprovantesCtes() {
                             <Table style={{ minWidth: '2400px', tableLayout: 'fixed' }}>
                                 <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-slate-700 hover:bg-slate-700">
-                                        <TableHead style={{ width: '50px' }} className="text-white text-center">
-                                            <Checkbox 
-                                                checked={selecionados.length === filtered.length && filtered.length > 0}
-                                                onCheckedChange={selecionarTodos}
-                                            />
-                                        </TableHead>
-                                        <TableHead style={{ width: '95px' }} className="text-white font-bold text-xs">DATA</TableHead>
-                                        <TableHead style={{ width: '180px' }} className="text-white font-bold text-xs">FORNECEDOR</TableHead>
-                                        <TableHead style={{ width: '180px' }} className="text-white font-bold text-xs">CLIENTE</TableHead>
-                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">NFE</TableHead>
-                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">CTE</TableHead>
-                                        <TableHead style={{ width: '110px' }} className="text-white font-bold text-xs text-center">VALOR NF</TableHead>
-                                        <TableHead style={{ width: '60px' }} className="text-white font-bold text-xs text-center">VOL</TableHead>
-                                        <TableHead style={{ width: '80px' }} className="text-white font-bold text-xs text-center">PESO</TableHead>
-                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">FRETE/PESO</TableHead>
-                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">COLETA</TableHead>
-                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">SEGURO</TableHead>
-                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">PEDÁGIO</TableHead>
-                                        <TableHead style={{ width: '90px' }} className="text-white font-bold text-xs text-center">OUTROS</TableHead>
-                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">TOTAL</TableHead>
-                                        <TableHead style={{ width: '60px' }} className="text-white font-bold text-xs text-center">%</TableHead>
-                                        <TableHead style={{ width: '100px' }} className="text-white font-bold text-xs text-center">MDFE</TableHead>
-                                        <TableHead style={{ width: '120px' }} className="text-white font-bold text-xs text-center">STATUS</TableHead>
-                                        <TableHead style={{ width: '130px' }} className="text-white font-bold text-xs text-center">AÇÕES</TableHead>
+                                        {orderedColumns.map((column) => {
+                                            const width = columnWidths[column.id] || column.width;
+                                            const isFixed = column.fixed;
+                                            
+                                            if (column.id === 'select') {
+                                                return (
+                                                    <TableHead 
+                                                        key={column.id}
+                                                        style={{ width: `${width}px`, position: 'relative' }} 
+                                                        className="text-white text-center"
+                                                    >
+                                                        <Checkbox 
+                                                            checked={selecionados.length === filtered.length && filtered.length > 0}
+                                                            onCheckedChange={selecionarTodos}
+                                                        />
+                                                    </TableHead>
+                                                );
+                                            }
+
+                                            return (
+                                                <TableHead
+                                                    key={column.id}
+                                                    draggable={!isFixed}
+                                                    onDragStart={(e) => handleDragStart(column.id, e)}
+                                                    onDragOver={(e) => handleDragOver(column.id, e)}
+                                                    onDragEnd={handleDragEnd}
+                                                    style={{ 
+                                                        width: `${width}px`, 
+                                                        position: 'relative',
+                                                        cursor: isFixed ? 'default' : 'move'
+                                                    }}
+                                                    className={`text-white font-bold text-xs ${
+                                                        ['nfe', 'numero_cte', 'valor_nf', 'volume', 'peso', 'frete_peso', 'coleta', 'seguro', 'pedagio', 'outros', 'valor_cobrado', 'porcentagem', 'mdfe', 'status', 'acoes'].includes(column.id) 
+                                                        ? 'text-center' 
+                                                        : ''
+                                                    } ${draggedColumn === column.id ? 'opacity-50' : ''}`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <span className="flex-1">{column.label}</span>
+                                                        {!isFixed && (
+                                                            <div
+                                                                onMouseDown={(e) => handleResizeStart(column.id, e)}
+                                                                className="w-1 h-full bg-white/30 hover:bg-white/60 cursor-col-resize absolute right-0 top-0"
+                                                                style={{ cursor: 'col-resize' }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </TableHead>
+                                            );
+                                        })}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1106,117 +1274,217 @@ export default function ComprovantesCtes() {
                                     ) : (
                                         filtered.map((cte) => (
                                             <TableRow key={cte.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                                <TableCell className="text-center p-2">
-                                                    <Checkbox 
-                                                        checked={selecionados.includes(cte.id)}
-                                                        onCheckedChange={() => toggleSelecionado(cte.id)}
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-xs p-2">
-                                                    {formatDate(cte.data)}
-                                                </TableCell>
-                                                <TableCell className="font-medium text-slate-800 text-xs p-2 truncate" title={cte.remetente || cte.empresa}>
-                                                    {cte.remetente || cte.empresa || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-slate-600 text-xs p-2 truncate" title={cte.destinatario}>
-                                                    {cte.destinatario || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.nfe || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center font-medium text-amber-600 text-xs p-2">
-                                                    {cte.numero_cte || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2 font-medium">
-                                                    {cte.valor_nf || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.volume || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.peso || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.frete_peso || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.coleta || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.seguro || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.pedagio || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.outros || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2 font-medium text-green-600">
-                                                    {cte.valor_cobrado || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center text-xs p-2">
-                                                    {cte.mdfe || "-"}
-                                                </TableCell>
-                                                <TableCell className="text-center p-2">
-                                                    <Select 
-                                                        value={cte.status || "pendente"} 
-                                                        onValueChange={(v) => updateMutation.mutate({ id: cte.id, data: { status: v } })}
-                                                    >
-                                                        <SelectTrigger className={`h-6 w-full text-xs ${getStatusColor(cte.status)}`}>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {statusList.length > 0 ? (
-                                                                statusList.map(s => (
-                                                                    <SelectItem key={s.id} value={s.nome}>
-                                                                        <span className={`px-2 py-0.5 rounded ${s.cor}`}>{s.nome}</span>
-                                                                    </SelectItem>
-                                                                ))
-                                                            ) : (
-                                                                <>
-                                                                    <SelectItem value="pendente">Pendente</SelectItem>
-                                                                    <SelectItem value="finalizado">Finalizado</SelectItem>
-                                                                </>
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                                <TableCell className="p-2">
-                                                    <div className="flex justify-center gap-1">
-                                                        <Button 
-                                                            variant="outline" 
-                                                            size="icon"
-                                                            className="h-6 w-6 border-amber-500 text-amber-600 hover:bg-amber-50"
-                                                            onClick={() => {
-                                                                setUploadingCTE(cte);
-                                                                setShowUploadDialog(true);
-                                                            }}
-                                                        >
-                                                            <Upload className="w-3 h-3" />
-                                                        </Button>
-                                                        {cte.arquivos?.length > 0 && (
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="icon"
-                                                                className="h-6 w-6"
-                                                                onClick={() => setViewFiles(cte.arquivos)}
-                                                            >
-                                                                <Eye className="w-3 h-3" />
-                                                            </Button>
-                                                        )}
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(cte)}>
-                                                            <Pencil className="w-3 h-3" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                                            if (confirm("Excluir este CTE?")) deleteMutation.mutate(cte.id);
-                                                        }}>
-                                                            <Trash2 className="w-3 h-3 text-red-600" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
+                                                {orderedColumns.map((column) => {
+                                                    const width = columnWidths[column.id] || column.width;
+
+                                                    if (column.id === 'select') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center p-2">
+                                                                <Checkbox 
+                                                                    checked={selecionados.includes(cte.id)}
+                                                                    onCheckedChange={() => toggleSelecionado(cte.id)}
+                                                                />
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'data') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-xs p-2">
+                                                                {formatDate(cte.data)}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'remetente') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="font-medium text-slate-800 text-xs p-2 truncate" title={cte.remetente || cte.empresa}>
+                                                                {cte.remetente || cte.empresa || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'destinatario') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-slate-600 text-xs p-2 truncate" title={cte.destinatario}>
+                                                                {cte.destinatario || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'nfe') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.nfe || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'numero_cte') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center font-medium text-amber-600 text-xs p-2">
+                                                                {cte.numero_cte || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'valor_nf') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2 font-medium">
+                                                                {cte.valor_nf || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'volume') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.volume || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'peso') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.peso || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'frete_peso') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.frete_peso || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'coleta') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.coleta || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'seguro') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.seguro || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'pedagio') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.pedagio || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'outros') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.outros || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'valor_cobrado') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2 font-medium text-green-600">
+                                                                {cte.valor_cobrado || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'porcentagem') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.porcentagem ? `${cte.porcentagem}%` : "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'mdfe') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center text-xs p-2">
+                                                                {cte.mdfe || "-"}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'status') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="text-center p-2">
+                                                                <Select 
+                                                                    value={cte.status || "pendente"} 
+                                                                    onValueChange={(v) => updateMutation.mutate({ id: cte.id, data: { status: v } })}
+                                                                >
+                                                                    <SelectTrigger className={`h-6 w-full text-xs ${getStatusColor(cte.status)}`}>
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {statusList.length > 0 ? (
+                                                                            statusList.map(s => (
+                                                                                <SelectItem key={s.id} value={s.nome}>
+                                                                                    <span className={`px-2 py-0.5 rounded ${s.cor}`}>{s.nome}</span>
+                                                                                </SelectItem>
+                                                                            ))
+                                                                        ) : (
+                                                                            <>
+                                                                                <SelectItem value="pendente">Pendente</SelectItem>
+                                                                                <SelectItem value="finalizado">Finalizado</SelectItem>
+                                                                            </>
+                                                                        )}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.id === 'acoes') {
+                                                        return (
+                                                            <TableCell key={column.id} style={{ width: `${width}px` }} className="p-2">
+                                                                <div className="flex justify-center gap-1">
+                                                                    <Button 
+                                                                        variant="outline" 
+                                                                        size="icon"
+                                                                        className="h-6 w-6 border-amber-500 text-amber-600 hover:bg-amber-50"
+                                                                        onClick={() => {
+                                                                            setUploadingCTE(cte);
+                                                                            setShowUploadDialog(true);
+                                                                        }}
+                                                                    >
+                                                                        <Upload className="w-3 h-3" />
+                                                                    </Button>
+                                                                    {cte.arquivos?.length > 0 && (
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            size="icon"
+                                                                            className="h-6 w-6"
+                                                                            onClick={() => setViewFiles(cte.arquivos)}
+                                                                        >
+                                                                            <Eye className="w-3 h-3" />
+                                                                        </Button>
+                                                                    )}
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(cte)}>
+                                                                        <Pencil className="w-3 h-3" />
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                                        if (confirm("Excluir este CTE?")) deleteMutation.mutate(cte.id);
+                                                                    }}>
+                                                                        <Trash2 className="w-3 h-3 text-red-600" />
+                                                                    </Button>
+                                                                </div>
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    return null;
+                                                })}
                                             </TableRow>
                                         ))
                                     )}

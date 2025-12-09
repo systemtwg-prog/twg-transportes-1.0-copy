@@ -22,6 +22,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import ScannerCamera from "@/components/shared/ScannerCamera";
 import ImportadorCTE from "@/components/cte/ImportadorCTE";
+import ConsultaSEFAZ from "@/components/cte/ConsultaSEFAZ";
 
 function FlipbookViewer({ files, onClose }) {
     const [currentPage, setCurrentPage] = useState(0);
@@ -156,6 +157,8 @@ export default function ComprovantesCtes() {
     const [showDuplicados, setShowDuplicados] = useState(false);
     const [duplicados, setDuplicados] = useState([]);
     const [duplicadosSelecionados, setDuplicadosSelecionados] = useState([]);
+    const [showConsultaSEFAZ, setShowConsultaSEFAZ] = useState(false);
+    const [tipoConsulta, setTipoConsulta] = useState("cte");
     const [columnWidths, setColumnWidths] = useState({});
     const [columnOrder, setColumnOrder] = useState([]);
     const [resizingColumn, setResizingColumn] = useState(null);
@@ -734,6 +737,23 @@ export default function ComprovantesCtes() {
         }
     };
 
+    const handleConsultaSEFAZ = (dados) => {
+        // Preencher formulário com dados da SEFAZ
+        setForm(prev => ({
+            ...prev,
+            numero_cte: dados.numero_cte || prev.numero_cte,
+            data: dados.data || prev.data,
+            remetente: dados.remetente || prev.remetente,
+            destinatario: dados.destinatario || prev.destinatario,
+            valor_cobrado: dados.valor_cobrado || prev.valor_cobrado,
+            peso: dados.peso || prev.peso,
+            nfe: dados.nfe || prev.nfe,
+            valor_nf: dados.valor_nf || prev.valor_nf
+        }));
+        setShowForm(true);
+        toast.success("Dados preenchidos automaticamente!");
+    };
+
     const handlePasteExtract = async () => {
         if (!pasteText.trim()) return;
         setExtracting(true);
@@ -959,6 +979,14 @@ export default function ComprovantesCtes() {
                         >
                             <AlertTriangle className="w-4 h-4 mr-2" />
                             Duplicados
+                        </Button>
+                        <Button 
+                            onClick={() => { setTipoConsulta("cte"); setShowConsultaSEFAZ(true); }}
+                            variant="outline"
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <Search className="w-4 h-4 mr-2" />
+                            Consultar SEFAZ
                         </Button>
                         <Button 
                             onClick={() => setShowCalculadora(true)}
@@ -1504,6 +1532,14 @@ export default function ComprovantesCtes() {
                 open={showImportador} 
                 onClose={() => setShowImportador(false)}
                 onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] })}
+            />
+
+            {/* Consulta SEFAZ */}
+            <ConsultaSEFAZ 
+                open={showConsultaSEFAZ}
+                onClose={() => setShowConsultaSEFAZ(false)}
+                onDadosEncontrados={handleConsultaSEFAZ}
+                tipo={tipoConsulta}
             />
 
             {/* Scanner Camera */}

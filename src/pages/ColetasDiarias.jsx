@@ -20,6 +20,7 @@ export default function ColetasDiarias() {
     const [dataFiltro, setDataFiltro] = useState("");
     const [searchFiltro, setSearchFiltro] = useState("");
     const [motoristaFiltro, setMotoristaFiltro] = useState("");
+    const [ordenacao, setOrdenacao] = useState("prioridade"); // prioridade, cidade
     const [activeTab, setActiveTab] = useState("pendentes");
     const [criandoOrdem, setCriandoOrdem] = useState(null);
     const printRef = useRef();
@@ -154,15 +155,29 @@ export default function ColetasDiarias() {
         coletasFiltradas = coletasFiltradas.filter(c => c.motorista_id === motoristaFiltro);
     }
 
-    const coletasPendentes = coletasFiltradas
-        .filter(c => c.status === "pendente" || !c.status)
-        .sort((a, b) => {
-            // Primeiro por prioridade (prioritários primeiro)
+    // Ordenar coletas
+    const ordenarColetas = (coletas) => {
+        if (ordenacao === "cidade") {
+            return [...coletas].sort((a, b) => {
+                const cidadeA = (a.remetente_cidade || "").toLowerCase();
+                const cidadeB = (b.remetente_cidade || "").toLowerCase();
+                return cidadeA.localeCompare(cidadeB);
+            });
+        }
+        
+        // Ordenação padrão por prioridade e ordem
+        return [...coletas].sort((a, b) => {
             if (b.prioridade !== a.prioridade) return (b.prioridade ? 1 : 0) - (a.prioridade ? 1 : 0);
-            // Depois por ordem (menor ordem primeiro)
             return (a.ordem || 0) - (b.ordem || 0);
         });
-    const coletasRealizadas = coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado");
+    };
+
+    const coletasPendentes = ordenarColetas(
+        coletasFiltradas.filter(c => c.status === "pendente" || !c.status)
+    );
+    const coletasRealizadas = ordenarColetas(
+        coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado")
+    );
 
     const statusColors = {
         pendente: "bg-amber-100 text-amber-700",
@@ -519,7 +534,7 @@ export default function ColetasDiarias() {
                                 )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Select value={motoristaFiltro} onValueChange={setMotoristaFiltro}>
                                 <SelectTrigger className="w-full md:w-64 bg-white">
                                     <SelectValue placeholder="Filtrar por motorista..." />
@@ -536,6 +551,16 @@ export default function ColetasDiarias() {
                                     <X className="w-4 h-4" />
                                 </Button>
                             )}
+                            
+                            <Select value={ordenacao} onValueChange={setOrdenacao}>
+                                <SelectTrigger className="w-full md:w-48 bg-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="prioridade">Ordenar por Prioridade</SelectItem>
+                                    <SelectItem value="cidade">Ordenar por Cidade</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>

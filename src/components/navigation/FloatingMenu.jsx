@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer
+    Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -35,6 +35,7 @@ const menuItems = [
     { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
     { name: "Relatórios", href: "Relatorios", icon: FileText },
     { name: "Performance", href: "RelatorioMotoristas", icon: Award },
+    { name: "Emails", href: "EmailManager", icon: Mail },
     { name: "Configurações", href: "Configuracoes", icon: Settings },
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
     { name: "Backup", href: "Backup", icon: Database },
@@ -46,16 +47,38 @@ const menuItems = [
 export default function FloatingMenu({ currentPage }) {
     const [open, setOpen] = React.useState(false);
 
+    const { data: currentUser } = useQuery({
+        queryKey: ["current-user"],
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch {
+                return null;
+            }
+        }
+    });
+
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
-    // Se não houver módulos configurados, mostrar todos
+    // Filtrar por módulos ativos E permissões do usuário
     const modulosAtivos = config?.[0]?.modulos_ativos;
-    const menuFiltrado = modulosAtivos && modulosAtivos.length > 0 
-        ? menuItems.filter(item => modulosAtivos.includes(item.href))
-        : menuItems;
+    const isAdmin = currentUser?.role === "admin";
+    const paginasPermitidas = currentUser?.paginas_permitidas || [];
+
+    const menuFiltrado = menuItems.filter(item => {
+        // Admin vê tudo
+        if (isAdmin) {
+            return modulosAtivos && modulosAtivos.length > 0 
+                ? modulosAtivos.includes(item.href)
+                : true;
+        }
+        
+        // Usuário comum só vê páginas permitidas
+        return paginasPermitidas.includes(item.href);
+    });
 
     const handleLogout = () => {
         // Limpar sessão de desbloqueio ao sair

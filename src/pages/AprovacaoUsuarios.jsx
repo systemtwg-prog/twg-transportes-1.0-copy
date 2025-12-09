@@ -12,32 +12,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
     UserCheck, UserX, Users, Shield, Search, 
-    Settings, Check, X, Clock, Mail, Zap, Save
+    Settings, Check, X, Clock, Mail, Zap, Save, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const TODAS_PAGINAS = [
-    { id: "Home", nome: "Home" },
-    { id: "ComprovantesInternos", nome: "Comprovantes de Entrega" },
-    { id: "NotaDeposito", nome: "Nota Depósito" },
-    { id: "ColetasDiarias", nome: "Coletas Diárias" },
-    { id: "OrdensColeta", nome: "Ordens de Coleta" },
-    { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas" },
-    { id: "Romaneios", nome: "Romaneios/Entregas" },
-    { id: "RotasGPS", nome: "Rotas GPS" },
-    { id: "Clientes", nome: "Clientes" },
-    { id: "Motoristas", nome: "Colaboradores" },
-    { id: "Veiculos", nome: "Veículos" },
-    { id: "Rastreamento", nome: "Rastreamento" },
-    { id: "Comprovantes", nome: "Comprovantes" },
-    { id: "Avisos", nome: "Avisos" },
-    { id: "Relatorios", nome: "Relatórios" },
-    { id: "RelatorioMotoristas", nome: "Performance" },
-    { id: "Configuracoes", nome: "Configurações" },
-    { id: "AprovacaoUsuarios", nome: "Gerenciar Usuários" },
-    { id: "PersonalizarHome", nome: "Personalizar Home" },
-    { id: "Backup", nome: "Backup e Restauração" }
+    { id: "HomeDesktop", nome: "Home Desktop", category: "principal" },
+    { id: "Home", nome: "Home Mobile", category: "principal" },
+    { id: "NotaDeposito", nome: "Nota Depósito", category: "operacional" },
+    { id: "ComprovantesInternos", nome: "Comprovantes de Entrega", category: "operacional" },
+    { id: "ComprovantesCtes", nome: "Comprovantes CTEs", category: "operacional" },
+    { id: "ColetasDiarias", nome: "Coletas Diárias", category: "operacional" },
+    { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas", category: "operacional" },
+    { id: "OrdensColeta", nome: "Ordens de Coleta", category: "operacional" },
+    { id: "NotasFiscais", nome: "Notas Fiscais", category: "documentos" },
+    { id: "MascaraRomaneio", nome: "Máscara Romaneio", category: "documentos" },
+    { id: "RomaneiosGerados", nome: "Romaneios Gerados", category: "documentos" },
+    { id: "ImpressaoRelatorio", nome: "Impressão Relatório", category: "documentos" },
+    { id: "ServicosSNF", nome: "Serviços S/NF", category: "documentos" },
+    { id: "Clientes", nome: "Clientes", category: "cadastros" },
+    { id: "ClientesSNF", nome: "Clientes S/NF", category: "cadastros" },
+    { id: "Transportadoras", nome: "Transportadoras", category: "cadastros" },
+    { id: "Motoristas", nome: "Colaboradores", category: "cadastros" },
+    { id: "Veiculos", nome: "Veículos", category: "cadastros" },
+    { id: "RotasGPS", nome: "Rotas GPS", category: "monitoramento" },
+    { id: "Rastreamento", nome: "Rastreamento", category: "monitoramento" },
+    { id: "BuscaMultas", nome: "Busca Multas", category: "monitoramento" },
+    { id: "ExtratorGoogle", nome: "Extrator Google", category: "ferramentas" },
+    { id: "ImportacaoDocumentos", nome: "Importar Documentos", category: "ferramentas" },
+    { id: "EmailManager", nome: "Emails", category: "ferramentas" },
+    { id: "Relatorios", nome: "Relatórios", category: "relatorios" },
+    { id: "RelatorioMotoristas", nome: "Performance", category: "relatorios" },
+    { id: "Avisos", nome: "Avisos", category: "admin" },
+    { id: "Configuracoes", nome: "Configurações", category: "admin" },
+    { id: "AprovacaoUsuarios", nome: "Gerenciar Usuários", category: "admin" },
+    { id: "Backup", nome: "Backup", category: "admin" },
+    { id: "PersonalizarHome", nome: "Personalizar Home", category: "admin" },
+    { id: "ConfiguracaoModulos", nome: "Config. Módulos", category: "admin" }
 ];
 
 // Páginas padrão para aprovação automática
@@ -112,6 +124,14 @@ export default function AprovacaoUsuarios() {
             queryClient.invalidateQueries({ queryKey: ["usuarios"] });
             toast.success("Usuário atualizado!");
             setShowPermissions(false);
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => base44.entities.User.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+            toast.success("Usuário excluído!");
         }
     });
 
@@ -323,6 +343,19 @@ export default function AprovacaoUsuarios() {
                                               Tornar Admin
                                           </Button>
                                       )}
+                                      <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => {
+                                              if (confirm(`Excluir usuário ${user.full_name}?\n\nEsta ação não pode ser desfeita.`)) {
+                                                  deleteMutation.mutate(user.id);
+                                              }
+                                          }}
+                                          className="border-red-300 text-red-600 hover:bg-red-50"
+                                      >
+                                          <Trash2 className="w-4 h-4 mr-1" />
+                                          Excluir
+                                      </Button>
                                   </div>
                               )}
                             {user.status === "rejeitado" && (
@@ -589,34 +622,57 @@ export default function AprovacaoUsuarios() {
                             {selectedUser.tipo_usuario !== "admin" && selectedUser.role !== "admin" && (
                                 <div className="space-y-3">
                                     <Label className="font-semibold">Páginas Permitidas</Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {TODAS_PAGINAS.map(pagina => (
-                                            <div 
-                                                key={pagina.id}
-                                                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                                                    (selectedUser.paginas_permitidas || []).includes(pagina.id)
-                                                        ? "bg-blue-50 border-blue-300 text-blue-800"
-                                                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                                                }`}
-                                                onClick={() => handleTogglePagina(pagina.id)}
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                                        (selectedUser.paginas_permitidas || []).includes(pagina.id)
-                                                            ? "bg-blue-500 border-blue-500"
-                                                            : "border-slate-300"
-                                                    }`}>
-                                                        {(selectedUser.paginas_permitidas || []).includes(pagina.id) && (
-                                                            <Check className="w-3 h-3 text-white" />
-                                                        )}
-                                                    </div>
-                                                    <span className="text-sm">{pagina.nome}</span>
+
+                                    {/* Agrupar por categoria */}
+                                    {["principal", "operacional", "documentos", "cadastros", "monitoramento", "ferramentas", "relatorios", "admin"].map(cat => {
+                                        const paginasCategoria = TODAS_PAGINAS.filter(p => p.category === cat);
+                                        if (paginasCategoria.length === 0) return null;
+
+                                        const categoriaLabel = {
+                                            principal: "Principal",
+                                            operacional: "Operacional",
+                                            documentos: "Documentos",
+                                            cadastros: "Cadastros",
+                                            monitoramento: "Monitoramento",
+                                            ferramentas: "Ferramentas",
+                                            relatorios: "Relatórios",
+                                            admin: "Administração"
+                                        }[cat];
+
+                                        return (
+                                            <div key={cat} className="space-y-2">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">{categoriaLabel}</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {paginasCategoria.map(pagina => (
+                                                        <div 
+                                                            key={pagina.id}
+                                                            className={`p-2 rounded-lg border cursor-pointer transition-all ${
+                                                                (selectedUser.paginas_permitidas || []).includes(pagina.id)
+                                                                    ? "bg-blue-50 border-blue-300 text-blue-800"
+                                                                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                                                            }`}
+                                                            onClick={() => handleTogglePagina(pagina.id)}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                                                    (selectedUser.paginas_permitidas || []).includes(pagina.id)
+                                                                        ? "bg-blue-500 border-blue-500"
+                                                                        : "border-slate-300"
+                                                                }`}>
+                                                                    {(selectedUser.paginas_permitidas || []).includes(pagina.id) && (
+                                                                        <Check className="w-3 h-3 text-white" />
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-xs">{pagina.nome}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        );
+                                    })}
                                 </div>
-                            )}
+                                )}
 
                             <div className="flex justify-end gap-3 pt-4 border-t">
                                 <Button variant="outline" onClick={() => setShowPermissions(false)}>

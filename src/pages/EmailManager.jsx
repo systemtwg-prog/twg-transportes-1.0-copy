@@ -17,6 +17,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function EmailManager() {
+    const [provedor, setProvedor] = useState("gmail"); // gmail, outlook, imap
+    const [showConfigIMAP, setShowConfigIMAP] = useState(false);
+    const [imapConfig, setImapConfig] = useState({
+        host: "",
+        port: 993,
+        user: "",
+        password: "",
+        tls: true
+    });
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -170,31 +179,69 @@ export default function EmailManager() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-sm text-blue-700">
-                                Para usar o gerenciador de emails, você precisa autorizar o acesso ao Gmail.
-                            </p>
+                        <div className="space-y-2">
+                            <Label>Provedor de Email</Label>
+                            <Select value={provedor} onValueChange={setProvedor}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gmail">Gmail (Google)</SelectItem>
+                                    <SelectItem value="outlook">Outlook (Microsoft)</SelectItem>
+                                    <SelectItem value="hostinger">Hostinger</SelectItem>
+                                    <SelectItem value="hostgator">HostGator</SelectItem>
+                                    <SelectItem value="imap">Outro (IMAP)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <Button 
-                            onClick={checkAuthorization}
-                            disabled={checkingAuth}
-                            className="w-full bg-blue-600 hover:bg-blue-700"
-                        >
-                            {checkingAuth ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Verificando...
-                                </>
-                            ) : (
-                                <>
-                                    <Mail className="w-4 h-4 mr-2" />
-                                    Verificar Autorização
-                                </>
-                            )}
-                        </Button>
-                        <p className="text-xs text-slate-500 text-center">
-                            Se não estiver autorizado, configure o App Connector do Gmail nas configurações.
-                        </p>
+
+                        {provedor === "gmail" && (
+                            <>
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-sm text-blue-700">
+                                        Para Gmail, você precisa autorizar o acesso via App Connector.
+                                    </p>
+                                </div>
+                                <Button 
+                                    onClick={checkAuthorization}
+                                    disabled={checkingAuth}
+                                    className="w-full bg-blue-600 hover:bg-blue-700"
+                                >
+                                    {checkingAuth ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Verificando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Mail className="w-4 h-4 mr-2" />
+                                            Conectar Gmail
+                                        </>
+                                    )}
+                                </Button>
+                            </>
+                        )}
+
+                        {provedor !== "gmail" && (
+                            <>
+                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p className="text-sm text-amber-700">
+                                        <strong>Configure o acesso IMAP:</strong><br/>
+                                        {provedor === "outlook" && "Host: outlook.office365.com, Porta: 993"}
+                                        {provedor === "hostinger" && "Host: seu-dominio.com, Porta: 993"}
+                                        {provedor === "hostgator" && "Host: seu-dominio.com, Porta: 993"}
+                                        {provedor === "imap" && "Configure com os dados do seu provedor"}
+                                    </p>
+                                </div>
+                                <Button 
+                                    onClick={() => setShowConfigIMAP(true)}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Configurar IMAP
+                                </Button>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             </div>

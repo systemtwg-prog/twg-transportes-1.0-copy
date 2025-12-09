@@ -9,7 +9,7 @@ import {
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, 
     Search, Database, Printer, ChevronLeft, ChevronRight, Truck, Building2,
-    Camera, ClipboardList, AlertTriangle, Upload
+    Camera, ClipboardList, AlertTriangle, Upload, Mail
 } from "lucide-react";
 
 const menuItems = [
@@ -35,6 +35,7 @@ const menuItems = [
     { name: "Busca Multas", href: "BuscaMultas", icon: AlertTriangle, category: "monitoramento" },
     { name: "Extrator Google", href: "ExtratorGoogle", icon: Search, category: "ferramentas" },
     { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: Upload, category: "ferramentas" },
+    { name: "Emails", href: "EmailManager", icon: Mail, category: "ferramentas" },
     { name: "Relatórios", href: "Relatorios", icon: FileText, category: "relatorios" },
     { name: "Performance", href: "RelatorioMotoristas", icon: Award, category: "relatorios" },
     { name: "Avisos", href: "Avisos", icon: Bell, category: "admin" },
@@ -59,16 +60,38 @@ const categories = [
 export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
     const navigate = useNavigate();
 
+    const { data: currentUser } = useQuery({
+        queryKey: ["current-user"],
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch {
+                return null;
+            }
+        }
+    });
+
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
     });
 
-    // Se não houver módulos configurados, mostrar todos
+    // Filtrar por módulos ativos E permissões do usuário
     const modulosAtivos = config?.[0]?.modulos_ativos;
-    const menuFiltrado = modulosAtivos && modulosAtivos.length > 0 
-        ? menuItems.filter(item => modulosAtivos.includes(item.href) || item.href === "HomeDesktop")
-        : menuItems;
+    const isAdmin = currentUser?.role === "admin";
+    const paginasPermitidas = currentUser?.paginas_permitidas || [];
+
+    const menuFiltrado = menuItems.filter(item => {
+        // Admin vê tudo (filtrado por módulos ativos)
+        if (isAdmin) {
+            return modulosAtivos && modulosAtivos.length > 0 
+                ? modulosAtivos.includes(item.href) || item.href === "HomeDesktop"
+                : true;
+        }
+        
+        // Usuário comum só vê páginas permitidas
+        return paginasPermitidas.includes(item.href) || item.href === "HomeDesktop";
+    });
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

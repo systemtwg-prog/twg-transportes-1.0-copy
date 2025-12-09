@@ -153,6 +153,8 @@ export default function ComprovantesCtes() {
     const [showTomadorDialog, setShowTomadorDialog] = useState(false);
     const [tomadorForm, setTomadorForm] = useState({ nome: "", cnpj: "", endereco: "", cidade: "", uf: "", telefone: "" });
     const [editingTomador, setEditingTomador] = useState(null);
+    const [showDuplicados, setShowDuplicados] = useState(false);
+    const [duplicados, setDuplicados] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: comprovantes = [], isLoading } = useQuery({
@@ -314,6 +316,29 @@ export default function ComprovantesCtes() {
             toast.success("CTEs excluídos!");
         }
     });
+
+    const identificarDuplicados = () => {
+        const grupos = {};
+        comprovantes.forEach(cte => {
+            if (cte.numero_cte) {
+                const key = cte.numero_cte.trim().toLowerCase();
+                if (!grupos[key]) grupos[key] = [];
+                grupos[key].push(cte);
+            }
+        });
+
+        const duplicadosEncontrados = Object.entries(grupos)
+            .filter(([_, ctes]) => ctes.length > 1)
+            .map(([numeroCte, ctes]) => ({ numeroCte, ctes }));
+
+        if (duplicadosEncontrados.length === 0) {
+            toast.info("Nenhum CTE duplicado encontrado!");
+            return;
+        }
+
+        setDuplicados(duplicadosEncontrados);
+        setShowDuplicados(true);
+    };
 
     const resetForm = () => {
         setForm({
@@ -751,6 +776,14 @@ export default function ComprovantesCtes() {
                         >
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Cadastro Status
+                        </Button>
+                        <Button 
+                            onClick={identificarDuplicados}
+                            variant="outline"
+                            className="border-red-500 text-red-600 hover:bg-red-50"
+                        >
+                            <AlertTriangle className="w-4 h-4 mr-2" />
+                            Duplicados
                         </Button>
                         <Button 
                             onClick={() => setShowCalculadora(true)}
@@ -1759,6 +1792,103 @@ export default function ComprovantesCtes() {
                                 ← Apagar
                             </Button>
                         </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Duplicados */}
+            <Dialog open={showDuplicados} onOpenChange={setShowDuplicados}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-red-600" />
+                            CTEs Duplicados ({duplicados.reduce((acc, d) => acc + d.ctes.length, 0)} registros)
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-700">
+                                <strong>Atenção:</strong> Foram encontrados {duplicados.length} número(s) de CTE com registros duplicados. 
+                                Revise os dados e exclua os registros indesejados.
+                            </p>
+                        </div>
+
+                        {duplicados.map((grupo, index) => (
+                            <Card key={index} className="border-2 border-red-200">
+                                <CardHeader className="bg-red-50 pb-3">
+                                    <CardTitle className="text-lg flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-red-600" />
+                                        CTE: {grupo.numeroCte}
+                                        <Badge className="bg-red-100 text-red-700 ml-2">
+                                            {grupo.ctes.length} duplicatas
+                                        </Badge>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 space-y-3">
+                                    {grupo.ctes.map((cte, cteIndex) => (
+                                        <div key={cte.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border">
+                                            <div className="flex-1 space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className="text-xs">#{cteIndex + 1}</Badge>
+                                                    <span className="text-sm text-slate-500">
+                                                        {formatDate(cte.data)}
+                                                    </span>
+                                                </div>
+                                                <p className="font-medium text-sm">
+                                                    {cte.remetente || "-"} → {cte.destinatario || "-"}
+                                                </p>
+                                                <div className="grid grid-cols-4 gap-2 text-xs text-slate-600">
+                                                    <span>NFE: {cte.nfe || "-"}</span>
+                                                    <span>Vol: {cte.volume || "-"}</span>
+                                                    <span>Peso: {cte.peso || "-"}</span>
+                                                    <span>Vl. Cobrado: {cte.valor_cobrado || "-"}</span>
+                                                </div>
+                                                {cte.observacoes && (
+                                                    <p className="text-xs text-slate-500 mt-1">Obs: {cte.observacoes}</p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleEdit(cte)}
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    className="h-8 w-8 text-red-600 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        if (confirm(`Excluir este registro?\n\nCTE: ${cte.numero_cte}\n${cte.remetente} → ${cte.destinatario}`)) {
+                                                            deleteMutation.mutate(cte.id);
+                                                            // Atualizar lista de duplicados
+                                                            setDuplicados(prev => {
+                                                                const updated = prev.map(g => {
+                                                                    if (g.numeroCte === grupo.numeroCte) {
+                                                                        const newCtes = g.ctes.filter(c => c.id !== cte.id);
+                                                                        return { ...g, ctes: newCtes };
+                                                                    }
+                                                                    return g;
+                                                                }).filter(g => g.ctes.length > 1);
+                                                                if (updated.length === 0) {
+                                                                    setShowDuplicados(false);
+                                                                    toast.success("Todos os duplicados foram resolvidos!");
+                                                                }
+                                                                return updated;
+                                                            });
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 </DialogContent>
             </Dialog>

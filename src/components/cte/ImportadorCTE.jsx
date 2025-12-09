@@ -195,7 +195,26 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
 
         setSaving(true);
         try {
+            // Buscar todos os CTEs existentes
+            const existingCTEs = await base44.entities.ComprovanteCTE.list();
+            const existingNumbers = new Set(
+                existingCTEs
+                    .filter(c => c.numero_cte)
+                    .map(c => c.numero_cte.trim().toLowerCase())
+            );
+
+            let importados = 0;
+            let duplicados = 0;
+
             for (const row of rowsToSave) {
+                const numeroCte = (row.numero_cte || "").trim();
+                
+                // Verificar se é duplicado
+                if (numeroCte && existingNumbers.has(numeroCte.toLowerCase())) {
+                    duplicados++;
+                    continue;
+                }
+
                 await base44.entities.ComprovanteCTE.create({
                     numero_cte: row.numero_cte || "",
                     remetente: row.remetente || "",
@@ -216,8 +235,17 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
                     status: "pendente",
                     arquivos: []
                 });
+                importados++;
             }
-            toast.success(`${rowsToSave.length} CTE(s) importado(s) com sucesso!`);
+
+            if (importados > 0 && duplicados > 0) {
+                toast.success(`${importados} CTE(s) importado(s). ${duplicados} duplicado(s) ignorado(s).`);
+            } else if (importados > 0) {
+                toast.success(`${importados} CTE(s) importado(s) com sucesso!`);
+            } else if (duplicados > 0) {
+                toast.warning(`Nenhum CTE importado. Todos os ${duplicados} registro(s) já existem no sistema.`);
+            }
+
             onImportSuccess();
             handleClose();
         } catch (err) {

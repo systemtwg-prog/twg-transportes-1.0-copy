@@ -32,6 +32,7 @@ import ServicosSNF from './pages/ServicosSNF';
 import ClientesSNF from './pages/ClientesSNF';
 import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
+import EmailManager from './pages/EmailManager';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "ClientesSNF": ClientesSNF,
     "ConfiguracaoModulos": ConfiguracaoModulos,
     "WhatsAppWeb": WhatsAppWeb,
+    "EmailManager": EmailManager,
 }
 
 export const pagesConfig = {

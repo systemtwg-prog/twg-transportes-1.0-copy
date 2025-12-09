@@ -59,20 +59,20 @@ XML:
 ${xmlText}
 
 IMPORTANTE: Extraia os seguintes campos (use string vazia "" se não encontrar):
-- numero_cte: Número do CTE
-- data: Data de emissão (formato YYYY-MM-DD)
-- remetente: Nome do remetente/expedidor
-- destinatario: Nome do destinatário
-- nfe: Número da NFe vinculada
-- valor_nf: Valor da nota fiscal
-- volume: Quantidade de volumes
-- peso: Peso da carga em KG
-- frete_peso: Valor do frete peso
+- numero_cte: Número do CTE (tag <nCT>)
+- data: Data de emissão no formato DD/MM/YYYY (tag <dhEmi>)
+- remetente: Nome do remetente/expedidor (tag <xNome> dentro de <rem>)
+- destinatario: Nome do destinatário (tag <xNome> dentro de <dest>)
+- nfe: APENAS o número da NFe (tag <nDoc> dentro de <infNFe> ou <infNF>), sem prefixo "NFe"
+- valor_nf: Valor da nota fiscal (tag <vNF> ou <vMerc>)
+- volume: Quantidade de volumes (tag <qVol>)
+- peso: Peso da carga em KG (tag <pesoB> ou <pesoL>)
+- frete_peso: Valor do frete peso (tag <vTPrest> ou componente de frete)
 - coleta: Valor da coleta
-- seguro: Valor do seguro
-- pedagio: Valor do pedágio
+- seguro: Valor do seguro (tag <vSeg>)
+- pedagio: Valor do pedágio (tag <vPed>)
 - outros: Outros valores
-- valor_cobrado: Valor total cobrado
+- valor_cobrado: Valor total cobrado (tag <vTPrest>)
 - porcentagem: Porcentagem
 - mdfe: Número do MDFe
 
@@ -105,7 +105,8 @@ Retorne um JSON com esses campos extraídos.`,
                         id: Date.now() + allData.length,
                         selected: true,
                         arquivo: file.name,
-                        ...result
+                        ...result,
+                        data: formatarDataExibicao(result.data)
                     });
                 }
             }
@@ -149,7 +150,9 @@ Retorne um JSON com esses campos extraídos.`,
 
     const parseDataBR = (dataStr) => {
         if (!dataStr) return format(new Date(), "yyyy-MM-dd");
+        // Se já está no formato YYYY-MM-DD
         if (/^\d{4}-\d{2}-\d{2}$/.test(dataStr)) return dataStr;
+        // Se está no formato DD/MM/YYYY
         const match = dataStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
         if (match) {
             const dia = match[1].padStart(2, '0');
@@ -226,6 +229,18 @@ Retorne um JSON com esses campos extraídos.`,
             toast.error("Erro ao salvar CTEs");
         }
         setSaving(false);
+    };
+
+    const formatarDataExibicao = (data) => {
+        if (!data) return "";
+        // Se já está em DD/MM/YYYY, retorna
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) return data;
+        // Se está em YYYY-MM-DD, converte
+        if (/^\d{4}-\d{2}-\d{2}/.test(data)) {
+            const [ano, mes, dia] = data.split('T')[0].split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+        return data;
     };
 
     const CAMPOS_VISIVEIS = [

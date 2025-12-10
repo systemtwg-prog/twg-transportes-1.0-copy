@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Users, Building2, 
-    Phone, MapPin, FileText, Star, Upload, ClipboardPaste, Sparkles, X
+    Phone, MapPin, FileText, Star, Upload, ClipboardPaste, Sparkles, X, ArrowUpDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
@@ -21,6 +22,7 @@ export default function Clientes() {
     const [editingCliente, setEditingCliente] = useState(null);
     const [search, setSearch] = useState("");
     const [filterFavoritos, setFilterFavoritos] = useState(false);
+    const [ordenacao, setOrdenacao] = useState("favoritos"); // favoritos, nome, cidade
     const queryClient = useQueryClient();
 
     const { data: clientes = [], isLoading } = useQuery({
@@ -296,10 +298,19 @@ IMPORTANTE:
         filteredClientes = filteredClientes.filter(c => c.favorito);
     }
 
-    // Ordenar favoritos primeiro
+    // Ordenar conforme seleção
     filteredClientes.sort((a, b) => {
-        if (a.favorito && !b.favorito) return -1;
-        if (!a.favorito && b.favorito) return 1;
+        if (ordenacao === "favoritos") {
+            if (a.favorito && !b.favorito) return -1;
+            if (!a.favorito && b.favorito) return 1;
+            return 0;
+        } else if (ordenacao === "nome") {
+            return (a.razao_social || "").localeCompare(b.razao_social || "");
+        } else if (ordenacao === "cidade") {
+            const cidadeA = `${a.cidade || ""}/${a.uf || ""}`;
+            const cidadeB = `${b.cidade || ""}/${b.uf || ""}`;
+            return cidadeA.localeCompare(cidadeB);
+        }
         return 0;
     });
 
@@ -427,17 +438,30 @@ IMPORTANTE:
                     </Card>
                 </div>
 
-                {/* Search */}
+                {/* Search and Sort */}
                 <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md">
                     <CardContent className="p-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <Input
-                                placeholder="Buscar por nome, código ou CNPJ..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 bg-white border-slate-200"
-                            />
+                        <div className="flex flex-col md:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                                    placeholder="Buscar por nome, código ou CNPJ..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-10 bg-white border-slate-200"
+                                />
+                            </div>
+                            <Select value={ordenacao} onValueChange={setOrdenacao}>
+                                <SelectTrigger className="w-full md:w-56 bg-white">
+                                    <ArrowUpDown className="w-4 h-4 mr-2" />
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="favoritos">Ordenar por Favoritos</SelectItem>
+                                    <SelectItem value="nome">Ordenar por Nome</SelectItem>
+                                    <SelectItem value="cidade">Ordenar por Cidade</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>

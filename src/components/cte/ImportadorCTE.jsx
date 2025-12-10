@@ -205,6 +205,10 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
         }
 
         setSaving(true);
+        let importados = 0;
+        let duplicados = 0;
+        const erros = [];
+        
         try {
             // Buscar todos os CTEs existentes
             const existingCTEs = await base44.entities.ComprovanteCTE.list();
@@ -214,54 +218,70 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
                     .map(c => c.numero_cte.trim().toLowerCase())
             );
 
-            let importados = 0;
-            let duplicados = 0;
-
-            for (const row of rowsToSave) {
+            for (let i = 0; i < rowsToSave.length; i++) {
+                const row = rowsToSave[i];
                 const numeroCte = (row.numero_cte || "").trim();
                 
-                // Verificar se é duplicado
-                if (numeroCte && existingNumbers.has(numeroCte.toLowerCase())) {
-                    duplicados++;
-                    continue;
+                try {
+                    // Verificar se é duplicado
+                    if (numeroCte && existingNumbers.has(numeroCte.toLowerCase())) {
+                        duplicados++;
+                        continue;
+                    }
+
+                    await base44.entities.ComprovanteCTE.create({
+                        numero_cte: row.numero_cte || "",
+                        remetente: row.remetente || "",
+                        destinatario: row.destinatario || "",
+                        nfe: row.nfe || "",
+                        valor_nf: row.valor_nf || "",
+                        volume: row.volume || "",
+                        peso: row.peso || "",
+                        frete_peso: row.frete_peso || "",
+                        coleta: row.coleta || "",
+                        seguro: row.seguro || "",
+                        pedagio: row.pedagio || "",
+                        outros: row.outros || "",
+                        valor_cobrado: row.valor_cobrado || "",
+                        porcentagem: row.porcentagem || "",
+                        mdfe: row.mdfe || "",
+                        data: parseDataBR(row.data),
+                        status: "pendente",
+                        arquivos: []
+                    });
+                    importados++;
+                } catch (error) {
+                    erros.push({
+                        linha: i + 1,
+                        cte: numeroCte || "sem número",
+                        erro: error.message || "Erro desconhecido"
+                    });
                 }
+            }
 
-                await base44.entities.ComprovanteCTE.create({
-                    numero_cte: row.numero_cte || "",
-                    remetente: row.remetente || "",
-                    destinatario: row.destinatario || "",
-                    nfe: row.nfe || "",
-                    valor_nf: row.valor_nf || "",
-                    volume: row.volume || "",
-                    peso: row.peso || "",
-                    frete_peso: row.frete_peso || "",
-                    coleta: row.coleta || "",
-                    seguro: row.seguro || "",
-                    pedagio: row.pedagio || "",
-                    outros: row.outros || "",
-                    valor_cobrado: row.valor_cobrado || "",
-                    porcentagem: row.porcentagem || "",
-                    mdfe: row.mdfe || "",
-                    data: parseDataBR(row.data),
-                    status: "pendente",
-                    arquivos: []
+            // Montar mensagem final
+            let mensagem = `📊 RESULTADO DA IMPORTAÇÃO:\n\n`;
+            mensagem += `✅ ${importados} registro(s) importado(s)\n`;
+            if (duplicados > 0) mensagem += `⚠️ ${duplicados} registro(s) duplicado(s) ignorado(s)\n`;
+            if (erros.length > 0) {
+                mensagem += `❌ ${erros.length} registro(s) com erro:\n`;
+                erros.slice(0, 5).forEach(e => {
+                    mensagem += `  • Linha ${e.linha} (CTE: ${e.cte}): ${e.erro}\n`;
                 });
-                importados++;
+                if (erros.length > 5) mensagem += `  ... e mais ${erros.length - 5} erro(s)\n`;
             }
 
-            if (importados > 0 && duplicados > 0) {
-                toast.success(`${importados} CTE(s) importado(s). ${duplicados} duplicado(s) ignorado(s).`);
-            } else if (importados > 0) {
-                toast.success(`${importados} CTE(s) importado(s) com sucesso!`);
-            } else if (duplicados > 0) {
-                toast.warning(`Nenhum CTE importado. Todos os ${duplicados} registro(s) já existem no sistema.`);
+            if (importados > 0) {
+                toast.success(mensagem, { duration: 8000 });
+                onImportSuccess();
+                handleClose();
+            } else {
+                toast.warning(mensagem, { duration: 8000 });
             }
-
-            onImportSuccess();
-            handleClose();
+            
         } catch (err) {
             console.error(err);
-            toast.error("Erro ao salvar CTEs");
+            toast.error(`Erro fatal ao importar: ${err.message}`);
         }
         setSaving(false);
     };

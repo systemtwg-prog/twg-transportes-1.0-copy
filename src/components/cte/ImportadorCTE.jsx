@@ -135,17 +135,28 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
 
     const applyMapping = () => {
         const mapped = rawData.map((row, rowIndex) => {
-            const obj = { id: Date.now() + rowIndex, selected: true };
-            Object.entries(columnMapping).forEach(([colIndex, fieldKey]) => {
+            const obj = { 
+                id: `${Date.now()}-${rowIndex}-${Math.random().toString(36).substr(2, 9)}`, 
+                selected: true 
+            };
+            
+            // Garantir que todas as colunas mapeadas sejam aplicadas corretamente
+            headers.forEach((header, colIndex) => {
+                const fieldKey = columnMapping[colIndex];
                 if (fieldKey && fieldKey !== "ignorar") {
-                    obj[fieldKey] = row[parseInt(colIndex)] || "";
+                    const cellValue = row[colIndex];
+                    obj[fieldKey] = cellValue !== undefined && cellValue !== null ? String(cellValue).trim() : "";
                 }
             });
+            
             return obj;
         });
+        
         setMappedData(mapped);
         setSelectedRows(mapped.map(r => r.id));
         setStep(3);
+        
+        console.log("Dados mapeados:", mapped);
     };
 
     const toggleRowSelection = (id) => {
@@ -433,13 +444,13 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-700">
-                                            <TableHead className="text-white w-10">
+                                            <TableHead className="text-white w-10 sticky left-0 z-10 bg-slate-700">
                                                 <Checkbox 
                                                     checked={selectedRows.length === mappedData.length}
                                                     onCheckedChange={toggleSelectAll}
                                                 />
                                             </TableHead>
-                                            {CAMPOS_CTE.slice(0, 10).map(campo => (
+                                            {CAMPOS_CTE.map(campo => (
                                                 <TableHead key={campo.key} className="text-white text-xs whitespace-nowrap">
                                                     {campo.label}
                                                 </TableHead>
@@ -452,13 +463,13 @@ export default function ImportadorCTE({ open, onClose, onImportSuccess }) {
                                                 key={row.id} 
                                                 className={selectedRows.includes(row.id) ? "bg-emerald-50" : "bg-slate-50"}
                                             >
-                                                <TableCell>
+                                                <TableCell className="sticky left-0 z-10 bg-inherit">
                                                     <Checkbox 
                                                         checked={selectedRows.includes(row.id)}
                                                         onCheckedChange={() => toggleRowSelection(row.id)}
                                                     />
                                                 </TableCell>
-                                                {CAMPOS_CTE.slice(0, 10).map(campo => (
+                                                {CAMPOS_CTE.map(campo => (
                                                     <TableCell key={campo.key} className="p-1">
                                                         {editingCell === `${row.id}-${campo.key}` ? (
                                                             <Input

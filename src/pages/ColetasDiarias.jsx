@@ -147,7 +147,11 @@ export default function ColetasDiarias() {
         const search = searchFiltro.toLowerCase();
         coletasFiltradas = coletasFiltradas.filter(c => 
             c.remetente_nome?.toLowerCase().includes(search) ||
-            c.destinatario_nome?.toLowerCase().includes(search)
+            c.destinatario_nome?.toLowerCase().includes(search) ||
+            c.remetente_endereco?.toLowerCase().includes(search) ||
+            c.remetente_bairro?.toLowerCase().includes(search) ||
+            c.remetente_cidade?.toLowerCase().includes(search) ||
+            c.remetente_cep?.toLowerCase().includes(search)
         );
     }
 
@@ -513,7 +517,7 @@ export default function ColetasDiarias() {
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <Input
-                                    placeholder="Buscar por remetente ou destinatário..."
+                                    placeholder="Buscar por nome, endereço, bairro, cidade ou CEP..."
                                     value={searchFiltro}
                                     onChange={(e) => setSearchFiltro(e.target.value)}
                                     className="pl-10 bg-white"

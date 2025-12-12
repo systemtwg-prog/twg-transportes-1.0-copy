@@ -472,6 +472,8 @@ export default function AdicionarColetaDiaria() {
             
             if (response.ok) {
                 const dados = await response.json();
+                const nomeEmpresa = dados.nome_fantasia || dados.razao_social;
+                
                 setClienteForm(prev => ({
                     ...prev,
                     razao_social: dados.razao_social || prev.razao_social,
@@ -483,6 +485,40 @@ export default function AdicionarColetaDiaria() {
                     uf: dados.uf || prev.uf,
                     cep: dados.cep || prev.cep
                 }));
+                
+                // Buscar horário de funcionamento online
+                if (nomeEmpresa) {
+                    try {
+                        const endereco = `${dados.logradouro}, ${dados.numero}, ${dados.bairro}, ${dados.municipio} - ${dados.uf}`;
+                        const { data: horarioData } = await base44.integrations.Core.InvokeLLM({
+                            prompt: `Busque o horário de funcionamento da empresa "${nomeEmpresa}" localizada em ${endereco}. Retorne apenas os horários encontrados.`,
+                            add_context_from_internet: true,
+                            response_json_schema: {
+                                type: "object",
+                                properties: {
+                                    horario_inicio: { type: "string", description: "Horário de abertura (ex: 08:00)" },
+                                    horario_fim: { type: "string", description: "Horário de fechamento (ex: 18:00)" },
+                                    almoco_inicio: { type: "string", description: "Início do almoço (ex: 12:00)" },
+                                    almoco_fim: { type: "string", description: "Fim do almoço (ex: 13:00)" }
+                                }
+                            }
+                        });
+                        
+                        if (horarioData?.horario_inicio && horarioData?.horario_fim) {
+                            setClienteForm(prev => ({
+                                ...prev,
+                                horario_funcionamento_inicio: horarioData.horario_inicio,
+                                horario_funcionamento_fim: horarioData.horario_fim,
+                                horario_almoco_inicio: horarioData.almoco_inicio || "",
+                                horario_almoco_fim: horarioData.almoco_fim || ""
+                            }));
+                            toast.success("Horário de funcionamento encontrado!");
+                        }
+                    } catch (error) {
+                        console.error("Erro ao buscar horário:", error);
+                    }
+                }
+                
                 toast.success("Dados do CNPJ encontrados!");
             } else {
                 toast.error("CNPJ não encontrado na base de dados");

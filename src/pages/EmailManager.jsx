@@ -40,10 +40,13 @@ export default function EmailManager() {
     const checkAuthorization = async () => {
         setCheckingAuth(true);
         try {
-            const { data } = await base44.functions.invoke('gmailAuth', {});
-            if (data.authorized) {
-                setAuthorized(true);
-                toast.success("Gmail conectado!");
+            if (provedor === "gmail") {
+                const { data } = await base44.functions.invoke('gmailAuth', {});
+                if (data.authorized) {
+                    setAuthorized(true);
+                    setProvedor("gmail");
+                    toast.success("Gmail conectado!");
+                }
             }
         } catch (error) {
             console.error(error);
@@ -52,10 +55,18 @@ export default function EmailManager() {
         setCheckingAuth(false);
     };
 
+    const handleGmailLogin = async () => {
+        toast.info("Redirecionando para autorização do Gmail...");
+        // Após autorização OAuth, a página irá recarregar e verificar a autorização
+        window.location.reload();
+    };
+
     React.useEffect(() => {
-        checkAuthorization();
         loadImapConfig();
-    }, []);
+        if (provedor === "gmail") {
+            checkAuthorization();
+        }
+    }, [provedor]);
 
     const loadImapConfig = async () => {
         try {
@@ -64,6 +75,7 @@ export default function EmailManager() {
                 setImapConfig(user.email_imap_config);
                 if (user.email_imap_config.user && user.email_imap_config.password) {
                     setAuthorized(true);
+                    setProvedor(user.email_imap_config.provider || "imap");
                 }
             }
         } catch (error) {
@@ -80,7 +92,10 @@ export default function EmailManager() {
         setSavingConfig(true);
         try {
             await base44.auth.updateMe({
-                email_imap_config: imapConfig
+                email_imap_config: {
+                    ...imapConfig,
+                    provider: provedor
+                }
             });
             toast.success("Configuração salva com sucesso!");
             setAuthorized(true);
@@ -148,16 +163,24 @@ export default function EmailManager() {
 
     // Listar emails
     const { data: emailsData, isLoading, refetch } = useQuery({
-        queryKey: ["emails", searchQuery],
+        queryKey: ["emails", searchQuery, provedor],
         queryFn: async () => {
-            const query = searchQuery || "has:attachment";
-            const { data } = await base44.functions.invoke('listarEmails', { 
-                maxResults: 50,
-                query 
-            });
-            return data;
+            if (provedor === "gmail") {
+                const query = searchQuery || "has:attachment";
+                const { data } = await base44.functions.invoke('listarEmails', { 
+                    maxResults: 50,
+                    query 
+                });
+                return data;
+            } else {
+                // IMAP
+                const { data } = await base44.functions.invoke('listarEmailsIMAP', { 
+                    maxResults: 50
+                });
+                return data;
+            }
         },
-        enabled: authorized,
+        enabled: authorized && !editingConfig,
         refetchOnWindowFocus: false
     });
 
@@ -291,12 +314,15 @@ export default function EmailManager() {
                         {provedor === "gmail" && (
                             <>
                                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <p className="text-sm text-blue-700">
-                                        Para Gmail, você precisa autorizar o acesso via App Connector.
+                                    <p className="text-sm text-blue-700 mb-2">
+                                        <strong>Conecte sua conta Gmail</strong>
+                                    </p>
+                                    <p className="text-xs text-blue-600">
+                                        Você será redirecionado para fazer login com sua conta Google e autorizar o acesso aos emails.
                                     </p>
                                 </div>
                                 <Button 
-                                    onClick={checkAuthorization}
+                                    onClick={handleGmailLogin}
                                     disabled={checkingAuth}
                                     className="w-full bg-blue-600 hover:bg-blue-700"
                                 >
@@ -308,7 +334,7 @@ export default function EmailManager() {
                                     ) : (
                                         <>
                                             <Mail className="w-4 h-4 mr-2" />
-                                            Conectar Gmail
+                                            Fazer Login com Gmail
                                         </>
                                     )}
                                 </Button>

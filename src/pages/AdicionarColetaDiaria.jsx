@@ -12,12 +12,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy, AlertTriangle, UserPlus
+    X, Save, Star, Copy, AlertTriangle, UserPlus, Loader2
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import CepAutoComplete from "@/components/cep/CepAutoComplete";
 
 function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente }) {
     const { data: clientes = [] } = useQuery({
@@ -421,7 +422,11 @@ export default function AdicionarColetaDiaria() {
         bairro: "",
         cidade: "",
         uf: "",
-        cep: ""
+        cep: "",
+        horario_funcionamento_inicio: "",
+        horario_funcionamento_fim: "",
+        horario_almoco_inicio: "",
+        horario_almoco_fim: ""
     });
     const queryClient = useQueryClient();
 
@@ -440,7 +445,11 @@ export default function AdicionarColetaDiaria() {
                 bairro: "",
                 cidade: "",
                 uf: "",
-                cep: ""
+                cep: "",
+                horario_funcionamento_inicio: "",
+                horario_funcionamento_fim: "",
+                horario_almoco_inicio: "",
+                horario_almoco_fim: ""
             });
             toast.success("Cliente cadastrado com sucesso!");
         }
@@ -720,6 +729,24 @@ export default function AdicionarColetaDiaria() {
                                 />
                             </div>
                         </div>
+                        
+                        <div className="space-y-2">
+                            <Label>CEP</Label>
+                            <CepAutoComplete
+                                value={clienteForm.cep}
+                                onChange={(cep) => setClienteForm({ ...clienteForm, cep })}
+                                onAddressFound={(address) => {
+                                    setClienteForm(prev => ({
+                                        ...prev,
+                                        endereco: address.logradouro || prev.endereco,
+                                        bairro: address.bairro || prev.bairro,
+                                        cidade: address.localidade || prev.cidade,
+                                        uf: address.uf || prev.uf
+                                    }));
+                                }}
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <Label>Endereço</Label>
                             <Input
@@ -752,6 +779,42 @@ export default function AdicionarColetaDiaria() {
                                 />
                             </div>
                         </div>
+
+                        <div className="space-y-2">
+                            <Label>Horário de Funcionamento</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                    type="time"
+                                    value={clienteForm.horario_funcionamento_inicio}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, horario_funcionamento_inicio: e.target.value })}
+                                    placeholder="Início"
+                                />
+                                <Input
+                                    type="time"
+                                    value={clienteForm.horario_funcionamento_fim}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, horario_funcionamento_fim: e.target.value })}
+                                    placeholder="Fim"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Horário de Almoço</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                    type="time"
+                                    value={clienteForm.horario_almoco_inicio}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, horario_almoco_inicio: e.target.value })}
+                                    placeholder="Início"
+                                />
+                                <Input
+                                    type="time"
+                                    value={clienteForm.horario_almoco_fim}
+                                    onChange={(e) => setClienteForm({ ...clienteForm, horario_almoco_fim: e.target.value })}
+                                    placeholder="Fim"
+                                />
+                            </div>
+                        </div>
                         <div className="flex justify-end gap-2 pt-4">
                             <Button variant="outline" onClick={() => setShowCadastroCliente(false)}>
                                 Cancelar
@@ -761,8 +824,17 @@ export default function AdicionarColetaDiaria() {
                                 disabled={!clienteForm.razao_social || createClienteMutation.isPending}
                                 className="bg-indigo-600 hover:bg-indigo-700"
                             >
-                                <Save className="w-4 h-4 mr-1" />
-                                Cadastrar
+                                {createClienteMutation.isPending ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                        Salvando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-4 h-4 mr-1" />
+                                        Cadastrar
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </div>

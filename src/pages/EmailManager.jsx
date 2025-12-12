@@ -26,6 +26,15 @@ export default function EmailManager() {
         password: "",
         encryption: "SSL/TLS"
     });
+
+    // Configurações padrão por provedor
+    const presetConfigs = {
+        gmail: { host: "imap.gmail.com", port: 993, encryption: "SSL/TLS" },
+        outlook: { host: "outlook.office365.com", port: 993, encryption: "SSL/TLS" },
+        hostinger: { host: "", port: 993, encryption: "SSL/TLS" },
+        hostgator: { host: "", port: 993, encryption: "SSL/TLS" },
+        imap: { host: "", port: 993, encryption: "SSL/TLS" }
+    };
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(false);
     const [savingConfig, setSavingConfig] = useState(false);
@@ -297,7 +306,18 @@ export default function EmailManager() {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Provedor de Email</Label>
-                            <Select value={provedor} onValueChange={setProvedor}>
+                            <Select value={provedor} onValueChange={(value) => {
+                                setProvedor(value);
+                                // Aplicar configurações padrão
+                                if (presetConfigs[value]) {
+                                    setImapConfig(prev => ({
+                                        ...prev,
+                                        host: presetConfigs[value].host,
+                                        port: presetConfigs[value].port,
+                                        encryption: presetConfigs[value].encryption
+                                    }));
+                                }
+                            }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -346,10 +366,11 @@ export default function EmailManager() {
                                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                                     <p className="text-sm text-blue-700">
                                         <strong>Configurações IMAP:</strong><br/>
-                                        {provedor === "outlook" && "Use: outlook.office365.com"}
-                                        {provedor === "hostinger" && "Use: seu-dominio.com (verifique no painel)"}
-                                        {provedor === "hostgator" && "Use: seu-dominio.com (verifique no painel)"}
-                                        {provedor === "imap" && "Consulte seu provedor de email"}
+                                        {provedor === "gmail" && "Servidor: imap.gmail.com • Use senha de app do Google"}
+                                        {provedor === "outlook" && "Servidor: outlook.office365.com • Use senha de app da Microsoft"}
+                                        {provedor === "hostinger" && "Servidor: seu-dominio.com ou mail.seu-dominio.com"}
+                                        {provedor === "hostgator" && "Servidor: seu-dominio.com ou mail.seu-dominio.com"}
+                                        {provedor === "imap" && "Consulte seu provedor de email para configurações IMAP"}
                                     </p>
                                 </div>
 
@@ -357,7 +378,13 @@ export default function EmailManager() {
                                     <div className="space-y-2">
                                         <Label>Servidor IMAP *</Label>
                                         <Input
-                                            placeholder={provedor === "outlook" ? "outlook.office365.com" : "imap.seuprovedor.com"}
+                                            placeholder={
+                                                provedor === "gmail" ? "imap.gmail.com" :
+                                                provedor === "outlook" ? "outlook.office365.com" :
+                                                provedor === "hostinger" ? "seu-dominio.com" :
+                                                provedor === "hostgator" ? "seu-dominio.com" :
+                                                "imap.seuprovedor.com"
+                                            }
                                             value={imapConfig.host}
                                             onChange={(e) => setImapConfig({...imapConfig, host: e.target.value})}
                                             className="bg-white"
@@ -477,6 +504,14 @@ export default function EmailManager() {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button 
+                            onClick={() => refetch()}
+                            variant="outline"
+                            className="border-blue-500 text-blue-600"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar
+                        </Button>
                         <Button 
                             onClick={testConnection}
                             disabled={testingConnection}

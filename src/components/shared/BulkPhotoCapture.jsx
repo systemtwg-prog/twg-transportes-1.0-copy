@@ -23,6 +23,11 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
         queryFn: () => base44.entities.EmpresaComprovante.list()
     });
 
+    const { data: currentUser } = useQuery({
+        queryKey: ["current-user-bulk"],
+        queryFn: () => base44.auth.me()
+    });
+
     useEffect(() => {
         startCamera();
         return () => stopCamera();
@@ -161,6 +166,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                     url: file_url,
                     numero_nota: foto.notaFiscal || "Pendente",
                     empresa: foto.empresa || "",
+                    usuario_foto: currentUser?.full_name || currentUser?.email || "Usuário",
                     observacoes: ""
                 });
 

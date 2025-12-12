@@ -586,6 +586,12 @@ export default function ComprovantesInternos() {
                                                     </div>
                                                 )}
                                                 <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                                {comprovante.usuario_foto && (
+                                                    <p className="text-xs text-slate-400 flex items-center gap-1">
+                                                        <User className="w-3 h-3" />
+                                                        {comprovante.usuario_foto}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <Badge variant="outline">
@@ -696,6 +702,7 @@ export default function ComprovantesInternos() {
                                         await base44.entities.ComprovanteInterno.create({
                                             nota_fiscal: resultado.numero_nota || "Pendente",
                                             empresa: resultado.empresa || "",
+                                            usuario_foto: resultado.usuario_foto || "",
                                             data: format(new Date(), "yyyy-MM-dd"),
                                             arquivos: [{ nome: "foto.jpg", url: resultado.url, tipo: "image/jpeg" }],
                                             observacoes: resultado.observacoes || ""

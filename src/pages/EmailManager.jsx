@@ -28,6 +28,7 @@ export default function EmailManager() {
     });
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(false);
+    const [savingConfig, setSavingConfig] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedEmails, setSelectedEmails] = useState([]);
     const [tipoFiltro, setTipoFiltro] = useState("all");
@@ -51,7 +52,42 @@ export default function EmailManager() {
 
     React.useEffect(() => {
         checkAuthorization();
+        loadImapConfig();
     }, []);
+
+    const loadImapConfig = async () => {
+        try {
+            const user = await base44.auth.me();
+            if (user.email_imap_config) {
+                setImapConfig(user.email_imap_config);
+                if (user.email_imap_config.user && user.email_imap_config.password) {
+                    setAuthorized(true);
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao carregar config:", error);
+        }
+    };
+
+    const saveImapConfig = async () => {
+        if (!imapConfig.host || !imapConfig.user || !imapConfig.password) {
+            toast.error("Preencha todos os campos obrigatórios");
+            return;
+        }
+
+        setSavingConfig(true);
+        try {
+            await base44.auth.updateMe({
+                email_imap_config: imapConfig
+            });
+            toast.success("Configuração salva com sucesso!");
+            setAuthorized(true);
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            toast.error("Erro ao salvar configuração");
+        }
+        setSavingConfig(false);
+    };
 
     // Listar emails
     const { data: emailsData, isLoading, refetch } = useQuery({
@@ -224,18 +260,77 @@ export default function EmailManager() {
 
                         {provedor !== "gmail" && (
                             <>
-                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <p className="text-sm text-amber-700">
-                                        <strong>Configure o acesso IMAP:</strong><br/>
-                                        {provedor === "outlook" && "Host: outlook.office365.com, Porta: 993"}
-                                        {provedor === "hostinger" && "Host: seu-dominio.com, Porta: 993"}
-                                        {provedor === "hostgator" && "Host: seu-dominio.com, Porta: 993"}
-                                        {provedor === "imap" && "Configure com os dados do seu provedor"}
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                                    <p className="text-sm text-blue-700">
+                                        <strong>Configurações IMAP:</strong><br/>
+                                        {provedor === "outlook" && "Use: outlook.office365.com"}
+                                        {provedor === "hostinger" && "Use: seu-dominio.com (verifique no painel)"}
+                                        {provedor === "hostgator" && "Use: seu-dominio.com (verifique no painel)"}
+                                        {provedor === "imap" && "Consulte seu provedor de email"}
                                     </p>
                                 </div>
-                                <p className="text-sm text-red-600 mt-2">
-                                    Configuração IMAP não disponível no momento. Use Gmail.
-                                </p>
+
+                                <div className="space-y-3">
+                                    <div className="space-y-2">
+                                        <Label>Servidor IMAP *</Label>
+                                        <Input
+                                            placeholder={provedor === "outlook" ? "outlook.office365.com" : "imap.seuprovedor.com"}
+                                            value={imapConfig.host}
+                                            onChange={(e) => setImapConfig({...imapConfig, host: e.target.value})}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Porta</Label>
+                                        <Input
+                                            type="number"
+                                            value={imapConfig.port}
+                                            onChange={(e) => setImapConfig({...imapConfig, port: parseInt(e.target.value)})}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Email (usuário) *</Label>
+                                        <Input
+                                            type="email"
+                                            placeholder="seu@email.com"
+                                            value={imapConfig.user}
+                                            onChange={(e) => setImapConfig({...imapConfig, user: e.target.value})}
+                                            className="bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Senha *</Label>
+                                        <Input
+                                            type="password"
+                                            placeholder="Sua senha ou senha de app"
+                                            value={imapConfig.password}
+                                            onChange={(e) => setImapConfig({...imapConfig, password: e.target.value})}
+                                            className="bg-white"
+                                        />
+                                        <p className="text-xs text-slate-500">
+                                            Para Gmail/Outlook, use uma "senha de app" ao invés da senha normal
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Button 
+                                    onClick={saveImapConfig}
+                                    disabled={savingConfig}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+                                >
+                                    {savingConfig ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Mail className="w-4 h-4 mr-2" />
+                                            Salvar Configuração
+                                        </>
+                                    )}
+                                </Button>
                             </>
                         )}
                     </CardContent>

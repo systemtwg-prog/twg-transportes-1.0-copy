@@ -248,7 +248,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                     <SelectTrigger className="h-8 bg-white text-slate-800 text-xs flex-1">
                                         <SelectValue placeholder="Empresa" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="z-[100]">
                                         {empresasCadastradas.map(emp => (
                                             <SelectItem key={emp.id} value={emp.nome}>
                                                 <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                         <SelectTrigger className="h-11 bg-white text-slate-800 text-base">
                                             <SelectValue placeholder="Empresa" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="z-[100]">
                                             {empresasCadastradas.map(emp => (
                                                 <SelectItem key={emp.id} value={emp.nome}>
                                                     <div className="flex items-center gap-2">

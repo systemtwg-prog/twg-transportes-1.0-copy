@@ -233,13 +233,9 @@ export default function EmailManager() {
                                         {provedor === "imap" && "Configure com os dados do seu provedor"}
                                     </p>
                                 </div>
-                                <Button 
-                                    onClick={() => setShowConfigIMAP(true)}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
-                                >
-                                    <Settings className="w-4 h-4 mr-2" />
-                                    Configurar IMAP
-                                </Button>
+                                <p className="text-sm text-red-600 mt-2">
+                                    Configuração IMAP não disponível no momento. Use Gmail.
+                                </p>
                             </>
                         )}
                     </CardContent>

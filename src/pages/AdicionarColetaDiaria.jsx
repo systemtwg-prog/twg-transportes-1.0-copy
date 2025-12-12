@@ -412,6 +412,7 @@ export default function AdicionarColetaDiaria() {
     const [search, setSearch] = useState("");
     const [showCadastroCliente, setShowCadastroCliente] = useState(false);
     const [tipoClienteCadastro, setTipoClienteCadastro] = useState("remetente");
+    const [buscandoCNPJ, setBuscandoCNPJ] = useState(false);
     const [clienteForm, setClienteForm] = useState({
         razao_social: "",
         nome_fantasia: "",
@@ -459,6 +460,38 @@ export default function AdicionarColetaDiaria() {
         setTipoClienteCadastro(tipo);
         setClienteForm(prev => ({ ...prev, tipo: tipo === "destinatario" ? "destinatario" : "remetente" }));
         setShowCadastroCliente(true);
+    };
+
+    const buscarDadosCNPJ = async (cnpj) => {
+        const cnpjLimpo = cnpj.replace(/\D/g, "");
+        if (cnpjLimpo.length !== 14) return;
+
+        setBuscandoCNPJ(true);
+        try {
+            const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+            
+            if (response.ok) {
+                const dados = await response.json();
+                setClienteForm(prev => ({
+                    ...prev,
+                    razao_social: dados.razao_social || prev.razao_social,
+                    nome_fantasia: dados.nome_fantasia || prev.nome_fantasia,
+                    telefone: dados.ddd_telefone_1 ? `(${dados.ddd_telefone_1}) ${dados.telefone_1}` : prev.telefone,
+                    endereco: dados.logradouro ? `${dados.logradouro}, ${dados.numero}` : prev.endereco,
+                    bairro: dados.bairro || prev.bairro,
+                    cidade: dados.municipio || prev.cidade,
+                    uf: dados.uf || prev.uf,
+                    cep: dados.cep || prev.cep
+                }));
+                toast.success("Dados do CNPJ encontrados!");
+            } else {
+                toast.error("CNPJ não encontrado na base de dados");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar CNPJ:", error);
+            toast.error("Erro ao consultar CNPJ");
+        }
+        setBuscandoCNPJ(false);
     };
 
     const { data: coletas = [], isLoading } = useQuery({
@@ -714,11 +747,28 @@ export default function AdicionarColetaDiaria() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>CNPJ/CPF</Label>
-                                <Input
-                                    value={clienteForm.cnpj_cpf}
-                                    onChange={(e) => setClienteForm({ ...clienteForm, cnpj_cpf: e.target.value })}
-                                    placeholder="00.000.000/0001-00"
-                                />
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={clienteForm.cnpj_cpf}
+                                        onChange={(e) => setClienteForm({ ...clienteForm, cnpj_cpf: e.target.value })}
+                                        placeholder="00.000.000/0001-00"
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => buscarDadosCNPJ(clienteForm.cnpj_cpf)}
+                                        disabled={buscandoCNPJ || !clienteForm.cnpj_cpf}
+                                        className="border-blue-500 text-blue-600"
+                                    >
+                                        {buscandoCNPJ ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Search className="w-4 h-4" />
+                                        )}
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-slate-500">Digite o CNPJ e clique na lupa para buscar</p>
                             </div>
                             <div className="space-y-2">
                                 <Label>Telefone</Label>

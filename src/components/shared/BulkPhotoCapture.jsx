@@ -290,6 +290,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                 />
                                 <div className="flex-1 min-w-0 space-y-2">
                                     <Input
+                                        type="number"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         placeholder="Nº Nota Fiscal"
                                         value={foto.notaFiscal || ""}
                                         onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}

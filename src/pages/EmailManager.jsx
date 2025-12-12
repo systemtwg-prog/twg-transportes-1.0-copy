@@ -451,26 +451,6 @@ export default function EmailManager() {
                         </div>
                     </CardContent>
                 </Card>
-                    <div className="flex gap-2">
-                        <Button 
-                            onClick={() => refetch()}
-                            variant="outline"
-                            className="border-blue-500 text-blue-600"
-                        >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Atualizar
-                        </Button>
-                        {selectedEmails.length > 0 && (
-                            <Button 
-                                onClick={handleBulkDownload}
-                                className="bg-blue-600 hover:bg-blue-700"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Baixar Selecionados ({selectedEmails.length})
-                            </Button>
-                        )}
-                    </div>
-                </div>
 
                 {/* Dashboard */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

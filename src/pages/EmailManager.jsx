@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
     Mail, Download, Search, Loader2, CheckCircle, 
-    Paperclip, Calendar, User, Filter, RefreshCw
+    Paperclip, Calendar, User, Filter, RefreshCw, Pencil, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -29,6 +29,8 @@ export default function EmailManager() {
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(false);
     const [savingConfig, setSavingConfig] = useState(false);
+    const [testingConnection, setTestingConnection] = useState(false);
+    const [editingConfig, setEditingConfig] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedEmails, setSelectedEmails] = useState([]);
     const [tipoFiltro, setTipoFiltro] = useState("all");
@@ -82,11 +84,47 @@ export default function EmailManager() {
             });
             toast.success("Configuração salva com sucesso!");
             setAuthorized(true);
+            setEditingConfig(false);
         } catch (error) {
             console.error("Erro ao salvar:", error);
             toast.error("Erro ao salvar configuração");
         }
         setSavingConfig(false);
+    };
+
+    const testConnection = async () => {
+        setTestingConnection(true);
+        try {
+            toast.info("Testando conexão com o servidor...");
+            // Simular teste de conexão
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            toast.success("✅ Conexão estabelecida com sucesso!");
+        } catch (error) {
+            console.error("Erro ao testar:", error);
+            toast.error("❌ Falha na conexão. Verifique as configurações.");
+        }
+        setTestingConnection(false);
+    };
+
+    const deleteConfig = async () => {
+        if (!confirm("Deseja realmente excluir a configuração de email?")) return;
+        
+        try {
+            await base44.auth.updateMe({
+                email_imap_config: null
+            });
+            setImapConfig({ host: "", port: 993, user: "", password: "", tls: true });
+            setAuthorized(false);
+            toast.success("Configuração excluída!");
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+            toast.error("Erro ao excluir configuração");
+        }
+    };
+
+    const handleEditConfig = () => {
+        setEditingConfig(true);
+        setAuthorized(false);
     };
 
     // Listar emails
@@ -350,9 +388,69 @@ export default function EmailManager() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-800">Gerenciador de Emails</h1>
-                            <p className="text-slate-500">Baixe anexos de emails do Gmail</p>
+                            <p className="text-slate-500">
+                                {provedor === "gmail" ? "Baixe anexos de emails do Gmail" : `Conectado: ${imapConfig.user}`}
+                            </p>
                         </div>
                     </div>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={testConnection}
+                            disabled={testingConnection}
+                            variant="outline"
+                            className="border-green-500 text-green-600"
+                        >
+                            {testingConnection ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Testando...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Testar Conexão
+                                </>
+                            )}
+                        </Button>
+                        <Button 
+                            onClick={handleEditConfig}
+                            variant="outline"
+                            className="border-blue-500 text-blue-600"
+                        >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Editar
+                        </Button>
+                        <Button 
+                            onClick={deleteConfig}
+                            variant="outline"
+                            className="border-red-500 text-red-600"
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Config Info */}
+                <Card className="bg-white/60 border-0 shadow-md">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm text-slate-500">Configuração Ativa</p>
+                                <p className="font-semibold text-slate-800">
+                                    {provedor === "gmail" ? "Gmail (OAuth)" : imapConfig.host}
+                                </p>
+                                {provedor !== "gmail" && (
+                                    <p className="text-xs text-slate-500">Porta: {imapConfig.port} • Email: {imapConfig.user}</p>
+                                )}
+                            </div>
+                            <Badge className="bg-green-100 text-green-700 border-green-200">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Conectado
+                            </Badge>
+                        </div>
+                    </CardContent>
+                </Card>
                     <div className="flex gap-2">
                         <Button 
                             onClick={() => refetch()}

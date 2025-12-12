@@ -24,7 +24,7 @@ export default function EmailManager() {
         port: 993,
         user: "",
         password: "",
-        tls: true
+        encryption: "SSL/TLS"
     });
     const [authorized, setAuthorized] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(false);
@@ -93,15 +93,34 @@ export default function EmailManager() {
     };
 
     const testConnection = async () => {
+        if (!imapConfig.host || !imapConfig.user || !imapConfig.password) {
+            toast.error("Preencha todas as configurações antes de testar");
+            return;
+        }
+
         setTestingConnection(true);
         try {
             toast.info("Testando conexão com o servidor...");
-            // Simular teste de conexão
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            toast.success("✅ Conexão estabelecida com sucesso!");
+            
+            const { data } = await base44.functions.invoke('testImapConnection', {
+                host: imapConfig.host,
+                port: imapConfig.port,
+                user: imapConfig.user,
+                password: imapConfig.password,
+                tls: imapConfig.encryption === "SSL/TLS"
+            });
+
+            if (data.success) {
+                toast.success("✅ " + data.message);
+            } else {
+                toast.error("❌ " + data.error);
+                if (data.details) {
+                    console.error("Detalhes:", data.details);
+                }
+            }
         } catch (error) {
             console.error("Erro ao testar:", error);
-            toast.error("❌ Falha na conexão. Verifique as configurações.");
+            toast.error("❌ Erro ao conectar ao servidor. Verifique suas configurações.");
         }
         setTestingConnection(false);
     };
@@ -113,7 +132,7 @@ export default function EmailManager() {
             await base44.auth.updateMe({
                 email_imap_config: null
             });
-            setImapConfig({ host: "", port: 993, user: "", password: "", tls: true });
+            setImapConfig({ host: "", port: 993, user: "", password: "", encryption: "SSL/TLS" });
             setAuthorized(false);
             toast.success("Configuração excluída!");
         } catch (error) {
@@ -318,14 +337,32 @@ export default function EmailManager() {
                                             className="bg-white"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Porta</Label>
-                                        <Input
-                                            type="number"
-                                            value={imapConfig.port}
-                                            onChange={(e) => setImapConfig({...imapConfig, port: parseInt(e.target.value)})}
-                                            className="bg-white"
-                                        />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-2">
+                                            <Label>Porta *</Label>
+                                            <Input
+                                                type="number"
+                                                value={imapConfig.port}
+                                                onChange={(e) => setImapConfig({...imapConfig, port: parseInt(e.target.value)})}
+                                                className="bg-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Criptografia *</Label>
+                                            <Select 
+                                                value={imapConfig.encryption} 
+                                                onValueChange={(v) => setImapConfig({...imapConfig, encryption: v, port: v === "SSL/TLS" ? 993 : 143})}
+                                            >
+                                                <SelectTrigger className="bg-white">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="SSL/TLS">SSL/TLS (993)</SelectItem>
+                                                    <SelectItem value="STARTTLS">STARTTLS (143)</SelectItem>
+                                                    <SelectItem value="Nenhuma">Nenhuma (143)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Email (usuário) *</Label>
@@ -352,23 +389,43 @@ export default function EmailManager() {
                                     </div>
                                 </div>
 
-                                <Button 
-                                    onClick={saveImapConfig}
-                                    disabled={savingConfig}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
-                                >
-                                    {savingConfig ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Salvando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Mail className="w-4 h-4 mr-2" />
-                                            Salvar Configuração
-                                        </>
-                                    )}
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={testConnection}
+                                        disabled={testingConnection}
+                                        variant="outline"
+                                        className="flex-1 border-green-500 text-green-600"
+                                    >
+                                        {testingConnection ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Testando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Testar Conexão
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button 
+                                        onClick={saveImapConfig}
+                                        disabled={savingConfig}
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {savingConfig ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Salvando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Mail className="w-4 h-4 mr-2" />
+                                                Salvar
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </>
                         )}
                     </CardContent>
@@ -441,7 +498,9 @@ export default function EmailManager() {
                                     {provedor === "gmail" ? "Gmail (OAuth)" : imapConfig.host}
                                 </p>
                                 {provedor !== "gmail" && (
-                                    <p className="text-xs text-slate-500">Porta: {imapConfig.port} • Email: {imapConfig.user}</p>
+                                    <p className="text-xs text-slate-500">
+                                        Porta: {imapConfig.port} • Criptografia: {imapConfig.encryption} • Email: {imapConfig.user}
+                                    </p>
                                 )}
                             </div>
                             <Badge className="bg-green-100 text-green-700 border-green-200">

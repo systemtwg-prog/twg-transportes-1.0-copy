@@ -25,6 +25,7 @@ const WIDGETS_DISPONIVEIS = [
 export default function PersonalizarHome() {
     const queryClient = useQueryClient();
     const [saving, setSaving] = useState(false);
+    const [widgets, setWidgets] = useState(["stats", "menu", "ultimas_ordens"]);
 
     const { data: user, isLoading } = useQuery({
         queryKey: ["current-user-personalize"],
@@ -38,7 +39,11 @@ export default function PersonalizarHome() {
         }
     });
 
-    const [widgets, setWidgets] = useState(["stats", "menu", "ultimas_ordens"]);
+    useEffect(() => {
+        if (user?.widgets_home?.length > 0) {
+            setWidgets(user.widgets_home);
+        }
+    }, [user]);
 
     if (isLoading) {
         return (
@@ -47,12 +52,6 @@ export default function PersonalizarHome() {
             </div>
         );
     }
-
-    useEffect(() => {
-        if (user?.widgets_home?.length > 0) {
-            setWidgets(user.widgets_home);
-        }
-    }, [user]);
 
     const handleToggleWidget = (widgetId) => {
         if (widgets.includes(widgetId)) {

@@ -445,7 +445,7 @@ export default function HomeDesktop() {
                     </div>
                 )}
 
-                {/* Cards de Estatísticas */}
+                {/* Cards de Estatísticas e Ações Rápidas */}
                 <div className="grid grid-cols-4 gap-4">
                     <Card className="bg-gradient-to-br from-orange-500 to-amber-600 text-white border-0">
                         <CardContent className="p-5">
@@ -458,17 +458,20 @@ export default function HomeDesktop() {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0">
-                        <CardContent className="p-5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm opacity-90">Coletas Pendentes</p>
-                                    <p className="text-3xl font-bold">{stats.totalColetas}</p>
+                    <Link to={createPageUrl("AdicionarColetaDiaria")}>
+                        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform">
+                            <CardContent className="p-5">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm opacity-90">Coletas Pendentes</p>
+                                        <p className="text-3xl font-bold">{stats.totalColetas}</p>
+                                        <p className="text-xs mt-1 opacity-75">Clique para adicionar</p>
+                                    </div>
+                                    <Truck className="w-10 h-10 opacity-80" />
                                 </div>
-                                <Truck className="w-10 h-10 opacity-80" />
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </Link>
                     <Card className="bg-gradient-to-br from-violet-500 to-purple-600 text-white border-0">
                         <CardContent className="p-5">
                             <div className="flex items-center justify-between">

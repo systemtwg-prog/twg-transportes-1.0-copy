@@ -4,26 +4,17 @@ import DesktopSidebar from "@/components/navigation/DesktopSidebar";
 import DesktopTabs from "@/components/navigation/DesktopTabs";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import BiometricLock from "@/components/auth/BiometricLock";
 
 export default function Layout({ children, currentPageName }) {
     const [isDesktop, setIsDesktop] = useState(null);
-    const [isUnlocked, setIsUnlocked] = useState(false);
-    const [checkingBiometric, setCheckingBiometric] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const navigate = useNavigate();
 
-    // Verificar se já desbloqueou nesta sessão
     useEffect(() => {
-        const unlocked = sessionStorage.getItem("appUnlocked");
-        if (unlocked === "true") {
-            setIsUnlocked(true);
-        }
         const collapsed = localStorage.getItem("sidebarCollapsed");
         if (collapsed === "true") {
             setSidebarCollapsed(true);
         }
-        setCheckingBiometric(false);
     }, []);
 
     useEffect(() => {
@@ -48,11 +39,6 @@ export default function Layout({ children, currentPageName }) {
         }
     }, [isDesktop, currentPageName, navigate]);
 
-    const handleUnlock = () => {
-        setIsUnlocked(true);
-        sessionStorage.setItem("appUnlocked", "true");
-    };
-
     const handleTabChange = (pageId) => {
         navigate(createPageUrl(pageId));
     };
@@ -70,20 +56,6 @@ export default function Layout({ children, currentPageName }) {
             localStorage.setItem("sidebarCollapsed", "false");
         }
     };
-
-    // Aguardar verificação de biometria
-    if (checkingBiometric) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-100 via-blue-50 to-slate-100">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
-            </div>
-        );
-    }
-
-    // Mostrar tela de bloqueio se não desbloqueado
-    if (!isUnlocked) {
-        return <BiometricLock onUnlock={handleUnlock} />;
-    }
 
     // Layout Desktop com Sidebar e Tabs
     if (isDesktop) {

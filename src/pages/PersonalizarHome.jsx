@@ -38,6 +38,8 @@ export default function PersonalizarHome() {
         }
     });
 
+    const [widgets, setWidgets] = useState(["stats", "menu", "ultimas_ordens"]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-4 md:p-8 flex items-center justify-center">
@@ -45,8 +47,6 @@ export default function PersonalizarHome() {
             </div>
         );
     }
-
-    const [widgets, setWidgets] = useState(["stats", "menu", "ultimas_ordens"]);
 
     useEffect(() => {
         if (user?.widgets_home?.length > 0) {

@@ -1658,7 +1658,29 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     value={form.transportadora}
                                     onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
                                     placeholder="Nome da transportadora"
+                                    className="bg-white"
+                                    list="transportadoras-list"
                                 />
+                                <datalist id="transportadoras-list">
+                                    {transportadoras
+                                        .sort((a, b) => (a.razao_social || a.nome_fantasia || "").localeCompare(b.razao_social || b.nome_fantasia || ""))
+                                        .filter(t => {
+                                            const nome = (t.razao_social || t.nome_fantasia || "").toLowerCase();
+                                            return nome.includes((form.transportadora || "").toLowerCase());
+                                        })
+                                        .map(t => (
+                                            <option key={t.id} value={t.razao_social || t.nome_fantasia}>
+                                                {t.cidade && `${t.razao_social || t.nome_fantasia} (${t.cidade})`}
+                                            </option>
+                                        ))}
+                                </datalist>
+                                {form.transportadora && (
+                                    <div className="text-xs text-slate-500">
+                                        {transportadoras.filter(t => 
+                                            (t.razao_social || t.nome_fantasia || "").toLowerCase().includes(form.transportadora.toLowerCase())
+                                        ).length} transportadora(s) encontrada(s)
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">

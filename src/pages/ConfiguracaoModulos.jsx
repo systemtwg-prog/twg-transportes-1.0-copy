@@ -43,6 +43,7 @@ const TODOS_MODULOS = [
     { id: "Backup", nome: "Backup", icon: Database, descricao: "Backup de dados" },
     { id: "PersonalizarHome", nome: "Personalizar Home", icon: LayoutGrid, descricao: "Personalizar página inicial" },
     { id: "ImportacaoDocumentos", nome: "Importar Documentos", icon: FileText, descricao: "Importar documentos" },
+    { id: "EmailManager", nome: "Emails", icon: FileText, descricao: "Gerenciar emails" },
     { id: "ConfiguracaoModulos", nome: "Configuração Módulos", icon: Settings, descricao: "Configurar módulos ativos" },
 ];
 

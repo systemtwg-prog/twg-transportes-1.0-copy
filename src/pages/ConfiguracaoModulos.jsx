@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
     Settings, LayoutGrid, Save, FileText, Users, Package, Car, 
-    Navigation, Award, Bell, Truck, Search, Database, Printer, UserCheck, Home
+    Navigation, Award, Bell, Truck, Search, Database, Printer, UserCheck, Home, Shield, User
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TODOS_MODULOS = [
     { id: "Home", nome: "Home", icon: Home, descricao: "Página inicial do sistema" },

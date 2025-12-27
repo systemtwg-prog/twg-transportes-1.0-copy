@@ -174,6 +174,13 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
             const notasExistentes = await base44.entities.NotaFiscal.list("-created_date", 1000);
             const numerosExistentes = new Set(notasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean));
             
+            // Buscar destinatários existentes
+            const destinatariosExistentes = await base44.entities.Destinatario.list();
+            const destinatariosSet = new Set(destinatariosExistentes.map(d => d.nome?.toLowerCase().trim()).filter(Boolean));
+            
+            // Coletar destinatários únicos para cadastrar
+            const novosDestinatarios = new Set();
+            
             let importadas = 0;
             let duplicadas = 0;
             
@@ -184,6 +191,13 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
                 if (numeroNf && numerosExistentes.has(numeroNf)) {
                     duplicadas++;
                     continue;
+                }
+                
+                // Adicionar destinatário ao set para cadastro
+                const nomeDestinatario = (row.destinatario || "").trim();
+                if (nomeDestinatario && !destinatariosSet.has(nomeDestinatario.toLowerCase())) {
+                    novosDestinatarios.add(nomeDestinatario);
+                    destinatariosSet.add(nomeDestinatario.toLowerCase());
                 }
                 
                 await base44.entities.NotaFiscal.create({
@@ -204,11 +218,23 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
                 if (numeroNf) numerosExistentes.add(numeroNf);
             }
             
+            // Cadastrar novos destinatários
+            let destinatariosCadastrados = 0;
+            for (const nomeDestinatario of novosDestinatarios) {
+                await base44.entities.Destinatario.create({ nome: nomeDestinatario });
+                destinatariosCadastrados++;
+            }
+            
             if (duplicadas > 0) {
                 toast.warning(`${importadas} nota(s) importada(s). ${duplicadas} ignorada(s) (duplicadas).`);
             } else {
                 toast.success(`${importadas} nota(s) fiscal(is) importada(s) com sucesso!`);
             }
+            
+            if (destinatariosCadastrados > 0) {
+                toast.success(`${destinatariosCadastrados} destinatário(s) cadastrado(s)!`);
+            }
+            
             onImportSuccess();
             handleClose();
         } catch (err) {

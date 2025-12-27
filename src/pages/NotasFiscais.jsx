@@ -1603,29 +1603,33 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     Cadastrar Novo
                                 </Button>
                             </Label>
-                            <Select 
-                                value={form.destinatario} 
-                                onValueChange={(v) => setForm({ ...form, destinatario: v })}
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione o destinatário..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {destinatarios.map(d => (
-                                        <SelectItem key={d.id} value={d.nome}>
-                                            {d.nome}
-                                            {d.cidade && <span className="text-xs text-slate-500 ml-1">({d.cidade})</span>}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Input
-                                value={form.destinatario}
-                                onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
-                                required
-                                placeholder="Ou digite manualmente..."
-                                className="mt-2"
-                            />
+                            <div className="space-y-2">
+                                <Input
+                                    value={form.destinatario}
+                                    onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
+                                    required
+                                    placeholder="Digite o nome do destinatário..."
+                                    className="bg-white"
+                                    list="destinatarios-list"
+                                />
+                                <datalist id="destinatarios-list">
+                                    {destinatarios
+                                        .sort((a, b) => a.nome.localeCompare(b.nome))
+                                        .filter(d => d.nome.toLowerCase().includes(form.destinatario.toLowerCase()))
+                                        .map(d => (
+                                            <option key={d.id} value={d.nome}>
+                                                {d.cidade && `${d.nome} (${d.cidade})`}
+                                            </option>
+                                        ))}
+                                </datalist>
+                                {form.destinatario && (
+                                    <div className="text-xs text-slate-500">
+                                        {destinatarios.filter(d => 
+                                            d.nome.toLowerCase().includes(form.destinatario.toLowerCase())
+                                        ).length} destinatário(s) encontrado(s)
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

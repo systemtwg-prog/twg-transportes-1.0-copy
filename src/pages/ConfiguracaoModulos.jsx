@@ -143,11 +143,15 @@ export default function ConfiguracaoModulos() {
         try {
             if (config && config.length > 0) {
                 await base44.entities.Configuracoes.update(config[0].id, {
-                    modulos_ativos: modulosAtivos
+                    modulos_ativos: modulosAtivos,
+                    modulos_usuario_comum: modulosUsuarioComum,
+                    modulos_admin: modulosAdmin
                 });
             } else {
                 await base44.entities.Configuracoes.create({
-                    modulos_ativos: modulosAtivos
+                    modulos_ativos: modulosAtivos,
+                    modulos_usuario_comum: modulosUsuarioComum,
+                    modulos_admin: modulosAdmin
                 });
             }
             queryClient.invalidateQueries({ queryKey: ["configuracoes"] });

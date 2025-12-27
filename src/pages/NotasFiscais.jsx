@@ -90,11 +90,6 @@ export default function NotasFiscais() {
         queryFn: () => base44.entities.Transportadora.list()
     });
 
-    const { data: clientes = [] } = useQuery({
-        queryKey: ["clientes-notas"],
-        queryFn: () => base44.entities.Cliente.list()
-    });
-
     // Verificar CNPJ duplicado
     const cnpjJaCadastrado = (cnpj) => {
         if (!cnpj) return false;
@@ -1497,40 +1492,11 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
 
                         <div className="space-y-2">
                             <Label>Destinatário *</Label>
-                            <Select 
-                                value={form.destinatario} 
-                                onValueChange={(v) => {
-                                    const cliente = clientes.find(c => c.razao_social === v || c.nome_fantasia === v);
-                                    if (cliente) {
-                                        setForm({ 
-                                            ...form, 
-                                            destinatario: cliente.nome_fantasia || cliente.razao_social
-                                        });
-                                    } else {
-                                        setForm({ ...form, destinatario: v });
-                                    }
-                                }}
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione ou digite o destinatário..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {clientes
-                                        .filter(c => c.tipo === "destinatario" || c.tipo === "ambos")
-                                        .map(c => (
-                                            <SelectItem key={c.id} value={c.nome_fantasia || c.razao_social}>
-                                                {c.nome_fantasia || c.razao_social}
-                                                {c.codigo && <span className="text-xs text-slate-500 ml-1">({c.codigo})</span>}
-                                            </SelectItem>
-                                        ))}
-                                </SelectContent>
-                            </Select>
                             <Input
                                 value={form.destinatario}
                                 onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
                                 required
-                                placeholder="Ou digite manualmente..."
-                                className="mt-2"
+                                placeholder="Nome do destinatário"
                             />
                         </div>
 
@@ -1556,38 +1522,10 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Transportadora</Label>
-                                <Select 
-                                    value={form.transportadora} 
-                                    onValueChange={(v) => {
-                                        const transp = transportadoras.find(t => t.razao_social === v || t.nome_fantasia === v);
-                                        if (transp) {
-                                            setForm({ 
-                                                ...form, 
-                                                transportadora: transp.nome_fantasia || transp.razao_social
-                                            });
-                                        } else {
-                                            setForm({ ...form, transportadora: v });
-                                        }
-                                    }}
-                                >
-                                    <SelectTrigger className="bg-white">
-                                        <SelectValue placeholder="Selecione ou digite..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {transportadoras
-                                            .filter(t => t.status === "ativo")
-                                            .map(t => (
-                                                <SelectItem key={t.id} value={t.nome_fantasia || t.razao_social}>
-                                                    {t.nome_fantasia || t.razao_social}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
                                 <Input
                                     value={form.transportadora}
                                     onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
-                                    placeholder="Ou digite manualmente..."
-                                    className="mt-2"
+                                    placeholder="Nome da transportadora"
                                 />
                             </div>
                             <div className="space-y-2">

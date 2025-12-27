@@ -157,8 +157,10 @@ export default function ComprovantesInternos() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [filterData, setFilterData] = useState("");
+    const [filterDataFim, setFilterDataFim] = useState("");
     const [filterNF, setFilterNF] = useState("");
     const [filterEmpresa, setFilterEmpresa] = useState("");
+    const [filterTexto, setFilterTexto] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [showCadastroEmpresa, setShowCadastroEmpresa] = useState(false);
@@ -374,10 +376,27 @@ export default function ComprovantesInternos() {
     };
 
     const filtered = comprovantes.filter(c => {
-        const matchData = !filterData || c.data === filterData;
+        // Filtro por data de início
+        const matchDataInicio = !filterData || c.data >= filterData;
+        
+        // Filtro por data fim
+        const matchDataFim = !filterDataFim || c.data <= filterDataFim;
+        
+        // Filtro por nota fiscal
         const matchNF = !filterNF || c.nota_fiscal?.toLowerCase().includes(filterNF.toLowerCase());
+        
+        // Filtro por empresa
         const matchEmpresa = !filterEmpresa || c.empresa === filterEmpresa;
-        return matchData && matchNF && matchEmpresa;
+        
+        // Busca por texto livre (pesquisa em múltiplos campos)
+        const matchTexto = !filterTexto || [
+            c.nota_fiscal,
+            c.empresa,
+            c.observacoes,
+            c.usuario_foto
+        ].some(campo => campo?.toLowerCase().includes(filterTexto.toLowerCase()));
+        
+        return matchDataInicio && matchDataFim && matchNF && matchEmpresa && matchTexto;
     });
 
 
@@ -455,10 +474,34 @@ export default function ComprovantesInternos() {
                     </Card>
                 )}
 
-                {/* Filtros */}
+                {/* Filtros Avançados */}
                 <Card className="bg-white/60 border-0 shadow-md">
-                    <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <CardContent className="p-4 space-y-4">
+                        {/* Busca Texto Livre */}
+                        <div className="space-y-1">
+                            <Label className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+                                <Search className="w-3 h-3" /> Busca Rápida (pesquisa em todos os campos)
+                            </Label>
+                            <div className="flex gap-1">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-sky-500" />
+                                    <Input
+                                        placeholder="Digite qualquer informação (NF, empresa, observações, usuário...)"
+                                        value={filterTexto}
+                                        onChange={(e) => setFilterTexto(e.target.value)}
+                                        className="pl-11 bg-white h-12 text-base border-2 border-sky-200 focus:border-sky-500"
+                                    />
+                                </div>
+                                {filterTexto && (
+                                    <Button variant="ghost" size="icon" onClick={() => setFilterTexto("")} className="h-12">
+                                        <X className="w-5 h-5" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Filtros Específicos */}
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             {/* Selecionar Todos */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500">Seleção</Label>
@@ -469,78 +512,129 @@ export default function ComprovantesInternos() {
                                 >
                                     {selectedIds.length === filtered.length && filtered.length > 0 ? (
                                         <>
-                                            <X className="w-4 h-4 mr-2" /> Desmarcar Todos
+                                            <X className="w-4 h-4 mr-2" /> Desmarcar
                                         </>
                                     ) : (
                                         <>
-                                            <Check className="w-4 h-4 mr-2" /> Selecionar Todos ({filtered.length})
+                                            <Check className="w-4 h-4 mr-2" /> Selecionar ({filtered.length})
                                         </>
                                     )}
                                 </Button>
                             </div>
+                            
+                            {/* Data Início */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" /> Filtrar por Data
+                                    <Calendar className="w-3 h-3" /> Data Início
                                 </Label>
                                 <div className="flex gap-1">
                                     <Input
                                         type="date"
                                         value={filterData}
                                         onChange={(e) => setFilterData(e.target.value)}
-                                        className="bg-white"
+                                        className="bg-white h-10"
                                     />
                                     {filterData && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterData("")}>
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterData("")} className="h-10 w-10">
                                             <X className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Data Fim */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
-                                    <FileText className="w-3 h-3" /> Filtrar por Nota Fiscal
+                                    <Calendar className="w-3 h-3" /> Data Fim
                                 </Label>
                                 <div className="flex gap-1">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <Input
-                                            placeholder="Número da NF..."
-                                            value={filterNF}
-                                            onChange={(e) => setFilterNF(e.target.value)}
-                                            className="pl-9 bg-white"
-                                        />
-                                    </div>
-                                    {filterNF && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterNF("")}>
+                                    <Input
+                                        type="date"
+                                        value={filterDataFim}
+                                        onChange={(e) => setFilterDataFim(e.target.value)}
+                                        className="bg-white h-10"
+                                    />
+                                    {filterDataFim && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterDataFim("")} className="h-10 w-10">
                                             <X className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
                             </div>
+                            
+                            {/* Nota Fiscal */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Building2 className="w-3 h-3" /> Filtrar por Empresa
+                                    <FileText className="w-3 h-3" /> Nota Fiscal
+                                </Label>
+                                <div className="flex gap-1">
+                                    <Input
+                                        placeholder="Nº NF..."
+                                        value={filterNF}
+                                        onChange={(e) => setFilterNF(e.target.value)}
+                                        className="bg-white h-10"
+                                    />
+                                    {filterNF && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterNF("")} className="h-10 w-10">
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Empresa */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3" /> Empresa
                                 </Label>
                                 <div className="flex gap-1">
                                     <Select value={filterEmpresa} onValueChange={setFilterEmpresa}>
-                                        <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder="Todas as empresas" />
+                                        <SelectTrigger className="bg-white h-10">
+                                            <SelectValue placeholder="Todas" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value={null}>Todas as empresas</SelectItem>
+                                            <SelectItem value={null}>Todas</SelectItem>
                                             {empresasUnicas.map(emp => (
                                                 <SelectItem key={emp} value={emp}>{emp}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                     {filterEmpresa && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterEmpresa("")}>
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterEmpresa("")} className="h-10 w-10">
                                             <X className="w-4 h-4" />
                                         </Button>
                                     )}
                                 </div>
                             </div>
                         </div>
+
+                        {/* Indicador de Filtros Ativos */}
+                        {(filterTexto || filterData || filterDataFim || filterNF || filterEmpresa) && (
+                            <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-200">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium text-sky-700">Filtros ativos:</span>
+                                    {filterTexto && <Badge className="bg-sky-500 text-white">Busca: {filterTexto}</Badge>}
+                                    {filterData && <Badge className="bg-blue-500 text-white">De: {format(new Date(filterData), "dd/MM/yyyy")}</Badge>}
+                                    {filterDataFim && <Badge className="bg-blue-500 text-white">Até: {format(new Date(filterDataFim), "dd/MM/yyyy")}</Badge>}
+                                    {filterNF && <Badge className="bg-purple-500 text-white">NF: {filterNF}</Badge>}
+                                    {filterEmpresa && <Badge className="bg-green-500 text-white">{filterEmpresa}</Badge>}
+                                </div>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                        setFilterTexto("");
+                                        setFilterData("");
+                                        setFilterDataFim("");
+                                        setFilterNF("");
+                                        setFilterEmpresa("");
+                                    }}
+                                    className="text-sky-600 hover:text-sky-700"
+                                >
+                                    <X className="w-4 h-4 mr-1" /> Limpar Filtros
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

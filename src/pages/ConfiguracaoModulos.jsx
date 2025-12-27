@@ -50,6 +50,8 @@ const TODOS_MODULOS = [
 
 export default function ConfiguracaoModulos() {
     const [modulosAtivos, setModulosAtivos] = useState([]);
+    const [modulosUsuarioComum, setModulosUsuarioComum] = useState([]);
+    const [modulosAdmin, setModulosAdmin] = useState([]);
     const [saving, setSaving] = useState(false);
     const queryClient = useQueryClient();
 

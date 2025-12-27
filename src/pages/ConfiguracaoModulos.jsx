@@ -174,103 +174,238 @@ export default function ConfiguracaoModulos() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-800">Configuração de Módulos</h1>
-                            <p className="text-slate-500">Ative ou desative módulos do sistema</p>
+                            <p className="text-slate-500">Configure permissões por tipo de usuário</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={selecionarTodos}>
-                            Selecionar Todos
-                        </Button>
-                        <Button variant="outline" onClick={desmarcarTodos}>
-                            Desmarcar Todos
-                        </Button>
-                        <Button 
-                            onClick={handleSalvar}
-                            disabled={saving}
-                            className="bg-gradient-to-r from-indigo-500 to-purple-600"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            {saving ? "Salvando..." : "Salvar Configuração"}
-                        </Button>
-                    </div>
+                    <Button 
+                        onClick={handleSalvar}
+                        disabled={saving}
+                        className="bg-gradient-to-r from-indigo-500 to-purple-600"
+                    >
+                        <Save className="w-4 h-4 mr-2" />
+                        {saving ? "Salvando..." : "Salvar Configuração"}
+                    </Button>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <Card className="bg-white/60 border-0 shadow-md">
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-3 bg-green-100 rounded-xl">
-                                <LayoutGrid className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-500">Módulos Ativos</p>
-                                <p className="text-2xl font-bold text-green-600">{modulosAtivos.length}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-white/60 border-0 shadow-md">
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-3 bg-slate-100 rounded-xl">
-                                <LayoutGrid className="w-6 h-6 text-slate-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-500">Módulos Inativos</p>
-                                <p className="text-2xl font-bold text-slate-600">{TODOS_MODULOS.length - modulosAtivos.length}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-white/60 border-0 shadow-md">
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-3 bg-blue-100 rounded-xl">
-                                <LayoutGrid className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-500">Total de Módulos</p>
-                                <p className="text-2xl font-bold text-blue-600">{TODOS_MODULOS.length}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                {/* Tabs */}
+                <Tabs defaultValue="admin" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 h-12">
+                        <TabsTrigger value="geral" className="flex items-center gap-2">
+                            <LayoutGrid className="w-4 h-4" />
+                            Módulos Gerais
+                        </TabsTrigger>
+                        <TabsTrigger value="user" className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            Usuário Comum
+                        </TabsTrigger>
+                        <TabsTrigger value="admin" className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Administrador
+                        </TabsTrigger>
+                    </TabsList>
 
-                {/* Módulos Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {TODOS_MODULOS.map((modulo) => {
-                        const IconComponent = modulo.icon;
-                        const isAtivo = modulosAtivos.includes(modulo.id);
-                        
-                        return (
-                            <Card 
-                                key={modulo.id} 
-                                className={`border-2 transition-all cursor-pointer ${
-                                    isAtivo 
-                                        ? "border-green-500 bg-green-50/50" 
-                                        : "border-slate-200 bg-white/60 opacity-60"
-                                }`}
-                                onClick={() => toggleModulo(modulo.id)}
-                            >
-                                <CardContent className="p-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${isAtivo ? "bg-green-100" : "bg-slate-100"}`}>
-                                                <IconComponent className={`w-5 h-5 ${isAtivo ? "text-green-600" : "text-slate-400"}`} />
-                                            </div>
-                                            <div>
-                                                <p className={`font-semibold ${isAtivo ? "text-slate-800" : "text-slate-500"}`}>
-                                                    {modulo.nome}
-                                                </p>
-                                                <p className="text-xs text-slate-400">{modulo.descricao}</p>
-                                            </div>
-                                        </div>
-                                        <Switch 
-                                            checked={isAtivo}
-                                            onCheckedChange={() => toggleModulo(modulo.id)}
-                                        />
+                    {/* Tab: Módulos Gerais */}
+                    <TabsContent value="geral" className="space-y-6">
+                        <Card className="bg-blue-50/50 border-blue-200">
+                            <CardContent className="p-4">
+                                <p className="text-sm text-blue-800">
+                                    <strong>Módulos Gerais:</strong> Define quais módulos estão ativos no sistema. 
+                                    Apenas módulos ativos aqui poderão ser vistos pelos usuários.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="outline" onClick={selecionarTodos}>Selecionar Todos</Button>
+                            <Button variant="outline" onClick={desmarcarTodos}>Desmarcar Todos</Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                            <Card className="bg-white/60 border-0 shadow-md">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <div className="p-3 bg-green-100 rounded-xl">
+                                        <LayoutGrid className="w-6 h-6 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500">Módulos Ativos</p>
+                                        <p className="text-2xl font-bold text-green-600">{modulosAtivos.length}</p>
                                     </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
-                </div>
+                            <Card className="bg-white/60 border-0 shadow-md">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <div className="p-3 bg-slate-100 rounded-xl">
+                                        <LayoutGrid className="w-6 h-6 text-slate-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500">Módulos Inativos</p>
+                                        <p className="text-2xl font-bold text-slate-600">{TODOS_MODULOS.length - modulosAtivos.length}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {TODOS_MODULOS.map((modulo) => {
+                                const IconComponent = modulo.icon;
+                                const isAtivo = modulosAtivos.includes(modulo.id);
+                                return (
+                                    <Card 
+                                        key={modulo.id} 
+                                        className={`border-2 transition-all cursor-pointer ${
+                                            isAtivo ? "border-green-500 bg-green-50/50" : "border-slate-200 bg-white/60 opacity-60"
+                                        }`}
+                                        onClick={() => toggleModulo(modulo.id)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${isAtivo ? "bg-green-100" : "bg-slate-100"}`}>
+                                                        <IconComponent className={`w-5 h-5 ${isAtivo ? "text-green-600" : "text-slate-400"}`} />
+                                                    </div>
+                                                    <div>
+                                                        <p className={`font-semibold ${isAtivo ? "text-slate-800" : "text-slate-500"}`}>
+                                                            {modulo.nome}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400">{modulo.descricao}</p>
+                                                    </div>
+                                                </div>
+                                                <Switch checked={isAtivo} onCheckedChange={() => toggleModulo(modulo.id)} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+
+                    {/* Tab: Usuário Comum */}
+                    <TabsContent value="user" className="space-y-6">
+                        <Card className="bg-amber-50/50 border-amber-200">
+                            <CardContent className="p-4">
+                                <p className="text-sm text-amber-800">
+                                    <strong>Permissões Usuário Comum:</strong> Define quais módulos os usuários com role "user" podem acessar.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="outline" onClick={selecionarTodosUsuarioComum}>Selecionar Todos</Button>
+                            <Button variant="outline" onClick={desmarcarTodosUsuarioComum}>Desmarcar Todos</Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                            <Card className="bg-white/60 border-0 shadow-md">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <div className="p-3 bg-amber-100 rounded-xl">
+                                        <User className="w-6 h-6 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500">Módulos Permitidos</p>
+                                        <p className="text-2xl font-bold text-amber-600">{modulosUsuarioComum.length}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {TODOS_MODULOS.map((modulo) => {
+                                const IconComponent = modulo.icon;
+                                const isPermitido = modulosUsuarioComum.includes(modulo.id);
+                                return (
+                                    <Card 
+                                        key={modulo.id} 
+                                        className={`border-2 transition-all cursor-pointer ${
+                                            isPermitido ? "border-amber-500 bg-amber-50/50" : "border-slate-200 bg-white/60 opacity-60"
+                                        }`}
+                                        onClick={() => toggleModuloUsuarioComum(modulo.id)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${isPermitido ? "bg-amber-100" : "bg-slate-100"}`}>
+                                                        <IconComponent className={`w-5 h-5 ${isPermitido ? "text-amber-600" : "text-slate-400"}`} />
+                                                    </div>
+                                                    <div>
+                                                        <p className={`font-semibold ${isPermitido ? "text-slate-800" : "text-slate-500"}`}>
+                                                            {modulo.nome}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400">{modulo.descricao}</p>
+                                                    </div>
+                                                </div>
+                                                <Switch checked={isPermitido} onCheckedChange={() => toggleModuloUsuarioComum(modulo.id)} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+
+                    {/* Tab: Admin */}
+                    <TabsContent value="admin" className="space-y-6">
+                        <Card className="bg-indigo-50/50 border-indigo-200">
+                            <CardContent className="p-4">
+                                <p className="text-sm text-indigo-800">
+                                    <strong>Permissões Admin:</strong> Define quais módulos os administradores podem acessar. 
+                                    Geralmente todos os módulos ficam disponíveis.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="outline" onClick={selecionarTodosAdmin}>Selecionar Todos</Button>
+                            <Button variant="outline" onClick={desmarcarTodosAdmin}>Desmarcar Todos</Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                            <Card className="bg-white/60 border-0 shadow-md">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <div className="p-3 bg-indigo-100 rounded-xl">
+                                        <Shield className="w-6 h-6 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500">Módulos Permitidos</p>
+                                        <p className="text-2xl font-bold text-indigo-600">{modulosAdmin.length}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {TODOS_MODULOS.map((modulo) => {
+                                const IconComponent = modulo.icon;
+                                const isPermitido = modulosAdmin.includes(modulo.id);
+                                return (
+                                    <Card 
+                                        key={modulo.id} 
+                                        className={`border-2 transition-all cursor-pointer ${
+                                            isPermitido ? "border-indigo-500 bg-indigo-50/50" : "border-slate-200 bg-white/60 opacity-60"
+                                        }`}
+                                        onClick={() => toggleModuloAdmin(modulo.id)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${isPermitido ? "bg-indigo-100" : "bg-slate-100"}`}>
+                                                        <IconComponent className={`w-5 h-5 ${isPermitido ? "text-indigo-600" : "text-slate-400"}`} />
+                                                    </div>
+                                                    <div>
+                                                        <p className={`font-semibold ${isPermitido ? "text-slate-800" : "text-slate-500"}`}>
+                                                            {modulo.nome}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400">{modulo.descricao}</p>
+                                                    </div>
+                                                </div>
+                                                <Switch checked={isPermitido} onCheckedChange={() => toggleModuloAdmin(modulo.id)} />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
         </div>
     );

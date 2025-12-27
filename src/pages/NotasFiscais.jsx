@@ -906,6 +906,40 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         </Button>
                                         <Button 
                                             variant="outline"
+                                            className="border-blue-500 text-blue-700 hover:bg-blue-50"
+                                            onClick={() => {
+                                                const notasSelecionadas = notas.filter(n => selecionados.includes(n.id));
+                                                const destinatariosUnicos = [...new Set(notasSelecionadas.map(n => n.destinatario).filter(Boolean))];
+                                                
+                                                const novosDestinatarios = destinatariosUnicos.filter(nome => 
+                                                    !destinatarios.some(d => d.nome.toLowerCase() === nome.toLowerCase())
+                                                );
+                                                
+                                                if (novosDestinatarios.length === 0) {
+                                                    toast.info("Todos os destinatários já estão cadastrados!");
+                                                    return;
+                                                }
+                                                
+                                                if (confirm(`Cadastrar ${novosDestinatarios.length} destinatário(s) novo(s)?`)) {
+                                                    Promise.all(
+                                                        novosDestinatarios.map(nome => 
+                                                            base44.entities.Destinatario.create({ nome })
+                                                        )
+                                                    ).then(() => {
+                                                        queryClient.invalidateQueries({ queryKey: ["destinatarios-notas"] });
+                                                        toast.success(`${novosDestinatarios.length} destinatário(s) cadastrado(s)!`);
+                                                    }).catch(err => {
+                                                        console.error(err);
+                                                        toast.error("Erro ao cadastrar destinatários");
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            <Users className="w-4 h-4 mr-1" />
+                                            Cadastrar Destinatários ({selecionados.length})
+                                        </Button>
+                                        <Button 
+                                            variant="outline"
                                             className="border-red-500 text-red-700 hover:bg-red-50"
                                             onClick={() => {
                                                 if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {

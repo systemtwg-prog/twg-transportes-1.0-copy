@@ -442,23 +442,24 @@ export default function ComprovantesInternos() {
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-2xl shadow-lg">
-                            <FileText className="w-8 h-8 text-white" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 md:p-3 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-xl md:rounded-2xl shadow-lg">
+                            <FileText className="w-6 h-6 md:w-8 md:h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Comprovantes de Entrega</h1>
-                            <p className="text-slate-500">Gerencie documentos e comprovantes</p>
+                            <h1 className="text-xl md:text-3xl font-bold text-slate-800">Comprovantes de Entrega</h1>
+                            <p className="text-xs md:text-sm text-slate-500">Gerencie documentos e comprovantes</p>
                         </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Button 
                             onClick={atualizarDashboards}
                             variant="outline"
-                            className="border-green-500 text-green-600 hover:bg-green-50"
+                            size="sm"
+                            className="border-green-500 text-green-600 hover:bg-green-50 text-xs md:text-sm h-8 md:h-10"
                         >
-                            <RefreshCw className="w-4 h-4 mr-2" />
+                            <RefreshCw className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                             Atualizar
                         </Button>
                         <Button 
@@ -483,29 +484,33 @@ export default function ComprovantesInternos() {
                                 toast.info(`Exibindo ${semEmpresa.length} comprovante(s) sem empresa`);
                             }}
                             variant="outline"
-                            className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                            size="sm"
+                            className="border-amber-500 text-amber-600 hover:bg-amber-50 text-xs md:text-sm h-8 md:h-10"
                         >
-                            <AlertTriangle className="w-4 h-4 mr-2" />
-                            Verificar Sem Empresa ({comprovantes.filter(c => !c.empresa).length})
+                            <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                            <span className="hidden sm:inline">Verificar Sem Empresa</span>
+                            <span className="sm:hidden">Sem Empresa</span> ({comprovantes.filter(c => !c.empresa).length})
                         </Button>
                         <Button 
                             onClick={() => { setEmpresaForm({ nome: "", logo_url: "" }); setEditingEmpresa(null); setShowCadastroEmpresa(true); }}
                             variant="outline"
-                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                            size="sm"
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50 text-xs md:text-sm h-8 md:h-10"
                         >
-                            <Building2 className="w-4 h-4 mr-2" />
-                            Cadastro Empresas
+                            <Building2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                            <span className="hidden sm:inline">Cadastro Empresas</span>
+                            <span className="sm:hidden">Empresas</span>
                         </Button>
                     </div>
                 </div>
 
                 {/* Botão Grande - Adicionar Comprovante */}
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                     <Button 
                         onClick={() => setShowCameraMassa(true)}
-                        className="w-full h-20 text-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-xl"
+                        className="w-full h-14 md:h-20 text-base md:text-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-xl"
                     >
-                        <Camera className="w-8 h-8 mr-3" />
+                        <Camera className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3" />
                         Adicionar Comprovante
                     </Button>
                 </div>
@@ -513,26 +518,28 @@ export default function ComprovantesInternos() {
                 {/* Barra de Seleção */}
                 {selectedIds.length > 0 && (
                     <Card className="bg-gradient-to-r from-sky-500 to-cyan-600 border-0 shadow-lg">
-                        <CardContent className="p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Badge className="bg-white text-sky-700 text-lg px-3 py-1">
+                        <CardContent className="p-3 md:p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <Badge className="bg-white text-sky-700 text-sm md:text-lg px-2 md:px-3 py-1">
                                     {selectedIds.length} selecionado(s)
                                 </Badge>
                                 <Button 
                                     variant="ghost" 
                                     size="sm" 
                                     onClick={() => setSelectedIds([])}
-                                    className="text-white hover:bg-white/20"
+                                    className="text-white hover:bg-white/20 text-xs md:text-sm h-7 md:h-8"
                                 >
-                                    <X className="w-4 h-4 mr-1" /> Limpar
+                                    <X className="w-3 h-3 md:w-4 md:h-4 mr-1" /> Limpar
                                 </Button>
                             </div>
                             <Button 
                                 onClick={() => setShowBulkEdit(true)}
-                                className="bg-white text-sky-700 hover:bg-sky-50"
+                                size="sm"
+                                className="bg-white text-sky-700 hover:bg-sky-50 text-xs md:text-sm h-8 md:h-10"
                             >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Editar em Massa
+                                <Pencil className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                                <span className="hidden sm:inline">Editar em Massa</span>
+                                <span className="sm:hidden">Editar</span>
                             </Button>
                         </CardContent>
                     </Card>
@@ -540,47 +547,47 @@ export default function ComprovantesInternos() {
 
                 {/* Filtros Avançados */}
                 <Card className="bg-white/60 border-0 shadow-md">
-                    <CardContent className="p-4 space-y-4">
+                    <CardContent className="p-3 md:p-4 space-y-3 md:space-y-4">
                         {/* Busca Texto Livre */}
                         <div className="space-y-1">
                             <Label className="text-xs text-slate-500 font-semibold flex items-center gap-1">
-                                <Search className="w-3 h-3" /> Busca Rápida (pesquisa em todos os campos)
+                                <Search className="w-3 h-3" /> Busca Rápida
                             </Label>
                             <div className="flex gap-1">
                                 <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-sky-500" />
+                                    <Search className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-sky-500" />
                                     <Input
-                                        placeholder="Digite qualquer informação (NF, empresa, observações, usuário...)"
+                                        placeholder="Digite qualquer informação..."
                                         value={filterTexto}
                                         onChange={(e) => setFilterTexto(e.target.value)}
-                                        className="pl-11 bg-white h-12 text-base border-2 border-sky-200 focus:border-sky-500"
+                                        className="pl-8 md:pl-11 bg-white h-9 md:h-12 text-sm md:text-base border-2 border-sky-200 focus:border-sky-500"
                                     />
                                 </div>
                                 {filterTexto && (
-                                    <Button variant="ghost" size="icon" onClick={() => setFilterTexto("")} className="h-12">
-                                        <X className="w-5 h-5" />
+                                    <Button variant="ghost" size="icon" onClick={() => setFilterTexto("")} className="h-9 w-9 md:h-12 md:w-12">
+                                        <X className="w-4 h-4 md:w-5 md:h-5" />
                                     </Button>
                                 )}
                             </div>
                         </div>
 
                         {/* Filtros Específicos - Linha 1 */}
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
                             {/* Selecionar Todos */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500">Seleção</Label>
                                 <Button 
                                     variant="outline" 
                                     onClick={toggleSelectAll}
-                                    className="w-full h-10"
+                                    className="w-full h-8 md:h-10 text-xs md:text-sm"
                                 >
                                     {selectedIds.length === filtered.length && filtered.length > 0 ? (
                                         <>
-                                            <X className="w-4 h-4 mr-2" /> Desmarcar
+                                            <X className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">Desmarcar</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Check className="w-4 h-4 mr-2" /> Selecionar ({filtered.length})
+                                            <Check className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> <span className="hidden sm:inline">Selecionar</span> ({filtered.length})
                                         </>
                                     )}
                                 </Button>
@@ -596,11 +603,11 @@ export default function ComprovantesInternos() {
                                         type="date"
                                         value={filterData}
                                         onChange={(e) => setFilterData(e.target.value)}
-                                        className="bg-white h-10"
+                                        className="bg-white h-8 md:h-10 text-xs md:text-sm"
                                     />
                                     {filterData && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterData("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterData("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -616,11 +623,11 @@ export default function ComprovantesInternos() {
                                         type="date"
                                         value={filterDataFim}
                                         onChange={(e) => setFilterDataFim(e.target.value)}
-                                        className="bg-white h-10"
+                                        className="bg-white h-8 md:h-10 text-xs md:text-sm"
                                     />
                                     {filterDataFim && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterDataFim("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterDataFim("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -636,11 +643,11 @@ export default function ComprovantesInternos() {
                                         placeholder="Nº NF..."
                                         value={filterNF}
                                         onChange={(e) => setFilterNF(e.target.value)}
-                                        className="bg-white h-10"
+                                        className="bg-white h-8 md:h-10 text-xs md:text-sm"
                                     />
                                     {filterNF && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterNF("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterNF("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -653,7 +660,7 @@ export default function ComprovantesInternos() {
                                 </Label>
                                 <div className="flex gap-1">
                                     <Select value={filterEmpresa} onValueChange={setFilterEmpresa}>
-                                        <SelectTrigger className="bg-white h-10">
+                                        <SelectTrigger className="bg-white h-8 md:h-10 text-xs md:text-sm">
                                             <SelectValue placeholder="Todas" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -664,8 +671,8 @@ export default function ComprovantesInternos() {
                                         </SelectContent>
                                     </Select>
                                     {filterEmpresa && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterEmpresa("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterEmpresa("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -673,7 +680,7 @@ export default function ComprovantesInternos() {
                         </div>
 
                         {/* Filtros Específicos - Linha 2 */}
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
                             {/* Tipo de Documento */}
                             <div className="space-y-1">
                                 <Label className="text-xs text-slate-500 flex items-center gap-1">
@@ -681,7 +688,7 @@ export default function ComprovantesInternos() {
                                 </Label>
                                 <div className="flex gap-1">
                                     <Select value={filterTipoDoc} onValueChange={setFilterTipoDoc}>
-                                        <SelectTrigger className="bg-white h-10">
+                                        <SelectTrigger className="bg-white h-8 md:h-10 text-xs md:text-sm">
                                             <SelectValue placeholder="Todos" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -696,8 +703,8 @@ export default function ComprovantesInternos() {
                                         </SelectContent>
                                     </Select>
                                     {filterTipoDoc && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterTipoDoc("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterTipoDoc("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -710,7 +717,7 @@ export default function ComprovantesInternos() {
                                 </Label>
                                 <div className="flex gap-1">
                                     <Select value={filterStatus} onValueChange={setFilterStatus}>
-                                        <SelectTrigger className="bg-white h-10">
+                                        <SelectTrigger className="bg-white h-8 md:h-10 text-xs md:text-sm">
                                             <SelectValue placeholder="Todos" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -722,8 +729,8 @@ export default function ComprovantesInternos() {
                                         </SelectContent>
                                     </Select>
                                     {filterStatus && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterStatus("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterStatus("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -738,12 +745,12 @@ export default function ComprovantesInternos() {
                                         placeholder="R$ 0,00"
                                         value={filterValorMin}
                                         onChange={(e) => setFilterValorMin(e.target.value)}
-                                        className="bg-white h-10"
+                                        className="bg-white h-8 md:h-10 text-xs md:text-sm"
                                         step="0.01"
                                     />
                                     {filterValorMin && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMin("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMin("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -758,12 +765,12 @@ export default function ComprovantesInternos() {
                                         placeholder="R$ 9999,99"
                                         value={filterValorMax}
                                         onChange={(e) => setFilterValorMax(e.target.value)}
-                                        className="bg-white h-10"
+                                        className="bg-white h-8 md:h-10 text-xs md:text-sm"
                                         step="0.01"
                                     />
                                     {filterValorMax && (
-                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMax("")} className="h-10 w-10">
-                                            <X className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMax("")} className="h-8 w-8 md:h-10 md:w-10">
+                                            <X className="w-3 h-3 md:w-4 md:h-4" />
                                         </Button>
                                     )}
                                 </div>
@@ -814,7 +821,7 @@ export default function ComprovantesInternos() {
                 </Card>
 
                 {/* Lista */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     {isLoading ? (
                         <div className="col-span-full text-center py-12">
                             <div className="animate-spin w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full mx-auto" />
@@ -835,38 +842,38 @@ export default function ComprovantesInternos() {
                                 }`}
                                 onClick={() => toggleSelect(comprovante.id)}
                             >
-                                <CardContent className="p-5">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex items-start gap-3">
+                                <CardContent className="p-3 md:p-5">
+                                    <div className="flex items-start justify-between mb-2 md:mb-3">
+                                        <div className="flex items-start gap-2 md:gap-3">
                                             {/* Checkbox de seleção */}
                                             <div 
-                                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedIds.includes(comprovante.id) ? 'bg-sky-500 border-sky-500' : 'border-slate-300'}`}
+                                                className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedIds.includes(comprovante.id) ? 'bg-sky-500 border-sky-500' : 'border-slate-300'}`}
                                             >
-                                                {selectedIds.includes(comprovante.id) && <Check className="w-4 h-4 text-white" />}
+                                                {selectedIds.includes(comprovante.id) && <Check className="w-3 h-3 md:w-4 md:h-4 text-white" />}
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                                <div className="flex items-center gap-1 md:gap-2">
+                                                    <h3 className="font-semibold text-sm md:text-base text-slate-800">NF: {comprovante.nota_fiscal}</h3>
                                                     {comprovante.tipo_documento && (
                                                         <Badge className="bg-indigo-100 text-indigo-700 text-xs">{comprovante.tipo_documento}</Badge>
                                                     )}
                                                 </div>
                                                 {comprovante.empresa && (
-                                                    <div className="flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1 md:gap-1.5">
                                                         {getEmpresaLogo(comprovante.empresa) && (
                                                             <img 
                                                                 src={getEmpresaLogo(comprovante.empresa)} 
                                                                 alt="" 
-                                                                className="w-5 h-5 object-contain rounded"
+                                                                className="w-4 h-4 md:w-5 md:h-5 object-contain rounded"
                                                             />
                                                         )}
-                                                        <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
+                                                        <p className="text-xs md:text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
                                                     </div>
                                                 )}
                                                 {comprovante.valor && (
-                                                    <p className="text-sm font-bold text-green-600">R$ {comprovante.valor.toFixed(2)}</p>
+                                                    <p className="text-xs md:text-sm font-bold text-green-600">R$ {comprovante.valor.toFixed(2)}</p>
                                                 )}
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1 md:gap-2 flex-wrap">
                                                     <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
                                                     {comprovante.status && (
                                                         <Badge className={`text-xs ${
@@ -884,20 +891,20 @@ export default function ComprovantesInternos() {
                                                 </div>
                                                 {comprovante.usuario_foto && (
                                                     <p className="text-xs text-slate-400 flex items-center gap-1">
-                                                        <User className="w-3 h-3" />
-                                                        {comprovante.usuario_foto}
+                                                        <User className="w-2 h-2 md:w-3 md:h-3" />
+                                                        <span className="hidden sm:inline">{comprovante.usuario_foto}</span>
                                                     </p>
                                                 )}
                                             </div>
                                         </div>
-                                        <Badge variant="outline">
-                                            {comprovante.arquivos?.length || 0} arquivo(s)
+                                        <Badge variant="outline" className="text-xs">
+                                            {comprovante.arquivos?.length || 0}
                                         </Badge>
                                     </div>
 
                                     {/* Preview da imagem - largura total do cartão */}
                                     <div 
-                                        className="w-full h-44 bg-slate-100 rounded-xl overflow-hidden cursor-pointer mb-3"
+                                        className="w-full h-32 md:h-44 bg-slate-100 rounded-lg md:rounded-xl overflow-hidden cursor-pointer mb-2 md:mb-3"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             if (comprovante.arquivos?.length > 0) setViewFiles(comprovante.arquivos);
@@ -914,34 +921,34 @@ export default function ComprovantesInternos() {
                                     </div>
 
                                     {comprovante.observacoes && (
-                                        <p className="text-sm text-slate-600 line-clamp-2 mb-3">{comprovante.observacoes}</p>
+                                        <p className="text-xs md:text-sm text-slate-600 line-clamp-2 mb-2 md:mb-3">{comprovante.observacoes}</p>
                                     )}
 
                                     <div className="flex justify-between" onClick={(e) => e.stopPropagation()}>
                                         <Button 
                                             variant="ghost" 
                                             size="sm" 
-                                            className="text-green-600 hover:bg-green-50"
+                                            className="text-green-600 hover:bg-green-50 text-xs md:text-sm h-7 md:h-8 px-2 md:px-3"
                                             onClick={() => {
                                                 const texto = `*COMPROVANTE DE ENTREGA*\nNF: ${comprovante.nota_fiscal}\nData: ${formatDate(comprovante.data)}\n${comprovante.observacoes ? `Obs: ${comprovante.observacoes}` : ""}\n${comprovante.arquivos?.[0]?.url || ""}`;
                                                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
                                             }}
                                         >
-                                            <Share2 className="w-4 h-4 mr-1" /> Compartilhar
+                                            <Share2 className="w-3 h-3 md:w-4 md:h-4 mr-1" /> <span className="hidden sm:inline">Compartilhar</span>
                                         </Button>
                                         <div className="flex gap-1">
                                             {comprovante.arquivos?.length > 0 && (
-                                                <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)}>
-                                                    <Eye className="w-4 h-4" />
+                                                <Button variant="ghost" size="sm" onClick={() => setViewFiles(comprovante.arquivos)} className="h-7 w-7 md:h-8 md:w-8 p-0">
+                                                    <Eye className="w-3 h-3 md:w-4 md:h-4" />
                                                 </Button>
                                             )}
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)}>
-                                                <Pencil className="w-4 h-4" />
+                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(comprovante)} className="h-7 w-7 md:h-8 md:w-8 p-0">
+                                                <Pencil className="w-3 h-3 md:w-4 md:h-4" />
                                             </Button>
                                             <Button variant="ghost" size="sm" onClick={() => {
                                                 if (confirm("Excluir este comprovante?")) deleteMutation.mutate(comprovante.id);
-                                            }}>
-                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                            }} className="h-7 w-7 md:h-8 md:w-8 p-0">
+                                                <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-red-600" />
                                             </Button>
                                         </div>
                                     </div>

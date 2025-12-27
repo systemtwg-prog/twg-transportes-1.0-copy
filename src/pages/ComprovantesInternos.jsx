@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2, Check
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2, Check, AlertTriangle, User
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

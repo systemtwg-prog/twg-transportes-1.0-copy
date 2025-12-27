@@ -20,6 +20,7 @@ const TODOS_MODULOS = [
     { id: "ColetasDiarias", nome: "Coletas Diárias", icon: FileText, descricao: "Gerenciar coletas diárias" },
     { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas", icon: Package, descricao: "Adicionar novas coletas" },
     { id: "Clientes", nome: "Clientes", icon: Users, descricao: "Cadastro de clientes" },
+    { id: "Destinatarios", nome: "Destinatários", icon: Users, descricao: "Cadastro de destinatários" },
     { id: "Transportadoras", nome: "Transportadoras", icon: Package, descricao: "Cadastro de transportadoras" },
     { id: "ExtratorGoogle", nome: "Extrator Google", icon: Search, descricao: "Extrair dados do Google" },
     { id: "Motoristas", nome: "Colaboradores", icon: Users, descricao: "Cadastro de colaboradores" },

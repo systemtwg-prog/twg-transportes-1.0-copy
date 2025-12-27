@@ -63,14 +63,30 @@ export default function ConfiguracaoModulos() {
     useEffect(() => {
         if (config && config.length > 0) {
             const modulosSalvos = config[0].modulos_ativos;
+            const modulosUser = config[0].modulos_usuario_comum;
+            const modulosAdm = config[0].modulos_admin;
+            
             if (modulosSalvos && Array.isArray(modulosSalvos)) {
                 setModulosAtivos(modulosSalvos);
             } else {
-                // Se não houver configuração, ativar todos por padrão
                 setModulosAtivos(TODOS_MODULOS.map(m => m.id));
+            }
+            
+            if (modulosUser && Array.isArray(modulosUser)) {
+                setModulosUsuarioComum(modulosUser);
+            } else {
+                setModulosUsuarioComum(["Home", "ComprovantesInternos", "NotaDeposito"]);
+            }
+            
+            if (modulosAdm && Array.isArray(modulosAdm)) {
+                setModulosAdmin(modulosAdm);
+            } else {
+                setModulosAdmin(TODOS_MODULOS.map(m => m.id));
             }
         } else {
             setModulosAtivos(TODOS_MODULOS.map(m => m.id));
+            setModulosUsuarioComum(["Home", "ComprovantesInternos", "NotaDeposito"]);
+            setModulosAdmin(TODOS_MODULOS.map(m => m.id));
         }
     }, [config]);
 

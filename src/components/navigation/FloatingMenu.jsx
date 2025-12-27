@@ -18,6 +18,7 @@ const menuItems = [
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
     { name: "Clientes", href: "Clientes", icon: Users },
+    { name: "Destinatários", href: "Destinatarios", icon: Users },
     { name: "Transportadoras", href: "Transportadoras", icon: Package },
     { name: "Extrator Google", href: "ExtratorGoogle", icon: Search },
     { name: "Colaboradores", href: "Motoristas", icon: User },

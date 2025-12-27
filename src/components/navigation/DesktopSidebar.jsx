@@ -27,6 +27,7 @@ const menuItems = [
     { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText, category: "documentos" },
     { name: "Clientes", href: "Clientes", icon: Users, category: "cadastros" },
     { name: "Clientes S/NF", href: "ClientesSNF", icon: Users, category: "cadastros" },
+    { name: "Destinatários", href: "Destinatarios", icon: Users, category: "cadastros" },
     { name: "Transportadoras", href: "Transportadoras", icon: Building2, category: "cadastros" },
     { name: "Colaboradores", href: "Motoristas", icon: User, category: "cadastros" },
     { name: "Veículos", href: "Veiculos", icon: Car, category: "cadastros" },

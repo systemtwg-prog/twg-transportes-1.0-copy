@@ -98,13 +98,44 @@ export default function ConfiguracaoModulos() {
         );
     };
 
+    const toggleModuloUsuarioComum = (moduloId) => {
+        setModulosUsuarioComum(prev => 
+            prev.includes(moduloId) 
+                ? prev.filter(id => id !== moduloId)
+                : [...prev, moduloId]
+        );
+    };
+
+    const toggleModuloAdmin = (moduloId) => {
+        setModulosAdmin(prev => 
+            prev.includes(moduloId) 
+                ? prev.filter(id => id !== moduloId)
+                : [...prev, moduloId]
+        );
+    };
+
     const selecionarTodos = () => {
         setModulosAtivos(TODOS_MODULOS.map(m => m.id));
     };
 
     const desmarcarTodos = () => {
-        // Manter apenas os essenciais
         setModulosAtivos(["Home", "Configuracoes", "ConfiguracaoModulos"]);
+    };
+
+    const selecionarTodosUsuarioComum = () => {
+        setModulosUsuarioComum(TODOS_MODULOS.map(m => m.id));
+    };
+
+    const desmarcarTodosUsuarioComum = () => {
+        setModulosUsuarioComum(["Home"]);
+    };
+
+    const selecionarTodosAdmin = () => {
+        setModulosAdmin(TODOS_MODULOS.map(m => m.id));
+    };
+
+    const desmarcarTodosAdmin = () => {
+        setModulosAdmin(["Home", "Configuracoes", "ConfiguracaoModulos"]);
     };
 
     const handleSalvar = async () => {

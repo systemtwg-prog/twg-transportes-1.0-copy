@@ -391,7 +391,13 @@ export default function ComprovantesInternos() {
         }
     };
 
+    // Variável para controlar filtro de "sem empresa"
+    const [filterSemEmpresa, setFilterSemEmpresa] = useState(false);
+
     const filtered = comprovantes.filter(c => {
+        // Filtro especial: apenas sem empresa
+        if (filterSemEmpresa && c.empresa) return false;
+        
         // Filtro por data de início
         const matchDataInicio = !filterData || c.data >= filterData;
         
@@ -454,6 +460,33 @@ export default function ComprovantesInternos() {
                         >
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Atualizar
+                        </Button>
+                        <Button 
+                            onClick={() => {
+                                const semEmpresa = comprovantes.filter(c => !c.empresa);
+                                if (semEmpresa.length === 0) {
+                                    toast.success("Todos os comprovantes têm empresa associada!");
+                                    return;
+                                }
+                                // Limpar todos os filtros
+                                setFilterEmpresa("");
+                                setFilterTexto("");
+                                setFilterData("");
+                                setFilterDataFim("");
+                                setFilterNF("");
+                                setFilterTipoDoc("");
+                                setFilterStatus("");
+                                setFilterValorMin("");
+                                setFilterValorMax("");
+                                // Ativar filtro especial
+                                setFilterSemEmpresa(true);
+                                toast.info(`Exibindo ${semEmpresa.length} comprovante(s) sem empresa`);
+                            }}
+                            variant="outline"
+                            className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                        >
+                            <AlertTriangle className="w-4 h-4 mr-2" />
+                            Verificar Sem Empresa ({comprovantes.filter(c => !c.empresa).length})
                         </Button>
                         <Button 
                             onClick={() => { setEmpresaForm({ nome: "", logo_url: "" }); setEditingEmpresa(null); setShowCadastroEmpresa(true); }}
@@ -741,10 +774,11 @@ export default function ComprovantesInternos() {
                         </div>
 
                         {/* Indicador de Filtros Ativos */}
-                        {(filterTexto || filterData || filterDataFim || filterNF || filterEmpresa || filterTipoDoc || filterStatus || filterValorMin || filterValorMax) && (
+                        {(filterTexto || filterData || filterDataFim || filterNF || filterEmpresa || filterTipoDoc || filterStatus || filterValorMin || filterValorMax || filterSemEmpresa) && (
                             <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-200">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-sm font-medium text-sky-700">Filtros ativos:</span>
+                                    {filterSemEmpresa && <Badge className="bg-amber-500 text-white">⚠️ Sem Empresa</Badge>}
                                     {filterTexto && <Badge className="bg-sky-500 text-white">Busca: {filterTexto}</Badge>}
                                     {filterData && <Badge className="bg-blue-500 text-white">De: {format(new Date(filterData), "dd/MM/yyyy")}</Badge>}
                                     {filterDataFim && <Badge className="bg-blue-500 text-white">Até: {format(new Date(filterDataFim), "dd/MM/yyyy")}</Badge>}
@@ -768,6 +802,7 @@ export default function ComprovantesInternos() {
                                         setFilterStatus("");
                                         setFilterValorMin("");
                                         setFilterValorMax("");
+                                        setFilterSemEmpresa(false);
                                     }}
                                     className="text-sky-600 hover:text-sky-700"
                                 >
@@ -793,7 +828,11 @@ export default function ComprovantesInternos() {
                         filtered.map((comprovante) => (
                             <Card 
                                 key={comprovante.id} 
-                                className={`bg-white/90 border-2 shadow-md hover:shadow-lg transition-all cursor-pointer ${selectedIds.includes(comprovante.id) ? 'border-sky-500 ring-2 ring-sky-200' : 'border-transparent'}`}
+                                className={`bg-white/90 border-2 shadow-md hover:shadow-lg transition-all cursor-pointer ${
+                                    selectedIds.includes(comprovante.id) ? 'border-sky-500 ring-2 ring-sky-200' : 
+                                    !comprovante.empresa ? 'border-amber-400 bg-amber-50/50' : 
+                                    'border-transparent'
+                                }`}
                                 onClick={() => toggleSelect(comprovante.id)}
                             >
                                 <CardContent className="p-5">

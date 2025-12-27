@@ -44,6 +44,8 @@ export default function NotasFiscais() {
     const [transpExtraidas, setTranspExtraidas] = useState([]);
     const [transpSelecionadas, setTranspSelecionadas] = useState([]);
     const [buscandoDados, setBuscandoDados] = useState({});
+    const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
+    const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
     
     // Estados para gravação de áudio
     const [showAudioDialog, setShowAudioDialog] = useState(false);
@@ -90,6 +92,11 @@ export default function NotasFiscais() {
         queryFn: () => base44.entities.Transportadora.list()
     });
 
+    const { data: destinatarios = [] } = useQuery({
+        queryKey: ["destinatarios-notas"],
+        queryFn: () => base44.entities.Destinatario.list()
+    });
+
     // Verificar CNPJ duplicado
     const cnpjJaCadastrado = (cnpj) => {
         if (!cnpj) return false;
@@ -102,6 +109,18 @@ export default function NotasFiscais() {
         mutationFn: (data) => base44.entities.Transportadora.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+        }
+    });
+
+    // Criar destinatário
+    const createDestinatarioMutation = useMutation({
+        mutationFn: (data) => base44.entities.Destinatario.create(data),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["destinatarios-notas"] });
+            setForm({ ...form, destinatario: data.nome });
+            setShowCadastroDestinatario(false);
+            setNovoDestinatario({ nome: "" });
+            toast.success("Destinatário cadastrado!");
         }
     });
 
@@ -1460,6 +1479,52 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                 onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] })}
             />
 
+            {/* Dialog Cadastrar Destinatário */}
+            <Dialog open={showCadastroDestinatario} onOpenChange={setShowCadastroDestinatario}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Plus className="w-5 h-5 text-blue-600" />
+                            Cadastrar Destinatário
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cadastre um novo destinatário para usar nas notas fiscais.
+                        </p>
+                        <div className="space-y-2">
+                            <Label>Nome *</Label>
+                            <Input
+                                value={novoDestinatario.nome}
+                                onChange={(e) => setNovoDestinatario({ nome: e.target.value })}
+                                placeholder="Nome do destinatário"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => { setShowCadastroDestinatario(false); setNovoDestinatario({ nome: "" }); }}
+                            >
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={() => createDestinatarioMutation.mutate(novoDestinatario)}
+                                disabled={!novoDestinatario.nome || createDestinatarioMutation.isPending}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                {createDestinatarioMutation.isPending ? "Salvando..." : (
+                                    <>
+                                        <Save className="w-4 h-4 mr-1" /> Salvar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Form Dialog */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg">
@@ -1491,12 +1556,41 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Destinatário *</Label>
+                            <Label className="flex items-center justify-between">
+                                <span>Destinatário *</span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowCadastroDestinatario(true)}
+                                    className="text-blue-600 hover:text-blue-700 h-auto p-0"
+                                >
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Cadastrar Novo
+                                </Button>
+                            </Label>
+                            <Select 
+                                value={form.destinatario} 
+                                onValueChange={(v) => setForm({ ...form, destinatario: v })}
+                            >
+                                <SelectTrigger className="bg-white">
+                                    <SelectValue placeholder="Selecione o destinatário..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {destinatarios.map(d => (
+                                        <SelectItem key={d.id} value={d.nome}>
+                                            {d.nome}
+                                            {d.cidade && <span className="text-xs text-slate-500 ml-1">({d.cidade})</span>}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             <Input
                                 value={form.destinatario}
                                 onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
                                 required
-                                placeholder="Nome do destinatário"
+                                placeholder="Ou digite manualmente..."
+                                className="mt-2"
                             />
                         </div>
 

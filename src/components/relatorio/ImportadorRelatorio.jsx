@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const CAMPOS_RELATORIO = [
     { key: "numero_nf", label: "Nº NF", aliases: ["numero_nf", "nf", "nota fiscal", "nfe", "número nf", "num nf", "nº nf", "nota"] },
@@ -168,8 +169,10 @@ export default function ImportadorRelatorio({ open, onClose, onImportSuccess }) 
 
         // Salvar registro do relatório importado
         try {
+            const dataRelatorio = format(new Date(), "yyyy-MM-dd");
+            
             await base44.entities.RelatorioImportado.create({
-                data_relatorio: new Date().toISOString().split('T')[0],
+                data_relatorio: dataRelatorio,
                 notas: notasParaAdicionar.map(n => ({
                     numero_nf: n.numero_nf,
                     destinatario: n.destinatario,
@@ -177,8 +180,11 @@ export default function ImportadorRelatorio({ open, onClose, onImportSuccess }) 
                 })),
                 total_notas: notasParaAdicionar.length
             });
+            
+            console.log("Relatório salvo com sucesso!");
         } catch (err) {
             console.error("Erro ao salvar relatório:", err);
+            toast.error("Erro ao salvar relatório: " + err.message);
         }
 
         toast.success(`${notasParaAdicionar.length} nota(s) importada(s) com sucesso!`);

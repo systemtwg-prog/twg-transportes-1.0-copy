@@ -161,6 +161,10 @@ export default function ComprovantesInternos() {
     const [filterNF, setFilterNF] = useState("");
     const [filterEmpresa, setFilterEmpresa] = useState("");
     const [filterTexto, setFilterTexto] = useState("");
+    const [filterTipoDoc, setFilterTipoDoc] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
+    const [filterValorMin, setFilterValorMin] = useState("");
+    const [filterValorMax, setFilterValorMax] = useState("");
     const [viewFiles, setViewFiles] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [showCadastroEmpresa, setShowCadastroEmpresa] = useState(false);
@@ -238,6 +242,12 @@ export default function ComprovantesInternos() {
 
     const [form, setForm] = useState({
         nota_fiscal: "",
+        tipo_documento: "Comprovante",
+        valor: "",
+        status: "pendente",
+        empresa: "",
+        remetente: "",
+        destinatario: "",
         data: format(new Date(), "yyyy-MM-dd"),
         arquivos: [],
         observacoes: ""
@@ -314,6 +324,12 @@ export default function ComprovantesInternos() {
     const resetForm = () => {
         setForm({
             nota_fiscal: "",
+            tipo_documento: "Comprovante",
+            valor: "",
+            status: "pendente",
+            empresa: "",
+            remetente: "",
+            destinatario: "",
             data: format(new Date(), "yyyy-MM-dd"),
             arquivos: [],
             observacoes: ""
@@ -388,15 +404,30 @@ export default function ComprovantesInternos() {
         // Filtro por empresa
         const matchEmpresa = !filterEmpresa || c.empresa === filterEmpresa;
         
+        // Filtro por tipo de documento
+        const matchTipoDoc = !filterTipoDoc || c.tipo_documento === filterTipoDoc;
+        
+        // Filtro por status
+        const matchStatus = !filterStatus || c.status === filterStatus;
+        
+        // Filtro por valor mínimo
+        const matchValorMin = !filterValorMin || (c.valor && c.valor >= parseFloat(filterValorMin));
+        
+        // Filtro por valor máximo
+        const matchValorMax = !filterValorMax || (c.valor && c.valor <= parseFloat(filterValorMax));
+        
         // Busca por texto livre (pesquisa em múltiplos campos)
         const matchTexto = !filterTexto || [
             c.nota_fiscal,
             c.empresa,
             c.observacoes,
-            c.usuario_foto
+            c.usuario_foto,
+            c.remetente,
+            c.destinatario,
+            c.tipo_documento
         ].some(campo => campo?.toLowerCase().includes(filterTexto.toLowerCase()));
         
-        return matchDataInicio && matchDataFim && matchNF && matchEmpresa && matchTexto;
+        return matchDataInicio && matchDataFim && matchNF && matchEmpresa && matchTipoDoc && matchStatus && matchValorMin && matchValorMax && matchTexto;
     });
 
 
@@ -500,7 +531,7 @@ export default function ComprovantesInternos() {
                             </div>
                         </div>
 
-                        {/* Filtros Específicos */}
+                        {/* Filtros Específicos - Linha 1 */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             {/* Selecionar Todos */}
                             <div className="space-y-1">
@@ -608,8 +639,109 @@ export default function ComprovantesInternos() {
                             </div>
                         </div>
 
+                        {/* Filtros Específicos - Linha 2 */}
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            {/* Tipo de Documento */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <FileText className="w-3 h-3" /> Tipo Documento
+                                </Label>
+                                <div className="flex gap-1">
+                                    <Select value={filterTipoDoc} onValueChange={setFilterTipoDoc}>
+                                        <SelectTrigger className="bg-white h-10">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={null}>Todos</SelectItem>
+                                            <SelectItem value="NF">NF</SelectItem>
+                                            <SelectItem value="CTE">CTE</SelectItem>
+                                            <SelectItem value="NFe">NFe</SelectItem>
+                                            <SelectItem value="CTe">CTe</SelectItem>
+                                            <SelectItem value="Comprovante">Comprovante</SelectItem>
+                                            <SelectItem value="Recibo">Recibo</SelectItem>
+                                            <SelectItem value="Outro">Outro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {filterTipoDoc && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterTipoDoc("")} className="h-10 w-10">
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500 flex items-center gap-1">
+                                    <Check className="w-3 h-3" /> Status
+                                </Label>
+                                <div className="flex gap-1">
+                                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                        <SelectTrigger className="bg-white h-10">
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={null}>Todos</SelectItem>
+                                            <SelectItem value="pendente">Pendente</SelectItem>
+                                            <SelectItem value="aprovado">Aprovado</SelectItem>
+                                            <SelectItem value="rejeitado">Rejeitado</SelectItem>
+                                            <SelectItem value="em_analise">Em Análise</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {filterStatus && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterStatus("")} className="h-10 w-10">
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Valor Mínimo */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500">Valor Mínimo</Label>
+                                <div className="flex gap-1">
+                                    <Input
+                                        type="number"
+                                        placeholder="R$ 0,00"
+                                        value={filterValorMin}
+                                        onChange={(e) => setFilterValorMin(e.target.value)}
+                                        className="bg-white h-10"
+                                        step="0.01"
+                                    />
+                                    {filterValorMin && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMin("")} className="h-10 w-10">
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Valor Máximo */}
+                            <div className="space-y-1">
+                                <Label className="text-xs text-slate-500">Valor Máximo</Label>
+                                <div className="flex gap-1">
+                                    <Input
+                                        type="number"
+                                        placeholder="R$ 9999,99"
+                                        value={filterValorMax}
+                                        onChange={(e) => setFilterValorMax(e.target.value)}
+                                        className="bg-white h-10"
+                                        step="0.01"
+                                    />
+                                    {filterValorMax && (
+                                        <Button variant="ghost" size="icon" onClick={() => setFilterValorMax("")} className="h-10 w-10">
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Espaço vazio para alinhar */}
+                            <div></div>
+                        </div>
+
                         {/* Indicador de Filtros Ativos */}
-                        {(filterTexto || filterData || filterDataFim || filterNF || filterEmpresa) && (
+                        {(filterTexto || filterData || filterDataFim || filterNF || filterEmpresa || filterTipoDoc || filterStatus || filterValorMin || filterValorMax) && (
                             <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-200">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-sm font-medium text-sky-700">Filtros ativos:</span>
@@ -618,6 +750,10 @@ export default function ComprovantesInternos() {
                                     {filterDataFim && <Badge className="bg-blue-500 text-white">Até: {format(new Date(filterDataFim), "dd/MM/yyyy")}</Badge>}
                                     {filterNF && <Badge className="bg-purple-500 text-white">NF: {filterNF}</Badge>}
                                     {filterEmpresa && <Badge className="bg-green-500 text-white">{filterEmpresa}</Badge>}
+                                    {filterTipoDoc && <Badge className="bg-indigo-500 text-white">Tipo: {filterTipoDoc}</Badge>}
+                                    {filterStatus && <Badge className="bg-amber-500 text-white">Status: {filterStatus}</Badge>}
+                                    {filterValorMin && <Badge className="bg-emerald-500 text-white">Min: R$ {parseFloat(filterValorMin).toFixed(2)}</Badge>}
+                                    {filterValorMax && <Badge className="bg-emerald-500 text-white">Max: R$ {parseFloat(filterValorMax).toFixed(2)}</Badge>}
                                 </div>
                                 <Button 
                                     variant="ghost" 
@@ -628,6 +764,10 @@ export default function ComprovantesInternos() {
                                         setFilterDataFim("");
                                         setFilterNF("");
                                         setFilterEmpresa("");
+                                        setFilterTipoDoc("");
+                                        setFilterStatus("");
+                                        setFilterValorMin("");
+                                        setFilterValorMax("");
                                     }}
                                     className="text-sky-600 hover:text-sky-700"
                                 >
@@ -666,7 +806,12 @@ export default function ComprovantesInternos() {
                                                 {selectedIds.includes(comprovante.id) && <Check className="w-4 h-4 text-white" />}
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-slate-800">NF: {comprovante.nota_fiscal}</h3>
+                                                    {comprovante.tipo_documento && (
+                                                        <Badge className="bg-indigo-100 text-indigo-700 text-xs">{comprovante.tipo_documento}</Badge>
+                                                    )}
+                                                </div>
                                                 {comprovante.empresa && (
                                                     <div className="flex items-center gap-1.5">
                                                         {getEmpresaLogo(comprovante.empresa) && (
@@ -679,7 +824,25 @@ export default function ComprovantesInternos() {
                                                         <p className="text-sm text-sky-600 font-medium">{comprovante.empresa}</p>
                                                     </div>
                                                 )}
-                                                <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                                {comprovante.valor && (
+                                                    <p className="text-sm font-bold text-green-600">R$ {comprovante.valor.toFixed(2)}</p>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs text-slate-500">{formatDate(comprovante.data)}</p>
+                                                    {comprovante.status && (
+                                                        <Badge className={`text-xs ${
+                                                            comprovante.status === "aprovado" ? "bg-green-100 text-green-700" :
+                                                            comprovante.status === "rejeitado" ? "bg-red-100 text-red-700" :
+                                                            comprovante.status === "em_analise" ? "bg-amber-100 text-amber-700" :
+                                                            "bg-yellow-100 text-yellow-700"
+                                                        }`}>
+                                                            {comprovante.status === "pendente" ? "Pendente" :
+                                                             comprovante.status === "aprovado" ? "Aprovado" :
+                                                             comprovante.status === "rejeitado" ? "Rejeitado" :
+                                                             comprovante.status === "em_analise" ? "Em Análise" : comprovante.status}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 {comprovante.usuario_foto && (
                                                     <p className="text-xs text-slate-400 flex items-center gap-1">
                                                         <User className="w-3 h-3" />
@@ -826,27 +989,115 @@ export default function ComprovantesInternos() {
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Nota Fiscal */}
-                        <div className="space-y-2">
-                            <Label>Nota Fiscal *</Label>
-                            <Input
-                                value={form.nota_fiscal}
-                                onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
-                                required
-                                placeholder="Número da NF"
-                                className="h-12 text-lg"
-                            />
+                        {/* Nota Fiscal e Tipo */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nota Fiscal *</Label>
+                                <Input
+                                    value={form.nota_fiscal}
+                                    onChange={(e) => setForm({ ...form, nota_fiscal: e.target.value })}
+                                    required
+                                    placeholder="Número da NF"
+                                    className="h-12 text-lg"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Tipo Documento</Label>
+                                <Select value={form.tipo_documento} onValueChange={(v) => setForm({ ...form, tipo_documento: v })}>
+                                    <SelectTrigger className="h-12">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="NF">NF</SelectItem>
+                                        <SelectItem value="CTE">CTE</SelectItem>
+                                        <SelectItem value="NFe">NFe</SelectItem>
+                                        <SelectItem value="CTe">CTe</SelectItem>
+                                        <SelectItem value="Comprovante">Comprovante</SelectItem>
+                                        <SelectItem value="Recibo">Recibo</SelectItem>
+                                        <SelectItem value="Outro">Outro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
-                        {/* Data */}
+                        {/* Data, Valor e Status */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Data</Label>
+                                <Input
+                                    type="date"
+                                    value={form.data}
+                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
+                                    className="h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Valor</Label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={form.valor}
+                                    onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                                    placeholder="0,00"
+                                    className="h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Status</Label>
+                                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                                    <SelectTrigger className="h-12">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pendente">Pendente</SelectItem>
+                                        <SelectItem value="aprovado">Aprovado</SelectItem>
+                                        <SelectItem value="rejeitado">Rejeitado</SelectItem>
+                                        <SelectItem value="em_analise">Em Análise</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Empresa */}
                         <div className="space-y-2">
-                            <Label>Data</Label>
-                            <Input
-                                type="date"
-                                value={form.data}
-                                onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                className="h-12"
-                            />
+                            <Label>Empresa</Label>
+                            <Select value={form.empresa} onValueChange={(v) => setForm({ ...form, empresa: v })}>
+                                <SelectTrigger className="h-12">
+                                    <SelectValue placeholder="Selecione a empresa" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {empresasCadastradas.map(emp => (
+                                        <SelectItem key={emp.id} value={emp.nome}>
+                                            <div className="flex items-center gap-2">
+                                                {emp.logo_url && <img src={emp.logo_url} alt="" className="w-5 h-5 object-contain" />}
+                                                {emp.nome}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Remetente e Destinatário */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Remetente</Label>
+                                <Input
+                                    value={form.remetente}
+                                    onChange={(e) => setForm({ ...form, remetente: e.target.value })}
+                                    placeholder="Nome do remetente"
+                                    className="h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Destinatário</Label>
+                                <Input
+                                    value={form.destinatario}
+                                    onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
+                                    placeholder="Nome do destinatário"
+                                    className="h-12"
+                                />
+                            </div>
                         </div>
 
                         {/* Arquivos - Upload e Foto */}

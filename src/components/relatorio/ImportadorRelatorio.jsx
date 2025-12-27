@@ -152,7 +152,7 @@ export default function ImportadorRelatorio({ open, onClose, onImportSuccess }) 
         setEditingCell(null);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const rowsToSave = mappedData.filter(r => selectedRows.includes(r.id));
         if (rowsToSave.length === 0) {
             toast.error("Selecione ao menos uma linha");
@@ -165,6 +165,21 @@ export default function ImportadorRelatorio({ open, onClose, onImportSuccess }) 
             destinatario: row.destinatario || "",
             transportadora: row.transportadora || ""
         }));
+
+        // Salvar registro do relatório importado
+        try {
+            await base44.entities.RelatorioImportado.create({
+                data_relatorio: new Date().toISOString().split('T')[0],
+                notas: notasParaAdicionar.map(n => ({
+                    numero_nf: n.numero_nf,
+                    destinatario: n.destinatario,
+                    transportadora: n.transportadora
+                })),
+                total_notas: notasParaAdicionar.length
+            });
+        } catch (err) {
+            console.error("Erro ao salvar relatório:", err);
+        }
 
         toast.success(`${notasParaAdicionar.length} nota(s) importada(s) com sucesso!`);
         onImportSuccess(notasParaAdicionar);

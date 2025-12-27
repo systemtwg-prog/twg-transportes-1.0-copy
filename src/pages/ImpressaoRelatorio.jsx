@@ -31,6 +31,7 @@ export default function ImpressaoRelatorio() {
     const [notaManual, setNotaManual] = useState({ numero_nf: "", destinatario: "", transportadora: "" });
     const [showAddManual, setShowAddManual] = useState(false);
     const [showImportadorArquivo, setShowImportadorArquivo] = useState(false);
+    const [showRelatorios, setShowRelatorios] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: configs = [] } = useQuery({
@@ -47,6 +48,11 @@ export default function ImpressaoRelatorio() {
     const { data: notasFiscais = [] } = useQuery({
         queryKey: ["notas-fiscais-relatorio"],
         queryFn: () => base44.entities.NotaFiscal.list("-created_date", 500)
+    });
+
+    const { data: relatoriosImportados = [] } = useQuery({
+        queryKey: ["relatorios-importados"],
+        queryFn: () => base44.entities.RelatorioImportado.list("-created_date", 100)
     });
 
     // Notas dos romaneios da data
@@ -349,6 +355,14 @@ Retorne todas as notas encontradas.`,
                                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                                 Importar Arquivo
                             </Button>
+                            <Button 
+                                onClick={() => setShowRelatorios(true)}
+                                variant="outline"
+                                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                            >
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Histórico ({relatoriosImportados.length})
+                            </Button>
                             {notasAdicionadas.length > 0 && (
                                 <Button 
                                     onClick={limparTodas}
@@ -580,8 +594,94 @@ Retorne todas as notas encontradas.`,
                 onClose={() => setShowImportadorArquivo(false)}
                 onImportSuccess={(notas) => {
                     setNotasAdicionadas(prev => [...prev, ...notas]);
+                    queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
                 }}
             />
+
+            {/* Dialog Histórico de Relatórios */}
+            <Dialog open={showRelatorios} onOpenChange={setShowRelatorios}>
+                <DialogContent className="max-w-4xl max-h-[80vh]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-purple-600" />
+                            Histórico de Relatórios Importados
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Relatórios importados anteriormente. Clique para carregar as notas.
+                        </p>
+                        <div className="max-h-96 overflow-y-auto border rounded-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50 sticky top-0">
+                                        <TableHead>Data</TableHead>
+                                        <TableHead>Total Notas</TableHead>
+                                        <TableHead>Importado em</TableHead>
+                                        <TableHead className="text-right">Ações</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {relatoriosImportados.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                                                Nenhum relatório importado ainda
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        relatoriosImportados.map((rel) => (
+                                            <TableRow 
+                                                key={rel.id}
+                                                className="cursor-pointer hover:bg-slate-50"
+                                            >
+                                                <TableCell className="font-medium">
+                                                    {format(new Date(rel.data_relatorio), "dd/MM/yyyy")}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge className="bg-purple-100 text-purple-700">
+                                                        {rel.total_notas || rel.notas?.length || 0} nota(s)
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-slate-500">
+                                                    {format(new Date(rel.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            if (rel.notas && rel.notas.length > 0) {
+                                                                const notas = rel.notas.map((n, idx) => ({
+                                                                    id: `historico_${rel.id}_${idx}`,
+                                                                    numero_nf: n.numero_nf || "",
+                                                                    destinatario: n.destinatario || "",
+                                                                    transportadora: n.transportadora || ""
+                                                                }));
+                                                                setNotasAdicionadas(prev => [...prev, ...notas]);
+                                                                setShowRelatorios(false);
+                                                                toast.success(`${notas.length} nota(s) carregada(s)!`);
+                                                            }
+                                                        }}
+                                                        className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        Carregar
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button variant="outline" onClick={() => setShowRelatorios(false)}>
+                                Fechar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Importar */}
             <Dialog open={showImportar} onOpenChange={setShowImportar}>

@@ -15,7 +15,7 @@ import {
     Check, X, AlertTriangle, Plus, Search, Trash2,
     Download, CheckCircle, XCircle, Building2, FileSpreadsheet
 } from "lucide-react";
-import ImportadorRelatorio from "@/components/relatorio/ImportadorRelatorio";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -326,13 +326,7 @@ Retorne todas as notas encontradas.`,
                                     className="w-44"
                                 />
                             </div>
-                            <Button 
-                                onClick={() => setShowColar(true)}
-                                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                            >
-                                <ClipboardPaste className="w-4 h-4 mr-2" />
-                                Colar Notas
-                            </Button>
+
                             <Button 
                                 onClick={() => setShowAddManual(true)}
                                 variant="outline"
@@ -347,14 +341,7 @@ Retorne todas as notas encontradas.`,
                                 <Download className="w-4 h-4 mr-2" />
                                 Importar NFs
                             </Button>
-                            <Button 
-                                onClick={() => setShowImportadorArquivo(true)}
-                                variant="outline"
-                                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                            >
-                                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                Importar Arquivo
-                            </Button>
+
                             <Button 
                                 onClick={() => setShowRelatorios(true)}
                                 variant="outline"
@@ -485,62 +472,19 @@ Retorne todas as notas encontradas.`,
                                 Cole texto com notas fiscais ou importe do cadastro
                             </p>
                             <div className="flex justify-center gap-3">
-                                <Button onClick={() => setShowColar(true)} className="bg-indigo-600 hover:bg-indigo-700">
-                                    <ClipboardPaste className="w-4 h-4 mr-2" />
-                                    Colar Notas
+                                <Button onClick={() => setShowAddManual(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Adicionar Nota
                                 </Button>
                                 <Button onClick={() => setShowImportar(true)} variant="outline">
                                     <Download className="w-4 h-4 mr-2" />
                                     Importar NFs
-                                </Button>
-                                <Button 
-                                    onClick={() => setShowImportadorArquivo(true)} 
-                                    variant="outline"
-                                    className="border-emerald-500 text-emerald-600"
-                                >
-                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                    Importar Arquivo
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 )}
             </div>
-
-            {/* Dialog Colar */}
-            <Dialog open={showColar} onOpenChange={setShowColar}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <ClipboardPaste className="w-5 h-5 text-indigo-600" />
-                            Colar Notas Fiscais
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
-                            Cole o texto contendo as notas fiscais. O sistema irá extrair automaticamente os números.
-                        </p>
-                        <Textarea
-                            value={textoColar}
-                            onChange={(e) => setTextoColar(e.target.value)}
-                            placeholder="Cole aqui o texto com as notas fiscais..."
-                            rows={8}
-                        />
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setShowColar(false)} className="flex-1">
-                                Cancelar
-                            </Button>
-                            <Button 
-                                onClick={handleColar}
-                                disabled={processandoColar || !textoColar.trim()}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-                            >
-                                {processandoColar ? "Processando..." : "Extrair Notas"}
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
 
             {/* Dialog Adicionar Manual */}
             <Dialog open={showAddManual} onOpenChange={setShowAddManual}>
@@ -588,15 +532,7 @@ Retorne todas as notas encontradas.`,
                 </DialogContent>
             </Dialog>
 
-            {/* Importador de Arquivos */}
-            <ImportadorRelatorio 
-                open={showImportadorArquivo} 
-                onClose={() => setShowImportadorArquivo(false)}
-                onImportSuccess={(notas) => {
-                    setNotasAdicionadas(prev => [...prev, ...notas]);
-                    queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
-                }}
-            />
+
 
             {/* Dialog Histórico de Relatórios */}
             <Dialog open={showRelatorios} onOpenChange={setShowRelatorios}>

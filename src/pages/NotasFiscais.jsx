@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,12 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter
+    Plus, FileText, Trash2, Pencil, Search, Save, X, Car, Truck, Package, Building2, Users
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
-
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -38,7 +35,6 @@ export default function NotasFiscais() {
     const [placaEmMassa, setPlacaEmMassa] = useState("");
     const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
     const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
-
     
     const queryClient = useQueryClient();
 
@@ -74,21 +70,6 @@ export default function NotasFiscais() {
         queryFn: () => base44.entities.Destinatario.list()
     });
 
-    // Verificar CNPJ duplicado
-    const cnpjJaCadastrado = (cnpj) => {
-        if (!cnpj) return false;
-        const cnpjLimpo = cnpj.replace(/\D/g, "");
-        return transportadoras.some(t => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
-    };
-
-    // Criar transportadora
-    const createTranspMutation = useMutation({
-        mutationFn: (data) => base44.entities.Transportadora.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
-        }
-    });
-
     // Criar destinatário
     const createDestinatarioMutation = useMutation({
         mutationFn: (data) => base44.entities.Destinatario.create(data),
@@ -100,8 +81,6 @@ export default function NotasFiscais() {
             toast.success("Destinatário cadastrado!");
         }
     });
-
-
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.NotaFiscal.create(data),
@@ -205,12 +184,6 @@ export default function NotasFiscais() {
         }
     };
 
-
-
-
-
-
-
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
         try {
@@ -218,35 +191,6 @@ export default function NotasFiscais() {
         } catch {
             return dateStr;
         }
-    };
-
-
-
-    // Substituir Washington Gonzales pela transportadora = destinatário
-    const handleSubstituirWashington = async () => {
-        const notasWashington = notas.filter(n => 
-            n.transportadora?.toUpperCase().includes("WASHINGTON GONZALES")
-        );
-
-        if (notasWashington.length === 0) {
-            toast.info("Nenhuma nota com transportadora WASHINGTON GONZALES encontrada");
-            return;
-        }
-
-        if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s)?`)) {
-            return;
-        }
-
-        let atualizadas = 0;
-        for (const nota of notasWashington) {
-            await base44.entities.NotaFiscal.update(nota.id, {
-                transportadora: nota.destinatario || "SEM TRANSPORTADORA"
-            });
-            atualizadas++;
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        toast.success(`${atualizadas} nota(s) atualizada(s)!`);
     };
 
     const filtered = notas.filter(n => {

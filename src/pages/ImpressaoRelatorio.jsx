@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,29 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-    Printer, ClipboardPaste, FileText, Calendar, 
-    Check, X, AlertTriangle, Plus, Search, Trash2,
-    Download, CheckCircle, XCircle, Building2, FileSpreadsheet
+    Printer, FileText, Calendar, 
+    Check, X, Plus, Trash2,
+    Download, CheckCircle, XCircle
 } from "lucide-react";
-
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ImpressaoRelatorio() {
     const [dataSelecionada, setDataSelecionada] = useState(format(new Date(), "yyyy-MM-dd"));
-    const [showColar, setShowColar] = useState(false);
-    const [textoColar, setTextoColar] = useState("");
-    const [processandoColar, setProcessandoColar] = useState(false);
     const [notasAdicionadas, setNotasAdicionadas] = useState([]);
     const [showImportar, setShowImportar] = useState(false);
     const [notasSelecionadasImportar, setNotasSelecionadasImportar] = useState([]);
     const [notaManual, setNotaManual] = useState({ numero_nf: "", destinatario: "", transportadora: "" });
     const [showAddManual, setShowAddManual] = useState(false);
-    const [showImportadorArquivo, setShowImportadorArquivo] = useState(false);
     const [showRelatorios, setShowRelatorios] = useState(false);
     const queryClient = useQueryClient();
 
@@ -84,61 +78,6 @@ export default function ImpressaoRelatorio() {
 
     const notasEncontradas = verificarNotas.filter(n => n.encontrada);
     const notasFaltantes = verificarNotas.filter(n => !n.encontrada);
-
-    const handleColar = async () => {
-        if (!textoColar.trim()) {
-            toast.error("Cole o texto com as notas fiscais");
-            return;
-        }
-
-        setProcessandoColar(true);
-
-        try {
-            const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Extraia os números de notas fiscais e informações do texto abaixo.
-Para cada nota, extraia: número da NF, destinatário/cliente, transportadora (se houver).
-
-Texto:
-${textoColar}
-
-Retorne todas as notas encontradas.`,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        notas: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    numero_nf: { type: "string" },
-                                    destinatario: { type: "string" },
-                                    transportadora: { type: "string" }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (resultado?.notas?.length > 0) {
-                const novasNotas = resultado.notas.map((n, idx) => ({
-                    id: `colado_${Date.now()}_${idx}`,
-                    ...n
-                }));
-                setNotasAdicionadas(prev => [...prev, ...novasNotas]);
-                toast.success(`${resultado.notas.length} nota(s) extraída(s)`);
-                setShowColar(false);
-                setTextoColar("");
-            } else {
-                toast.error("Nenhuma nota encontrada no texto");
-            }
-        } catch (error) {
-            console.error("Erro ao processar:", error);
-            toast.error("Erro ao processar o texto");
-        }
-
-        setProcessandoColar(false);
-    };
 
     const handleAddManual = () => {
         if (!notaManual.numero_nf) {
@@ -297,6 +236,33 @@ Retorne todas as notas encontradas.`,
         setTimeout(() => winPrint.print(), 500);
     };
 
+    const salvarRelatorio = async () => {
+        if (notasAdicionadas.length === 0) {
+            toast.error("Adicione ao menos uma nota antes de salvar");
+            return;
+        }
+
+        try {
+            const dataRelatorio = format(new Date(), "yyyy-MM-dd");
+            
+            await base44.entities.RelatorioImportado.create({
+                data_relatorio: dataRelatorio,
+                notas: notasAdicionadas.map(n => ({
+                    numero_nf: n.numero_nf,
+                    destinatario: n.destinatario || "",
+                    transportadora: n.transportadora || ""
+                })),
+                total_notas: notasAdicionadas.length
+            });
+            
+            queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
+            toast.success("Relatório salvo com sucesso!");
+        } catch (err) {
+            console.error("Erro ao salvar relatório:", err);
+            toast.error("Erro ao salvar relatório");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 md:p-8">
             <div className="max-w-5xl mx-auto space-y-6">
@@ -326,7 +292,6 @@ Retorne todas as notas encontradas.`,
                                     className="w-44"
                                 />
                             </div>
-
                             <Button 
                                 onClick={() => setShowAddManual(true)}
                                 variant="outline"
@@ -341,7 +306,6 @@ Retorne todas as notas encontradas.`,
                                 <Download className="w-4 h-4 mr-2" />
                                 Importar NFs
                             </Button>
-
                             <Button 
                                 onClick={() => setShowRelatorios(true)}
                                 variant="outline"
@@ -351,14 +315,23 @@ Retorne todas as notas encontradas.`,
                                 Histórico ({relatoriosImportados.length})
                             </Button>
                             {notasAdicionadas.length > 0 && (
-                                <Button 
-                                    onClick={limparTodas}
-                                    variant="ghost"
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Limpar
-                                </Button>
+                                <>
+                                    <Button 
+                                        onClick={salvarRelatorio}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        <Check className="w-4 h-4 mr-2" />
+                                        Salvar Relatório
+                                    </Button>
+                                    <Button 
+                                        onClick={limparTodas}
+                                        variant="ghost"
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Limpar
+                                    </Button>
+                                </>
                             )}
                         </div>
 
@@ -464,17 +437,17 @@ Retorne todas as notas encontradas.`,
                 {notasAdicionadas.length === 0 && (
                     <Card className="bg-white/80 border-0 shadow-lg">
                         <CardContent className="p-12 text-center">
-                            <ClipboardPaste className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                            <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                             <h3 className="text-xl font-semibold text-slate-700 mb-2">
                                 Nenhuma nota adicionada
                             </h3>
                             <p className="text-slate-500 mb-4">
-                                Cole texto com notas fiscais ou importe do cadastro
+                                Adicione notas manualmente ou importe do cadastro
                             </p>
                             <div className="flex justify-center gap-3">
                                 <Button onClick={() => setShowAddManual(true)} className="bg-indigo-600 hover:bg-indigo-700">
                                     <Plus className="w-4 h-4 mr-2" />
-                                    Adicionar Nota
+                                    Adicionar Manual
                                 </Button>
                                 <Button onClick={() => setShowImportar(true)} variant="outline">
                                     <Download className="w-4 h-4 mr-2" />
@@ -532,8 +505,6 @@ Retorne todas as notas encontradas.`,
                 </DialogContent>
             </Dialog>
 
-
-
             {/* Dialog Histórico de Relatórios */}
             <Dialog open={showRelatorios} onOpenChange={setShowRelatorios}>
                 <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -545,7 +516,7 @@ Retorne todas as notas encontradas.`,
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
-                            Relatórios importados anteriormente. Clique para carregar as notas.
+                            Relatórios salvos anteriormente. Clique para carregar as notas.
                         </p>
                         <div className="max-h-96 overflow-y-auto border rounded-lg">
                             <Table>
@@ -553,7 +524,7 @@ Retorne todas as notas encontradas.`,
                                     <TableRow className="bg-slate-50 sticky top-0">
                                         <TableHead>Data</TableHead>
                                         <TableHead>Total Notas</TableHead>
-                                        <TableHead>Importado em</TableHead>
+                                        <TableHead>Salvo em</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -561,7 +532,7 @@ Retorne todas as notas encontradas.`,
                                     {relatoriosImportados.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                                                Nenhum relatório importado ainda
+                                                Nenhum relatório salvo ainda
                                             </TableCell>
                                         </TableRow>
                                     ) : (

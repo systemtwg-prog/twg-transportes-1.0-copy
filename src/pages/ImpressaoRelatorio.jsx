@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,23 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-    Printer, FileText, Calendar, 
-    Check, X, Plus, Trash2,
-    Download, CheckCircle, XCircle
+    Printer, ClipboardPaste, FileText, Calendar, 
+    Check, X, AlertTriangle, Plus, Search, Trash2,
+    Download, CheckCircle, XCircle, Building2, FileSpreadsheet
 } from "lucide-react";
+import ImportadorRelatorio from "@/components/relatorio/ImportadorRelatorio";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function ImpressaoRelatorio() {
     const [dataSelecionada, setDataSelecionada] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [showColar, setShowColar] = useState(false);
+    const [textoColar, setTextoColar] = useState("");
+    const [processandoColar, setProcessandoColar] = useState(false);
     const [notasAdicionadas, setNotasAdicionadas] = useState([]);
     const [showImportar, setShowImportar] = useState(false);
     const [notasSelecionadasImportar, setNotasSelecionadasImportar] = useState([]);
     const [notaManual, setNotaManual] = useState({ numero_nf: "", destinatario: "", transportadora: "" });
     const [showAddManual, setShowAddManual] = useState(false);
+    const [showImportadorArquivo, setShowImportadorArquivo] = useState(false);
     const [showRelatorios, setShowRelatorios] = useState(false);
     const queryClient = useQueryClient();
 
@@ -78,6 +84,61 @@ export default function ImpressaoRelatorio() {
 
     const notasEncontradas = verificarNotas.filter(n => n.encontrada);
     const notasFaltantes = verificarNotas.filter(n => !n.encontrada);
+
+    const handleColar = async () => {
+        if (!textoColar.trim()) {
+            toast.error("Cole o texto com as notas fiscais");
+            return;
+        }
+
+        setProcessandoColar(true);
+
+        try {
+            const resultado = await base44.integrations.Core.InvokeLLM({
+                prompt: `Extraia os números de notas fiscais e informações do texto abaixo.
+Para cada nota, extraia: número da NF, destinatário/cliente, transportadora (se houver).
+
+Texto:
+${textoColar}
+
+Retorne todas as notas encontradas.`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        notas: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    numero_nf: { type: "string" },
+                                    destinatario: { type: "string" },
+                                    transportadora: { type: "string" }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (resultado?.notas?.length > 0) {
+                const novasNotas = resultado.notas.map((n, idx) => ({
+                    id: `colado_${Date.now()}_${idx}`,
+                    ...n
+                }));
+                setNotasAdicionadas(prev => [...prev, ...novasNotas]);
+                toast.success(`${resultado.notas.length} nota(s) extraída(s)`);
+                setShowColar(false);
+                setTextoColar("");
+            } else {
+                toast.error("Nenhuma nota encontrada no texto");
+            }
+        } catch (error) {
+            console.error("Erro ao processar:", error);
+            toast.error("Erro ao processar o texto");
+        }
+
+        setProcessandoColar(false);
+    };
 
     const handleAddManual = () => {
         if (!notaManual.numero_nf) {
@@ -236,33 +297,6 @@ export default function ImpressaoRelatorio() {
         setTimeout(() => winPrint.print(), 500);
     };
 
-    const salvarRelatorio = async () => {
-        if (notasAdicionadas.length === 0) {
-            toast.error("Adicione ao menos uma nota antes de salvar");
-            return;
-        }
-
-        try {
-            const dataRelatorio = format(new Date(), "yyyy-MM-dd");
-            
-            await base44.entities.RelatorioImportado.create({
-                data_relatorio: dataRelatorio,
-                notas: notasAdicionadas.map(n => ({
-                    numero_nf: n.numero_nf,
-                    destinatario: n.destinatario || "",
-                    transportadora: n.transportadora || ""
-                })),
-                total_notas: notasAdicionadas.length
-            });
-            
-            queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
-            toast.success("Relatório salvo com sucesso!");
-        } catch (err) {
-            console.error("Erro ao salvar relatório:", err);
-            toast.error("Erro ao salvar relatório");
-        }
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 md:p-8">
             <div className="max-w-5xl mx-auto space-y-6">
@@ -293,6 +327,13 @@ export default function ImpressaoRelatorio() {
                                 />
                             </div>
                             <Button 
+                                onClick={() => setShowColar(true)}
+                                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                            >
+                                <ClipboardPaste className="w-4 h-4 mr-2" />
+                                Colar Notas
+                            </Button>
+                            <Button 
                                 onClick={() => setShowAddManual(true)}
                                 variant="outline"
                             >
@@ -307,6 +348,14 @@ export default function ImpressaoRelatorio() {
                                 Importar NFs
                             </Button>
                             <Button 
+                                onClick={() => setShowImportadorArquivo(true)}
+                                variant="outline"
+                                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                            >
+                                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                                Importar Arquivo
+                            </Button>
+                            <Button 
                                 onClick={() => setShowRelatorios(true)}
                                 variant="outline"
                                 className="border-purple-500 text-purple-600 hover:bg-purple-50"
@@ -315,23 +364,14 @@ export default function ImpressaoRelatorio() {
                                 Histórico ({relatoriosImportados.length})
                             </Button>
                             {notasAdicionadas.length > 0 && (
-                                <>
-                                    <Button 
-                                        onClick={salvarRelatorio}
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        <Check className="w-4 h-4 mr-2" />
-                                        Salvar Relatório
-                                    </Button>
-                                    <Button 
-                                        onClick={limparTodas}
-                                        variant="ghost"
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Limpar
-                                    </Button>
-                                </>
+                                <Button 
+                                    onClick={limparTodas}
+                                    variant="ghost"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Limpar
+                                </Button>
                             )}
                         </div>
 
@@ -437,27 +477,70 @@ export default function ImpressaoRelatorio() {
                 {notasAdicionadas.length === 0 && (
                     <Card className="bg-white/80 border-0 shadow-lg">
                         <CardContent className="p-12 text-center">
-                            <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                            <ClipboardPaste className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                             <h3 className="text-xl font-semibold text-slate-700 mb-2">
                                 Nenhuma nota adicionada
                             </h3>
                             <p className="text-slate-500 mb-4">
-                                Adicione notas manualmente ou importe do cadastro
+                                Cole texto com notas fiscais ou importe do cadastro
                             </p>
                             <div className="flex justify-center gap-3">
-                                <Button onClick={() => setShowAddManual(true)} className="bg-indigo-600 hover:bg-indigo-700">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Adicionar Manual
+                                <Button onClick={() => setShowColar(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                                    <ClipboardPaste className="w-4 h-4 mr-2" />
+                                    Colar Notas
                                 </Button>
                                 <Button onClick={() => setShowImportar(true)} variant="outline">
                                     <Download className="w-4 h-4 mr-2" />
                                     Importar NFs
+                                </Button>
+                                <Button 
+                                    onClick={() => setShowImportadorArquivo(true)} 
+                                    variant="outline"
+                                    className="border-emerald-500 text-emerald-600"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                                    Importar Arquivo
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 )}
             </div>
+
+            {/* Dialog Colar */}
+            <Dialog open={showColar} onOpenChange={setShowColar}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-indigo-600" />
+                            Colar Notas Fiscais
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole o texto contendo as notas fiscais. O sistema irá extrair automaticamente os números.
+                        </p>
+                        <Textarea
+                            value={textoColar}
+                            onChange={(e) => setTextoColar(e.target.value)}
+                            placeholder="Cole aqui o texto com as notas fiscais..."
+                            rows={8}
+                        />
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setShowColar(false)} className="flex-1">
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleColar}
+                                disabled={processandoColar || !textoColar.trim()}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                {processandoColar ? "Processando..." : "Extrair Notas"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Adicionar Manual */}
             <Dialog open={showAddManual} onOpenChange={setShowAddManual}>
@@ -505,6 +588,16 @@ export default function ImpressaoRelatorio() {
                 </DialogContent>
             </Dialog>
 
+            {/* Importador de Arquivos */}
+            <ImportadorRelatorio 
+                open={showImportadorArquivo} 
+                onClose={() => setShowImportadorArquivo(false)}
+                onImportSuccess={(notas) => {
+                    setNotasAdicionadas(prev => [...prev, ...notas]);
+                    queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
+                }}
+            />
+
             {/* Dialog Histórico de Relatórios */}
             <Dialog open={showRelatorios} onOpenChange={setShowRelatorios}>
                 <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -516,7 +609,7 @@ export default function ImpressaoRelatorio() {
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
-                            Relatórios salvos anteriormente. Clique para carregar as notas.
+                            Relatórios importados anteriormente. Clique para carregar as notas.
                         </p>
                         <div className="max-h-96 overflow-y-auto border rounded-lg">
                             <Table>
@@ -524,7 +617,7 @@ export default function ImpressaoRelatorio() {
                                     <TableRow className="bg-slate-50 sticky top-0">
                                         <TableHead>Data</TableHead>
                                         <TableHead>Total Notas</TableHead>
-                                        <TableHead>Salvo em</TableHead>
+                                        <TableHead>Importado em</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -532,7 +625,7 @@ export default function ImpressaoRelatorio() {
                                     {relatoriosImportados.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                                                Nenhum relatório salvo ainda
+                                                Nenhum relatório importado ainda
                                             </TableCell>
                                         </TableRow>
                                     ) : (

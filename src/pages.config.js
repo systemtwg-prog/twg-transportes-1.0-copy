@@ -34,6 +34,7 @@ import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
 import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
 import NotasFiscais from './pages/NotasFiscais';
+import Importacao from './pages/Importacao';
 import __Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "WhatsAppWeb": WhatsAppWeb,
     "ImpressaoRelatorio": ImpressaoRelatorio,
     "NotasFiscais": NotasFiscais,
+    "Importacao": Importacao,
 }
 
 export const pagesConfig = {

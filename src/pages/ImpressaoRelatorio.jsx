@@ -15,7 +15,7 @@ import {
     Check, X, AlertTriangle, Plus, Search, Trash2,
     Download, CheckCircle, XCircle, Building2, FileSpreadsheet
 } from "lucide-react";
-import ImportadorRelatorio from "@/components/relatorio/ImportadorRelatorio";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,7 +30,7 @@ export default function ImpressaoRelatorio() {
     const [notasSelecionadasImportar, setNotasSelecionadasImportar] = useState([]);
     const [notaManual, setNotaManual] = useState({ numero_nf: "", destinatario: "", transportadora: "" });
     const [showAddManual, setShowAddManual] = useState(false);
-    const [showImportadorArquivo, setShowImportadorArquivo] = useState(false);
+
     const [showRelatorios, setShowRelatorios] = useState(false);
     const queryClient = useQueryClient();
 
@@ -94,39 +94,26 @@ export default function ImpressaoRelatorio() {
         setProcessandoColar(true);
 
         try {
-            const resultado = await base44.integrations.Core.InvokeLLM({
-                prompt: `Extraia os números de notas fiscais e informações do texto abaixo.
-Para cada nota, extraia: número da NF, destinatário/cliente, transportadora (se houver).
-
-Texto:
-${textoColar}
-
-Retorne todas as notas encontradas.`,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        notas: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    numero_nf: { type: "string" },
-                                    destinatario: { type: "string" },
-                                    transportadora: { type: "string" }
-                                }
-                            }
-                        }
-                    }
+            // Extração simples baseada em regex
+            const linhas = textoColar.split('\n').filter(l => l.trim());
+            const notas = [];
+            
+            for (const linha of linhas) {
+                // Busca por números que parecem NFs (5+ dígitos)
+                const matchNF = linha.match(/\b\d{5,}\b/);
+                if (matchNF) {
+                    notas.push({
+                        id: `colado_${Date.now()}_${notas.length}`,
+                        numero_nf: matchNF[0],
+                        destinatario: "",
+                        transportadora: ""
+                    });
                 }
-            });
+            }
 
-            if (resultado?.notas?.length > 0) {
-                const novasNotas = resultado.notas.map((n, idx) => ({
-                    id: `colado_${Date.now()}_${idx}`,
-                    ...n
-                }));
-                setNotasAdicionadas(prev => [...prev, ...novasNotas]);
-                toast.success(`${resultado.notas.length} nota(s) extraída(s)`);
+            if (notas.length > 0) {
+                setNotasAdicionadas(prev => [...prev, ...notas]);
+                toast.success(`${notas.length} nota(s) extraída(s)`);
                 setShowColar(false);
                 setTextoColar("");
             } else {
@@ -347,14 +334,7 @@ Retorne todas as notas encontradas.`,
                                 <Download className="w-4 h-4 mr-2" />
                                 Importar NFs
                             </Button>
-                            <Button 
-                                onClick={() => setShowImportadorArquivo(true)}
-                                variant="outline"
-                                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                            >
-                                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                Importar Arquivo
-                            </Button>
+
                             <Button 
                                 onClick={() => setShowRelatorios(true)}
                                 variant="outline"
@@ -493,14 +473,7 @@ Retorne todas as notas encontradas.`,
                                     <Download className="w-4 h-4 mr-2" />
                                     Importar NFs
                                 </Button>
-                                <Button 
-                                    onClick={() => setShowImportadorArquivo(true)} 
-                                    variant="outline"
-                                    className="border-emerald-500 text-emerald-600"
-                                >
-                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                                    Importar Arquivo
-                                </Button>
+
                             </div>
                         </CardContent>
                     </Card>
@@ -588,15 +561,7 @@ Retorne todas as notas encontradas.`,
                 </DialogContent>
             </Dialog>
 
-            {/* Importador de Arquivos */}
-            <ImportadorRelatorio 
-                open={showImportadorArquivo} 
-                onClose={() => setShowImportadorArquivo(false)}
-                onImportSuccess={(notas) => {
-                    setNotasAdicionadas(prev => [...prev, ...notas]);
-                    queryClient.invalidateQueries({ queryKey: ["relatorios-importados"] });
-                }}
-            />
+
 
             {/* Dialog Histórico de Relatórios */}
             <Dialog open={showRelatorios} onOpenChange={setShowRelatorios}>

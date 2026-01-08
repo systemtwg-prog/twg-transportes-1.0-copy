@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import FloatingMenu from "@/components/navigation/FloatingMenu";
+import BottomTabBar from "@/components/navigation/BottomTabBar";
 import DesktopSidebar from "@/components/navigation/DesktopSidebar";
 import DesktopTabs from "@/components/navigation/DesktopTabs";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ import { createPageUrl } from "@/utils";
 export default function Layout({ children, currentPageName }) {
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -67,13 +69,17 @@ export default function Layout({ children, currentPageName }) {
         );
     }
 
-    // Layout Mobile com menu flutuante
+    // Layout Mobile com menu flutuante e abas inferiores
     return (
         <div className="min-h-screen pb-20">
             <FloatingMenu currentPage={currentPageName} />
-            <main className="p-4">
+            <main className="p-4 pb-20">
                 {children}
             </main>
+            <BottomTabBar 
+                currentPage={currentPageName} 
+                onMenuClick={() => setMenuOpen(!menuOpen)}
+            />
         </div>
     );
 }

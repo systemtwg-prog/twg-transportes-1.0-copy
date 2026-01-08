@@ -112,18 +112,6 @@ export default function FloatingMenu({ currentPage }) {
 
     return (
         <>
-        {/* Botão Início - Fixo no canto inferior esquerdo */}
-        {currentPage !== "Home" && (
-            <Link to={createPageUrl("Home")} className="fixed bottom-4 left-4 z-50">
-                <Button
-                    size="icon"
-                    className="w-14 h-14 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg"
-                >
-                    <HomeIcon className="w-7 h-7 text-white" />
-                </Button>
-            </Link>
-        )}
-        
         <div className="fixed top-4 right-4 z-50 flex gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>

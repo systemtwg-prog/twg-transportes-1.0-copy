@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
@@ -48,6 +48,20 @@ export default function NotasFiscais() {
     const [buscandoDados, setBuscandoDados] = useState({});
     const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
     const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
+    
+    // Estados para funcionalidades do romaneio
+    const [motorista, setMotorista] = useState("");
+    const [dataRomaneio, setDataRomaneio] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+    const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
+    const [notasDigitadas, setNotasDigitadas] = useState("");
+    const [layoutConfig, setLayoutConfig] = useState({
+        colRemetente: 18,
+        colDestinatario: 42,
+        colNfe: 15,
+        colCarimbo: 25,
+        alturaLinha: 45
+    });
     
     // Estados para gravação de áudio
     const [showAudioDialog, setShowAudioDialog] = useState(false);
@@ -103,6 +117,18 @@ export default function NotasFiscais() {
         queryKey: ["registros-importacao"],
         queryFn: () => base44.entities.RegistroImportacao.list("-created_date", 10)
     });
+
+    const { data: motoristas = [] } = useQuery({
+        queryKey: ["motoristas-romaneio"],
+        queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
+    });
+
+    const { data: configs = [] } = useQuery({
+        queryKey: ["configuracoes"],
+        queryFn: () => base44.entities.Configuracoes.list()
+    });
+
+    const config = configs[0] || {};
 
     // Mutation para criar registro de importação
     const createImportacaoMutation = useMutation({
@@ -822,6 +848,288 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         toast.success(`${atualizadas} nota(s) atualizada(s)!`);
     };
 
+    // Buscar notas digitadas manualmente
+    const buscarNotasDigitadas = () => {
+        if (!notasDigitadas.trim()) return;
+        
+        const numerosDigitados = notasDigitadas
+            .split(/[,;\s\n]+/)
+            .map(n => n.trim())
+            .filter(Boolean);
+        
+        const notasEncontradas = [];
+        const naoEncontradas = [];
+        
+        numerosDigitados.forEach(num => {
+            const notaEncontrada = notas.find(n => 
+                n.numero_nf?.toLowerCase().includes(num.toLowerCase())
+            );
+            if (notaEncontrada && !notasEncontradas.find(n => n.id === notaEncontrada.id)) {
+                notasEncontradas.push(notaEncontrada);
+            } else if (!notaEncontrada) {
+                naoEncontradas.push(num);
+            }
+        });
+        
+        if (notasEncontradas.length > 0) {
+            setSelecionados(notasEncontradas.map(n => n.id));
+            if (naoEncontradas.length > 0) {
+                toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+            } else {
+                toast.success(`${notasEncontradas.length} nota(s) selecionada(s)`);
+            }
+        } else {
+            toast.error("Nenhuma nota encontrada");
+        }
+    };
+
+    // Imprimir romaneio
+    const handlePrintRomaneio = () => {
+        const notasParaImprimir = selecionados
+            .map(id => notas.find(n => n.id === id))
+            .filter(Boolean);
+
+        if (notasParaImprimir.length === 0) {
+            toast.error("Selecione ao menos uma nota");
+            return;
+        }
+
+        const motoristaObj = motoristas.find(m => m.id === motorista);
+        const winPrint = window.open('', '_blank', 'width=900,height=650');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
+
+        // Agrupar notas por placa
+        const notasPorPlaca = {};
+        const placaParaUsar = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
+        
+        notasParaImprimir.forEach(nota => {
+            const placa = placaParaUsar || nota.placa || "SEM_PLACA";
+            if (!notasPorPlaca[placa]) {
+                notasPorPlaca[placa] = [];
+            }
+            notasPorPlaca[placa].push(nota);
+        });
+
+        let pagesHtml = "";
+
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            const NOTAS_POR_PAGINA = 6;
+            const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+
+            for (let pagina = 0; pagina < totalPaginas; pagina++) {
+                const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+
+                let rowsHtml = "";
+                notasDaPagina.forEach((nota) => {
+                    const remetenteNota = remetenteSelecionado || nota.remetente || "";
+                    const destinatarioNota = nota.destinatario || "";
+                    const numeroNf = nota.numero_nf || "";
+                    const transportadoraOriginal = nota.transportadora || "";
+                    const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
+                        ? destinatarioNota 
+                        : transportadoraOriginal;
+                    const volumeNota = nota.volume ? nota.volume + " vol" : "";
+                            
+                    rowsHtml += '<tr class="nota-row">';
+                    rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+                    rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+                    rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+                    rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+                    rowsHtml += '</tr>';
+                    rowsHtml += '<tr class="transportadora-row">';
+                    rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+                    rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+                    rowsHtml += '</tr>';
+                });
+
+                // Linhas em branco
+                const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+                for (let i = 0; i < linhasRestantes; i++) {
+                    rowsHtml += `
+                        <tr class="nota-row vazia">
+                            <td class="remetente"></td>
+                            <td class="destinatario"></td>
+                            <td class="nfe"></td>
+                            <td class="carimbo" rowspan="2"></td>
+                        </tr>
+                        <tr class="transportadora-row vazia">
+                            <td class="transportadora-nome" colspan="2"></td>
+                            <td class="volume"></td>
+                        </tr>
+                    `;
+                }
+
+                const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+                const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+                const veiculoInfo = veiculos.find(v => v.placa === placa);
+                const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
+                const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
+
+                pagesHtml += `
+                    <div class="page">
+                        <div class="header">
+                            <div class="logo">
+                                ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div class="logo-placeholder">TWG</div>'}
+                            </div>
+                            <div class="company-info">
+                                <p class="company-name">TWG TRANSPORTES</p>
+                                <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
+                                <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                            </div>
+                            <div class="romaneio-info">
+                                <p class="date">${dataFormatada}</p>
+                                <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
+                                <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+                            </div>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-remetente">Remetente</th>
+                                    <th class="col-destinatario">Destinatário</th>
+                                    <th class="col-nfe">NFE</th>
+                                    <th class="col-carimbo">Carimbo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        });
+
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Romaneio de Entregas</title>
+                <style>
+                    @media print {
+                        @page { margin: 5mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .page { page-break-after: always; }
+                        .page:last-child { page-break-after: avoid; }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; }
+                    .page { 
+                        padding: 5mm; 
+                        height: 287mm; 
+                        display: flex; 
+                        flex-direction: column;
+                    }
+                    .header { 
+                        display: flex; 
+                        align-items: flex-start; 
+                        margin-bottom: 8px; 
+                        border-bottom: 3px solid #000; 
+                        padding-bottom: 8px; 
+                    }
+                    .logo { width: 120px; margin-right: 20px; }
+                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                    .logo-placeholder { 
+                        width: 100px; height: 60px; background: #0ea5e9; 
+                        display: flex; align-items: center; justify-content: center; 
+                        color: white; font-weight: bold; font-size: 20px; 
+                    }
+                    .company-info { flex: 1; }
+                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                    .romaneio-info { text-align: right; }
+                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
+                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
+                    .date { font-size: 22px; font-weight: bold; }
+                    
+                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    th { 
+                        background: #d0d0d0; 
+                        padding: 10px; 
+                        text-align: left; 
+                        border: 2px solid #000; 
+                        font-size: 16px; 
+                    }
+                    td { 
+                        border: 2px solid #000; 
+                        font-size: 14px; 
+                        vertical-align: top;
+                    }
+                    
+                    .col-remetente { width: ${layoutConfig.colRemetente}%; }
+                    .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
+                    .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
+                    .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
+                    
+                    .nota-row .remetente { 
+                        padding: 6px 8px; 
+                        font-size: 12px;
+                        font-weight: bold;
+                        text-align: center;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .destinatario { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 18px; 
+                        padding: 6px 8px;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .nfe { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 20px; 
+                        padding: 6px 8px;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .carimbo { 
+                        min-height: ${layoutConfig.alturaLinha * 2}px;
+                        padding: 6px;
+                        vertical-align: middle;
+                    }
+
+                    .transportadora-row td { 
+                        border-top: none; 
+                        padding: 8px; 
+                        text-align: center;
+                        vertical-align: middle;
+                    }
+                    .transportadora-row .transportadora-nome { 
+                        font-size: 16px; 
+                        font-weight: bold;
+                        line-height: 1.3;
+                        text-transform: uppercase;
+                        color: #333;
+                    }
+                    .transportadora-row .volume { 
+                        text-align: center; 
+                        font-size: 16px; 
+                        font-weight: bold; 
+                    }
+
+                    .nota-row.vazia td,
+                    .transportadora-row.vazia td {
+                        border: none !important;
+                    }
+                </style>
+            </head>
+            <body>
+                ${pagesHtml}
+            </body>
+            </html>
+        `);
+        
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
+    };
+
     const filtered = notas.filter(n => {
         // Busca geral
         const matchSearch = !search || 
@@ -916,6 +1224,170 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         </Button>
                     </div>
                 </div>
+
+                {/* Configurações do Romaneio */}
+                <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-emerald-600" />
+                            Configurações do Romaneio
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label>Data do Romaneio</Label>
+                                <Input
+                                    type="date"
+                                    value={dataRomaneio}
+                                    onChange={(e) => setDataRomaneio(e.target.value)}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Motorista</Label>
+                                <Select value={motorista} onValueChange={setMotorista}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {motoristas.map(m => (
+                                            <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <Car className="w-4 h-4" /> Veículo (aplica em todos)
+                                </Label>
+                                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="individual">Usar individual</SelectItem>
+                                        {veiculos.map(v => (
+                                            <SelectItem key={v.id} value={v.placa}>
+                                                {v.modelo} - {v.placa}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
+                                </Label>
+                                <Input
+                                    value={remetenteSelecionado}
+                                    onChange={(e) => setRemetenteSelecionado(e.target.value)}
+                                    placeholder="Nome do remetente..."
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Layout da Impressão */}
+                <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                            Layout da Impressão (%)
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs">Remetente (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="5"
+                                    max="50"
+                                    value={layoutConfig.colRemetente}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colRemetente: parseInt(e.target.value) || 18})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Destinatário (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="10"
+                                    max="60"
+                                    value={layoutConfig.colDestinatario}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colDestinatario: parseInt(e.target.value) || 42})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">NFE (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="5"
+                                    max="30"
+                                    value={layoutConfig.colNfe}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colNfe: parseInt(e.target.value) || 15})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Carimbo (%)</Label>
+                                <Input
+                                    type="number"
+                                    min="10"
+                                    max="40"
+                                    value={layoutConfig.colCarimbo}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, colCarimbo: parseInt(e.target.value) || 25})}
+                                    className="bg-white"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Altura Linha (px)</Label>
+                                <Input
+                                    type="number"
+                                    min="30"
+                                    max="80"
+                                    value={layoutConfig.alturaLinha}
+                                    onChange={(e) => setLayoutConfig({...layoutConfig, alturaLinha: parseInt(e.target.value) || 45})}
+                                    className="bg-white"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Total: {layoutConfig.colRemetente + layoutConfig.colDestinatario + layoutConfig.colNfe + layoutConfig.colCarimbo}% (ideal: 100%)
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* Buscar Notas por Número */}
+                <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            Buscar Notas por Número
+                        </h3>
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
+                                value={notasDigitadas}
+                                onChange={(e) => setNotasDigitadas(e.target.value)}
+                                className="bg-white flex-1"
+                                onKeyDown={(e) => { if (e.key === "Enter") buscarNotasDigitadas(); }}
+                            />
+                            <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
+                                <Search className="w-4 h-4 mr-2" />
+                                Buscar e Selecionar
+                            </Button>
+                            <Button 
+                                onClick={handlePrintRomaneio}
+                                disabled={selecionados.length === 0}
+                                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6"
+                            >
+                                <Printer className="w-5 h-5 mr-2" />
+                                Imprimir Romaneio ({selecionados.length})
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Filtro de Data para Importações */}
                 <Card className="bg-white/80 border-0 shadow-md">

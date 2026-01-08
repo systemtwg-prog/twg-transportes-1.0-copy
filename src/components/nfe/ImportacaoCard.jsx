@@ -225,8 +225,8 @@ export default function ImportacaoCard({
                     .info {
                         text-align: center;
                         color: #475569;
-                        margin-bottom: 20px;
-                        font-size: 12px;
+                        margin-bottom: 10px;
+                        font-size: 9px;
                     }
                     table { 
                         width: 100%; 
@@ -236,18 +236,18 @@ export default function ImportacaoCard({
                     th { 
                         background: #3b82f6;
                         color: white;
-                        padding: 4px 6px;
+                        padding: 3px 4px;
                         text-align: left;
-                        font-size: 11px;
+                        font-size: 9px;
                         font-weight: 600;
                         border: 1px solid #2563eb;
                     }
                     td { 
-                        padding: 3px 6px;
+                        padding: 2px 4px;
                         border: 1px solid #cbd5e1;
-                        font-size: 10px;
+                        font-size: 8px;
                         background: white;
-                        line-height: 1.2;
+                        line-height: 1.1;
                     }
                     tr:nth-child(even) td {
                         background: #f8fafc;

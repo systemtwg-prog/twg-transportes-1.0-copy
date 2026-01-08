@@ -1378,7 +1378,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         <SelectItem value="individual">Usar individual</SelectItem>
                                         {veiculos.map(v => (
                                             <SelectItem key={v.id} value={v.placa}>
-                                                {v.modelo} - {v.placa}
+                                                {v.placa}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -1389,12 +1389,17 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
                                 </Label>
                                 <div className="flex gap-1">
-                                    <Input
-                                        value={remetenteSelecionado}
-                                        onChange={(e) => setRemetenteSelecionado(e.target.value)}
-                                        placeholder="Nome do remetente..."
-                                        className="bg-white flex-1"
-                                    />
+                                    <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
+                                        <SelectTrigger className="bg-white flex-1">
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="individual">Usar individual</SelectItem>
+                                            {[...new Set(notas.map(n => n.remetente).filter(Boolean))].map((rem, idx) => (
+                                                <SelectItem key={idx} value={rem}>{rem}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <Button
                                         type="button"
                                         variant="outline"

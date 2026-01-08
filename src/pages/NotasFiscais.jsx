@@ -1336,12 +1336,29 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 <Label className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
                                 </Label>
-                                <Input
-                                    value={remetenteSelecionado}
-                                    onChange={(e) => setRemetenteSelecionado(e.target.value)}
-                                    placeholder="Nome do remetente..."
-                                    className="bg-white"
-                                />
+                                <div className="flex gap-1">
+                                    <Input
+                                        value={remetenteSelecionado}
+                                        onChange={(e) => setRemetenteSelecionado(e.target.value)}
+                                        placeholder="Nome do remetente..."
+                                        className="bg-white flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => {
+                                            const nome = prompt("Nome da empresa remetente:");
+                                            if (nome) {
+                                                setRemetenteSelecionado(nome);
+                                                toast.success("Remetente definido!");
+                                            }
+                                        }}
+                                        className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </CardContent>

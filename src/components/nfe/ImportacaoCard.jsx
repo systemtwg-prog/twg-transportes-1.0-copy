@@ -144,6 +144,32 @@ export default function ImportacaoCard({
             return;
         }
 
+        // Calcular resumo por placa
+        const resumoPorPlaca = {};
+        notasParaImprimir.forEach(nota => {
+            const placa = nota.placa || "SEM PLACA";
+            if (!resumoPorPlaca[placa]) {
+                resumoPorPlaca[placa] = {
+                    totalNotas: 0,
+                    transportadoras: new Set(),
+                    pesoTotal: 0,
+                    volumeTotal: 0
+                };
+            }
+            resumoPorPlaca[placa].totalNotas++;
+            if (nota.transportadora) {
+                resumoPorPlaca[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
+            }
+            // Peso
+            const pesoStr = nota.peso || "";
+            const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+            resumoPorPlaca[placa].pesoTotal += pesoNum;
+            // Volume
+            const volStr = nota.volume || "";
+            const volNum = parseFloat(volStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+            resumoPorPlaca[placa].volumeTotal += volNum;
+        });
+
         // Gerar linhas da tabela
         let rowsHtml = "";
         notasParaImprimir.forEach(nota => {
@@ -158,6 +184,21 @@ export default function ImportacaoCard({
                 </tr>
             `;
         });
+
+        // Gerar HTML do resumo
+        let resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3>';
+        Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
+            resumoHtml += `
+                <div class="resumo-placa">
+                    <h4>PLACA: ${placa}</h4>
+                    <div class="resumo-item"><strong>Total de Notas:</strong> ${dados.totalNotas}</div>
+                    <div class="resumo-item"><strong>Total de Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                    <div class="resumo-item"><strong>Peso Total:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                    <div class="resumo-item"><strong>Volume Total:</strong> ${dados.volumeTotal}</div>
+                </div>
+            `;
+        });
+        resumoHtml += '</div>';
 
         winPrint.document.write(`
             <html>
@@ -195,18 +236,18 @@ export default function ImportacaoCard({
                     th { 
                         background: #3b82f6;
                         color: white;
-                        padding: 6px 8px;
+                        padding: 4px 6px;
                         text-align: left;
-                        font-size: 12px;
+                        font-size: 11px;
                         font-weight: 600;
                         border: 1px solid #2563eb;
                     }
                     td { 
-                        padding: 4px 8px;
+                        padding: 3px 6px;
                         border: 1px solid #cbd5e1;
-                        font-size: 11px;
+                        font-size: 10px;
                         background: white;
-                        line-height: 1.3;
+                        line-height: 1.2;
                     }
                     tr:nth-child(even) td {
                         background: #f8fafc;
@@ -215,12 +256,41 @@ export default function ImportacaoCard({
                         background: #e0f2fe;
                     }
                     .footer {
-                        margin-top: 30px;
+                        margin-top: 10px;
                         text-align: center;
                         color: #64748b;
-                        font-size: 11px;
-                        padding-top: 20px;
-                        border-top: 2px solid #e2e8f0;
+                        font-size: 9px;
+                        padding-top: 8px;
+                        border-top: 1px solid #e2e8f0;
+                    }
+                    .resumo {
+                        margin-top: 15px;
+                        padding: 10px;
+                        border: 2px solid #2563eb;
+                        background: #eff6ff;
+                    }
+                    .resumo h3 {
+                        color: #1e3a8a;
+                        font-size: 14px;
+                        margin-bottom: 8px;
+                        font-weight: bold;
+                    }
+                    .resumo-placa {
+                        background: white;
+                        padding: 8px;
+                        margin-bottom: 6px;
+                        border-left: 4px solid #3b82f6;
+                    }
+                    .resumo-placa h4 {
+                        color: #1e40af;
+                        font-size: 12px;
+                        margin-bottom: 4px;
+                        font-weight: bold;
+                    }
+                    .resumo-item {
+                        font-size: 10px;
+                        color: #334155;
+                        margin: 2px 0;
                     }
                 </style>
             </head>
@@ -244,11 +314,13 @@ export default function ImportacaoCard({
                     <tbody>
                         ${rowsHtml}
                     </tbody>
-                </table>
+                    </table>
 
-                <div class="footer">
-                    <p>TWG Transportes - Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
-                </div>
+                    ${resumoHtml}
+
+                    <div class="footer">
+                    <p>TWG Transportes</p>
+                    </div>
             </body>
             </html>
         `);

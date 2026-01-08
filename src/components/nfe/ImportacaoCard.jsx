@@ -115,7 +115,124 @@ export default function ImportacaoCard({
             toast.error("Selecione ao menos uma nota para imprimir");
             return;
         }
-        onPrint(notasParaImprimir);
+
+        // Gerar impressão no formato tabular
+        const winPrint = window.open('', '_blank', 'width=1200,height=800');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
+
+        // Gerar linhas da tabela
+        let rowsHtml = "";
+        notasParaImprimir.forEach(nota => {
+            rowsHtml += `
+                <tr>
+                    <td>${nota.numero_nf || "-"}</td>
+                    <td>${nota.placa || "-"}</td>
+                    <td>${nota.destinatario || "-"}</td>
+                    <td>${nota.volume || "-"}</td>
+                    <td>${nota.peso || "-"}</td>
+                    <td>${nota.transportadora || "-"}</td>
+                </tr>
+            `;
+        });
+
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Importação de Notas Fiscais</title>
+                <style>
+                    @media print {
+                        @page { margin: 10mm; size: A4 landscape; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        padding: 20px;
+                        background: white;
+                    }
+                    h1 {
+                        text-align: center;
+                        color: #1e3a8a;
+                        margin-bottom: 10px;
+                        font-size: 24px;
+                    }
+                    .info {
+                        text-align: center;
+                        color: #475569;
+                        margin-bottom: 20px;
+                        font-size: 12px;
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    th { 
+                        background: #3b82f6;
+                        color: white;
+                        padding: 12px 8px;
+                        text-align: left;
+                        font-size: 13px;
+                        font-weight: 600;
+                        border: 1px solid #2563eb;
+                    }
+                    td { 
+                        padding: 10px 8px;
+                        border: 1px solid #cbd5e1;
+                        font-size: 12px;
+                        background: white;
+                    }
+                    tr:nth-child(even) td {
+                        background: #f8fafc;
+                    }
+                    tr:hover td {
+                        background: #e0f2fe;
+                    }
+                    .footer {
+                        margin-top: 30px;
+                        text-align: center;
+                        color: #64748b;
+                        font-size: 11px;
+                        padding-top: 20px;
+                        border-top: 2px solid #e2e8f0;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Importação de Notas Fiscais</h1>
+                <div class="info">
+                    <p>Data: ${formatDateTime(importacao.data_importacao)} | Origem: ${getOrigemLabel(importacao.origem)} | Total: ${notasParaImprimir.length} nota(s)</p>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nota Fiscal</th>
+                            <th>PLACA</th>
+                            <th>Nome do Cliente</th>
+                            <th>Qtd. Volumes</th>
+                            <th>Peso</th>
+                            <th>Transportadora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div class="footer">
+                    <p>TWG Transportes - Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
         setShowPrintDialog(false);
     };
 

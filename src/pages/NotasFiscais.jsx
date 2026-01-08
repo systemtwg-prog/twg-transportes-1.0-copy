@@ -155,12 +155,12 @@ export default function NotasFiscais() {
         }
     });
 
-    // Mutation para excluir registro de importação
+    // Mutation para excluir registro de importação (SEM excluir as notas)
     const deleteImportacaoMutation = useMutation({
         mutationFn: (id) => base44.entities.RegistroImportacao.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-            toast.success("Registro de importação excluído!");
+            toast.success("Registro excluído. As notas foram mantidas no sistema.");
         }
     });
 
@@ -438,13 +438,28 @@ IMPORTANTE:
 
             const notasEncontradas = result?.notas || [];
             
+            // Buscar notas existentes para verificar duplicados
+            const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
+            const numerosExistentes = new Set(
+                todasNotasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
+            );
+            
             if (notasEncontradas.length > 0) {
                 let importados = 0;
+                let duplicados = 0;
                 const transportadorasUnicas = new Set();
                 const notasIdsImportadas = [];
                 
                 for (const nota of notasEncontradas) {
                     if (nota.numero_nf || nota.destinatario) {
+                        const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
+                        
+                        // Verificar duplicidade
+                        if (numeroNf && numerosExistentes.has(numeroNf)) {
+                            duplicados++;
+                            continue;
+                        }
+                        
                         const novaNota = await base44.entities.NotaFiscal.create({
                             numero_nf: nota.numero_nf || "",
                             destinatario: nota.destinatario || "",
@@ -456,6 +471,9 @@ IMPORTANTE:
                         });
                         importados++;
                         notasIdsImportadas.push(novaNota.id);
+                        
+                        // Adicionar ao set para evitar duplicados no mesmo lote
+                        if (numeroNf) numerosExistentes.add(numeroNf);
                         
                         // Coletar transportadoras únicas
                         if (nota.transportadora) {
@@ -476,7 +494,12 @@ IMPORTANTE:
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
+                
+                if (duplicados > 0) {
+                    toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
+                } else {
+                    toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
+                }
                 
                 // Extrair transportadoras para cadastro
                 if (transportadorasUnicas.size > 0) {
@@ -567,7 +590,7 @@ IMPORTANTE:
         
         try {
             const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            
+
             const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
                 file_url,
                 json_schema: {
@@ -593,11 +616,27 @@ IMPORTANTE:
 
             if (result.status === "success" && result.output) {
                 const notasImport = result.output.notas || (Array.isArray(result.output) ? result.output : [result.output]);
+
+                // Buscar notas existentes
+                const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
+                const numerosExistentes = new Set(
+                    todasNotasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
+                );
+
                 let importados = 0;
+                let duplicados = 0;
                 const notasIdsImportadas = [];
-                
+
                 for (const nota of notasImport) {
                     if (nota.numero_nf || nota.destinatario) {
+                        const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
+
+                        // Verificar duplicidade
+                        if (numeroNf && numerosExistentes.has(numeroNf)) {
+                            duplicados++;
+                            continue;
+                        }
+
                         const novaNota = await base44.entities.NotaFiscal.create({
                             numero_nf: nota.numero_nf || "",
                             destinatario: nota.destinatario || "",
@@ -609,6 +648,9 @@ IMPORTANTE:
                         });
                         importados++;
                         notasIdsImportadas.push(novaNota.id);
+
+                        // Adicionar ao set para evitar duplicados no mesmo lote
+                        if (numeroNf) numerosExistentes.add(numeroNf);
                     }
                 }
                 
@@ -625,10 +667,15 @@ IMPORTANTE:
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                toast.success(`✅ Importado com sucesso! ${importados} nota(s) fiscal(is) adicionada(s).`);
-            } else {
+
+                if (duplicados > 0) {
+                    toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
+                } else {
+                    toast.success(`✅ Importado com sucesso! ${importados} nota(s) fiscal(is) adicionada(s).`);
+                }
+                } else {
                 toast.error("Erro ao processar arquivo. Verifique o formato.");
-            }
+                }
         } catch (error) {
             console.error("Erro na importação:", error);
             toast.error("Erro ao importar arquivo. Tente novamente.");

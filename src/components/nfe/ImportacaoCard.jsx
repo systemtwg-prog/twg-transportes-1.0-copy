@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { 
     Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2
 } from "lucide-react";

@@ -31,6 +31,16 @@ export default function MascaraRomaneio() {
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
     const [remetenteForm, setRemetenteForm] = useState({ nome: "", cnpj: "", endereco: "", telefone: "" });
     const [editingRemetente, setEditingRemetente] = useState(null);
+
+    // Carregar notas da URL se houver
+    React.useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const notasParam = urlParams.get("notas");
+        if (notasParam) {
+            const ids = notasParam.split(",");
+            setNotasSelecionadas(ids);
+        }
+    }, []);
     
     // Configurações de layout personalizáveis
     const [layoutConfig, setLayoutConfig] = useState({

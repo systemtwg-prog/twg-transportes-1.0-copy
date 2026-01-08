@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export default function DesktopTabs({ currentPage, onTabChange, onCloseTab, onNewTab }) {
     const [tabs, setTabs] = useState([]);
 
-    // Carregar abas do sessionStorage
+    // Carregar abas do sessionStorage e garantir que inicie na HomeDesktop
     useEffect(() => {
         const savedTabs = sessionStorage.getItem("desktopTabs");
         if (savedTabs) {
@@ -14,6 +14,10 @@ export default function DesktopTabs({ currentPage, onTabChange, onCloseTab, onNe
         } else {
             // Iniciar com HomeDesktop
             setTabs([{ id: "HomeDesktop", name: "Início" }]);
+            // Redirecionar para HomeDesktop se não estiver lá
+            if (currentPage !== "HomeDesktop") {
+                onTabChange?.("HomeDesktop");
+            }
         }
     }, []);
 

@@ -12,6 +12,13 @@ export default function Layout({ children, currentPageName }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
 
+    // Redirecionar para HomeDesktop no desktop se necessário
+    useEffect(() => {
+        if (isDesktop && !currentPageName) {
+            navigate(createPageUrl("HomeDesktop"));
+        }
+    }, [isDesktop, currentPageName]);
+
     useEffect(() => {
         const collapsed = localStorage.getItem("sidebarCollapsed");
         if (collapsed === "true") {

@@ -215,22 +215,25 @@ export default function ImportacaoCard({
             totalEntregasGeral += (dados.transportadoras.size || dados.totalNotas);
         });
 
-        // Gerar HTML do resumo por placa (sempre exibe)
-        let resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3><div class="resumo-grid">';
+        // Gerar HTML do resumo por placa (apenas se houver notas com placa)
+        let resumoHtml = '';
 
-        Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
-            resumoHtml += `
-                <div class="resumo-placa">
-                    <h4>PLACA: ${placa}</h4>
-                    <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
-                    <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                    <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                    <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
-                </div>
-            `;
-        });
+        if (Object.keys(resumoPorPlaca).length > 0) {
+            resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3><div class="resumo-grid">';
 
-        resumoHtml += '</div>';
+            Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
+                resumoHtml += `
+                    <div class="resumo-placa">
+                        <h4>PLACA: ${placa}</h4>
+                        <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                        <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
+                    </div>
+                `;
+            });
+
+            resumoHtml += '</div>';
 
         // Adicionar totais gerais
         resumoHtml += `

@@ -968,8 +968,8 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         toast.success(`${atualizadas} nota(s) atualizada(s)!`);
     };
 
-    // Buscar notas digitadas manualmente
-    const buscarNotasDigitadas = () => {
+    // Buscar notas digitadas manualmente - busca no banco de dados
+    const buscarNotasDigitadas = async () => {
         if (!notasDigitadas.trim()) return;
         
         const numerosDigitados = notasDigitadas
@@ -977,29 +977,37 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             .map(n => n.trim())
             .filter(Boolean);
         
-        const notasEncontradas = [];
-        const naoEncontradas = [];
-        
-        numerosDigitados.forEach(num => {
-            const notaEncontrada = notas.find(n => 
-                n.numero_nf?.toLowerCase().includes(num.toLowerCase())
-            );
-            if (notaEncontrada && !notasEncontradas.find(n => n.id === notaEncontrada.id)) {
-                notasEncontradas.push(notaEncontrada);
-            } else if (!notaEncontrada) {
-                naoEncontradas.push(num);
-            }
-        });
-        
-        if (notasEncontradas.length > 0) {
-            setSelecionados(notasEncontradas.map(n => n.id));
-            if (naoEncontradas.length > 0) {
-                toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+        try {
+            // Buscar TODAS as notas do banco de dados
+            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+            
+            const notasEncontradas = [];
+            const naoEncontradas = [];
+            
+            numerosDigitados.forEach(num => {
+                const notaEncontrada = todasNotas.find(n => 
+                    n.numero_nf?.toLowerCase().includes(num.toLowerCase())
+                );
+                if (notaEncontrada && !notasEncontradas.find(n => n.id === notaEncontrada.id)) {
+                    notasEncontradas.push(notaEncontrada);
+                } else if (!notaEncontrada) {
+                    naoEncontradas.push(num);
+                }
+            });
+            
+            if (notasEncontradas.length > 0) {
+                setSelecionados(notasEncontradas.map(n => n.id));
+                if (naoEncontradas.length > 0) {
+                    toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+                } else {
+                    toast.success(`${notasEncontradas.length} nota(s) selecionada(s)`);
+                }
             } else {
-                toast.success(`${notasEncontradas.length} nota(s) selecionada(s)`);
+                toast.error("Nenhuma nota encontrada no banco de dados");
             }
-        } else {
-            toast.error("Nenhuma nota encontrada");
+        } catch (error) {
+            console.error("Erro ao buscar notas:", error);
+            toast.error("Erro ao buscar notas no banco de dados");
         }
     };
 

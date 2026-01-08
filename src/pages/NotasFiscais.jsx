@@ -1083,10 +1083,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             let pagesHtml = "";
 
             Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-            const NOTAS_POR_PAGINA = 6;
-            const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+                const NOTAS_POR_PAGINA = 6;
+                const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
 
-            for (let pagina = 0; pagina < totalPaginas; pagina++) {
+                for (let pagina = 0; pagina < totalPaginas; pagina++) {
                 const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
 
                 let rowsHtml = "";

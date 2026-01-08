@@ -402,6 +402,9 @@ export default function ImportacaoCard({
         setShowConfigDialog(false);
     };
 
+    const totalColunas = printConfig.colNF + printConfig.colPlaca + printConfig.colCliente + 
+                         printConfig.colVolume + printConfig.colPeso + printConfig.colTransp;
+
     return (
         <>
             <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-l-indigo-500 shadow-md hover:shadow-lg transition-shadow">

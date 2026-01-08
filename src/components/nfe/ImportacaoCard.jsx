@@ -238,7 +238,7 @@ export default function ImportacaoCard({
                 <title>Importação de Notas Fiscais</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4 portrait; }
+                        @page { margin: 10mm; size: A4 landscape; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -250,7 +250,7 @@ export default function ImportacaoCard({
                     h1 {
                         text-align: center;
                         color: #1e3a8a;
-                        margin-bottom: 10px;
+                        margin-bottom: 5px;
                         font-size: 24px;
                     }
                     .info {
@@ -258,6 +258,13 @@ export default function ImportacaoCard({
                         color: #475569;
                         margin-bottom: 10px;
                         font-size: 9px;
+                    }
+                    .date-info {
+                        text-align: center;
+                        color: #1e3a8a;
+                        margin-bottom: 10px;
+                        font-size: 12px;
+                        font-weight: bold;
                     }
                     table { 
                         width: 100%; 
@@ -273,6 +280,12 @@ export default function ImportacaoCard({
                         font-weight: 600;
                         border: 1px solid #2563eb;
                     }
+                    th:nth-child(1) { width: 10%; } /* Nota Fiscal */
+                    th:nth-child(2) { width: 10%; } /* PLACA */
+                    th:nth-child(3) { width: 40%; } /* Nome do Cliente */
+                    th:nth-child(4) { width: 10%; } /* Qtd. Volumes */
+                    th:nth-child(5) { width: 10%; } /* Peso */
+                    th:nth-child(6) { width: 20%; } /* Transportadora */
                     td { 
                         padding: 2px 4px;
                         border: 1px solid #cbd5e1;
@@ -339,9 +352,12 @@ export default function ImportacaoCard({
                 </style>
             </head>
             <body>
-                <h1>Importação de Notas Fiscais</h1>
+                <h1>Relatório Diário</h1>
+                <div class="date-info">
+                    <p>${format(new Date(importacao.data_importacao), "dd/MM/yyyy", { locale: ptBR })}</p>
+                </div>
                 <div class="info">
-                    <p>Data: ${formatDateTime(importacao.data_importacao)} | Origem: ${getOrigemLabel(importacao.origem)} | Total: ${notasParaImprimir.length} nota(s)</p>
+                    <p>Origem: ${getOrigemLabel(importacao.origem)} | Total: ${notasParaImprimir.length} nota(s)</p>
                 </div>
                 
                 <table>

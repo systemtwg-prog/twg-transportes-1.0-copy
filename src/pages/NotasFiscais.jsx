@@ -1080,9 +1080,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                 notasPorPlaca[placa].push(nota);
             });
 
-        let pagesHtml = "";
+            let pagesHtml = "";
 
-        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
             const NOTAS_POR_PAGINA = 6;
             const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
 

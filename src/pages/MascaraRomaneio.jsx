@@ -499,7 +499,10 @@ export default function MascaraRomaneio() {
         `);
         
         winPrint.document.close();
-        setTimeout(() => winPrint.print(), 500);
+        setTimeout(() => {
+            winPrint.print();
+            winPrint.close();
+        }, 500);
 
         // Salvar romaneio gerado para cada placa
         Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {

@@ -1180,7 +1180,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         `);
         
         winPrint.document.close();
-        setTimeout(() => winPrint.print(), 500);
+        setTimeout(() => {
+            winPrint.print();
+            winPrint.close();
+        }, 500);
 
         // Salvar romaneio gerado para cada placa
         Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
@@ -1315,14 +1318,6 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         >
                             <ClipboardPaste className="w-4 h-4 mr-2" />
                             Colar Texto
-                        </Button>
-                        <Button 
-                            onClick={() => setShowAudioDialog(true)}
-                            variant="outline"
-                            className="border-red-500 text-red-700 hover:bg-red-50"
-                        >
-                            <Mic className="w-4 h-4 mr-2" />
-                            Gravar Áudio
                         </Button>
                         <Button 
                             onClick={handleSubstituirWashington}

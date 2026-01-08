@@ -144,10 +144,13 @@ export default function ImportacaoCard({
             return;
         }
 
-        // Calcular resumo por placa
+        // Calcular resumo por placa (apenas notas com placa definida)
         const resumoPorPlaca = {};
         notasParaImprimir.forEach(nota => {
-            const placa = nota.placa || "SEM PLACA";
+            const placa = nota.placa || "";
+            // Ignorar notas sem placa
+            if (!placa) return;
+
             if (!resumoPorPlaca[placa]) {
                 resumoPorPlaca[placa] = {
                     totalNotas: 0,
@@ -185,20 +188,23 @@ export default function ImportacaoCard({
             `;
         });
 
-        // Gerar HTML do resumo
-        let resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3>';
-        Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
-            resumoHtml += `
-                <div class="resumo-placa">
-                    <h4>PLACA: ${placa}</h4>
-                    <div class="resumo-item"><strong>Total de Notas:</strong> ${dados.totalNotas}</div>
-                    <div class="resumo-item"><strong>Total de Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                    <div class="resumo-item"><strong>Peso Total:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                    <div class="resumo-item"><strong>Volume Total:</strong> ${dados.volumeTotal}</div>
-                </div>
-            `;
-        });
-        resumoHtml += '</div>';
+        // Gerar HTML do resumo (apenas se houver placas)
+        let resumoHtml = '';
+        if (Object.keys(resumoPorPlaca).length > 0) {
+            resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3>';
+            Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
+                resumoHtml += `
+                    <div class="resumo-placa">
+                        <h4>PLACA: ${placa}</h4>
+                        <div class="resumo-item"><strong>Total de Notas:</strong> ${dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Total de Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Peso Total:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                        <div class="resumo-item"><strong>Volume Total:</strong> ${dados.volumeTotal}</div>
+                    </div>
+                `;
+            });
+            resumoHtml += '</div>';
+        }
 
         winPrint.document.write(`
             <html>

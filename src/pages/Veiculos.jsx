@@ -10,9 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-    Plus, Search, Pencil, Trash2, Truck, X, Save, Upload, Camera, FileText, Eye, Share2, Printer
+    Plus, Search, Pencil, Trash2, Truck, X, Save, Upload, Camera, FileText, Eye, Share2, Printer, ClipboardPaste, Sparkles
 } from "lucide-react";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog as DialogComponent, DialogContent as DialogContentComponent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function VeiculoForm({ veiculo, onSubmit, onCancel }) {
     const [form, setForm] = useState({
@@ -328,6 +331,9 @@ export default function Veiculos() {
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
     const [viewDocsModal, setViewDocsModal] = useState(null);
+    const [showPasteForm, setShowPasteForm] = useState(false);
+    const [pasteText, setPasteText] = useState("");
+    const [processingPaste, setProcessingPaste] = useState(false);
     const queryClient = useQueryClient();
 
     const handlePrintVeiculo = (vei) => {
@@ -423,6 +429,82 @@ export default function Veiculos() {
         }
     };
 
+    const handleProcessPaste = async () => {
+        if (!pasteText.trim()) return;
+        
+        setProcessingPaste(true);
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de veículos.
+
+TEXTO PARA ANALISAR:
+"""
+${pasteText}
+"""
+
+IMPORTANTE: 
+- Extraia TODOS os veículos encontrados
+- Para cada veículo, identifique: placa, modelo, marca, ano, tipo, capacidade, etc.`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        veiculos: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    placa: { type: "string", description: "Placa do veículo" },
+                                    modelo: { type: "string", description: "Modelo" },
+                                    marca: { type: "string", description: "Marca" },
+                                    ano: { type: "string", description: "Ano" },
+                                    cor: { type: "string", description: "Cor" },
+                                    tipo: { type: "string", description: "Tipo: van, caminhao_leve, caminhao_medio, etc" },
+                                    capacidade_kg: { type: "string", description: "Capacidade em KG" }
+                                }
+                            }
+                        }
+                    },
+                    required: ["veiculos"]
+                }
+            });
+
+            const veiculosEncontrados = result?.veiculos || [];
+            
+            if (veiculosEncontrados.length > 0) {
+                let importados = 0;
+                
+                for (const vei of veiculosEncontrados) {
+                    if (vei.placa && vei.modelo) {
+                        await base44.entities.Veiculo.create({
+                            placa: vei.placa.toUpperCase() || "",
+                            modelo: vei.modelo || "",
+                            marca: vei.marca || "",
+                            ano: vei.ano || "",
+                            cor: vei.cor || "",
+                            tipo: vei.tipo || "van",
+                            capacidade_kg: vei.capacidade_kg ? Number(vei.capacidade_kg) : null,
+                            status: "disponivel"
+                        });
+                        importados++;
+                    }
+                }
+                
+                queryClient.invalidateQueries({ queryKey: ["veiculos"] });
+                toast.success(`✅ ${importados} veículo(s) importado(s)!`);
+                setShowPasteForm(false);
+                setPasteText("");
+            } else {
+                toast.error("Não foi possível identificar veículos no texto.");
+            }
+        } catch (error) {
+            console.error("Erro ao processar texto:", error);
+            toast.error("Erro ao processar texto. Tente novamente.");
+        }
+        
+        setProcessingPaste(false);
+    };
+
     const filtered = veiculos.filter(v => 
         v.placa?.toLowerCase().includes(search.toLowerCase()) ||
         v.modelo?.toLowerCase().includes(search.toLowerCase()) ||
@@ -458,13 +540,23 @@ export default function Veiculos() {
                             <p className="text-slate-500">Gerencie a frota de veículos</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-sky-400 to-cyan-500"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Novo Veículo
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={() => setShowPasteForm(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                        >
+                            <ClipboardPaste className="w-4 h-4 mr-2" />
+                            Colar
+                        </Button>
+                        <Button 
+                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            className="bg-gradient-to-r from-sky-400 to-cyan-500"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Novo Veículo
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -662,6 +754,54 @@ export default function Veiculos() {
                     </DialogContent>
                 </Dialog>
             )}
+
+            <DialogComponent open={showPasteForm} onOpenChange={setShowPasteForm}>
+                <DialogContentComponent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-purple-600" />
+                            Colar Informações de Veículos
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole abaixo as informações dos veículos. O sistema irá identificar e organizar automaticamente os dados.
+                        </p>
+                        <Textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder="Cole aqui as informações dos veículos...
+
+Exemplo:
+Placa: ABC1D23 - Modelo: Sprinter - Marca: Mercedes - Ano: 2020 - Capacidade: 1500kg
+DEF2E34, Ducato, Fiat, 2019, branco, van, 1200kg"
+                            rows={10}
+                            className="font-mono text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleProcessPaste}
+                                disabled={processingPaste || !pasteText.trim()}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {processingPaste ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" /> Processar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContentComponent>
+            </DialogComponent>
         </div>
     );
 }

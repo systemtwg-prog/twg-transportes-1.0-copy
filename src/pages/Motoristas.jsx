@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, User, Phone, 
-    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, MessageCircle, IdCard
+    CreditCard, Calendar, X, Save, Upload, Camera, Users, FileText, Eye, Share2, MessageCircle, IdCard, ClipboardPaste, Sparkles
 } from "lucide-react";
 import CrachaMotorista from "@/components/motorista/CrachaMotorista";
 import FlipbookViewer from "@/components/shared/FlipbookViewer";
@@ -19,6 +19,8 @@ import CepAutoComplete from "@/components/cep/CepAutoComplete";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog as DialogComponent, DialogContent as DialogContentComponent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function MotoristaForm({ motorista, onSubmit, onCancel, usuarios }) {
     const [form, setForm] = useState({
@@ -432,6 +434,9 @@ export default function Motoristas() {
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState("");
     const [showCracha, setShowCracha] = useState(null);
+    const [showPasteForm, setShowPasteForm] = useState(false);
+    const [pasteText, setPasteText] = useState("");
+    const [processingPaste, setProcessingPaste] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: motoristas = [], isLoading } = useQuery({
@@ -481,6 +486,82 @@ export default function Motoristas() {
         }
     };
 
+    const handleProcessPaste = async () => {
+        if (!pasteText.trim()) return;
+        
+        setProcessingPaste(true);
+        
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de colaboradores/motoristas.
+
+TEXTO PARA ANALISAR:
+"""
+${pasteText}
+"""
+
+IMPORTANTE: 
+- Extraia TODOS os colaboradores encontrados
+- Para cada colaborador, identifique: nome, CPF, CNH, telefone, categoria CNH, etc.`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        colaboradores: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    nome: { type: "string", description: "Nome completo" },
+                                    cpf: { type: "string", description: "CPF" },
+                                    cnh: { type: "string", description: "Número da CNH" },
+                                    categoria_cnh: { type: "string", description: "Categoria da CNH" },
+                                    telefone: { type: "string", description: "Telefone" },
+                                    email: { type: "string", description: "Email" }
+                                }
+                            }
+                        }
+                    },
+                    required: ["colaboradores"]
+                }
+            });
+
+            const colaboradoresEncontrados = result?.colaboradores || [];
+            
+            if (colaboradoresEncontrados.length > 0) {
+                let importados = 0;
+                
+                for (const colab of colaboradoresEncontrados) {
+                    if (colab.nome && colab.cpf && colab.cnh) {
+                        await base44.entities.Motorista.create({
+                            nome: colab.nome || "",
+                            cpf: colab.cpf || "",
+                            cnh: colab.cnh || "",
+                            categoria_cnh: colab.categoria_cnh || "B",
+                            telefone: colab.telefone || "",
+                            email: colab.email || "",
+                            status: "ativo",
+                            funcao: "Motorista",
+                            tipo_vinculo: "funcionario"
+                        });
+                        importados++;
+                    }
+                }
+                
+                queryClient.invalidateQueries({ queryKey: ["motoristas"] });
+                toast.success(`✅ ${importados} colaborador(es) importado(s)!`);
+                setShowPasteForm(false);
+                setPasteText("");
+            } else {
+                toast.error("Não foi possível identificar colaboradores no texto.");
+            }
+        } catch (error) {
+            console.error("Erro ao processar texto:", error);
+            toast.error("Erro ao processar texto. Tente novamente.");
+        }
+        
+        setProcessingPaste(false);
+    };
+
     const filtered = motoristas.filter(m => 
         m.nome?.toLowerCase().includes(search.toLowerCase()) ||
         m.cpf?.includes(search) ||
@@ -507,13 +588,23 @@ export default function Motoristas() {
                             <p className="text-slate-500">Gerencie motoristas e colaboradores</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-sky-400 to-cyan-500"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Novo Colaborador
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={() => setShowPasteForm(true)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                        >
+                            <ClipboardPaste className="w-4 h-4 mr-2" />
+                            Colar
+                        </Button>
+                        <Button 
+                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            className="bg-gradient-to-r from-sky-400 to-cyan-500"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Novo Colaborador
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -646,6 +737,54 @@ export default function Motoristas() {
                     onClose={() => setShowCracha(null)} 
                 />
             )}
+
+            <DialogComponent open={showPasteForm} onOpenChange={setShowPasteForm}>
+                <DialogContentComponent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardPaste className="w-5 h-5 text-purple-600" />
+                            Colar Informações de Colaboradores
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cole abaixo as informações dos colaboradores. O sistema irá identificar e organizar automaticamente os dados.
+                        </p>
+                        <Textarea
+                            value={pasteText}
+                            onChange={(e) => setPasteText(e.target.value)}
+                            placeholder="Cole aqui as informações dos colaboradores...
+
+Exemplo:
+Nome: João Silva - CPF: 123.456.789-00 - CNH: 12345678900 - Categoria: D - Telefone: (11) 98765-4321
+Maria Santos, CPF 987.654.321-00, CNH 98765432100, Cat. C, Tel: 11987654322"
+                            rows={10}
+                            className="font-mono text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleProcessPaste}
+                                disabled={processingPaste || !pasteText.trim()}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                {processingPaste ? (
+                                    <>
+                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" /> Processar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContentComponent>
+            </DialogComponent>
         </div>
     );
 }

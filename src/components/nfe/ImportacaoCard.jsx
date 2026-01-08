@@ -235,20 +235,21 @@ export default function ImportacaoCard({
 
             resumoHtml += '</div>';
 
-        // Adicionar totais gerais
-        resumoHtml += `
-            <div class="resumo-total">
-                <h4>TOTAL CONSOLIDADO</h4>
-                <div class="resumo-grid-total">
-                    <div class="resumo-item"><strong>Total de Notas:</strong> ${totalNotasGeral}</div>
-                    <div class="resumo-item"><strong>Total de Entregas:</strong> ${totalEntregasGeral}</div>
-                    <div class="resumo-item"><strong>Peso Total:</strong> ${pesoTotalGeral.toFixed(2)} kg</div>
-                    <div class="resumo-item"><strong>Volume Total:</strong> ${volumeTotalGeral}</div>
+            // Adicionar totais gerais
+            resumoHtml += `
+                <div class="resumo-total">
+                    <h4>TOTAL CONSOLIDADO</h4>
+                    <div class="resumo-grid-total">
+                        <div class="resumo-item"><strong>Total de Notas:</strong> ${totalNotasGeral}</div>
+                        <div class="resumo-item"><strong>Total de Entregas:</strong> ${totalEntregasGeral}</div>
+                        <div class="resumo-item"><strong>Peso Total:</strong> ${pesoTotalGeral.toFixed(2)} kg</div>
+                        <div class="resumo-item"><strong>Volume Total:</strong> ${volumeTotalGeral}</div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        resumoHtml += '</div>';
+            resumoHtml += '</div>';
+            }
 
         winPrint.document.write(`
             <html>

@@ -185,15 +185,15 @@ export default function ImportacaoCard({
             resumoPorPlaca[placa].volumeTotal += volNum;
         });
 
-        // Gerar linhas da tabela apenas com notas que possuem placa
+        // Gerar linhas da tabela (incluir todas, placa em branco se não tiver)
         let rowsHtml = "";
         notasParaImprimir.forEach(nota => {
-            if (!nota.placa) return; // Ignorar notas sem placa
-
+            const placaDisplay = nota.placa || "";
+            
             rowsHtml += `
                 <tr>
                     <td>${nota.numero_nf || "-"}</td>
-                    <td class="placa-cell">${nota.placa}</td>
+                    <td class="${nota.placa ? 'placa-cell' : ''}">${placaDisplay}</td>
                     <td>${nota.destinatario || "-"}</td>
                     <td>${nota.volume || "-"}</td>
                     <td>${nota.peso || "-"}</td>

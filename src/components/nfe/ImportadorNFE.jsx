@@ -27,7 +27,7 @@ const CAMPOS_NFE = [
     { key: "observacoes", label: "Observações", aliases: ["observacoes", "observações", "obs", "observação"] }
 ];
 
-export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
+export default function ImportadorNFE({ open, onClose, onImportSuccess, onImportComplete }) {
     const [step, setStep] = useState(1);
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -183,6 +183,7 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
             
             let importadas = 0;
             let duplicadas = 0;
+            const notasIdsImportadas = [];
             
             for (const row of rowsToSave) {
                 const numeroNf = (row.numero_nf || "").toLowerCase().trim();
@@ -200,7 +201,7 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
                     destinatariosSet.add(nomeDestinatario.toLowerCase());
                 }
                 
-                await base44.entities.NotaFiscal.create({
+                const novaNota = await base44.entities.NotaFiscal.create({
                     numero_nf: row.numero_nf || "",
                     destinatario: row.destinatario || "",
                     remetente: row.remetente || "",
@@ -213,6 +214,7 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
                     observacoes: row.observacoes || ""
                 });
                 importadas++;
+                notasIdsImportadas.push(novaNota.id);
                 
                 // Adicionar ao set para evitar duplicados dentro do próprio lote
                 if (numeroNf) numerosExistentes.add(numeroNf);
@@ -223,6 +225,17 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
             for (const nomeDestinatario of novosDestinatarios) {
                 await base44.entities.Destinatario.create({ nome: nomeDestinatario });
                 destinatariosCadastrados++;
+            }
+            
+            // Criar registro de importação
+            if (importadas > 0) {
+                await base44.entities.RegistroImportacao.create({
+                    data_importacao: new Date().toISOString(),
+                    quantidade_notas: importadas,
+                    origem: "arquivo",
+                    notas_ids: notasIdsImportadas,
+                    status: "processado"
+                });
             }
             
             if (duplicadas > 0) {
@@ -236,6 +249,9 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess }) {
             }
             
             onImportSuccess();
+            if (onImportComplete) {
+                onImportComplete(notasIdsImportadas);
+            }
             handleClose();
         } catch (err) {
             console.error(err);

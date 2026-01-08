@@ -85,46 +85,42 @@ export default function ImpressaoRelatorio() {
     const notasEncontradas = verificarNotas.filter(n => n.encontrada);
     const notasFaltantes = verificarNotas.filter(n => !n.encontrada);
 
-    const handleColar = async () => {
+    const handleColar = () => {
         if (!textoColar.trim()) {
             toast.error("Cole o texto com as notas fiscais");
             return;
         }
 
-        setProcessandoColar(true);
-
-        try {
-            // Extração simples baseada em regex
-            const linhas = textoColar.split('\n').filter(l => l.trim());
-            const notas = [];
+        // Extração direta usando regex - instantâneo
+        const notas = [];
+        const linhas = textoColar.split(/[\n\r]+/);
+        
+        for (const linha of linhas) {
+            const linhaTrim = linha.trim();
+            if (!linhaTrim) continue;
             
-            for (const linha of linhas) {
-                // Busca por números que parecem NFs (5+ dígitos)
-                const matchNF = linha.match(/\b\d{5,}\b/);
-                if (matchNF) {
+            // Busca por números que parecem NFs (5+ dígitos)
+            const matches = linhaTrim.match(/\b\d{5,}\b/g);
+            if (matches) {
+                matches.forEach(num => {
                     notas.push({
-                        id: `colado_${Date.now()}_${notas.length}`,
-                        numero_nf: matchNF[0],
+                        id: `colado_${Date.now()}_${Math.random()}`,
+                        numero_nf: num,
                         destinatario: "",
                         transportadora: ""
                     });
-                }
+                });
             }
-
-            if (notas.length > 0) {
-                setNotasAdicionadas(prev => [...prev, ...notas]);
-                toast.success(`${notas.length} nota(s) extraída(s)`);
-                setShowColar(false);
-                setTextoColar("");
-            } else {
-                toast.error("Nenhuma nota encontrada no texto");
-            }
-        } catch (error) {
-            console.error("Erro ao processar:", error);
-            toast.error("Erro ao processar o texto");
         }
 
-        setProcessandoColar(false);
+        if (notas.length > 0) {
+            setNotasAdicionadas(prev => [...prev, ...notas]);
+            toast.success(`${notas.length} nota(s) extraída(s) instantaneamente`);
+            setShowColar(false);
+            setTextoColar("");
+        } else {
+            toast.error("Nenhuma nota encontrada no texto");
+        }
     };
 
     const handleAddManual = () => {
@@ -505,10 +501,11 @@ export default function ImpressaoRelatorio() {
                             </Button>
                             <Button 
                                 onClick={handleColar}
-                                disabled={processandoColar || !textoColar.trim()}
+                                disabled={!textoColar.trim()}
                                 className="flex-1 bg-indigo-600 hover:bg-indigo-700"
                             >
-                                {processandoColar ? "Processando..." : "Extrair Notas"}
+                                <Check className="w-4 h-4 mr-2" />
+                                Extrair Notas
                             </Button>
                         </div>
                     </div>

@@ -1852,6 +1852,66 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </CardContent>
                 </Card>
 
+                {/* Dashboard Resumo da Última Importação */}
+                {dashboardImportacao && Object.keys(dashboardImportacao.porPlaca).length > 0 && (
+                    <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-emerald-600" />
+                                Resumo da Última Importação
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Totais Consolidados */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-white rounded-lg p-3 shadow-sm">
+                                    <p className="text-xs text-slate-500">Total Notas</p>
+                                    <p className="text-2xl font-bold text-blue-600">{dashboardImportacao.totalNotas}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 shadow-sm">
+                                    <p className="text-xs text-slate-500">Total Entregas</p>
+                                    <p className="text-2xl font-bold text-emerald-600">{dashboardImportacao.totalEntregas}</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 shadow-sm">
+                                    <p className="text-xs text-slate-500">Peso Consolidado</p>
+                                    <p className="text-2xl font-bold text-orange-600">{dashboardImportacao.pesoConsolidado.toFixed(2)} kg</p>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 shadow-sm">
+                                    <p className="text-xs text-slate-500">Veículos</p>
+                                    <p className="text-2xl font-bold text-purple-600">{Object.keys(dashboardImportacao.porPlaca).length}</p>
+                                </div>
+                            </div>
+
+                            {/* Por Placa */}
+                            <div>
+                                <h4 className="font-semibold text-sm text-slate-700 mb-2">Por Veículo:</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {Object.entries(dashboardImportacao.porPlaca).map(([placa, dados]) => (
+                                        <div key={placa} className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-emerald-500">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-emerald-700">{placa}</span>
+                                                <Badge className="bg-emerald-100 text-emerald-700">
+                                                    {dados.notas} NF{dados.notas > 1 ? "s" : ""}
+                                                </Badge>
+                                            </div>
+                                            <div className="space-y-1 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-500">Entregas:</span>
+                                                    <span className="font-semibold">{dados.transportadoras.size || dados.notas}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-500">Peso:</span>
+                                                    <span className="font-semibold text-orange-600">{dados.peso.toFixed(2)} kg</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Tabela */}
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl overflow-hidden">
                     <CardContent className="p-0">

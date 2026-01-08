@@ -389,11 +389,22 @@ export default function ImportacaoCard({
                         border-bottom: 2px solid #2563eb;
                         padding-bottom: 6px;
                     }
+                    .resumo-section {
+                        margin-bottom: 12px;
+                    }
+                    .resumo-section-title {
+                        color: #1e40af;
+                        font-size: 12px;
+                        font-weight: bold;
+                        margin-bottom: 6px;
+                        padding-bottom: 3px;
+                        border-bottom: 1px solid #60a5fa;
+                    }
                     .resumo-grid {
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                         gap: 8px;
-                        margin-bottom: 10px;
+                        margin-bottom: 8px;
                     }
                     .resumo-placa {
                         background: white;
@@ -409,6 +420,23 @@ export default function ImportacaoCard({
                         font-weight: bold;
                         text-align: center;
                         background: #d1fae5;
+                        padding: 4px;
+                        border-radius: 3px;
+                    }
+                    .resumo-transp {
+                        background: white;
+                        padding: 10px;
+                        border-left: 4px solid #7c3aed;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    .resumo-transp h4 {
+                        color: #6d28d9;
+                        font-size: 11px;
+                        margin-bottom: 6px;
+                        font-weight: bold;
+                        text-align: center;
+                        background: #ede9fe;
                         padding: 4px;
                         border-radius: 3px;
                     }

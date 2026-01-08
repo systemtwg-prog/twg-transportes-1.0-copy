@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
@@ -37,6 +37,7 @@ export default function NotasFiscais() {
         placa: []
     });
     const [filterFilial, setFilterFilial] = useState("");
+    const [filterDataImportacao, setFilterDataImportacao] = useState("");
     const [importing, setImporting] = useState(false);
     const [selecionados, setSelecionados] = useState([]);
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -916,6 +917,34 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </div>
                 </div>
 
+                {/* Filtro de Data para Importações */}
+                <Card className="bg-white/80 border-0 shadow-md">
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-blue-600" />
+                                <Label className="font-medium">Filtrar Importações por Data:</Label>
+                            </div>
+                            <Input
+                                type="date"
+                                className="w-48 bg-white"
+                                value={filterDataImportacao}
+                                onChange={(e) => setFilterDataImportacao(e.target.value)}
+                            />
+                            {filterDataImportacao && (
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setFilterDataImportacao("")}
+                                >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Limpar
+                                </Button>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Registros de Importação */}
                 {importacoes.length > 0 && (
                     <div className="space-y-3">
@@ -924,7 +953,18 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <h2 className="font-semibold">Importações Recentes</h2>
                         </div>
                         <div className="space-y-2">
-                            {importacoes.slice(0, 5).map(importacao => (
+                            {importacoes
+                                .filter(imp => {
+                                    if (!filterDataImportacao) return true;
+                                    try {
+                                        const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
+                                        return dataImp === filterDataImportacao;
+                                    } catch {
+                                        return true;
+                                    }
+                                })
+                                .slice(0, 5)
+                                .map(importacao => (
                                 <ImportacaoCard
                                     key={importacao.id}
                                     importacao={importacao}

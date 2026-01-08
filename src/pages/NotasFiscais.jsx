@@ -1589,7 +1589,10 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
             <ImportadorNFE 
                 open={showImportador} 
                 onClose={() => setShowImportador(false)}
-                onImportSuccess={() => queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] })}
+                onImportSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+                    queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+                }}
             />
 
             {/* Dialog Cadastrar Destinatário */}

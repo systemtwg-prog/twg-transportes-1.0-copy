@@ -1136,40 +1136,40 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
 
                     pagesHtml += `
-                    <div class="page">
-                        <div class="header">
-                            <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                        <div class="page">
+                            <div class="header">
+                                <div class="logo">
+                                    ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                                </div>
+                                <div class="company-info">
+                                    <p class="company-name">TWG TRANSPORTES</p>
+                                    <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
+                                    <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                                </div>
+                                <div class="romaneio-info">
+                                    <p class="date">${dataFormatada}</p>
+                                    <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
+                                    <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+                                </div>
                             </div>
-                            <div class="company-info">
-                                <p class="company-name">TWG TRANSPORTES</p>
-                                <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
-                                <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
-                            </div>
-                            <div class="romaneio-info">
-                                <p class="date">${dataFormatada}</p>
-                                <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
-                                <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
-                            </div>
+                            
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-remetente">Remetente</th>
+                                        <th class="col-destinatario">Destinatário</th>
+                                        <th class="col-nfe">NFE</th>
+                                        <th class="col-carimbo">Carimbo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
                         </div>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="col-remetente">Remetente</th>
-                                    <th class="col-destinatario">Destinatário</th>
-                                    <th class="col-nfe">NFE</th>
-                                    <th class="col-carimbo">Carimbo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
-        });
+                    `;
+                }
+            });
 
         winPrint.document.write(`
             <html>

@@ -1091,51 +1091,51 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
                     let rowsHtml = "";
                     notasDaPagina.forEach((nota) => {
-                    const remetenteNota = remetenteSelecionado || nota.remetente || "";
-                    const destinatarioNota = nota.destinatario || "";
-                    const numeroNf = nota.numero_nf || "";
-                    const transportadoraOriginal = nota.transportadora || "";
-                    const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
-                        ? destinatarioNota 
-                        : transportadoraOriginal;
-                    const volumeNota = nota.volume ? nota.volume + " vol" : "";
-                            
-                    rowsHtml += '<tr class="nota-row">';
-                    rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
-                    rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
-                    rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-                    rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-                    rowsHtml += '</tr>';
-                    rowsHtml += '<tr class="transportadora-row">';
-                    rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
-                    rowsHtml += '<td class="volume">' + volumeNota + '</td>';
-                    rowsHtml += '</tr>';
-                });
+                        const remetenteNota = remetenteSelecionado || nota.remetente || "";
+                        const destinatarioNota = nota.destinatario || "";
+                        const numeroNf = nota.numero_nf || "";
+                        const transportadoraOriginal = nota.transportadora || "";
+                        const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
+                            ? destinatarioNota 
+                            : transportadoraOriginal;
+                        const volumeNota = nota.volume ? nota.volume + " vol" : "";
+                                
+                        rowsHtml += '<tr class="nota-row">';
+                        rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+                        rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+                        rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+                        rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+                        rowsHtml += '</tr>';
+                        rowsHtml += '<tr class="transportadora-row">';
+                        rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+                        rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+                        rowsHtml += '</tr>';
+                    });
 
-                // Linhas em branco
-                const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
-                for (let i = 0; i < linhasRestantes; i++) {
-                    rowsHtml += `
-                        <tr class="nota-row vazia">
-                            <td class="remetente"></td>
-                            <td class="destinatario"></td>
-                            <td class="nfe"></td>
-                            <td class="carimbo" rowspan="2"></td>
-                        </tr>
-                        <tr class="transportadora-row vazia">
-                            <td class="transportadora-nome" colspan="2"></td>
-                            <td class="volume"></td>
-                        </tr>
-                    `;
-                }
+                    // Linhas em branco
+                    const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+                    for (let i = 0; i < linhasRestantes; i++) {
+                        rowsHtml += `
+                            <tr class="nota-row vazia">
+                                <td class="remetente"></td>
+                                <td class="destinatario"></td>
+                                <td class="nfe"></td>
+                                <td class="carimbo" rowspan="2"></td>
+                            </tr>
+                            <tr class="transportadora-row vazia">
+                                <td class="transportadora-nome" colspan="2"></td>
+                                <td class="volume"></td>
+                            </tr>
+                        `;
+                    }
 
-                const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
-                const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
-                const veiculoInfo = veiculos.find(v => v.placa === placa);
-                const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
-                const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
+                    const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+                    const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+                    const veiculoInfo = veiculos.find(v => v.placa === placa);
+                    const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
+                    const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
 
-                pagesHtml += `
+                    pagesHtml += `
                     <div class="page">
                         <div class="header">
                             <div class="logo">

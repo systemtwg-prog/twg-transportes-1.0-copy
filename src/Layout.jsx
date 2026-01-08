@@ -17,7 +17,7 @@ export default function Layout({ children, currentPageName }) {
         if (isDesktop && !currentPageName) {
             navigate(createPageUrl("HomeDesktop"));
         }
-    }, [isDesktop, currentPageName]);
+    }, [isDesktop, currentPageName, navigate]);
 
     useEffect(() => {
         const collapsed = localStorage.getItem("sidebarCollapsed");
@@ -53,16 +53,16 @@ export default function Layout({ children, currentPageName }) {
         }
     };
 
-    // Layout Desktop com Sidebar e Tabs
+    // Layout Desktop com Sidebar e Tabs - Força exibição correta
     if (isDesktop) {
         return (
-            <div className="h-screen flex overflow-hidden">
+            <div className="h-screen flex overflow-hidden" style={{ width: '100vw', height: '100vh' }}>
                 <DesktopSidebar 
                     currentPage={currentPageName} 
                     collapsed={sidebarCollapsed}
                     onToggle={handleToggleSidebar}
                 />
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden" style={{ minWidth: 0 }}>
                     <DesktopTabs 
                         currentPage={currentPageName}
                         onTabChange={handleTabChange}

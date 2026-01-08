@@ -1087,10 +1087,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                 const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
 
                 for (let pagina = 0; pagina < totalPaginas; pagina++) {
-                const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+                    const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
 
-                let rowsHtml = "";
-                notasDaPagina.forEach((nota) => {
+                    let rowsHtml = "";
+                    notasDaPagina.forEach((nota) => {
                     const remetenteNota = remetenteSelecionado || nota.remetente || "";
                     const destinatarioNota = nota.destinatario || "";
                     const numeroNf = nota.numero_nf || "";

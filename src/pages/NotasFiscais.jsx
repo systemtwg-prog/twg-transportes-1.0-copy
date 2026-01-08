@@ -138,6 +138,15 @@ export default function NotasFiscais() {
         }
     });
 
+    // Mutation para salvar romaneio gerado
+    const createRomaneioMutation = useMutation({
+        mutationFn: (data) => base44.entities.RomaneioGerado.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+            toast.success("Romaneio salvo com sucesso!");
+        }
+    });
+
     // Mutation para excluir registro de importação
     const deleteImportacaoMutation = useMutation({
         mutationFn: (id) => base44.entities.RegistroImportacao.delete(id),
@@ -1128,6 +1137,52 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         
         winPrint.document.close();
         setTimeout(() => winPrint.print(), 500);
+
+        // Salvar romaneio gerado para cada placa
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            // Calcular notas por transportadora
+            const notasPorTransp = {};
+            notasPlaca.forEach(nota => {
+                const transp = nota.transportadora || "Sem transportadora";
+                if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
+                notasPorTransp[transp]++;
+            });
+
+            const notasPorTransportadora = Object.entries(notasPorTransp).map(([t, q]) => ({
+                transportadora: t,
+                quantidade: q
+            }));
+
+            // Calcular peso total
+            const pesoTotal = notasPlaca.reduce((acc, nota) => {
+                const pesoStr = nota.peso || "";
+                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                return acc + pesoNum;
+            }, 0);
+
+            // Lista de destinatários únicos
+            const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
+
+            // Contar entregas (transportadoras únicas)
+            const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
+
+            const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
+
+            createRomaneioMutation.mutate({
+                nome: `Romaneio ${placa !== "SEM_PLACA" ? placa : ""} - ${dataFormatada}`,
+                placa: placa !== "SEM_PLACA" ? placa : "",
+                data: dataRomaneio,
+                motorista_id: motorista || "",
+                motorista_nome: motoristaObj?.nome || "",
+                total_notas: notasPlaca.length,
+                total_entregas: transportadorasUnicas.size || notasPlaca.length,
+                peso_total: pesoTotal,
+                notas_por_transportadora: notasPorTransportadora,
+                notas_ids: notasPlaca.map(n => n.id),
+                destinatarios: destinatarios,
+                status: "gerado"
+            });
+        });
     };
 
     const filtered = notas.filter(n => {
@@ -1157,31 +1212,42 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
-                            <FileText className="w-8 h-8 text-white" />
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                                <FileText className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold text-slate-800">Notas Fiscais</h1>
+                                <p className="text-slate-500">Gerencie notas fiscais para romaneios</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Notas Fiscais</h1>
-                            <p className="text-slate-500">Gerencie notas fiscais para romaneios</p>
+                        <div className="flex gap-2">
+                            <Link to={createPageUrl("MascaraRomaneio")}>
+                                <Button variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
+                                    <Truck className="w-4 h-4 mr-2" />
+                                    Máscara Romaneio
+                                </Button>
+                            </Link>
+                            <Link to={createPageUrl("RomaneiosGerados")}>
+                                <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                                    <Package className="w-4 h-4 mr-2" />
+                                    Romaneios Gerados
+                                </Button>
+                            </Link>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Link to={createPageUrl("MascaraRomaneio")}>
-                            <Button variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
-                                <Truck className="w-4 h-4 mr-2" />
-                                Máscara Romaneio
-                            </Button>
-                        </Link>
-                        <Link to={createPageUrl("RomaneiosGerados")}>
-                            <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
-                                <Package className="w-4 h-4 mr-2" />
-                                Romaneios Gerados
-                            </Button>
-                        </Link>
-                    </div>
+
+                    {/* Botões de ação organizados */}
                     <div className="flex gap-2 flex-wrap">
+                        <Button 
+                            onClick={() => { resetForm(); setShowForm(true); }}
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nova Nota
+                        </Button>
                         <Button 
                             onClick={() => setShowImportador(true)}
                             variant="outline" 
@@ -1214,13 +1280,6 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         >
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
-                        </Button>
-                        <Button 
-                            onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-14 px-8 text-lg"
-                        >
-                            <Plus className="w-6 h-6 mr-2" />
-                            Nova Nota
                         </Button>
                     </div>
                 </div>
@@ -1358,12 +1417,12 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </CardContent>
                 </Card>
 
-                {/* Buscar Notas por Número */}
+                {/* Notas para o Romaneio */}
                 <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-0 shadow-lg">
                     <CardContent className="p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                             <FileText className="w-5 h-5 text-blue-600" />
-                            Buscar Notas por Número
+                            Notas para o Romaneio
                         </h3>
                         <div className="flex gap-2">
                             <Input

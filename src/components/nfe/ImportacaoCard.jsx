@@ -174,17 +174,18 @@ export default function ImportacaoCard({
                     th { 
                         background: #3b82f6;
                         color: white;
-                        padding: 12px 8px;
+                        padding: 6px 8px;
                         text-align: left;
-                        font-size: 13px;
+                        font-size: 12px;
                         font-weight: 600;
                         border: 1px solid #2563eb;
                     }
                     td { 
-                        padding: 10px 8px;
+                        padding: 4px 8px;
                         border: 1px solid #cbd5e1;
-                        font-size: 12px;
+                        font-size: 11px;
                         background: white;
+                        line-height: 1.3;
                     }
                     tr:nth-child(even) td {
                         background: #f8fafc;

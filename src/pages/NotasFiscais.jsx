@@ -1064,22 +1064,21 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
             const motoristaObj = motoristas.find(m => m.id === motorista);
             const winPrint = window.open('', '_blank', 'width=900,height=650');
-        if (!winPrint) {
-            alert("Por favor, permita pop-ups para imprimir.");
-            return;
-        }
-
-        // Agrupar notas por placa
-        const notasPorPlaca = {};
-        const placaParaUsar = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
-        
-        notasParaImprimir.forEach(nota => {
-            const placa = placaParaUsar || nota.placa || "SEM_PLACA";
-            if (!notasPorPlaca[placa]) {
-                notasPorPlaca[placa] = [];
+            if (!winPrint) {
+                alert("Por favor, permita pop-ups para imprimir.");
+                return;
             }
-            notasPorPlaca[placa].push(nota);
-        });
+
+            // Agrupar notas por placa
+            const notasPorPlaca = {};
+            
+            notasParaImprimir.forEach(nota => {
+                const placa = nota.placa || "SEM_PLACA";
+                if (!notasPorPlaca[placa]) {
+                    notasPorPlaca[placa] = [];
+                }
+                notasPorPlaca[placa].push(nota);
+            });
 
         let pagesHtml = "";
 

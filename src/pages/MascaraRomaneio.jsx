@@ -198,8 +198,8 @@ export default function MascaraRomaneio() {
         }
     };
 
-    // Buscar notas digitadas manualmente - mantendo a ordem digitada
-    const buscarNotasDigitadas = () => {
+    // Buscar notas digitadas manualmente - busca no banco de dados
+    const buscarNotasDigitadas = async () => {
         if (!notasDigitadas.trim()) return;
         
         const numerosDigitados = notasDigitadas
@@ -207,34 +207,42 @@ export default function MascaraRomaneio() {
             .map(n => n.trim())
             .filter(Boolean);
         
-        // Buscar na ordem em que foram digitadas
-        const notasOrdenadas = [];
-        const naoEncontradas = [];
-        
-        numerosDigitados.forEach(num => {
-            const notaEncontrada = notasFiscais.find(n => 
-                n.numero_nf?.toLowerCase().includes(num.toLowerCase())
-            );
-            if (notaEncontrada && !notasOrdenadas.find(n => n.id === notaEncontrada.id)) {
-                notasOrdenadas.push(notaEncontrada);
-            } else if (!notaEncontrada) {
-                naoEncontradas.push(num);
-            }
-        });
-        
-        // Atualiza notas não encontradas
-        setNotasNaoEncontradas(naoEncontradas);
-        
-        if (notasOrdenadas.length > 0) {
-            // Substitui as selecionadas pela nova ordem
-            setNotasSelecionadas(notasOrdenadas.map(n => n.id));
-            if (naoEncontradas.length > 0) {
-                toast.warning(`${notasOrdenadas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+        try {
+            // Buscar TODAS as notas do banco de dados
+            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+            
+            // Buscar na ordem em que foram digitadas
+            const notasOrdenadas = [];
+            const naoEncontradas = [];
+            
+            numerosDigitados.forEach(num => {
+                const notaEncontrada = todasNotas.find(n => 
+                    n.numero_nf?.toLowerCase().includes(num.toLowerCase())
+                );
+                if (notaEncontrada && !notasOrdenadas.find(n => n.id === notaEncontrada.id)) {
+                    notasOrdenadas.push(notaEncontrada);
+                } else if (!notaEncontrada) {
+                    naoEncontradas.push(num);
+                }
+            });
+            
+            // Atualiza notas não encontradas
+            setNotasNaoEncontradas(naoEncontradas);
+            
+            if (notasOrdenadas.length > 0) {
+                // Substitui as selecionadas pela nova ordem
+                setNotasSelecionadas(notasOrdenadas.map(n => n.id));
+                if (naoEncontradas.length > 0) {
+                    toast.warning(`${notasOrdenadas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s) no banco de dados.`);
+                } else {
+                    toast.success(`${notasOrdenadas.length} nota(s) encontrada(s) e selecionada(s)`);
+                }
             } else {
-                toast.success(`${notasOrdenadas.length} nota(s) encontrada(s) e selecionada(s)`);
+                toast.error("Nenhuma nota encontrada no banco de dados");
             }
-        } else {
-            toast.error("Nenhuma nota encontrada com os números informados");
+        } catch (error) {
+            console.error("Erro ao buscar notas:", error);
+            toast.error("Erro ao buscar notas no banco de dados");
         }
     };
 

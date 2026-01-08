@@ -1301,49 +1301,57 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
             // Salvar romaneio gerado para cada placa
             Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-            // Calcular notas por transportadora
-            const notasPorTransp = {};
-            notasPlaca.forEach(nota => {
-                const transp = nota.transportadora || "Sem transportadora";
-                if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
-                notasPorTransp[transp]++;
+                if (placa === "SEM_PLACA") return; // Ignorar notas sem placa para romaneio
+
+                // Calcular notas por transportadora
+                const notasPorTransp = {};
+                notasPlaca.forEach(nota => {
+                    const transp = nota.transportadora || "Sem transportadora";
+                    if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
+                    notasPorTransp[transp]++;
+                });
+
+                const notasPorTransportadora = Object.entries(notasPorTransp).map(([t, q]) => ({
+                    transportadora: t,
+                    quantidade: q
+                }));
+
+                // Calcular peso total
+                const pesoTotal = notasPlaca.reduce((acc, nota) => {
+                    const pesoStr = nota.peso || "";
+                    const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                    return acc + pesoNum;
+                }, 0);
+
+                // Lista de destinatários únicos
+                const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
+
+                // Contar entregas (transportadoras únicas)
+                const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
+
+                const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
+
+                createRomaneioMutation.mutate({
+                    nome: `Romaneio ${placa} - ${dataFormatada}`,
+                    placa: placa,
+                    data: dataRomaneio,
+                    motorista_id: motorista || "",
+                    motorista_nome: motoristaObj?.nome || "",
+                    total_notas: notasPlaca.length,
+                    total_entregas: transportadorasUnicas.size || notasPlaca.length,
+                    peso_total: pesoTotal,
+                    notas_por_transportadora: notasPorTransportadora,
+                    notas_ids: notasPlaca.map(n => n.id),
+                    destinatarios: destinatarios,
+                    status: "gerado"
+                });
             });
 
-            const notasPorTransportadora = Object.entries(notasPorTransp).map(([t, q]) => ({
-                transportadora: t,
-                quantidade: q
-            }));
-
-            // Calcular peso total
-            const pesoTotal = notasPlaca.reduce((acc, nota) => {
-                const pesoStr = nota.peso || "";
-                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-                return acc + pesoNum;
-            }, 0);
-
-            // Lista de destinatários únicos
-            const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
-
-            // Contar entregas (transportadoras únicas)
-            const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
-
-            const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
-
-            createRomaneioMutation.mutate({
-                nome: `Romaneio ${placa !== "SEM_PLACA" ? placa : ""} - ${dataFormatada}`,
-                placa: placa !== "SEM_PLACA" ? placa : "",
-                data: dataRomaneio,
-                motorista_id: motorista || "",
-                motorista_nome: motoristaObj?.nome || "",
-                total_notas: notasPlaca.length,
-                total_entregas: transportadorasUnicas.size || notasPlaca.length,
-                peso_total: pesoTotal,
-                notas_por_transportadora: notasPorTransportadora,
-                notas_ids: notasPlaca.map(n => n.id),
-                destinatarios: destinatarios,
-                status: "gerado"
-            });
-        });
+            toast.success("Romaneio impresso e registrado com sucesso!");
+        } catch (error) {
+            console.error("Erro ao imprimir romaneio:", error);
+            toast.error("Erro ao processar romaneio");
+        }
     };
 
     const filtered = notas.filter(n => {

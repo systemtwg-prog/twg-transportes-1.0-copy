@@ -69,9 +69,11 @@ export default function Layout({ children, currentPageName }) {
 
     // Layout Mobile com menu flutuante
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen pb-20">
             <FloatingMenu currentPage={currentPageName} />
-            {children}
+            <main className="p-4">
+                {children}
+            </main>
         </div>
     );
 }

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-    Menu, Home, Package, FileText, Users, User, Car, 
+    Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, 
     Search, Database, Printer, ChevronLeft, ChevronRight, Truck, Building2,
     Camera, ClipboardList, AlertTriangle, Upload, Mail
@@ -74,30 +74,34 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
 
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
-        queryFn: () => base44.entities.Configuracoes.list()
+        queryFn: async () => {
+            try {
+                return await base44.entities.Configuracoes.list();
+            } catch {
+                return [];
+            }
+        }
     });
 
-    // Filtrar por módulos ativos E permissões do usuário
-    const modulosAtivos = config?.[0]?.modulos_ativos;
     const isAdmin = currentUser?.role === "admin";
+    const modulosAtivos = config?.[0]?.modulos_ativos;
     const paginasPermitidas = currentUser?.paginas_permitidas || [];
 
+    // Lógica simplificada de filtro
     const menuFiltrado = menuItems.filter(item => {
-        // Admin vê tudo
+        // Início sempre visível
+        if (item.href === "HomeDesktop") return true;
+        
+        // Admin
         if (isAdmin) {
-            // Se não há módulos configurados, mostra tudo
-            if (!modulosAtivos || modulosAtivos.length === 0) {
-                return true;
-            }
-            // Se tem módulos configurados, filtra por eles
-            return modulosAtivos.includes(item.href) || item.href === "HomeDesktop";
+            // Se não configurou módulos ainda, mostra tudo
+            if (!modulosAtivos || modulosAtivos.length === 0) return true;
+            // Se configurou, respeita a configuração
+            return modulosAtivos.includes(item.href);
         }
         
-        // Usuário comum só vê páginas permitidas
-        if (!paginasPermitidas || paginasPermitidas.length === 0) {
-            return item.href === "HomeDesktop"; // Só mostra início se não tem permissões
-        }
-        return paginasPermitidas.includes(item.href) || item.href === "HomeDesktop";
+        // Usuário comum - só vê o que tem permissão
+        return paginasPermitidas.includes(item.href);
     });
 
     const handleLogout = () => {

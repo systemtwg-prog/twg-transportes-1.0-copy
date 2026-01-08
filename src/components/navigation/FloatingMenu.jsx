@@ -6,43 +6,55 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
-    Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail
+    Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail,
+    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 const menuItems = [
-    { name: "Home", href: "Home", icon: Home },
-    { name: "Comprovantes de Entrega", href: "ComprovantesInternos", icon: FileText },
-    { name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText },
-    { name: "Nota Depósito", href: "NotaDeposito", icon: FileText },
-    { name: "Coletas Diárias", href: "ColetasDiarias", icon: FileText },
-    { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package },
-    { name: "Clientes", href: "Clientes", icon: Users },
-    { name: "Destinatários", href: "Destinatarios", icon: Users },
-    { name: "Transportadoras", href: "Transportadoras", icon: Package },
-    { name: "Extrator Google", href: "ExtratorGoogle", icon: Search },
-    { name: "Colaboradores", href: "Motoristas", icon: User },
-    { name: "Veículos", href: "Veiculos", icon: Car },
-    { name: "Busca de Multas", href: "BuscaMultas", icon: Car },
-    { name: "Avisos", href: "Avisos", icon: Bell },
-    { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText },
-    { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText },
-    { name: "Clientes S/NF", href: "ClientesSNF", icon: Users },
-    { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: FileText },
-    { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package },
-    { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer },
-    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
-    { name: "Ordens de Coleta", href: "OrdensColeta", icon: Package },
-    { name: "Rastreamento", href: "Rastreamento", icon: Navigation },
-    { name: "Relatórios", href: "Relatorios", icon: FileText },
-    { name: "Performance", href: "RelatorioMotoristas", icon: Award },
-    { name: "Emails", href: "EmailManager", icon: Mail },
-    { name: "Configurações", href: "Configuracoes", icon: Settings },
-    { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck },
-    { name: "Backup", href: "Backup", icon: Database },
-    { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid },
-    { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: FileText },
-    { name: "Configuração Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid },
+    { name: "Home", href: "Home", icon: Home, category: "principal" },
+    { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, category: "operacional" },
+    { name: "Comprovantes Entrega", href: "ComprovantesInternos", icon: Upload, category: "operacional" },
+    { name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText, category: "operacional" },
+    { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, category: "operacional" },
+    { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package, category: "operacional" },
+    { name: "Ordens de Coleta", href: "OrdensColeta", icon: ClipboardList, category: "operacional" },
+    { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, category: "documentos" },
+    { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, category: "documentos" },
+    { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package, category: "documentos" },
+    { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer, category: "documentos" },
+    { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText, category: "documentos" },
+    { name: "Clientes", href: "Clientes", icon: Users, category: "cadastros" },
+    { name: "Clientes S/NF", href: "ClientesSNF", icon: Users, category: "cadastros" },
+    { name: "Destinatários", href: "Destinatarios", icon: Users, category: "cadastros" },
+    { name: "Transportadoras", href: "Transportadoras", icon: Building2, category: "cadastros" },
+    { name: "Colaboradores", href: "Motoristas", icon: User, category: "cadastros" },
+    { name: "Veículos", href: "Veiculos", icon: Car, category: "cadastros" },
+    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation, category: "monitoramento" },
+    { name: "Rastreamento", href: "Rastreamento", icon: Navigation, category: "monitoramento" },
+    { name: "Busca Multas", href: "BuscaMultas", icon: AlertTriangle, category: "monitoramento" },
+    { name: "Extrator Google", href: "ExtratorGoogle", icon: Search, category: "ferramentas" },
+    { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: Upload, category: "ferramentas" },
+    { name: "Emails", href: "EmailManager", icon: Mail, category: "ferramentas" },
+    { name: "Relatórios", href: "Relatorios", icon: FileText, category: "relatorios" },
+    { name: "Performance", href: "RelatorioMotoristas", icon: Award, category: "relatorios" },
+    { name: "Avisos", href: "Avisos", icon: Bell, category: "admin" },
+    { name: "Configurações", href: "Configuracoes", icon: Settings, category: "admin" },
+    { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck, category: "admin" },
+    { name: "Backup", href: "Backup", icon: Database, category: "admin" },
+    { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid, category: "admin" },
+    { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
+];
+
+const categories = [
+    { id: "principal", name: "Principal" },
+    { id: "operacional", name: "Operacional" },
+    { id: "documentos", name: "Documentos" },
+    { id: "cadastros", name: "Cadastros" },
+    { id: "monitoramento", name: "Monitoramento" },
+    { id: "ferramentas", name: "Ferramentas" },
+    { id: "relatorios", name: "Relatórios" },
+    { id: "admin", name: "Administração" },
 ];
 
 export default function FloatingMenu({ currentPage }) {
@@ -61,34 +73,37 @@ export default function FloatingMenu({ currentPage }) {
 
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
-        queryFn: () => base44.entities.Configuracoes.list()
+        queryFn: async () => {
+            try {
+                return await base44.entities.Configuracoes.list();
+            } catch {
+                return [];
+            }
+        }
     });
 
-    // Filtrar por módulos ativos E permissões do usuário
-    const modulosAtivos = config?.[0]?.modulos_ativos;
     const isAdmin = currentUser?.role === "admin";
+    const modulosAtivos = config?.[0]?.modulos_ativos;
     const paginasPermitidas = currentUser?.paginas_permitidas || [];
 
+    // Lógica simplificada de filtro
     const menuFiltrado = menuItems.filter(item => {
-        // Admin vê tudo
+        // Home sempre visível
+        if (item.href === "Home") return true;
+        
+        // Admin
         if (isAdmin) {
-            // Se não há módulos configurados, mostra tudo
-            if (!modulosAtivos || modulosAtivos.length === 0) {
-                return true;
-            }
-            // Se tem módulos configurados, filtra por eles
-            return modulosAtivos.includes(item.href) || item.href === "Home";
+            // Se não configurou módulos ainda, mostra tudo
+            if (!modulosAtivos || modulosAtivos.length === 0) return true;
+            // Se configurou, respeita a configuração
+            return modulosAtivos.includes(item.href);
         }
         
-        // Usuário comum só vê páginas permitidas
-        if (!paginasPermitidas || paginasPermitidas.length === 0) {
-            return item.href === "Home"; // Só mostra início se não tem permissões
-        }
-        return paginasPermitidas.includes(item.href) || item.href === "Home";
+        // Usuário comum - só vê o que tem permissão
+        return paginasPermitidas.includes(item.href);
     });
 
     const handleLogout = () => {
-        // Limpar sessão de desbloqueio ao sair
         sessionStorage.removeItem("appUnlocked");
         if (confirm("Deseja realmente sair do sistema?")) {
             base44.auth.logout();
@@ -119,37 +134,51 @@ export default function FloatingMenu({ currentPage }) {
                         <Menu className="w-6 h-6 text-white" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72 bg-gradient-to-b from-slate-900 to-slate-800 border-0 p-0">
+                <SheetContent side="right" className="w-80 bg-gradient-to-b from-slate-900 to-slate-800 border-0 p-0">
                     <div className="p-6 border-b border-white/10">
                         <h2 className="font-bold text-xl text-white">Menu</h2>
-                        <p className="text-sm text-slate-400">Navegação rápida</p>
+                        <p className="text-sm text-slate-400">Sistema de Transportes</p>
                     </div>
-                    <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-100px)]">
-                        {menuFiltrado.map((item) => (
-                            <Link
-                                key={item.href}
-                                to={createPageUrl(item.href)}
-                                onClick={() => setOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                                    currentPage === item.href
-                                        ? "bg-blue-600 text-white shadow-lg"
-                                        : "text-slate-300 hover:bg-white/10 hover:text-white"
-                                }`}
-                            >
-                                <item.icon className="w-5 h-5" />
-                                        <span className="font-medium">{item.name}</span>
-                                    </Link>
-                                ))}
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full mt-4 border-t border-white/10 pt-4"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    <span className="font-medium">Sair do Sistema</span>
-                                </button>
-                                </nav>
-                                </SheetContent>
-                                </Sheet>
+                    <nav className="p-4 overflow-y-auto max-h-[calc(100vh-140px)]">
+                        {categories.map((cat) => {
+                            const items = menuFiltrado.filter(m => m.category === cat.id);
+                            if (items.length === 0) return null;
+                            
+                            return (
+                                <div key={cat.id} className="mb-4">
+                                    <p className="px-2 py-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        {cat.name}
+                                    </p>
+                                    <div className="space-y-1 mt-1">
+                                        {items.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                to={createPageUrl(item.href)}
+                                                onClick={() => setOpen(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                                                    currentPage === item.href
+                                                        ? "bg-blue-600 text-white shadow-lg"
+                                                        : "text-slate-300 hover:bg-white/10 hover:text-white"
+                                                }`}
+                                            >
+                                                <item.icon className="w-5 h-5" />
+                                                <span className="font-medium text-sm">{item.name}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full mt-4 border-t border-white/10 pt-4"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="font-medium">Sair do Sistema</span>
+                        </button>
+                    </nav>
+                </SheetContent>
+            </Sheet>
         </div>
         </>
     );

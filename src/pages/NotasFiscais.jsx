@@ -10,10 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
+import ImportacaoCard from "@/components/nfe/ImportacaoCard";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -95,6 +96,28 @@ export default function NotasFiscais() {
     const { data: destinatarios = [] } = useQuery({
         queryKey: ["destinatarios-notas"],
         queryFn: () => base44.entities.Destinatario.list()
+    });
+
+    const { data: importacoes = [] } = useQuery({
+        queryKey: ["registros-importacao"],
+        queryFn: () => base44.entities.RegistroImportacao.list("-created_date", 10)
+    });
+
+    // Mutation para criar registro de importação
+    const createImportacaoMutation = useMutation({
+        mutationFn: (data) => base44.entities.RegistroImportacao.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+        }
+    });
+
+    // Mutation para excluir registro de importação
+    const deleteImportacaoMutation = useMutation({
+        mutationFn: (id) => base44.entities.RegistroImportacao.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+            toast.success("Registro de importação excluído!");
+        }
     });
 
     // Verificar CNPJ duplicado
@@ -333,10 +356,11 @@ IMPORTANTE:
             if (notasEncontradas.length > 0) {
                 let importados = 0;
                 const transportadorasUnicas = new Set();
+                const notasIdsImportadas = [];
                 
                 for (const nota of notasEncontradas) {
                     if (nota.numero_nf || nota.destinatario) {
-                        await base44.entities.NotaFiscal.create({
+                        const novaNota = await base44.entities.NotaFiscal.create({
                             numero_nf: nota.numero_nf || "",
                             destinatario: nota.destinatario || "",
                             peso: nota.peso || "",
@@ -346,12 +370,24 @@ IMPORTANTE:
                             data: format(new Date(), "yyyy-MM-dd")
                         });
                         importados++;
+                        notasIdsImportadas.push(novaNota.id);
                         
                         // Coletar transportadoras únicas
                         if (nota.transportadora) {
                             transportadorasUnicas.add(nota.transportadora.trim());
                         }
                     }
+                }
+                
+                // Criar registro de importação
+                if (importados > 0) {
+                    await createImportacaoMutation.mutateAsync({
+                        data_importacao: new Date().toISOString(),
+                        quantidade_notas: importados,
+                        origem: "colagem",
+                        notas_ids: notasIdsImportadas,
+                        status: "processado"
+                    });
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
@@ -473,10 +509,11 @@ IMPORTANTE:
             if (result.status === "success" && result.output) {
                 const notasImport = result.output.notas || (Array.isArray(result.output) ? result.output : [result.output]);
                 let importados = 0;
+                const notasIdsImportadas = [];
                 
                 for (const nota of notasImport) {
                     if (nota.numero_nf || nota.destinatario) {
-                        await base44.entities.NotaFiscal.create({
+                        const novaNota = await base44.entities.NotaFiscal.create({
                             numero_nf: nota.numero_nf || "",
                             destinatario: nota.destinatario || "",
                             peso: nota.peso || "",
@@ -486,7 +523,20 @@ IMPORTANTE:
                             data: format(new Date(), "yyyy-MM-dd")
                         });
                         importados++;
+                        notasIdsImportadas.push(novaNota.id);
                     }
+                }
+                
+                // Criar registro de importação
+                if (importados > 0) {
+                    await createImportacaoMutation.mutateAsync({
+                        data_importacao: new Date().toISOString(),
+                        quantidade_notas: importados,
+                        origem: "arquivo",
+                        nome_arquivo: file.name,
+                        notas_ids: notasIdsImportadas,
+                        status: "processado"
+                    });
                 }
                 
                 queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
@@ -865,6 +915,35 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         </Button>
                     </div>
                 </div>
+
+                {/* Registros de Importação */}
+                {importacoes.length > 0 && (
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-slate-700">
+                            <History className="w-5 h-5 text-indigo-600" />
+                            <h2 className="font-semibold">Importações Recentes</h2>
+                        </div>
+                        <div className="space-y-2">
+                            {importacoes.slice(0, 5).map(importacao => (
+                                <ImportacaoCard
+                                    key={importacao.id}
+                                    importacao={importacao}
+                                    notas={notas}
+                                    onDelete={(id) => {
+                                        if (confirm("Excluir este registro de importação?")) {
+                                            deleteImportacaoMutation.mutate(id);
+                                        }
+                                    }}
+                                    onPrint={(notasParaImprimir) => {
+                                        // Redirecionar para a página de Máscara Romaneio com as notas
+                                        const notasIds = notasParaImprimir.map(n => n.id).join(",");
+                                        window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Search e Ações em Massa */}
                 <Card className="bg-white/60 border-0 shadow-md">

@@ -1171,7 +1171,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                 }
             });
 
-        winPrint.document.write(`
+            winPrint.document.write(`
             <html>
             <head>
                 <meta charset="UTF-8">

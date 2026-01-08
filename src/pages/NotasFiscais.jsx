@@ -1172,11 +1172,11 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             });
 
             winPrint.document.write(`
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Romaneio de Entregas</title>
-                <style>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Romaneio de Entregas</title>
+                    <style>
                     @media print {
                         @page { margin: 5mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }

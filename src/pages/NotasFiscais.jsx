@@ -1012,15 +1012,29 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     };
 
     // Imprimir romaneio
-    const handlePrintRomaneio = () => {
-        const notasParaImprimir = selecionados
+    const handlePrintRomaneio = async () => {
+        const notasDigitadasSelecionadas = selecionados
             .map(id => notas.find(n => n.id === id))
             .filter(Boolean);
 
-        if (notasParaImprimir.length === 0) {
+        if (notasDigitadasSelecionadas.length === 0) {
             toast.error("Selecione ao menos uma nota");
             return;
         }
+
+        // Buscar TODAS as notas do dia no banco
+        const todasNotasDoDia = await base44.entities.NotaFiscal.filter({ data: dataRomaneio });
+        
+        // Notas que estão no banco mas NÃO foram digitadas/selecionadas
+        const notasNaoDigitadas = todasNotasDoDia.filter(nota => 
+            !selecionados.includes(nota.id)
+        );
+
+        // Combinar: notas digitadas + notas não digitadas (com NF em branco)
+        const notasParaImprimir = [
+            ...notasDigitadasSelecionadas,
+            ...notasNaoDigitadas.map(n => ({ ...n, numero_nf: "" })) // NF em branco
+        ];
 
         const motoristaObj = motoristas.find(m => m.id === motorista);
         const winPrint = window.open('', '_blank', 'width=900,height=650');

@@ -48,6 +48,8 @@ export default function NotasFiscais() {
     const [buscandoDados, setBuscandoDados] = useState({});
     const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
     const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
+    const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
+    const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
     
     // Estados para funcionalidades do romaneio
     const [motorista, setMotorista] = useState("");
@@ -188,6 +190,18 @@ export default function NotasFiscais() {
             setShowCadastroDestinatario(false);
             setNovoDestinatario({ nome: "" });
             toast.success("Destinatário cadastrado!");
+        }
+    });
+
+    // Criar remetente
+    const createRemetenteMutation = useMutation({
+        mutationFn: (data) => base44.entities.EmpresaRemetente.create(data),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] });
+            setRemetenteSelecionado(data.nome);
+            setShowCadastroRemetente(false);
+            setNovoRemetente({ nome: "" });
+            toast.success("Remetente cadastrado!");
         }
     });
 
@@ -1432,8 +1446,20 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
+                                <Label className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowCadastroRemetente(true)}
+                                        className="text-green-600 hover:text-green-700 h-auto p-0"
+                                    >
+                                        <Plus className="w-4 h-4 mr-1" />
+                                        Cadastrar
+                                    </Button>
                                 </Label>
                                 <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
                                     <SelectTrigger className="bg-white">
@@ -2311,6 +2337,52 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                 className="bg-blue-600 hover:bg-blue-700"
                             >
                                 {createDestinatarioMutation.isPending ? "Salvando..." : (
+                                    <>
+                                        <Save className="w-4 h-4 mr-1" /> Salvar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Cadastrar Remetente */}
+            <Dialog open={showCadastroRemetente} onOpenChange={setShowCadastroRemetente}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-green-600" />
+                            Cadastrar Remetente
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Cadastre uma nova empresa remetente para aplicar em todas as notas.
+                        </p>
+                        <div className="space-y-2">
+                            <Label>Nome da Empresa *</Label>
+                            <Input
+                                value={novoRemetente.nome}
+                                onChange={(e) => setNovoRemetente({ nome: e.target.value })}
+                                placeholder="Nome da empresa remetente"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => { setShowCadastroRemetente(false); setNovoRemetente({ nome: "" }); }}
+                            >
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={() => createRemetenteMutation.mutate(novoRemetente)}
+                                disabled={!novoRemetente.nome || createRemetenteMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                {createRemetenteMutation.isPending ? "Salvando..." : (
                                     <>
                                         <Save className="w-4 h-4 mr-1" /> Salvar
                                     </>

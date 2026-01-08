@@ -1013,11 +1013,12 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
     // Imprimir romaneio
     const handlePrintRomaneio = async () => {
-        const notasDigitadasSelecionadas = selecionados
+        // Notas digitadas/selecionadas pelo usuário (com NF preenchida)
+        const notasDigitadas = selecionados
             .map(id => notas.find(n => n.id === id))
             .filter(Boolean);
 
-        if (notasDigitadasSelecionadas.length === 0) {
+        if (notasDigitadas.length === 0) {
             toast.error("Selecione ao menos uma nota");
             return;
         }
@@ -1031,20 +1032,20 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             (rom.notas_ids || []).forEach(id => notasIdsNosRomaneios.add(id));
         });
 
-        // Buscar notas dos romaneios que NÃO foram digitadas/selecionadas
+        // Notas dos romaneios que NÃO foram digitadas (NF em branco)
         const notasFaltantes = [];
         for (const notaId of notasIdsNosRomaneios) {
             if (!selecionados.includes(notaId)) {
                 const notaEncontrada = notas.find(n => n.id === notaId);
                 if (notaEncontrada) {
-                    notasFaltantes.push({ ...notaEncontrada, numero_nf: "" }); // NF em branco
+                    notasFaltantes.push({ ...notaEncontrada, numero_nf: "" });
                 }
             }
         }
 
-        // Combinar: notas digitadas (com NF) + notas faltantes dos romaneios (sem NF)
+        // Combinar: digitadas PRIMEIRO (com NF) + faltantes DEPOIS (sem NF)
         const notasParaImprimir = [
-            ...notasDigitadasSelecionadas,
+            ...notasDigitadas,
             ...notasFaltantes
         ];
 

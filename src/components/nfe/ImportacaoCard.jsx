@@ -156,12 +156,10 @@ export default function ImportacaoCard({
             return;
         }
 
-        // Calcular resumo por placa (apenas notas com placa definida)
+        // Calcular resumo por placa (incluindo notas sem placa)
         const resumoPorPlaca = {};
         notasParaImprimir.forEach(nota => {
-            const placa = nota.placa || "";
-            // Ignorar notas sem placa
-            if (!placa) return;
+            const placa = nota.placa || "SEM PLACA";
 
             if (!resumoPorPlaca[placa]) {
                 resumoPorPlaca[placa] = {
@@ -185,13 +183,14 @@ export default function ImportacaoCard({
             resumoPorPlaca[placa].volumeTotal += volNum;
         });
 
-        // Gerar linhas da tabela
+        // Gerar linhas da tabela com placa em destaque
         let rowsHtml = "";
         notasParaImprimir.forEach(nota => {
+            const placaNota = nota.placa || "SEM PLACA";
             rowsHtml += `
                 <tr>
                     <td>${nota.numero_nf || "-"}</td>
-                    <td>${nota.placa || "-"}</td>
+                    <td class="placa-cell">${placaNota}</td>
                     <td>${nota.destinatario || "-"}</td>
                     <td>${nota.volume || "-"}</td>
                     <td>${nota.peso || "-"}</td>
@@ -213,35 +212,37 @@ export default function ImportacaoCard({
             totalEntregasGeral += (dados.transportadoras.size || dados.totalNotas);
         });
 
-        // Gerar HTML do resumo (apenas se houver placas)
-        let resumoHtml = '';
-        if (Object.keys(resumoPorPlaca).length > 0) {
-            resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3>';
-            Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
-                resumoHtml += `
-                    <div class="resumo-placa">
-                        <h4>PLACA: ${placa}</h4>
-                        <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                        <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
-                    </div>
-                `;
-            });
-            
-            // Adicionar totais gerais
+        // Gerar HTML do resumo por placa (sempre exibe)
+        let resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3><div class="resumo-grid">';
+
+        Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
             resumoHtml += `
-                <div class="resumo-total">
-                    <h4>TOTAL GERAL</h4>
+                <div class="resumo-placa">
+                    <h4>PLACA: ${placa}</h4>
+                    <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
+                    <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                    <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                    <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
+                </div>
+            `;
+        });
+
+        resumoHtml += '</div>';
+
+        // Adicionar totais gerais
+        resumoHtml += `
+            <div class="resumo-total">
+                <h4>TOTAL CONSOLIDADO</h4>
+                <div class="resumo-grid-total">
                     <div class="resumo-item"><strong>Total de Notas:</strong> ${totalNotasGeral}</div>
                     <div class="resumo-item"><strong>Total de Entregas:</strong> ${totalEntregasGeral}</div>
                     <div class="resumo-item"><strong>Peso Total:</strong> ${pesoTotalGeral.toFixed(2)} kg</div>
                     <div class="resumo-item"><strong>Volume Total:</strong> ${volumeTotalGeral}</div>
                 </div>
-            `;
-            
-            resumoHtml += '</div>';
-        }
+            </div>
+        `;
+
+        resumoHtml += '</div>';
 
         winPrint.document.write(`
             <html>
@@ -305,6 +306,11 @@ export default function ImportacaoCard({
                         background: white;
                         line-height: 1.1;
                     }
+                    td.placa-cell {
+                        font-weight: bold;
+                        color: #059669;
+                        background: #d1fae5 !important;
+                    }
                     tr:nth-child(even) td {
                         background: #f8fafc;
                     }
@@ -321,45 +327,78 @@ export default function ImportacaoCard({
                     }
                     .resumo {
                         margin-top: 15px;
-                        padding: 10px;
+                        padding: 12px;
                         border: 2px solid #2563eb;
                         background: #eff6ff;
+                        page-break-inside: avoid;
                     }
                     .resumo h3 {
                         color: #1e3a8a;
                         font-size: 14px;
-                        margin-bottom: 8px;
+                        margin-bottom: 10px;
                         font-weight: bold;
+                        text-align: center;
+                        border-bottom: 2px solid #2563eb;
+                        padding-bottom: 6px;
+                    }
+                    .resumo-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 8px;
+                        margin-bottom: 10px;
                     }
                     .resumo-placa {
                         background: white;
-                        padding: 8px;
-                        margin-bottom: 6px;
-                        border-left: 4px solid #3b82f6;
+                        padding: 10px;
+                        border-left: 4px solid #059669;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     }
                     .resumo-placa h4 {
-                        color: #1e40af;
+                        color: #047857;
                         font-size: 12px;
-                        margin-bottom: 4px;
+                        margin-bottom: 6px;
                         font-weight: bold;
+                        text-align: center;
+                        background: #d1fae5;
+                        padding: 4px;
+                        border-radius: 3px;
                     }
                     .resumo-item {
                         font-size: 10px;
                         color: #334155;
-                        margin: 2px 0;
+                        margin: 3px 0;
+                        display: flex;
+                        justify-content: space-between;
                     }
                     .resumo-total {
-                        background: #dbeafe;
-                        padding: 8px;
+                        background: #1e40af;
+                        color: white;
+                        padding: 12px;
                         margin-top: 10px;
-                        border-left: 4px solid #1e40af;
-                        border-radius: 4px;
+                        border-radius: 6px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                     }
                     .resumo-total h4 {
-                        color: #1e40af;
-                        font-size: 13px;
-                        margin-bottom: 4px;
+                        color: white;
+                        font-size: 14px;
+                        margin-bottom: 8px;
                         font-weight: bold;
+                        text-align: center;
+                        border-bottom: 2px solid rgba(255,255,255,0.3);
+                        padding-bottom: 6px;
+                    }
+                    .resumo-grid-total {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                    }
+                    .resumo-total .resumo-item {
+                        color: white;
+                        font-size: 11px;
+                        background: rgba(255,255,255,0.1);
+                        padding: 6px;
+                        border-radius: 4px;
                     }
                 </style>
             </head>
@@ -376,7 +415,7 @@ export default function ImportacaoCard({
                     <thead>
                         <tr>
                             <th>Nota Fiscal</th>
-                            <th>PLACA</th>
+                            <th>Placa</th>
                             <th>Nome do Cliente</th>
                             <th>Qtd. Volumes</th>
                             <th>Peso</th>
@@ -386,7 +425,7 @@ export default function ImportacaoCard({
                     <tbody>
                         ${rowsHtml}
                     </tbody>
-                    </table>
+                </table>
 
                     ${resumoHtml}
 

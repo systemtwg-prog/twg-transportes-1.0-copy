@@ -21,9 +21,20 @@ export default function ImportacaoCard({
 }) {
     const [expanded, setExpanded] = useState(false);
     const [showPrintDialog, setShowPrintDialog] = useState(false);
+    const [showConfigDialog, setShowConfigDialog] = useState(false);
     const [loading, setLoading] = useState(false);
     const [notasParaImprimir, setNotasParaImprimir] = useState([]);
     const [notasDaMascara, setNotasDaMascara] = useState([]);
+    const [printConfig, setPrintConfig] = useState({
+        colNF: 10,
+        colPlaca: 10,
+        colCliente: 40,
+        colVolume: 10,
+        colPeso: 10,
+        colTransp: 20,
+        fontSize: 8,
+        orientation: "portrait"
+    });
 
     // Filtrar notas desta importação
     const notasDaImportacao = notas.filter(n => 
@@ -59,8 +70,8 @@ export default function ImportacaoCard({
         return colors[origem] || "bg-slate-100 text-slate-700";
     };
 
-    // Verificar máscara do dia e preparar impressão
-    const handlePrepararImpressao = async () => {
+    // Abrir configurações de impressão
+    const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
             // Buscar máscaras do dia atual
@@ -103,7 +114,7 @@ export default function ImportacaoCard({
 
             setNotasParaImprimir(notasImportacao);
             setNotasDaMascara([...notasFaltantes, ...notasSelecionadasNaBusca]);
-            setShowPrintDialog(true);
+            setShowConfigDialog(true);
 
             let mensagens = [];
             if (notasFaltantes.length > 0) {
@@ -238,7 +249,7 @@ export default function ImportacaoCard({
                 <title>Importação de Notas Fiscais</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4 landscape; }
+                        @page { margin: 10mm; size: A4 ${printConfig.orientation}; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -280,16 +291,16 @@ export default function ImportacaoCard({
                         font-weight: 600;
                         border: 1px solid #2563eb;
                     }
-                    th:nth-child(1) { width: 10%; } /* Nota Fiscal */
-                    th:nth-child(2) { width: 10%; } /* PLACA */
-                    th:nth-child(3) { width: 40%; } /* Nome do Cliente */
-                    th:nth-child(4) { width: 10%; } /* Qtd. Volumes */
-                    th:nth-child(5) { width: 10%; } /* Peso */
-                    th:nth-child(6) { width: 20%; } /* Transportadora */
+                    th:nth-child(1) { width: ${printConfig.colNF}%; }
+                    th:nth-child(2) { width: ${printConfig.colPlaca}%; }
+                    th:nth-child(3) { width: ${printConfig.colCliente}%; }
+                    th:nth-child(4) { width: ${printConfig.colVolume}%; }
+                    th:nth-child(5) { width: ${printConfig.colPeso}%; }
+                    th:nth-child(6) { width: ${printConfig.colTransp}%; }
                     td { 
                         padding: 2px 4px;
                         border: 1px solid #cbd5e1;
-                        font-size: 8px;
+                        font-size: ${printConfig.fontSize}px;
                         background: white;
                         line-height: 1.1;
                     }
@@ -384,10 +395,11 @@ export default function ImportacaoCard({
             </body>
             </html>
         `);
-        
+
         winPrint.document.close();
         setTimeout(() => winPrint.print(), 500);
         setShowPrintDialog(false);
+        setShowConfigDialog(false);
     };
 
     return (
@@ -429,7 +441,7 @@ export default function ImportacaoCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={handlePrepararImpressao}
+                                onClick={handleAbrirConfigImpressao}
                                 disabled={loading}
                                 className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
                             >
@@ -482,7 +494,173 @@ export default function ImportacaoCard({
                 </CardContent>
             </Card>
 
-            {/* Dialog de Opções de Impressão */}
+            {/* Dialog de Configuração de Impressão */}
+            <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Printer className="w-5 h-5 text-indigo-600" />
+                            Configurar Impressão
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                        {/* Orientação */}
+                        <div>
+                            <Label className="text-sm font-semibold mb-2 block">Orientação da Página</Label>
+                            <div className="flex gap-3">
+                                <Button
+                                    type="button"
+                                    variant={printConfig.orientation === "portrait" ? "default" : "outline"}
+                                    onClick={() => setPrintConfig({ ...printConfig, orientation: "portrait" })}
+                                    className="flex-1"
+                                >
+                                    Retrato
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={printConfig.orientation === "landscape" ? "default" : "outline"}
+                                    onClick={() => setPrintConfig({ ...printConfig, orientation: "landscape" })}
+                                    className="flex-1"
+                                >
+                                    Paisagem
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Tamanho da Fonte */}
+                        <div>
+                            <Label className="text-sm font-semibold mb-2 block">
+                                Tamanho da Fonte: {printConfig.fontSize}px
+                            </Label>
+                            <input
+                                type="range"
+                                min="6"
+                                max="14"
+                                value={printConfig.fontSize}
+                                onChange={(e) => setPrintConfig({ ...printConfig, fontSize: parseInt(e.target.value) })}
+                                className="w-full"
+                            />
+                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>Pequena (6px)</span>
+                                <span>Grande (14px)</span>
+                            </div>
+                        </div>
+
+                        {/* Largura das Colunas */}
+                        <div>
+                            <Label className="text-sm font-semibold mb-3 block">
+                                Largura das Colunas (%)
+                                <span className={`ml-2 text-xs ${totalColunas === 100 ? 'text-green-600' : 'text-red-600'}`}>
+                                    Total: {totalColunas}% {totalColunas !== 100 && '(ideal: 100%)'}
+                                </span>
+                            </Label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                    <Label className="text-xs text-slate-600">NF</Label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="30"
+                                        value={printConfig.colNF}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colNF: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Placa</Label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="20"
+                                        value={printConfig.colPlaca}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colPlaca: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Cliente</Label>
+                                    <input
+                                        type="number"
+                                        min="20"
+                                        max="60"
+                                        value={printConfig.colCliente}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colCliente: parseInt(e.target.value) || 40 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Volume</Label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="20"
+                                        value={printConfig.colVolume}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colVolume: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Peso</Label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="20"
+                                        value={printConfig.colPeso}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colPeso: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Transportadora</Label>
+                                    <input
+                                        type="number"
+                                        min="10"
+                                        max="40"
+                                        value={printConfig.colTransp}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, colTransp: parseInt(e.target.value) || 20 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between pt-4 border-t">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setPrintConfig({
+                                    colNF: 10,
+                                    colPlaca: 10,
+                                    colCliente: 40,
+                                    colVolume: 10,
+                                    colPeso: 10,
+                                    colTransp: 20,
+                                    fontSize: 8,
+                                    orientation: "portrait"
+                                })}
+                            >
+                                Restaurar Padrão
+                            </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setShowConfigDialog(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button 
+                                    onClick={() => {
+                                        setShowConfigDialog(false);
+                                        setShowPrintDialog(true);
+                                    }}
+                                    className="bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                    Continuar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog de Seleção de Notas */}
             <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
                 <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>

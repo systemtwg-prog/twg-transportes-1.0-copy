@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function Layout({ children, currentPageName }) {
-    const [isDesktop, setIsDesktop] = useState(null);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const navigate = useNavigate();
 
@@ -22,22 +22,9 @@ export default function Layout({ children, currentPageName }) {
             setIsDesktop(window.innerWidth >= 1024);
         };
         
-        checkDevice();
         window.addEventListener("resize", checkDevice);
         return () => window.removeEventListener("resize", checkDevice);
     }, []);
-
-    // Redirecionar para Home/HomeDesktop baseado no dispositivo
-    useEffect(() => {
-        if (isDesktop === null) return;
-        
-        if (isDesktop && currentPageName === "Home") {
-            navigate(createPageUrl("HomeDesktop"));
-        }
-        if (!isDesktop && currentPageName === "HomeDesktop") {
-            navigate(createPageUrl("Home"));
-        }
-    }, [isDesktop, currentPageName, navigate]);
 
     const handleTabChange = (pageId) => {
         navigate(createPageUrl(pageId));

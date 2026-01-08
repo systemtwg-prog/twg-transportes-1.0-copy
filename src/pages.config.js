@@ -18,9 +18,11 @@ import ExtratorGoogle from './pages/ExtratorGoogle';
 import Home from './pages/Home';
 import HomeDesktop from './pages/HomeDesktop';
 import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
+import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
 import MascaraRomaneio from './pages/MascaraRomaneio';
 import Motoristas from './pages/Motoristas';
 import NotaDeposito from './pages/NotaDeposito';
+import NotasFiscais from './pages/NotasFiscais';
 import OrdensColeta from './pages/OrdensColeta';
 import PersonalizarHome from './pages/PersonalizarHome';
 import Rastreamento from './pages/Rastreamento';
@@ -32,8 +34,6 @@ import ServicosSNF from './pages/ServicosSNF';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import ImpressaoRelatorio from './pages/ImpressaoRelatorio';
-import NotasFiscais from './pages/NotasFiscais';
 import __Layout from './Layout.jsx';
 
 
@@ -58,9 +58,11 @@ export const PAGES = {
     "Home": Home,
     "HomeDesktop": HomeDesktop,
     "ImportacaoDocumentos": ImportacaoDocumentos,
+    "ImpressaoRelatorio": ImpressaoRelatorio,
     "MascaraRomaneio": MascaraRomaneio,
     "Motoristas": Motoristas,
     "NotaDeposito": NotaDeposito,
+    "NotasFiscais": NotasFiscais,
     "OrdensColeta": OrdensColeta,
     "PersonalizarHome": PersonalizarHome,
     "Rastreamento": Rastreamento,
@@ -72,8 +74,6 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "ImpressaoRelatorio": ImpressaoRelatorio,
-    "NotasFiscais": NotasFiscais,
 }
 
 export const pagesConfig = {

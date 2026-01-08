@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3
+    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
@@ -75,6 +75,9 @@ export default function NotasFiscais() {
     const [dadosExtraidos, setDadosExtraidos] = useState(null);
     const [destinoSelecionado, setDestinoSelecionado] = useState("");
     const [showImportador, setShowImportador] = useState(false);
+    const [showChaveAcesso, setShowChaveAcesso] = useState(false);
+    const [chaveAcesso, setChaveAcesso] = useState("");
+    const [consultandoChave, setConsultandoChave] = useState(false);
     const mediaRecorderRef = React.useRef(null);
     const audioChunksRef = React.useRef([]);
     const audioRef = React.useRef(null);
@@ -315,6 +318,47 @@ Se não encontrar algum dado, deixe em branco.`,
             observacoes: ""
         });
         setEditing(null);
+    };
+
+    // Consultar chave de acesso
+    const handleConsultarChave = async () => {
+        if (!chaveAcesso || chaveAcesso.length !== 44) {
+            toast.error("Chave de acesso deve ter 44 dígitos");
+            return;
+        }
+
+        setConsultandoChave(true);
+        try {
+            const result = await base44.integrations.Core.InvokeLLM({
+                prompt: `A partir da chave de acesso de NFe: ${chaveAcesso}
+                
+Extraia as seguintes informações:
+- Número da nota fiscal (posições 25-33 da chave)
+- UF emissor (posições 1-2)
+- Data de emissão (posições 3-8 no formato AAMM)
+
+Retorne apenas o número da nota fiscal extraído.`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        numero_nf: { type: "string" }
+                    }
+                }
+            });
+
+            if (result?.numero_nf) {
+                setForm({ ...form, numero_nf: result.numero_nf });
+                setShowChaveAcesso(false);
+                setChaveAcesso("");
+                toast.success("Número da NF extraído da chave!");
+            } else {
+                toast.error("Não foi possível extrair dados da chave");
+            }
+        } catch (error) {
+            console.error("Erro ao consultar chave:", error);
+            toast.error("Erro ao processar chave de acesso");
+        }
+        setConsultandoChave(false);
     };
 
     const handleEdit = (nota) => {
@@ -981,7 +1025,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     <div class="page">
                         <div class="header">
                             <div class="logo">
-                                ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : '<div class="logo-placeholder">TWG</div>'}
+                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
                             </div>
                             <div class="company-info">
                                 <p class="company-name">TWG TRANSPORTES</p>
@@ -1247,6 +1291,14 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Nova Nota
+                        </Button>
+                        <Button 
+                            onClick={() => setShowChaveAcesso(true)}
+                            variant="outline"
+                            className="border-green-500 text-green-700 hover:bg-green-50"
+                        >
+                            <Key className="w-4 h-4 mr-2" />
+                            Chave de Acesso
                         </Button>
                         <Button 
                             onClick={() => setShowImportador(true)}
@@ -2182,9 +2234,57 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                     queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
                     queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
                 }}
-            />
+                />
 
-            {/* Dialog Cadastrar Destinatário */}
+                {/* Dialog Chave de Acesso */}
+                <Dialog open={showChaveAcesso} onOpenChange={setShowChaveAcesso}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Key className="w-5 h-5 text-green-600" />
+                            Cadastrar por Chave de Acesso
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Digite a chave de acesso da NFe (44 dígitos):
+                        </p>
+                        <Input
+                            value={chaveAcesso}
+                            onChange={(e) => setChaveAcesso(e.target.value.replace(/\D/g, ""))}
+                            placeholder="00000000000000000000000000000000000000000000"
+                            maxLength={44}
+                            className="font-mono"
+                        />
+                        <p className="text-xs text-slate-500">
+                            {chaveAcesso.length}/44 dígitos
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => { setShowChaveAcesso(false); setChaveAcesso(""); }}>
+                                <X className="w-4 h-4 mr-1" /> Cancelar
+                            </Button>
+                            <Button 
+                                onClick={handleConsultarChave}
+                                disabled={consultandoChave || chaveAcesso.length !== 44}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                {consultandoChave ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Consultando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Search className="w-4 h-4 mr-1" /> Consultar
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+                </Dialog>
+
+                {/* Dialog Cadastrar Destinatário */}
             <Dialog open={showCadastroDestinatario} onOpenChange={setShowCadastroDestinatario}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>

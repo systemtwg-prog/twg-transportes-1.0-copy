@@ -215,11 +215,14 @@ export default function ImportacaoCard({
             totalEntregasGeral += (dados.transportadoras.size || dados.totalNotas);
         });
 
-        // Gerar HTML do resumo por placa (apenas se houver notas com placa)
+        // Gerar HTML do resumo (apenas notas com placa)
         let resumoHtml = '';
 
         if (Object.keys(resumoPorPlaca).length > 0) {
-            resumoHtml = '<div class="resumo"><h3>RESUMO POR PLACA</h3><div class="resumo-grid">';
+            resumoHtml = '<div class="resumo"><h3>RESUMO - NOTAS COM PLACA</h3>';
+
+            // Agrupar por placa
+            resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Placa:</h4><div class="resumo-grid">';
 
             Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
                 resumoHtml += `
@@ -233,12 +236,50 @@ export default function ImportacaoCard({
                 `;
             });
 
-            resumoHtml += '</div>';
+            resumoHtml += '</div></div>';
 
-            // Adicionar totais gerais
+            // Agrupar por transportadora (apenas notas com placa)
+            const resumoPorTransp = {};
+            notasParaImprimir.forEach(nota => {
+                if (!nota.placa) return;
+                const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
+                if (!resumoPorTransp[transp]) {
+                    resumoPorTransp[transp] = {
+                        totalNotas: 0,
+                        pesoTotal: 0,
+                        volumeTotal: 0
+                    };
+                }
+                resumoPorTransp[transp].totalNotas++;
+                const pesoNum = parseFloat((nota.peso || "").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                resumoPorTransp[transp].pesoTotal += pesoNum;
+                const volNum = parseFloat((nota.volume || "").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                resumoPorTransp[transp].volumeTotal += volNum;
+            });
+
+            if (Object.keys(resumoPorTransp).length > 0) {
+                resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid">';
+
+                Object.entries(resumoPorTransp)
+                    .sort((a, b) => b[1].totalNotas - a[1].totalNotas)
+                    .forEach(([transp, dados]) => {
+                        resumoHtml += `
+                            <div class="resumo-transp">
+                                <h4>${transp}</h4>
+                                <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
+                                <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                                <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
+                            </div>
+                        `;
+                    });
+
+                resumoHtml += '</div></div>';
+            }
+
+            // Totais consolidados
             resumoHtml += `
                 <div class="resumo-total">
-                    <h4>TOTAL CONSOLIDADO</h4>
+                    <h4>TOTAL CONSOLIDADO (COM PLACA)</h4>
                     <div class="resumo-grid-total">
                         <div class="resumo-item"><strong>Total de Notas:</strong> ${totalNotasGeral}</div>
                         <div class="resumo-item"><strong>Total de Entregas:</strong> ${totalEntregasGeral}</div>
@@ -249,7 +290,7 @@ export default function ImportacaoCard({
             `;
 
             resumoHtml += '</div>';
-            }
+        }
 
         winPrint.document.write(`
             <html>

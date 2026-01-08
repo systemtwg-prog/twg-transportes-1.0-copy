@@ -126,6 +126,11 @@ export default function NotasFiscais() {
         queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
     });
 
+    const { data: empresasRemetentes = [] } = useQuery({
+        queryKey: ["empresas-remetentes"],
+        queryFn: () => base44.entities.EmpresaRemetente.list()
+    });
+
     const { data: configs = [] } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
@@ -1383,34 +1388,17 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 <Label className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
                                 </Label>
-                                <div className="flex gap-1">
-                                    <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
-                                        <SelectTrigger className="bg-white flex-1">
-                                            <SelectValue placeholder="Selecione..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="individual">Usar individual</SelectItem>
-                                            {[...new Set(notas.map(n => n.remetente).filter(Boolean))].map((rem, idx) => (
-                                                <SelectItem key={idx} value={rem}>{rem}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => {
-                                            const nome = prompt("Nome da empresa remetente:");
-                                            if (nome) {
-                                                setRemetenteSelecionado(nome);
-                                                toast.success("Remetente definido!");
-                                            }
-                                        }}
-                                        className="border-orange-500 text-orange-600 hover:bg-orange-50"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </Button>
-                                </div>
+                                <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="individual">Usar individual</SelectItem>
+                                        {empresasRemetentes.map(emp => (
+                                            <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </CardContent>
@@ -1615,62 +1603,18 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
                                 </Button>
                                 {selecionados.length > 0 && (
-                                    <>
-                                        <Button 
-                                            variant="outline"
-                                            className="border-green-500 text-green-700 hover:bg-green-50"
-                                            onClick={() => setShowEditDialog(true)}
-                                        >
-                                            <Car className="w-4 h-4 mr-1" />
-                                            Atribuir Placa ({selecionados.length})
-                                        </Button>
-                                        <Button 
-                                            variant="outline"
-                                            className="border-blue-500 text-blue-700 hover:bg-blue-50"
-                                            onClick={() => {
-                                                const notasSelecionadas = notas.filter(n => selecionados.includes(n.id));
-                                                const destinatariosUnicos = [...new Set(notasSelecionadas.map(n => n.destinatario).filter(Boolean))];
-                                                
-                                                const novosDestinatarios = destinatariosUnicos.filter(nome => 
-                                                    !destinatarios.some(d => d.nome.toLowerCase() === nome.toLowerCase())
-                                                );
-                                                
-                                                if (novosDestinatarios.length === 0) {
-                                                    toast.info("Todos os destinatários já estão cadastrados!");
-                                                    return;
-                                                }
-                                                
-                                                if (confirm(`Cadastrar ${novosDestinatarios.length} destinatário(s) novo(s)?`)) {
-                                                    Promise.all(
-                                                        novosDestinatarios.map(nome => 
-                                                            base44.entities.Destinatario.create({ nome })
-                                                        )
-                                                    ).then(() => {
-                                                        queryClient.invalidateQueries({ queryKey: ["destinatarios-notas"] });
-                                                        toast.success(`${novosDestinatarios.length} destinatário(s) cadastrado(s)!`);
-                                                    }).catch(err => {
-                                                        console.error(err);
-                                                        toast.error("Erro ao cadastrar destinatários");
-                                                    });
-                                                }
-                                            }}
-                                        >
-                                            <Users className="w-4 h-4 mr-1" />
-                                            Cadastrar Destinatários ({selecionados.length})
-                                        </Button>
-                                        <Button 
-                                            variant="outline"
-                                            className="border-red-500 text-red-700 hover:bg-red-50"
-                                            onClick={() => {
-                                                if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
-                                                    deleteEmMassaMutation.mutate(selecionados);
-                                                }
-                                            }}
-                                        >
-                                            <Trash2 className="w-4 h-4 mr-1" />
-                                            Excluir ({selecionados.length})
-                                        </Button>
-                                    </>
+                                    <Button 
+                                        variant="outline"
+                                        className="border-red-500 text-red-700 hover:bg-red-50"
+                                        onClick={() => {
+                                            if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
+                                                deleteEmMassaMutation.mutate(selecionados);
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Excluir ({selecionados.length})
+                                    </Button>
                                 )}
                             </div>
                         </div>

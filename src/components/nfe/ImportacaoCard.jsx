@@ -188,6 +188,19 @@ export default function ImportacaoCard({
             `;
         });
 
+        // Calcular totais gerais
+        let pesoTotalGeral = 0;
+        let volumeTotalGeral = 0;
+        let totalNotasGeral = 0;
+        let totalEntregasGeral = 0;
+
+        Object.values(resumoPorPlaca).forEach(dados => {
+            pesoTotalGeral += dados.pesoTotal;
+            volumeTotalGeral += dados.volumeTotal;
+            totalNotasGeral += dados.totalNotas;
+            totalEntregasGeral += (dados.transportadoras.size || dados.totalNotas);
+        });
+
         // Gerar HTML do resumo (apenas se houver placas)
         let resumoHtml = '';
         if (Object.keys(resumoPorPlaca).length > 0) {
@@ -196,13 +209,25 @@ export default function ImportacaoCard({
                 resumoHtml += `
                     <div class="resumo-placa">
                         <h4>PLACA: ${placa}</h4>
-                        <div class="resumo-item"><strong>Total de Notas:</strong> ${dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Total de Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Peso Total:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                        <div class="resumo-item"><strong>Volume Total:</strong> ${dados.volumeTotal}</div>
+                        <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                        <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                        <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
                     </div>
                 `;
             });
+            
+            // Adicionar totais gerais
+            resumoHtml += `
+                <div class="resumo-total">
+                    <h4>TOTAL GERAL</h4>
+                    <div class="resumo-item"><strong>Total de Notas:</strong> ${totalNotasGeral}</div>
+                    <div class="resumo-item"><strong>Total de Entregas:</strong> ${totalEntregasGeral}</div>
+                    <div class="resumo-item"><strong>Peso Total:</strong> ${pesoTotalGeral.toFixed(2)} kg</div>
+                    <div class="resumo-item"><strong>Volume Total:</strong> ${volumeTotalGeral}</div>
+                </div>
+            `;
+            
             resumoHtml += '</div>';
         }
 
@@ -297,6 +322,19 @@ export default function ImportacaoCard({
                         font-size: 10px;
                         color: #334155;
                         margin: 2px 0;
+                    }
+                    .resumo-total {
+                        background: #dbeafe;
+                        padding: 8px;
+                        margin-top: 10px;
+                        border-left: 4px solid #1e40af;
+                        border-radius: 4px;
+                    }
+                    .resumo-total h4 {
+                        color: #1e40af;
+                        font-size: 13px;
+                        margin-bottom: 4px;
+                        font-weight: bold;
                     }
                 </style>
             </head>

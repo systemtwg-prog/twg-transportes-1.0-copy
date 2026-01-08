@@ -1177,130 +1177,130 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     <meta charset="UTF-8">
                     <title>Romaneio de Entregas</title>
                     <style>
-                    @media print {
-                        @page { margin: 5mm; size: A4; }
-                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        .page { page-break-after: always; }
-                        .page:last-child { page-break-after: avoid; }
-                    }
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; }
-                    .page { 
-                        padding: 5mm; 
-                        height: 287mm; 
-                        display: flex; 
-                        flex-direction: column;
-                    }
-                    .header { 
-                        display: flex; 
-                        align-items: flex-start; 
-                        margin-bottom: 8px; 
-                        border-bottom: 3px solid #000; 
-                        padding-bottom: 8px; 
-                    }
-                    .logo { width: 120px; margin-right: 20px; }
-                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
-                    .logo-placeholder { 
-                        width: 100px; height: 60px; background: #0ea5e9; 
-                        display: flex; align-items: center; justify-content: center; 
-                        color: white; font-weight: bold; font-size: 20px; 
-                    }
-                    .company-info { flex: 1; }
-                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
-                    .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
-                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
-                    .date { font-size: 22px; font-weight: bold; }
-                    
-                    table { width: 100%; border-collapse: collapse; flex: 1; }
-                    th { 
-                        background: #d0d0d0; 
-                        padding: 10px; 
-                        text-align: left; 
-                        border: 2px solid #000; 
-                        font-size: 16px; 
-                    }
-                    td { 
-                        border: 2px solid #000; 
-                        font-size: 14px; 
-                        vertical-align: top;
-                    }
-                    
-                    .col-remetente { width: ${layoutConfig.colRemetente}%; }
-                    .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
-                    .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
-                    .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
-                    
-                    .nota-row .remetente { 
-                        padding: 6px 8px; 
-                        font-size: 12px;
-                        font-weight: bold;
-                        text-align: center;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .destinatario { 
-                        text-align: center; 
-                        font-weight: bold; 
-                        font-size: 18px; 
-                        padding: 6px 8px;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .nfe { 
-                        text-align: center; 
-                        font-weight: bold; 
-                        font-size: 20px; 
-                        padding: 6px 8px;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .carimbo { 
-                        min-height: ${layoutConfig.alturaLinha * 2}px;
-                        padding: 6px;
-                        vertical-align: middle;
-                    }
+                        @media print {
+                            @page { margin: 5mm; size: A4; }
+                            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                            .page { page-break-after: always; }
+                            .page:last-child { page-break-after: avoid; }
+                        }
+                        * { box-sizing: border-box; margin: 0; padding: 0; }
+                        body { font-family: Arial, sans-serif; }
+                        .page { 
+                            padding: 5mm; 
+                            height: 287mm; 
+                            display: flex; 
+                            flex-direction: column;
+                        }
+                        .header { 
+                            display: flex; 
+                            align-items: flex-start; 
+                            margin-bottom: 8px; 
+                            border-bottom: 3px solid #000; 
+                            padding-bottom: 8px; 
+                        }
+                        .logo { width: 120px; margin-right: 20px; }
+                        .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                        .logo-placeholder { 
+                            width: 100px; height: 60px; background: #0ea5e9; 
+                            display: flex; align-items: center; justify-content: center; 
+                            color: white; font-weight: bold; font-size: 20px; 
+                        }
+                        .company-info { flex: 1; }
+                        .company-name { font-size: 24px; font-weight: bold; margin: 0; }
+                        .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                        .romaneio-info { text-align: right; }
+                        .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
+                        .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
+                        .date { font-size: 22px; font-weight: bold; }
+                        
+                        table { width: 100%; border-collapse: collapse; flex: 1; }
+                        th { 
+                            background: #d0d0d0; 
+                            padding: 10px; 
+                            text-align: left; 
+                            border: 2px solid #000; 
+                            font-size: 16px; 
+                        }
+                        td { 
+                            border: 2px solid #000; 
+                            font-size: 14px; 
+                            vertical-align: top;
+                        }
+                        
+                        .col-remetente { width: ${layoutConfig.colRemetente}%; }
+                        .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
+                        .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
+                        .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
+                        
+                        .nota-row .remetente { 
+                            padding: 6px 8px; 
+                            font-size: 12px;
+                            font-weight: bold;
+                            text-align: center;
+                            vertical-align: middle;
+                            border-bottom: 1px solid #999;
+                        }
+                        .nota-row .destinatario { 
+                            text-align: center; 
+                            font-weight: bold; 
+                            font-size: 18px; 
+                            padding: 6px 8px;
+                            vertical-align: middle;
+                            border-bottom: 1px solid #999;
+                        }
+                        .nota-row .nfe { 
+                            text-align: center; 
+                            font-weight: bold; 
+                            font-size: 20px; 
+                            padding: 6px 8px;
+                            vertical-align: middle;
+                            border-bottom: 1px solid #999;
+                        }
+                        .nota-row .carimbo { 
+                            min-height: ${layoutConfig.alturaLinha * 2}px;
+                            padding: 6px;
+                            vertical-align: middle;
+                        }
 
-                    .transportadora-row td { 
-                        border-top: none; 
-                        padding: 8px; 
-                        text-align: center;
-                        vertical-align: middle;
-                    }
-                    .transportadora-row .transportadora-nome { 
-                        font-size: 16px; 
-                        font-weight: bold;
-                        line-height: 1.3;
-                        text-transform: uppercase;
-                        color: #333;
-                    }
-                    .transportadora-row .volume { 
-                        text-align: center; 
-                        font-size: 16px; 
-                        font-weight: bold; 
-                    }
+                        .transportadora-row td { 
+                            border-top: none; 
+                            padding: 8px; 
+                            text-align: center;
+                            vertical-align: middle;
+                        }
+                        .transportadora-row .transportadora-nome { 
+                            font-size: 16px; 
+                            font-weight: bold;
+                            line-height: 1.3;
+                            text-transform: uppercase;
+                            color: #333;
+                        }
+                        .transportadora-row .volume { 
+                            text-align: center; 
+                            font-size: 16px; 
+                            font-weight: bold; 
+                        }
 
-                    .nota-row.vazia td,
-                    .transportadora-row.vazia td {
-                        border: none !important;
-                    }
-                </style>
-            </head>
-            <body>
-                ${pagesHtml}
-            </body>
-            </html>
-        `);
-        
-        winPrint.document.close();
-        setTimeout(() => {
-            winPrint.print();
-            winPrint.close();
-        }, 500);
+                        .nota-row.vazia td,
+                        .transportadora-row.vazia td {
+                            border: none !important;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${pagesHtml}
+                </body>
+                </html>
+            `);
+            
+            winPrint.document.close();
+            setTimeout(() => {
+                winPrint.print();
+                winPrint.close();
+            }, 500);
 
-        // Salvar romaneio gerado para cada placa
-        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            // Salvar romaneio gerado para cada placa
+            Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
             // Calcular notas por transportadora
             const notasPorTransp = {};
             notasPlaca.forEach(nota => {

@@ -1062,8 +1062,8 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             // 4. Continuar com a impressão
             const notasParaImprimir = notasSelecionadas;
 
-        const motoristaObj = motoristas.find(m => m.id === motorista);
-        const winPrint = window.open('', '_blank', 'width=900,height=650');
+            const motoristaObj = motoristas.find(m => m.id === motorista);
+            const winPrint = window.open('', '_blank', 'width=900,height=650');
         if (!winPrint) {
             alert("Por favor, permita pop-ups para imprimir.");
             return;

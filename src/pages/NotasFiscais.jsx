@@ -1022,336 +1022,314 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             return;
         }
 
-        try {
-            // 1. Buscar a última importação
-            const ultimaImportacao = importacoes[0];
-            
-            if (!ultimaImportacao) {
-                toast.error("Nenhuma importação encontrada");
-                return;
-            }
+        const ultimaImportacao = importacoes[0];
+        if (!ultimaImportacao) {
+            toast.error("Nenhuma importação encontrada");
+            return;
+        }
 
-            // 2. Atualizar placa das notas selecionadas no banco
-            const placaParaUsar = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
-            
-            for (const nota of notasSelecionadas) {
-                const placa = placaParaUsar || nota.placa || "";
-                await base44.entities.NotaFiscal.update(nota.id, { placa });
-            }
+        // 1. Atualizar placa das notas selecionadas
+        const placaParaAtribuir = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
+        
+        for (const nota of notasSelecionadas) {
+            const placa = placaParaAtribuir || nota.placa || "";
+            await base44.entities.NotaFiscal.update(nota.id, { placa });
+        }
 
-            // 3. Atualizar a última importação
-            const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
-            
-            // Adicionar notas que não estão na importação
-            for (const nota of notasSelecionadas) {
-                if (!notasIdsImportacao.has(nota.id)) {
-                    notasIdsImportacao.add(nota.id);
-                }
-            }
+        // 2. Adicionar notas à última importação
+        const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
+        for (const nota of notasSelecionadas) {
+            notasIdsImportacao.add(nota.id);
+        }
 
-            // Atualizar a importação com todos os IDs
-            await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
-                notas_ids: Array.from(notasIdsImportacao),
-                quantidade_notas: notasIdsImportacao.size
-            });
+        await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
+            notas_ids: Array.from(notasIdsImportacao),
+            quantidade_notas: notasIdsImportacao.size
+        });
 
-            // Recarregar dados
-            await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+        // Recarregar dados
+        await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+        await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
 
-            // 4. Continuar com a impressão
-            const notasParaImprimir = notasSelecionadas;
+        // 3. Imprimir
+        const notasAtualizadas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+        const notasParaImprimir = selecionados
+            .map(id => notasAtualizadas.find(n => n.id === id))
+            .filter(Boolean);
 
-            const motoristaObj = motoristas.find(m => m.id === motorista);
-            const winPrint = window.open('', '_blank', 'width=900,height=650');
-            if (!winPrint) {
-                alert("Por favor, permita pop-ups para imprimir.");
-                return;
-            }
+        const motoristaObj = motoristas.find(m => m.id === motorista);
+        const winPrint = window.open('', '_blank', 'width=900,height=650');
+        if (!winPrint) {
+            alert("Por favor, permita pop-ups para imprimir.");
+            return;
+        }
 
-            // Agrupar notas por placa
-            const notasPorPlaca = {};
-            
-            notasParaImprimir.forEach(nota => {
-                const placa = nota.placa || "SEM_PLACA";
-                if (!notasPorPlaca[placa]) {
-                    notasPorPlaca[placa] = [];
-                }
-                notasPorPlaca[placa].push(nota);
-            });
+        // Agrupar por placa
+        const notasPorPlaca = {};
+        notasParaImprimir.forEach(nota => {
+            const placa = nota.placa || "SEM_PLACA";
+            if (!notasPorPlaca[placa]) notasPorPlaca[placa] = [];
+            notasPorPlaca[placa].push(nota);
+        });
 
-            let pagesHtml = "";
+        let pagesHtml = "";
 
-            Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-                const NOTAS_POR_PAGINA = 6;
-                const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            const NOTAS_POR_PAGINA = 6;
+            const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
 
-                for (let pagina = 0; pagina < totalPaginas; pagina++) {
-                    const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+            for (let pagina = 0; pagina < totalPaginas; pagina++) {
+                const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
 
-                    let rowsHtml = "";
-                    notasDaPagina.forEach((nota) => {
-                        const remetenteNota = remetenteSelecionado || nota.remetente || "";
-                        const destinatarioNota = nota.destinatario || "";
-                        const numeroNf = nota.numero_nf || "";
-                        const transportadoraOriginal = nota.transportadora || "";
-                        const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
-                            ? destinatarioNota 
-                            : transportadoraOriginal;
-                        const volumeNota = nota.volume ? nota.volume + " vol" : "";
-                                
-                        rowsHtml += '<tr class="nota-row">';
-                        rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
-                        rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
-                        rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-                        rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-                        rowsHtml += '</tr>';
-                        rowsHtml += '<tr class="transportadora-row">';
-                        rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
-                        rowsHtml += '<td class="volume">' + volumeNota + '</td>';
-                        rowsHtml += '</tr>';
-                    });
-
-                    // Linhas em branco
-                    const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
-                    for (let i = 0; i < linhasRestantes; i++) {
-                        rowsHtml += `
-                            <tr class="nota-row vazia">
-                                <td class="remetente"></td>
-                                <td class="destinatario"></td>
-                                <td class="nfe"></td>
-                                <td class="carimbo" rowspan="2"></td>
-                            </tr>
-                            <tr class="transportadora-row vazia">
-                                <td class="transportadora-nome" colspan="2"></td>
-                                <td class="volume"></td>
-                            </tr>
-                        `;
-                    }
-
-                    const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
-                    const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
-                    const veiculoInfo = veiculos.find(v => v.placa === placa);
-                    const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
-                    const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
-
-                    pagesHtml += `
-                        <div class="page">
-                            <div class="header">
-                                <div class="logo">
-                                    ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
-                                </div>
-                                <div class="company-info">
-                                    <p class="company-name">TWG TRANSPORTES</p>
-                                    <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
-                                    <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
-                                </div>
-                                <div class="romaneio-info">
-                                    <p class="date">${dataFormatada}</p>
-                                    <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
-                                    <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
-                                </div>
-                            </div>
+                let rowsHtml = "";
+                notasDaPagina.forEach((nota) => {
+                    const remetenteNota = remetenteSelecionado || nota.remetente || "";
+                    const destinatarioNota = nota.destinatario || "";
+                    const numeroNf = nota.numero_nf || "";
+                    const transportadoraOriginal = nota.transportadora || "";
+                    const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
+                        ? destinatarioNota 
+                        : transportadoraOriginal;
+                    const volumeNota = nota.volume ? nota.volume + " vol" : "";
                             
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th class="col-remetente">Remetente</th>
-                                        <th class="col-destinatario">Destinatário</th>
-                                        <th class="col-nfe">NFE</th>
-                                        <th class="col-carimbo">Carimbo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
+                    rowsHtml += '<tr class="nota-row">';
+                    rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+                    rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+                    rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+                    rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+                    rowsHtml += '</tr>';
+                    rowsHtml += '<tr class="transportadora-row">';
+                    rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+                    rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+                    rowsHtml += '</tr>';
+                });
+
+                const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+                for (let i = 0; i < linhasRestantes; i++) {
+                    rowsHtml += `
+                        <tr class="nota-row vazia">
+                            <td class="remetente"></td>
+                            <td class="destinatario"></td>
+                            <td class="nfe"></td>
+                            <td class="carimbo" rowspan="2"></td>
+                        </tr>
+                        <tr class="transportadora-row vazia">
+                            <td class="transportadora-nome" colspan="2"></td>
+                            <td class="volume"></td>
+                        </tr>
                     `;
                 }
-            });
 
-            winPrint.document.write(`
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Romaneio de Entregas</title>
-                    <style>
-                        @media print {
-                            @page { margin: 5mm; size: A4; }
-                            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                            .page { page-break-after: always; }
-                            .page:last-child { page-break-after: avoid; }
-                        }
-                        * { box-sizing: border-box; margin: 0; padding: 0; }
-                        body { font-family: Arial, sans-serif; }
-                        .page { 
-                            padding: 5mm; 
-                            height: 287mm; 
-                            display: flex; 
-                            flex-direction: column;
-                        }
-                        .header { 
-                            display: flex; 
-                            align-items: flex-start; 
-                            margin-bottom: 8px; 
-                            border-bottom: 3px solid #000; 
-                            padding-bottom: 8px; 
-                        }
-                        .logo { width: 120px; margin-right: 20px; }
-                        .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
-                        .logo-placeholder { 
-                            width: 100px; height: 60px; background: #0ea5e9; 
-                            display: flex; align-items: center; justify-content: center; 
-                            color: white; font-weight: bold; font-size: 20px; 
-                        }
-                        .company-info { flex: 1; }
-                        .company-name { font-size: 24px; font-weight: bold; margin: 0; }
-                        .company-address { font-size: 11px; color: #333; margin: 2px 0; }
-                        .romaneio-info { text-align: right; }
-                        .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
-                        .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
-                        .date { font-size: 22px; font-weight: bold; }
-                        
-                        table { width: 100%; border-collapse: collapse; flex: 1; }
-                        th { 
-                            background: #d0d0d0; 
-                            padding: 10px; 
-                            text-align: left; 
-                            border: 2px solid #000; 
-                            font-size: 16px; 
-                        }
-                        td { 
-                            border: 2px solid #000; 
-                            font-size: 14px; 
-                            vertical-align: top;
-                        }
-                        
-                        .col-remetente { width: ${layoutConfig.colRemetente}%; }
-                        .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
-                        .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
-                        .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
-                        
-                        .nota-row .remetente { 
-                            padding: 6px 8px; 
-                            font-size: 12px;
-                            font-weight: bold;
-                            text-align: center;
-                            vertical-align: middle;
-                            border-bottom: 1px solid #999;
-                        }
-                        .nota-row .destinatario { 
-                            text-align: center; 
-                            font-weight: bold; 
-                            font-size: 18px; 
-                            padding: 6px 8px;
-                            vertical-align: middle;
-                            border-bottom: 1px solid #999;
-                        }
-                        .nota-row .nfe { 
-                            text-align: center; 
-                            font-weight: bold; 
-                            font-size: 20px; 
-                            padding: 6px 8px;
-                            vertical-align: middle;
-                            border-bottom: 1px solid #999;
-                        }
-                        .nota-row .carimbo { 
-                            min-height: ${layoutConfig.alturaLinha * 2}px;
-                            padding: 6px;
-                            vertical-align: middle;
-                        }
-
-                        .transportadora-row td { 
-                            border-top: none; 
-                            padding: 8px; 
-                            text-align: center;
-                            vertical-align: middle;
-                        }
-                        .transportadora-row .transportadora-nome { 
-                            font-size: 16px; 
-                            font-weight: bold;
-                            line-height: 1.3;
-                            text-transform: uppercase;
-                            color: #333;
-                        }
-                        .transportadora-row .volume { 
-                            text-align: center; 
-                            font-size: 16px; 
-                            font-weight: bold; 
-                        }
-
-                        .nota-row.vazia td,
-                        .transportadora-row.vazia td {
-                            border: none !important;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${pagesHtml}
-                </body>
-                </html>
-            `);
-            
-            winPrint.document.close();
-            setTimeout(() => {
-                winPrint.print();
-                winPrint.close();
-            }, 500);
-
-            // Salvar romaneio gerado para cada placa
-            Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-                if (placa === "SEM_PLACA") return; // Ignorar notas sem placa para romaneio
-
-                // Calcular notas por transportadora
-                const notasPorTransp = {};
-                notasPlaca.forEach(nota => {
-                    const transp = nota.transportadora || "Sem transportadora";
-                    if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
-                    notasPorTransp[transp]++;
-                });
-
-                const notasPorTransportadora = Object.entries(notasPorTransp).map(([t, q]) => ({
-                    transportadora: t,
-                    quantidade: q
-                }));
-
-                // Calcular peso total
-                const pesoTotal = notasPlaca.reduce((acc, nota) => {
-                    const pesoStr = nota.peso || "";
-                    const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-                    return acc + pesoNum;
-                }, 0);
-
-                // Lista de destinatários únicos
-                const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
-
-                // Contar entregas (transportadoras únicas)
-                const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
-
+                const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+                const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+                const veiculoInfo = veiculos.find(v => v.placa === placa);
+                const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
                 const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
 
-                createRomaneioMutation.mutate({
-                    nome: `Romaneio ${placa} - ${dataFormatada}`,
-                    placa: placa,
-                    data: dataRomaneio,
-                    motorista_id: motorista || "",
-                    motorista_nome: motoristaObj?.nome || "",
-                    total_notas: notasPlaca.length,
-                    total_entregas: transportadorasUnicas.size || notasPlaca.length,
-                    peso_total: pesoTotal,
-                    notas_por_transportadora: notasPorTransportadora,
-                    notas_ids: notasPlaca.map(n => n.id),
-                    destinatarios: destinatarios,
-                    status: "gerado"
-                });
+                pagesHtml += `
+                    <div class="page">
+                        <div class="header">
+                            <div class="logo">
+                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                            </div>
+                            <div class="company-info">
+                                <p class="company-name">TWG TRANSPORTES</p>
+                                <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
+                                <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                            </div>
+                            <div class="romaneio-info">
+                                <p class="date">${dataFormatada}</p>
+                                <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
+                                <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+                            </div>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-remetente">Remetente</th>
+                                    <th class="col-destinatario">Destinatário</th>
+                                    <th class="col-nfe">NFE</th>
+                                    <th class="col-carimbo">Carimbo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        });
+
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Romaneio de Entregas</title>
+                <style>
+                    @media print {
+                        @page { margin: 5mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .page { page-break-after: always; }
+                        .page:last-child { page-break-after: avoid; }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; }
+                    .page { 
+                        padding: 5mm; 
+                        height: 287mm; 
+                        display: flex; 
+                        flex-direction: column;
+                    }
+                    .header { 
+                        display: flex; 
+                        align-items: flex-start; 
+                        margin-bottom: 8px; 
+                        border-bottom: 3px solid #000; 
+                        padding-bottom: 8px; 
+                    }
+                    .logo { width: 120px; margin-right: 20px; }
+                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                    .logo-placeholder { 
+                        width: 100px; height: 60px; background: #0ea5e9; 
+                        display: flex; align-items: center; justify-content: center; 
+                        color: white; font-weight: bold; font-size: 20px; 
+                    }
+                    .company-info { flex: 1; }
+                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                    .romaneio-info { text-align: right; }
+                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
+                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
+                    .date { font-size: 22px; font-weight: bold; }
+                    
+                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    th { 
+                        background: #d0d0d0; 
+                        padding: 10px; 
+                        text-align: left; 
+                        border: 2px solid #000; 
+                        font-size: 16px; 
+                    }
+                    td { 
+                        border: 2px solid #000; 
+                        font-size: 14px; 
+                        vertical-align: top;
+                    }
+                    
+                    .col-remetente { width: ${layoutConfig.colRemetente}%; }
+                    .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
+                    .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
+                    .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
+                    
+                    .nota-row .remetente { 
+                        padding: 6px 8px; 
+                        font-size: 12px;
+                        font-weight: bold;
+                        text-align: center;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .destinatario { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 18px; 
+                        padding: 6px 8px;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .nfe { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 20px; 
+                        padding: 6px 8px;
+                        vertical-align: middle;
+                        border-bottom: 1px solid #999;
+                    }
+                    .nota-row .carimbo { 
+                        min-height: ${layoutConfig.alturaLinha * 2}px;
+                        padding: 6px;
+                        vertical-align: middle;
+                    }
+
+                    .transportadora-row td { 
+                        border-top: none; 
+                        padding: 8px; 
+                        text-align: center;
+                        vertical-align: middle;
+                    }
+                    .transportadora-row .transportadora-nome { 
+                        font-size: 16px; 
+                        font-weight: bold;
+                        line-height: 1.3;
+                        text-transform: uppercase;
+                        color: #333;
+                    }
+                    .transportadora-row .volume { 
+                        text-align: center; 
+                        font-size: 16px; 
+                        font-weight: bold; 
+                    }
+
+                    .nota-row.vazia td,
+                    .transportadora-row.vazia td {
+                        border: none !important;
+                    }
+                </style>
+            </head>
+            <body>
+                ${pagesHtml}
+            </body>
+            </html>
+        `);
+        
+        winPrint.document.close();
+        setTimeout(() => {
+            winPrint.print();
+            winPrint.close();
+        }, 500);
+
+        // 4. Salvar romaneios gerados
+        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+            if (placa === "SEM_PLACA") return;
+
+            const notasPorTransp = {};
+            notasPlaca.forEach(nota => {
+                const transp = nota.transportadora || "Sem transportadora";
+                if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
+                notasPorTransp[transp]++;
             });
 
-            toast.success("Romaneio impresso e registrado com sucesso!");
-        } catch (error) {
-            console.error("Erro ao imprimir romaneio:", error);
-            toast.error("Erro ao processar romaneio");
-        }
+            const pesoTotal = notasPlaca.reduce((acc, nota) => {
+                const pesoStr = nota.peso || "";
+                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                return acc + pesoNum;
+            }, 0);
+
+            const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
+            const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
+
+            createRomaneioMutation.mutate({
+                nome: `Romaneio ${placa} - ${format(new Date(dataRomaneio), "dd/MM/yyyy")}`,
+                placa: placa,
+                data: dataRomaneio,
+                motorista_id: motorista || "",
+                motorista_nome: motoristaObj?.nome || "",
+                total_notas: notasPlaca.length,
+                total_entregas: transportadorasUnicas.size || notasPlaca.length,
+                peso_total: pesoTotal,
+                notas_por_transportadora: Object.entries(notasPorTransp).map(([t, q]) => ({
+                    transportadora: t,
+                    quantidade: q
+                })),
+                notas_ids: notasPlaca.map(n => n.id),
+                destinatarios: destinatarios,
+                status: "gerado"
+            });
+        });
+
+        toast.success("Romaneio impresso e registrado!");
     };
 
     // Dashboard resumo da última importação

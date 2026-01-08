@@ -50,6 +50,7 @@ export default function NotasFiscais() {
     const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
     const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
+    const [showArquivados, setShowArquivados] = useState(false);
     
     // Estados para funcionalidades do romaneio
     const [motorista, setMotorista] = useState("");
@@ -1609,10 +1610,25 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                 {/* Registros de Importação */}
                 {importacoes.length > 0 && (
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-slate-700">
-                            <History className="w-5 h-5 text-indigo-600" />
-                            <h2 className="font-semibold">Importações Recentes</h2>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-slate-700">
+                                <History className="w-5 h-5 text-indigo-600" />
+                                <h2 className="font-semibold">Última Importação</h2>
+                            </div>
+                            {importacoes.length > 1 && (
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setShowArquivados(!showArquivados)}
+                                    className="border-slate-400 text-slate-700 hover:bg-slate-100"
+                                >
+                                    <History className="w-4 h-4 mr-1" />
+                                    {showArquivados ? "Ocultar" : "Ver"} Arquivadas ({importacoes.length - 1})
+                                </Button>
+                            )}
                         </div>
+                        
+                        {/* Última Importação */}
                         <div className="space-y-2">
                             {importacoes
                                 .filter(imp => {
@@ -1624,7 +1640,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         return true;
                                     }
                                 })
-                                .slice(0, 5)
+                                .slice(0, 1)
                                 .map(importacao => (
                                 <ImportacaoCard
                                     key={importacao.id}
@@ -1637,13 +1653,54 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         }
                                     }}
                                     onPrint={(notasParaImprimir) => {
-                                        // Redirecionar para a página de Máscara Romaneio com as notas
                                         const notasIds = notasParaImprimir.map(n => n.id).join(",");
                                         window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
                                     }}
                                 />
                             ))}
                         </div>
+
+                        {/* Importações Arquivadas */}
+                        {showArquivados && importacoes.length > 1 && (
+                            <Card className="bg-slate-50 border-slate-300">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+                                        <Package className="w-4 h-4" />
+                                        Importações Arquivadas
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+                                    {importacoes
+                                        .filter(imp => {
+                                            if (!filterDataImportacao) return true;
+                                            try {
+                                                const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
+                                                return dataImp === filterDataImportacao;
+                                            } catch {
+                                                return true;
+                                            }
+                                        })
+                                        .slice(1)
+                                        .map(importacao => (
+                                        <ImportacaoCard
+                                            key={importacao.id}
+                                            importacao={importacao}
+                                            notas={notas}
+                                            notasSelecionadas={selecionados}
+                                            onDelete={(id) => {
+                                                if (confirm("Excluir este registro de importação?")) {
+                                                    deleteImportacaoMutation.mutate(id);
+                                                }
+                                            }}
+                                            onPrint={(notasParaImprimir) => {
+                                                const notasIds = notasParaImprimir.map(n => n.id).join(",");
+                                                window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
+                                            }}
+                                        />
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 )}
 

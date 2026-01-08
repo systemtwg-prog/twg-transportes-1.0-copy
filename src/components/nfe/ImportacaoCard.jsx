@@ -238,7 +238,7 @@ export default function ImportacaoCard({
                 <title>Importação de Notas Fiscais</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4 landscape; }
+                        @page { margin: 10mm; size: A4 portrait; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }

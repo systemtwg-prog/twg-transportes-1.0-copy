@@ -1022,18 +1022,30 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             return;
         }
 
-        // Buscar TODAS as notas do dia no banco
-        const todasNotasDoDia = await base44.entities.NotaFiscal.filter({ data: dataRomaneio });
+        // Buscar romaneios gerados da data selecionada
+        const romaneiosDaData = await base44.entities.RomaneioGerado.filter({ data: dataRomaneio });
         
-        // Notas que estão no banco mas NÃO foram digitadas/selecionadas
-        const notasNaoDigitadas = todasNotasDoDia.filter(nota => 
-            !selecionados.includes(nota.id)
-        );
+        // Coletar IDs de todas as notas dos romaneios da data
+        const notasIdsNosRomaneios = new Set();
+        romaneiosDaData.forEach(rom => {
+            (rom.notas_ids || []).forEach(id => notasIdsNosRomaneios.add(id));
+        });
 
-        // Combinar: notas digitadas + notas não digitadas (com NF em branco)
+        // Buscar notas dos romaneios que NÃO foram digitadas/selecionadas
+        const notasFaltantes = [];
+        for (const notaId of notasIdsNosRomaneios) {
+            if (!selecionados.includes(notaId)) {
+                const notaEncontrada = notas.find(n => n.id === notaId);
+                if (notaEncontrada) {
+                    notasFaltantes.push({ ...notaEncontrada, numero_nf: "" }); // NF em branco
+                }
+            }
+        }
+
+        // Combinar: notas digitadas (com NF) + notas faltantes dos romaneios (sem NF)
         const notasParaImprimir = [
             ...notasDigitadasSelecionadas,
-            ...notasNaoDigitadas.map(n => ({ ...n, numero_nf: "" })) // NF em branco
+            ...notasFaltantes
         ];
 
         const motoristaObj = motoristas.find(m => m.id === motorista);

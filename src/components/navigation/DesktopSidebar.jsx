@@ -83,26 +83,8 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
         }
     });
 
-    const isAdmin = currentUser?.role === "admin";
-    const modulosAtivos = config?.[0]?.modulos_ativos;
-    const paginasPermitidas = currentUser?.paginas_permitidas || [];
-
-    // Lógica simplificada de filtro
-    const menuFiltrado = menuItems.filter(item => {
-        // Início sempre visível
-        if (item.href === "HomeDesktop") return true;
-        
-        // Admin
-        if (isAdmin) {
-            // Se não configurou módulos ainda, mostra tudo
-            if (!modulosAtivos || modulosAtivos.length === 0) return true;
-            // Se configurou, respeita a configuração
-            return modulosAtivos.includes(item.href);
-        }
-        
-        // Usuário comum - só vê o que tem permissão
-        return paginasPermitidas.includes(item.href);
-    });
+    // Mostrar TODOS os menus - sem restrição
+    const menuFiltrado = menuItems;
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");
@@ -118,40 +100,40 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
 
     if (collapsed) {
         return (
-            <div className="w-16 bg-slate-900 flex flex-col h-full border-r border-slate-700">
-                <div className="p-3 border-b border-slate-700 flex justify-center">
+            <div className="w-14 bg-slate-900 flex flex-col h-full border-r border-slate-700">
+                <div className="p-2 border-b border-slate-700 flex justify-center">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={onToggle}
-                        className="text-slate-400 hover:text-white hover:bg-slate-800"
+                        className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8"
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>
-                <ScrollArea className="flex-1 py-2">
-                    {menuFiltrado.slice(0, 15).map((item) => (
+                <ScrollArea className="flex-1 py-1">
+                    {menuFiltrado.map((item) => (
                         <button
                             key={item.href}
                             onClick={() => handleNavigate(item.href)}
-                            className={`w-full p-3 flex justify-center transition-all ${
+                            className={`w-full p-2 flex justify-center transition-all ${
                                 currentPage === item.href
                                     ? "bg-blue-600 text-white"
                                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                             }`}
                             title={item.name}
                         >
-                            <item.icon className="w-5 h-5" />
+                            <item.icon className="w-4 h-4" />
                         </button>
                     ))}
                 </ScrollArea>
-                <div className="p-3 border-t border-slate-700">
+                <div className="p-2 border-t border-slate-700">
                     <button
                         onClick={handleLogout}
                         className="w-full p-2 flex justify-center text-red-400 hover:bg-red-500/20 rounded-lg"
                         title="Sair"
                     >
-                        <LogOut className="w-5 h-5" />
+                        <LogOut className="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -159,13 +141,13 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
     }
 
     return (
-        <div className="w-60 bg-slate-900 flex flex-col h-full border-r border-slate-700">
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+        <div className="w-56 bg-slate-900 flex flex-col h-full border-r border-slate-700">
+            <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
                     {config?.[0]?.logo_url && (
-                        <img src={config[0].logo_url} alt="Logo" className="h-8 object-contain" />
+                        <img src={config[0].logo_url} alt="Logo" className="h-7 object-contain flex-shrink-0" />
                     )}
-                    <span className="text-white font-semibold text-sm truncate">
+                    <span className="text-white font-semibold text-xs truncate">
                         {config?.[0]?.nome_empresa || "Sistema"}
                     </span>
                 </div>
@@ -173,7 +155,7 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                     variant="ghost"
                     size="icon"
                     onClick={onToggle}
-                    className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8"
+                    className="text-slate-400 hover:text-white hover:bg-slate-800 h-7 w-7 flex-shrink-0"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -186,15 +168,15 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                         if (items.length === 0) return null;
                         
                         return (
-                            <div key={cat.id} className="mb-2">
-                                <p className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <div key={cat.id} className="mb-1">
+                                <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                                     {cat.name}
                                 </p>
                                 {items.map((item) => (
                                     <button
                                         key={item.href}
                                         onClick={() => handleNavigate(item.href)}
-                                        className={`w-full px-4 py-2 flex items-center gap-3 transition-all text-sm ${
+                                        className={`w-full px-3 py-1.5 flex items-center gap-2 transition-all text-xs ${
                                             currentPage === item.href
                                                 ? "bg-blue-600 text-white"
                                                 : "text-slate-300 hover:bg-slate-800 hover:text-white"
@@ -210,13 +192,13 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                 </div>
             </ScrollArea>
             
-            <div className="p-3 border-t border-slate-700">
+            <div className="p-2 border-t border-slate-700">
                 <button
                     onClick={handleLogout}
-                    className="w-full px-4 py-2 flex items-center gap-3 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
+                    className="w-full px-3 py-1.5 flex items-center gap-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
                 >
-                    <LogOut className="w-5 h-5" />
-                    <span className="text-sm">Sair do Sistema</span>
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-xs">Sair</span>
                 </button>
             </div>
         </div>

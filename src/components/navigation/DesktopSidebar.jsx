@@ -83,14 +83,20 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
     const paginasPermitidas = currentUser?.paginas_permitidas || [];
 
     const menuFiltrado = menuItems.filter(item => {
-        // Admin vê tudo (filtrado por módulos ativos)
+        // Admin vê tudo
         if (isAdmin) {
-            return modulosAtivos && modulosAtivos.length > 0 
-                ? modulosAtivos.includes(item.href) || item.href === "HomeDesktop"
-                : true;
+            // Se não há módulos configurados, mostra tudo
+            if (!modulosAtivos || modulosAtivos.length === 0) {
+                return true;
+            }
+            // Se tem módulos configurados, filtra por eles
+            return modulosAtivos.includes(item.href) || item.href === "HomeDesktop";
         }
         
         // Usuário comum só vê páginas permitidas
+        if (!paginasPermitidas || paginasPermitidas.length === 0) {
+            return item.href === "HomeDesktop"; // Só mostra início se não tem permissões
+        }
         return paginasPermitidas.includes(item.href) || item.href === "HomeDesktop";
     });
 

@@ -72,13 +72,19 @@ export default function FloatingMenu({ currentPage }) {
     const menuFiltrado = menuItems.filter(item => {
         // Admin vê tudo
         if (isAdmin) {
-            return modulosAtivos && modulosAtivos.length > 0 
-                ? modulosAtivos.includes(item.href)
-                : true;
+            // Se não há módulos configurados, mostra tudo
+            if (!modulosAtivos || modulosAtivos.length === 0) {
+                return true;
+            }
+            // Se tem módulos configurados, filtra por eles
+            return modulosAtivos.includes(item.href) || item.href === "Home";
         }
         
         // Usuário comum só vê páginas permitidas
-        return paginasPermitidas.includes(item.href);
+        if (!paginasPermitidas || paginasPermitidas.length === 0) {
+            return item.href === "Home"; // Só mostra início se não tem permissões
+        }
+        return paginasPermitidas.includes(item.href) || item.href === "Home";
     });
 
     const handleLogout = () => {

@@ -1441,6 +1441,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     key={importacao.id}
                                     importacao={importacao}
                                     notas={notas}
+                                    notasSelecionadas={selecionados}
                                     onDelete={(id) => {
                                         if (confirm("Excluir este registro de importação?")) {
                                             deleteImportacaoMutation.mutate(id);

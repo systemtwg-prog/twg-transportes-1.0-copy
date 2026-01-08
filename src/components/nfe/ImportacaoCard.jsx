@@ -15,6 +15,7 @@ import { base44 } from "@/api/base44Client";
 export default function ImportacaoCard({ 
     importacao, 
     notas, 
+    notasSelecionadas = [],
     onDelete,
     onPrint 
 }) {
@@ -87,12 +88,32 @@ export default function ImportacaoCard({
                 }
             }
 
+            // Adicionar notas selecionadas na busca que não estão na importação
+            const notasSelecionadasNaBusca = [];
+            if (notasSelecionadas && notasSelecionadas.length > 0) {
+                for (const notaId of notasSelecionadas) {
+                    if (!importacao.notas_ids?.includes(notaId)) {
+                        const notaEncontrada = notas.find(n => n.id === notaId);
+                        if (notaEncontrada && !notasFaltantes.find(n => n.id === notaId)) {
+                            notasSelecionadasNaBusca.push(notaEncontrada);
+                        }
+                    }
+                }
+            }
+
             setNotasParaImprimir(notasImportacao);
-            setNotasDaMascara(notasFaltantes);
+            setNotasDaMascara([...notasFaltantes, ...notasSelecionadasNaBusca]);
             setShowPrintDialog(true);
 
+            let mensagens = [];
             if (notasFaltantes.length > 0) {
-                toast.info(`Encontradas ${notasFaltantes.length} nota(s) da máscara do dia que não estão nesta importação.`);
+                mensagens.push(`${notasFaltantes.length} nota(s) da máscara do dia`);
+            }
+            if (notasSelecionadasNaBusca.length > 0) {
+                mensagens.push(`${notasSelecionadasNaBusca.length} nota(s) selecionadas na busca`);
+            }
+            if (mensagens.length > 0) {
+                toast.info(`Encontradas ${mensagens.join(" e ")} que não estão nesta importação.`);
             }
         } catch (error) {
             console.error("Erro ao preparar impressão:", error);

@@ -156,10 +156,12 @@ export default function ImportacaoCard({
             return;
         }
 
-        // Calcular resumo por placa (incluindo notas sem placa)
+        // Calcular resumo por placa (ignorar notas sem placa)
         const resumoPorPlaca = {};
         notasParaImprimir.forEach(nota => {
-            const placa = nota.placa || "SEM PLACA";
+            if (!nota.placa) return; // Ignorar notas sem placa
+
+            const placa = nota.placa;
 
             if (!resumoPorPlaca[placa]) {
                 resumoPorPlaca[placa] = {

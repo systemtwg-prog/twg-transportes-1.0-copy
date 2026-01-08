@@ -1013,41 +1013,54 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
     // Imprimir romaneio
     const handlePrintRomaneio = async () => {
-        // Notas digitadas/selecionadas pelo usuário (com NF preenchida)
-        const notasDigitadas = selecionados
+        const notasSelecionadas = selecionados
             .map(id => notas.find(n => n.id === id))
             .filter(Boolean);
 
-        if (notasDigitadas.length === 0) {
+        if (notasSelecionadas.length === 0) {
             toast.error("Selecione ao menos uma nota");
             return;
         }
 
-        // Buscar romaneios gerados da data selecionada
-        const romaneiosDaData = await base44.entities.RomaneioGerado.filter({ data: dataRomaneio });
-        
-        // Coletar IDs de todas as notas dos romaneios da data
-        const notasIdsNosRomaneios = new Set();
-        romaneiosDaData.forEach(rom => {
-            (rom.notas_ids || []).forEach(id => notasIdsNosRomaneios.add(id));
-        });
+        try {
+            // 1. Buscar a última importação
+            const ultimaImportacao = importacoes[0];
+            
+            if (!ultimaImportacao) {
+                toast.error("Nenhuma importação encontrada");
+                return;
+            }
 
-        // Notas dos romaneios que NÃO foram digitadas (NF em branco)
-        const notasFaltantes = [];
-        for (const notaId of notasIdsNosRomaneios) {
-            if (!selecionados.includes(notaId)) {
-                const notaEncontrada = notas.find(n => n.id === notaId);
-                if (notaEncontrada) {
-                    notasFaltantes.push({ ...notaEncontrada, numero_nf: "" });
+            // 2. Atualizar placa das notas selecionadas no banco
+            const placaParaUsar = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
+            
+            for (const nota of notasSelecionadas) {
+                const placa = placaParaUsar || nota.placa || "";
+                await base44.entities.NotaFiscal.update(nota.id, { placa });
+            }
+
+            // 3. Atualizar a última importação
+            const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
+            
+            // Adicionar notas que não estão na importação
+            for (const nota of notasSelecionadas) {
+                if (!notasIdsImportacao.has(nota.id)) {
+                    notasIdsImportacao.add(nota.id);
                 }
             }
-        }
 
-        // Combinar: digitadas PRIMEIRO (com NF) + faltantes DEPOIS (sem NF)
-        const notasParaImprimir = [
-            ...notasDigitadas,
-            ...notasFaltantes
-        ];
+            // Atualizar a importação com todos os IDs
+            await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
+                notas_ids: Array.from(notasIdsImportacao),
+                quantidade_notas: notasIdsImportacao.size
+            });
+
+            // Recarregar dados
+            await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+            await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+
+            // 4. Continuar com a impressão
+            const notasParaImprimir = notasSelecionadas;
 
         const motoristaObj = motoristas.find(m => m.id === motorista);
         const winPrint = window.open('', '_blank', 'width=900,height=650');

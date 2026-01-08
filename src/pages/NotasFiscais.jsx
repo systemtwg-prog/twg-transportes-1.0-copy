@@ -1354,6 +1354,52 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         }
     };
 
+    // Dashboard resumo da última importação
+    const dashboardImportacao = React.useMemo(() => {
+        if (!importacoes[0]) return null;
+        
+        const ultimaImportacao = importacoes[0];
+        const notasDaImportacao = notas.filter(n => ultimaImportacao.notas_ids?.includes(n.id));
+        
+        // Agrupar por placa
+        const porPlaca = {};
+        let pesoConsolidado = 0;
+        let totalNotas = 0;
+        let totalEntregas = 0;
+        
+        notasDaImportacao.forEach(nota => {
+            if (!nota.placa) return; // Ignorar notas sem placa
+            
+            const placa = nota.placa;
+            if (!porPlaca[placa]) {
+                porPlaca[placa] = {
+                    notas: 0,
+                    transportadoras: new Set(),
+                    peso: 0
+                };
+            }
+            
+            porPlaca[placa].notas++;
+            totalNotas++;
+            
+            if (nota.transportadora) {
+                porPlaca[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
+            }
+            
+            const pesoStr = nota.peso || "";
+            const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+            porPlaca[placa].peso += pesoNum;
+            pesoConsolidado += pesoNum;
+        });
+        
+        // Calcular total de entregas
+        Object.values(porPlaca).forEach(dados => {
+            totalEntregas += dados.transportadoras.size || dados.notas;
+        });
+        
+        return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
+    }, [importacoes, notas]);
+
     const filtered = notas.filter(n => {
         // Busca geral
         const matchSearch = !search || 

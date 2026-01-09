@@ -34,6 +34,7 @@ import ServicosSNF from './pages/ServicosSNF';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
+import Canhoto from './pages/Canhoto';
 import __Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
+    "Canhoto": Canhoto,
 }
 
 export const pagesConfig = {

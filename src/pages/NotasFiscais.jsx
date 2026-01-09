@@ -1402,8 +1402,8 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-4 md:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-2 md:p-4 pb-2">
+            <div className="max-w-7xl mx-auto space-y-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">

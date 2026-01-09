@@ -342,8 +342,11 @@ export default function Home() {
         { name: "Veículos", href: "Veiculos", icon: Car },
     ];
 
-    const menuItems = [
+    const mainButtons2 = [
         { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600" },
+    ];
+
+    const menuItems = [
         { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600" },
         { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: BarChart3, color: "from-pink-500 to-rose-600" },
         { name: "Relatório", href: "ImpressaoRelatorio", icon: Printer, color: "from-indigo-500 to-purple-600" },
@@ -420,6 +423,18 @@ export default function Home() {
                         <span className="text-lg font-bold text-white drop-shadow-md">{bigButton.name}</span>
                     </Button>
                 </Link>
+
+                {/* Botão Notas Fiscais */}
+                <div className="grid grid-cols-1 gap-3">
+                    {mainButtons2.map((item) => (
+                        <Link key={item.name} to={createPageUrl(item.href)}>
+                            <Button className={`w-full h-20 bg-gradient-to-br ${item.color} hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl border-2 border-white/30 flex items-center justify-center gap-3 rounded-2xl`}>
+                                <item.icon className="w-8 h-8 text-white drop-shadow-md" />
+                                <span className="text-lg font-bold text-white drop-shadow-md">{item.name}</span>
+                            </Button>
+                        </Link>
+                    ))}
+                </div>
 
                 {/* Botões Rápidos */}
                 <div className="grid grid-cols-2 gap-3">

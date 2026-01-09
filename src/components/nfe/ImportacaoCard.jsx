@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { 
-    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save
+    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -935,29 +935,35 @@ export default function ImportacaoCard({
                             </div>
 
                             <div className="flex justify-between pt-4 border-t">
-                            <Button 
-                                variant="outline" 
-                                onClick={() => setPrintConfig({
-                                    colNF: 10,
-                                    colPlaca: 10,
-                                    colCliente: 40,
-                                    colVolume: 10,
-                                    colPeso: 10,
-                                    colTransp: 20,
-                                    fontSize: 8,
-                                    orientation: "portrait",
-                                    marginTop: 10,
-                                    marginBottom: 10,
-                                    marginLeft: 10,
-                                    marginRight: 10,
-                                    resumoFontSize: 10,
-                                    resumoGap: 8,
-                                    resumoLineSpacing: 3,
-                                    resumoTotalSpacing: 10
-                                })}
-                            >
-                                Restaurar Padrão
-                            </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => {
+                                        setPrintConfig({
+                                            colNF: 10,
+                                            colPlaca: 10,
+                                            colCliente: 40,
+                                            colVolume: 10,
+                                            colPeso: 10,
+                                            colTransp: 20,
+                                            fontSize: 8,
+                                            orientation: "portrait",
+                                            marginTop: 10,
+                                            marginBottom: 10,
+                                            marginLeft: 10,
+                                            marginRight: 10,
+                                            resumoFontSize: 10,
+                                            resumoGap: 8,
+                                            resumoLineSpacing: 3,
+                                            resumoTotalSpacing: 10
+                                        });
+                                        localStorage.removeItem("importacaoPrintConfig");
+                                        toast.success("Configurações restauradas ao padrão!");
+                                    }}
+                                    className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                                >
+                                    <RotateCcw className="w-4 h-4 mr-1" />
+                                    Restaurar Padrão
+                                </Button>
                             <div className="flex gap-2">
                                 <Button 
                                     variant="outline" 

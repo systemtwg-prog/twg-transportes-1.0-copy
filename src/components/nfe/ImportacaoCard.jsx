@@ -114,58 +114,12 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // Buscar máscaras do dia atual
-            const dataHoje = format(new Date(), "yyyy-MM-dd");
-            const romaneios = await base44.entities.RomaneioGerado.filter({ data: dataHoje });
-            
-            // Coletar todas as notas que estão nas máscaras do dia
-            const notasIdsDaMascara = new Set();
-            romaneios.forEach(rom => {
-                (rom.notas_ids || []).forEach(id => notasIdsDaMascara.add(id));
-            });
-
             // Notas da importação atual
             const notasImportacao = [...notasDaImportacao];
-            
-            // Verificar quais notas da máscara não estão nesta importação
-            const notasFaltantes = [];
-            for (const notaId of notasIdsDaMascara) {
-                if (!importacao.notas_ids?.includes(notaId)) {
-                    // Buscar a nota no banco
-                    const notaEncontrada = notas.find(n => n.id === notaId);
-                    if (notaEncontrada) {
-                        notasFaltantes.push(notaEncontrada);
-                    }
-                }
-            }
-
-            // Adicionar notas selecionadas na busca que não estão na importação
-            const notasSelecionadasNaBusca = [];
-            if (notasSelecionadas && notasSelecionadas.length > 0) {
-                for (const notaId of notasSelecionadas) {
-                    if (!importacao.notas_ids?.includes(notaId)) {
-                        const notaEncontrada = notas.find(n => n.id === notaId);
-                        if (notaEncontrada && !notasFaltantes.find(n => n.id === notaId)) {
-                            notasSelecionadasNaBusca.push(notaEncontrada);
-                        }
-                    }
-                }
-            }
 
             setNotasParaImprimir(notasImportacao);
-            setNotasDaMascara([...notasFaltantes, ...notasSelecionadasNaBusca]);
-            setShowConfigDialog(true);
-
-            let mensagens = [];
-            if (notasFaltantes.length > 0) {
-                mensagens.push(`${notasFaltantes.length} nota(s) da máscara do dia`);
-            }
-            if (notasSelecionadasNaBusca.length > 0) {
-                mensagens.push(`${notasSelecionadasNaBusca.length} nota(s) selecionadas na busca`);
-            }
-            if (mensagens.length > 0) {
-                toast.info(`Encontradas ${mensagens.join(" e ")} que não estão nesta importação.`);
-            }
+            setNotasDaMascara([]);
+            setShowPrintDialog(true);
         } catch (error) {
             console.error("Erro ao preparar impressão:", error);
             toast.error("Erro ao preparar impressão");
@@ -235,6 +189,13 @@ export default function ImportacaoCard({
             return;
         }
 
+        // Ordenar notas por transportadora antes de imprimir
+        const notasOrdenadas = [...notasParaImprimir].sort((a, b) => {
+            const transpA = (a.transportadora || "").toUpperCase();
+            const transpB = (b.transportadora || "").toUpperCase();
+            return transpA.localeCompare(transpB);
+        });
+
         // Gerar impressão no formato tabular
         const winPrint = window.open('', '_blank', 'width=1200,height=800');
         if (!winPrint) {
@@ -244,7 +205,7 @@ export default function ImportacaoCard({
 
         // Calcular resumo por placa (ignorar notas sem placa)
         const resumoPorPlaca = {};
-        notasParaImprimir.forEach(nota => {
+        notasOrdenadas.forEach(nota => {
             if (!nota.placa) return; // Ignorar notas sem placa
 
             const placa = nota.placa;
@@ -273,7 +234,7 @@ export default function ImportacaoCard({
 
         // Calcular resumo por filial e placa (apenas notas com placa)
         const resumoPorFilial = {};
-        notasParaImprimir.forEach(nota => {
+        notasOrdenadas.forEach(nota => {
             if (!nota.placa || !nota.filial) return;
             const filial = nota.filial;
             const placa = nota.placa;
@@ -290,7 +251,7 @@ export default function ImportacaoCard({
         // Gerar linhas da tabela (incluir todas, placa em branco se não tiver)
         let rowsHtml = "";
         let placaAnterior = null;
-        notasParaImprimir.forEach(nota => {
+        notasOrdenadas.forEach(nota => {
             const placaDisplay = nota.placa || "";
             const placaMudou = placaAnterior !== null && placaAnterior !== nota.placa;
             placaAnterior = nota.placa;

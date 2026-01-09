@@ -43,6 +43,7 @@ export default function NotasFiscais() {
   const [selecionados, setSelecionados] = useState([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [placaEmMassa, setPlacaEmMassa] = useState("");
+  const [filialEmMassa, setFilialEmMassa] = useState("");
   const [showCadastroTransp, setShowCadastroTransp] = useState(false);
   const [transpExtraidas, setTranspExtraidas] = useState([]);
   const [transpSelecionadas, setTranspSelecionadas] = useState([]);
@@ -308,6 +309,7 @@ Se não encontrar algum dado, deixe em branco.`,
       setShowEditDialog(false);
       setSelecionados([]);
       setPlacaEmMassa("");
+      setFilialEmMassa("");
       toast.success("Notas fiscais atualizadas!");
     }
   });
@@ -1871,33 +1873,42 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             </div>
                             <Select value={filterFilial} onValueChange={setFilterFilial}>
                                 <SelectTrigger className="w-40 bg-white">
-                                    <SelectValue placeholder="Filial" />
+                                    <SelectValue placeholder="Filiais" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="todas">Todas Filiais</SelectItem>
-                                    {[...new Set(notas.map((n) => n.filial).filter(Boolean))].map((filial) =>
-                  <SelectItem key={filial} value={filial}>{filial}</SelectItem>
-                  )}
+                                    <SelectItem value="SP">Filial SP</SelectItem>
+                                    <SelectItem value="SC">Filial SC</SelectItem>
                                 </SelectContent>
                             </Select>
                             <div className="flex gap-2 flex-wrap">
                                 <Button variant="outline" onClick={selecionarTodos}>
                                     {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
                                 </Button>
-                                {selecionados.length > 0 &&
-                <Button
-                  variant="outline"
-                  className="border-red-500 text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
-                      deleteEmMassaMutation.mutate(selecionados);
-                    }
-                  }}>
-
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        Excluir ({selecionados.length})
-                                    </Button>
-                }
+                                {selecionados.length > 0 && (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
+                                            onClick={() => setShowEditDialog(true)}
+                                        >
+                                            <Pencil className="w-4 h-4 mr-1" />
+                                            Editar ({selecionados.length})
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="border-red-500 text-red-700 hover:bg-red-50"
+                                            onClick={() => {
+                                                if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
+                                                    deleteEmMassaMutation.mutate(selecionados);
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="w-4 h-4 mr-1" />
+                                            Excluir ({selecionados.length})
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </CardContent>
@@ -2032,19 +2043,20 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                 </Card>
             </div>
 
-            {/* Dialog Atribuir Placa em Massa */}
+            {/* Dialog Editar em Massa */}
             <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Car className="w-5 h-5 text-green-600" />
-                            Atribuir Placa
+                            <Pencil className="w-5 h-5 text-purple-600" />
+                            Editar em Massa
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
                         <p className="text-sm text-slate-600">
-                            Atribuir placa a <strong>{selecionados.length}</strong> nota(s) fiscal(is) selecionada(s).
+                            Editar <strong>{selecionados.length}</strong> nota(s) fiscal(is) selecionada(s).
                         </p>
+                        
                         <div className="space-y-2">
                             <Label className="flex items-center gap-2">
                                 <Car className="w-4 h-4" /> Placa do Veículo
@@ -2054,27 +2066,55 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     <SelectValue placeholder="Selecione a placa..." />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value={null}>Não alterar</SelectItem>
                                     {veiculos.map((v) =>
-                  <SelectItem key={v.id} value={v.placa}>
+                                        <SelectItem key={v.id} value={v.placa}>
                                             {v.placa} - {v.modelo}
                                         </SelectItem>
-                  )}
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4" /> Filial
+                            </Label>
+                            <Select value={filialEmMassa} onValueChange={setFilialEmMassa}>
+                                <SelectTrigger className="bg-white">
+                                    <SelectValue placeholder="Selecione a filial..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Não alterar</SelectItem>
+                                    <SelectItem value="SP">Filial SP</SelectItem>
+                                    <SelectItem value="SC">Filial SC</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                            <Button variant="outline" onClick={() => {
+                                setShowEditDialog(false);
+                                setPlacaEmMassa("");
+                                setFilialEmMassa("");
+                            }}>
                                 Cancelar
                             </Button>
                             <Button
-                onClick={() => {
-                  if (placaEmMassa) {
-                    updateEmMassaMutation.mutate({ ids: selecionados, data: { placa: placaEmMassa } });
-                  }
-                }}
-                disabled={updateEmMassaMutation.isPending || !placaEmMassa}
-                className="bg-green-600 hover:bg-green-700">
-
+                                onClick={() => {
+                                    const updates = {};
+                                    if (placaEmMassa) updates.placa = placaEmMassa;
+                                    if (filialEmMassa) updates.filial = filialEmMassa;
+                                    
+                                    if (Object.keys(updates).length > 0) {
+                                        updateEmMassaMutation.mutate({ ids: selecionados, data: updates });
+                                    } else {
+                                        toast.error("Selecione ao menos um campo para atualizar");
+                                    }
+                                }}
+                                disabled={updateEmMassaMutation.isPending || (!placaEmMassa && !filialEmMassa)}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
                                 {updateEmMassaMutation.isPending ? "Salvando..." : "Salvar"}
                             </Button>
                         </div>

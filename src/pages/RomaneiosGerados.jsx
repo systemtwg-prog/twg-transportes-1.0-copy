@@ -283,10 +283,11 @@ export default function RomaneiosGerados() {
             <html><head><title>Dashboard Romaneios</title>
             <style>
                 body { font-family: Arial; padding: ${cfg.marginTop}mm; font-size: ${cfg.fontSize}px; }
-                .grid { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: 8px; }
-                .card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; }
-                .header { background: #2563eb; color: white; padding: 4px 8px; font-weight: bold; }
-                .content { padding: 8px; }
+                h2 { margin: 0 0 8px 0; font-size: 14px; }
+                .grid { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: 4px; }
+                .card { border: 1px solid #2563eb; border-radius: 2px; overflow: hidden; }
+                .header { background: #2563eb; color: white; padding: 2px 6px; font-weight: bold; font-size: 10px; }
+                .content { padding: 4px 6px; font-size: 10px; }
             </style></head>
             <body><h2>Resumo por Placa - ${format(new Date(), "dd/MM/yyyy")}</h2><div class="grid">${html}</div></body></html>
         `);
@@ -433,43 +434,43 @@ export default function RomaneiosGerados() {
                 <title>Romaneio de Entregas - Reimpressão</title>
                 <style>
                     @media print {
-                        @page { margin: 5mm; size: A4; }
+                        @page { margin: 3mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                         .page { page-break-after: always; }
                         .page:last-child { page-break-after: avoid; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
                     body { font-family: Arial, sans-serif; }
-                    .page { padding: 5mm; height: 287mm; display: flex; flex-direction: column; }
-                    .header { display: flex; align-items: flex-start; margin-bottom: 8px; border-bottom: 3px solid #000; padding-bottom: 8px; }
-                    .logo { width: 120px; margin-right: 20px; }
-                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
-                    .logo-placeholder { width: 100px; height: 60px; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
+                    .page { padding: 3mm; height: 291mm; display: flex; flex-direction: column; }
+                    .header { display: flex; align-items: flex-start; margin-bottom: 4px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+                    .logo { width: 80px; margin-right: 12px; }
+                    .logo img { max-width: 100%; max-height: 50px; object-fit: contain; }
+                    .logo-placeholder { width: 70px; height: 40px; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                    .company-name { font-size: 18px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: 9px; color: #333; margin: 1px 0; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
-                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
-                    .date { font-size: 22px; font-weight: bold; }
+                    .romaneio-title { font-size: 16px; font-weight: bold; margin: 0; }
+                    .motorista-veiculo { font-size: 11px; font-weight: bold; margin: 2px 0; }
+                    .date { font-size: 18px; font-weight: bold; }
                     
                     table { width: 100%; border-collapse: collapse; flex: 1; }
-                    th { background: #d0d0d0; padding: 10px; text-align: left; border: 2px solid #000; font-size: 16px; }
-                    td { border: 2px solid #000; font-size: 14px; vertical-align: top; }
+                    th { background: #d0d0d0; padding: 6px; text-align: left; border: 2px solid #000; font-size: 13px; }
+                    td { border: 2px solid #000; font-size: 12px; vertical-align: top; }
                     
                     .col-remetente { width: 18%; }
                     .col-destinatario { width: 42%; }
                     .col-nfe { width: 15%; text-align: center; }
                     .col-carimbo { width: 25%; }
                     
-                    .nota-row .remetente { padding: 6px 8px; font-size: 12px; font-weight: bold; text-align: center; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 8px; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 20px; padding: 6px 8px; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .carimbo { min-height: 90px; padding: 6px; vertical-align: middle; }
+                    .nota-row .remetente { padding: 3px 5px; font-size: 10px; font-weight: bold; text-align: center; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 15px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 16px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .carimbo { min-height: 60px; padding: 4px; vertical-align: middle; }
 
-                    .transportadora-row td { border-top: none; padding: 8px; text-align: center; vertical-align: middle; }
-                    .transportadora-row .transportadora-nome { font-size: 16px; font-weight: bold; line-height: 1.3; text-transform: uppercase; color: #333; }
-                    .transportadora-row .volume { text-align: center; font-size: 16px; font-weight: bold; }
+                    .transportadora-row td { border-top: none; padding: 4px; text-align: center; vertical-align: middle; }
+                    .transportadora-row .transportadora-nome { font-size: 13px; font-weight: bold; line-height: 1.2; text-transform: uppercase; color: #333; }
+                    .transportadora-row .volume { text-align: center; font-size: 13px; font-weight: bold; }
 
                     .nota-row.vazia td,
                     .transportadora-row.vazia td { border: none !important; }

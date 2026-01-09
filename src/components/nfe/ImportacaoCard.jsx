@@ -947,7 +947,7 @@ export default function ImportacaoCard({
                                 <Button 
                                     variant="outline" 
                                     onClick={() => {
-                                        setPrintConfig({
+                                        const defaultConfig = {
                                             colNF: 10,
                                             colPlaca: 10,
                                             colCliente: 40,
@@ -964,8 +964,9 @@ export default function ImportacaoCard({
                                             resumoGap: 8,
                                             resumoLineSpacing: 3,
                                             resumoTotalSpacing: 10
-                                        });
-                                        localStorage.removeItem("importacaoPrintConfig");
+                                        };
+                                        setPrintConfig(defaultConfig);
+                                        localStorage.setItem("importacaoPrintConfig", JSON.stringify(defaultConfig));
                                         toast.success("Configurações restauradas ao padrão!");
                                     }}
                                     className="border-orange-500 text-orange-600 hover:bg-orange-50"
@@ -976,7 +977,10 @@ export default function ImportacaoCard({
                             <div className="flex gap-2">
                                 <Button 
                                     variant="outline" 
-                                    onClick={handleSalvarConfig}
+                                    onClick={() => {
+                                        handleSalvarConfig();
+                                        toast.success("Configurações salvas com sucesso!");
+                                    }}
                                     className="border-green-500 text-green-600 hover:bg-green-50"
                                 >
                                     <Save className="w-4 h-4 mr-1" />
@@ -995,7 +999,7 @@ export default function ImportacaoCard({
                                     Continuar
                                 </Button>
                             </div>
-                        </div>
+                            </div>
                     </div>
                 </DialogContent>
             </Dialog>

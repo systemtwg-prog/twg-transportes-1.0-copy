@@ -143,10 +143,11 @@ export default function ImportacaoCard({
     };
 
     const selecionarTodasExpanded = () => {
-        if (notasSelecionadasExpanded.length === notasDaImportacao.length) {
+        const notasComPlaca = notasDaImportacao.filter(n => n.placa);
+        if (notasSelecionadasExpanded.length === notasComPlaca.length) {
             setNotasSelecionadasExpanded([]);
         } else {
-            setNotasSelecionadasExpanded(notasDaImportacao.map(n => n.id));
+            setNotasSelecionadasExpanded(notasComPlaca.map(n => n.id));
         }
     };
 
@@ -782,14 +783,14 @@ export default function ImportacaoCard({
                         <div className="mt-4 pt-4 border-t">
                             <div className="flex flex-col gap-3 mb-3">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium text-slate-600">Notas desta importação:</h4>
+                                    <h4 className="text-sm font-medium text-slate-600">Notas com placa desta importação:</h4>
                                     <div className="flex gap-2">
                                     <Button 
                                         variant="outline" 
                                         size="sm"
                                         onClick={selecionarTodasExpanded}
                                     >
-                                        {notasSelecionadasExpanded.length === notasDaImportacao.length ? "Desmarcar" : "Selecionar"} Todas
+                                        {notasSelecionadasExpanded.length === notasDaImportacao.filter(n => n.placa).length ? "Desmarcar" : "Selecionar"} Todas com Placa
                                     </Button>
                                     {notasSelecionadasExpanded.length > 0 && (
                                         <Button 
@@ -814,6 +815,9 @@ export default function ImportacaoCard({
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-48 overflow-y-auto">
                                 {notasDaImportacao
                                     .filter(nota => {
+                                        // Filtrar apenas notas com placa
+                                        if (!nota.placa) return false;
+                                        // Aplicar filtro de busca
                                         if (!filtroNotas) return true;
                                         const termo = filtroNotas.toLowerCase();
                                         return nota.numero_nf?.toLowerCase().startsWith(termo) || 

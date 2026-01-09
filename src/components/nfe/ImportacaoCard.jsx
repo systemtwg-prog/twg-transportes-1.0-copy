@@ -330,29 +330,43 @@ export default function ImportacaoCard({
             Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
                 // Calcular totais por filial para esta placa
                 const filiaisPlaca = {};
+                const pesosPorFilial = {};
                 notasParaImprimir.forEach(nota => {
                     if (nota.placa === placa && nota.filial) {
-                        if (!filiaisPlaca[nota.filial]) filiaisPlaca[nota.filial] = 0;
+                        if (!filiaisPlaca[nota.filial]) {
+                            filiaisPlaca[nota.filial] = 0;
+                            pesosPorFilial[nota.filial] = 0;
+                        }
                         filiaisPlaca[nota.filial]++;
+
+                        // Somar peso
+                        const pesoStr = nota.peso || "";
+                        const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+                        pesosPorFilial[nota.filial] += pesoNum;
                     }
                 });
 
                 resumoHtml += `
                     <div class="resumo-placa-unificado">
-                        <div class="resumo-placa-dados">
-                            <h4>PLACA: ${placa}</h4>
-                            <div class="resumo-item-grande"><strong>NOTAS:</strong> ${dados.totalNotas}</div>
-                            <div class="resumo-item-grande"><strong>ENTREGAS:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                            <div class="resumo-item-grande"><strong>PESO:</strong> ${dados.pesoTotal.toFixed(2)} KG</div>
-                            <div class="resumo-item-grande"><strong>VOLUME:</strong> ${dados.volumeTotal}</div>
+                        <h4 class="resumo-placa-titulo">PLACA: ${placa}</h4>
+                        <div class="resumo-placa-colunas">
+                            <div class="resumo-placa-col1">
+                                <div class="resumo-item-grande"><strong>NOTAS:</strong> ${dados.totalNotas}</div>
+                                <div class="resumo-item-grande"><strong>ENTREGAS:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                                <div class="resumo-item-grande"><strong>PESO:</strong> ${dados.pesoTotal.toFixed(2)} KG</div>
+                                <div class="resumo-item-grande"><strong>VOLUME:</strong> ${dados.volumeTotal}</div>
+                            </div>
+                            ${Object.keys(filiaisPlaca).length > 0 ? `
+                            <div class="resumo-placa-col2">
+                                ${Object.entries(filiaisPlaca).sort((a, b) => a[0].localeCompare(b[0])).map(([filial, qtd]) => 
+                                    `<div class="resumo-filial-item">
+                                        <strong>FILIAL ${filial}:</strong> ${qtd} NOTAS<br/>
+                                        <strong>PESO:</strong> ${pesosPorFilial[filial].toFixed(2)} KG
+                                    </div>`
+                                ).join('')}
+                            </div>
+                            ` : ''}
                         </div>
-                        ${Object.keys(filiaisPlaca).length > 0 ? `
-                        <div class="resumo-placa-filiais">
-                            ${Object.entries(filiaisPlaca).map(([filial, qtd]) => 
-                                `<div class="resumo-filial-item">FILIAL ${filial}: <strong>${qtd} NOTAS</strong></div>`
-                            ).join('')}
-                        </div>
-                        ` : ''}
                     </div>
                 `;
             });
@@ -541,23 +555,27 @@ export default function ImportacaoCard({
                         border-left: 4px solid #059669;
                         border-radius: 6px;
                         box-shadow: 0 2px 4px rgba(0,0,0,0.12);
-                        display: grid;
-                        grid-template-columns: 1fr auto;
-                        gap: 12px;
-                        align-items: start;
+                        margin-bottom: 10px;
                     }
-                    .resumo-placa-dados {
-                        flex: 1;
-                    }
-                    .resumo-placa-dados h4 {
+                    .resumo-placa-titulo {
                         color: #047857;
                         font-size: ${printConfig.resumoFontSize + 4}px;
-                        margin-bottom: 8px;
+                        margin-bottom: 10px;
                         font-weight: bold;
-                        text-align: center;
+                        text-align: left;
                         background: #d1fae5;
-                        padding: 6px;
+                        padding: 6px 10px;
                         border-radius: 4px;
+                    }
+                    .resumo-placa-colunas {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 15px;
+                    }
+                    .resumo-placa-col1,
+                    .resumo-placa-col2 {
+                        display: flex;
+                        flex-direction: column;
                     }
                     .resumo-item-grande {
                         font-size: ${printConfig.resumoFontSize + 3}px;
@@ -565,18 +583,14 @@ export default function ImportacaoCard({
                         margin: 5px 0;
                         font-weight: 600;
                     }
-                    .resumo-placa-filiais {
-                        border-left: 2px solid #e2e8f0;
-                        padding-left: 12px;
-                        min-width: 160px;
-                    }
                     .resumo-filial-item {
                         font-size: ${printConfig.resumoFontSize + 2}px;
                         color: #334155;
-                        margin: 4px 0;
-                        padding: 4px 8px;
+                        margin: 5px 0;
+                        padding: 6px 10px;
                         background: #f1f5f9;
                         border-radius: 3px;
+                        line-height: 1.6;
                     }
                     .resumo-transp {
                         background: white;

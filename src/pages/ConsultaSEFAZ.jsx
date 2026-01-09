@@ -537,11 +537,20 @@ export default function ConsultaSEFAZ() {
                     <CardHeader>
                         <CardTitle className="text-base">ℹ️ Como usar</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm text-slate-700 space-y-2">
-                        <p>1️⃣ Importe seu <strong>certificado digital A1</strong> clicando em "Importar Certificado"</p>
-                        <p>2️⃣ Cole a <strong>chave de acesso de 44 dígitos</strong> do DFE</p>
-                        <p>3️⃣ Clique em <strong>Buscar</strong> para validar e localizar o documento</p>
-                        <p>4️⃣ Baixe o <strong>XML</strong> ou <strong>DANFE</strong> conforme necessário</p>
+                    <CardContent className="text-sm text-slate-700 space-y-3">
+                        <div>
+                            <p className="font-semibold text-blue-900 mb-1">📋 Buscar DANFE ou CTE:</p>
+                            <p>1️⃣ Cole a <strong>chave de acesso de 44 dígitos</strong></p>
+                            <p>2️⃣ Clique em <strong>Buscar</strong></p>
+                            <p>3️⃣ Baixe o <strong>XML</strong> ou <strong>DANFE/CTE</strong></p>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-amber-900 mb-1">⚡ Consulta Automática:</p>
+                            <p>1️⃣ Importe seu <strong>certificado digital A1</strong></p>
+                            <p>2️⃣ Vá na aba <strong>"Consulta Automática"</strong></p>
+                            <p>3️⃣ Clique em <strong>"Consultar DFEs Agora"</strong></p>
+                            <p>4️⃣ O sistema busca automaticamente todos os DFEs</p>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

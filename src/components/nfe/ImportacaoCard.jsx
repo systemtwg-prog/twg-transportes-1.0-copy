@@ -319,25 +319,9 @@ export default function ImportacaoCard({
                 });
 
                 resumoHtml += '</div></div>';
-            }
-
-            // Agrupar por filial e placa (apenas notas com placa)
-            const resumoPorFilial = {};
-            notasParaImprimir.forEach(nota => {
-                if (!nota.placa || !nota.filial) return;
-                const filial = nota.filial;
-                const placa = nota.placa;
-
-                if (!resumoPorFilial[placa]) {
-                    resumoPorFilial[placa] = {};
                 }
-                if (!resumoPorFilial[placa][filial]) {
-                    resumoPorFilial[placa][filial] = 0;
-                }
-                resumoPorFilial[placa][filial]++;
-            });
 
-            // Agrupar por transportadora (apenas notas com placa)
+                // Agrupar por transportadora (apenas notas com placa)
             const resumoPorTransp = {};
             notasParaImprimir.forEach(nota => {
                 if (!nota.placa) return;

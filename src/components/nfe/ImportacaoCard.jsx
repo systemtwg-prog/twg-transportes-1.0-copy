@@ -897,40 +897,40 @@ export default function ImportacaoCard({
                             {/* Painel de Preview */}
                             <div className="bg-slate-50 rounded-lg p-4 border-2 border-slate-200">
                             <h3 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
-                            <Eye className="w-4 h-4" />
-                            Preview das Configurações
+                                <Eye className="w-4 h-4" />
+                                Preview das Configurações
                             </h3>
                             <div className="bg-white rounded p-3 space-y-2 text-xs border">
-                            <div className="border-b pb-2">
-                                <p className="text-slate-500">Margens:</p>
-                                <p className="font-mono">
-                                    Superior: {printConfig.marginTop}mm | Inferior: {printConfig.marginBottom}mm<br/>
-                                    Esquerda: {printConfig.marginLeft}mm | Direita: {printConfig.marginRight}mm
-                                </p>
-                            </div>
-                            <div className="border-b pb-2">
-                                <p className="text-slate-500">Tabela:</p>
-                                <p className="font-mono">
-                                    Fonte: {printConfig.fontSize}px | Orientação: {printConfig.orientation === "portrait" ? "Retrato" : "Paisagem"}
-                                </p>
-                            </div>
-                            <div className="border-b pb-2">
-                                <p className="text-slate-500">Resumo:</p>
-                                <p className="font-mono">
-                                    Fonte: {printConfig.resumoFontSize}px<br/>
-                                    Espaço Placas: {printConfig.resumoGap}px<br/>
-                                    Espaço Linhas: {printConfig.resumoLineSpacing}px<br/>
-                                    Espaço Total: {printConfig.resumoTotalSpacing}px
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-slate-500">Colunas (Total: {totalColunas}%):</p>
-                                <div className="font-mono text-xs">
-                                    NF: {printConfig.colNF}% | Placa: {printConfig.colPlaca}%<br/>
-                                    Cliente: {printConfig.colCliente}% | Vol: {printConfig.colVolume}%<br/>
-                                    Peso: {printConfig.colPeso}% | Transp: {printConfig.colTransp}%
+                                <div className="border-b pb-2">
+                                    <p className="text-slate-500">Margens:</p>
+                                    <p className="font-mono">
+                                        Superior: {printConfig.marginTop}mm | Inferior: {printConfig.marginBottom}mm<br/>
+                                        Esquerda: {printConfig.marginLeft}mm | Direita: {printConfig.marginRight}mm
+                                    </p>
                                 </div>
-                            </div>
+                                <div className="border-b pb-2">
+                                    <p className="text-slate-500">Tabela:</p>
+                                    <p className="font-mono">
+                                        Fonte: {printConfig.fontSize}px | Orientação: {printConfig.orientation === "portrait" ? "Retrato" : "Paisagem"}
+                                    </p>
+                                </div>
+                                <div className="border-b pb-2">
+                                    <p className="text-slate-500">Resumo:</p>
+                                    <p className="font-mono">
+                                        Fonte: {printConfig.resumoFontSize}px<br/>
+                                        Espaço Placas: {printConfig.resumoGap}px<br/>
+                                        Espaço Linhas: {printConfig.resumoLineSpacing}px<br/>
+                                        Espaço Total: {printConfig.resumoTotalSpacing}px
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-500">Colunas (Total: {totalColunas}%):</p>
+                                    <div className="font-mono text-xs">
+                                        NF: {printConfig.colNF}% | Placa: {printConfig.colPlaca}%<br/>
+                                        Cliente: {printConfig.colCliente}% | Vol: {printConfig.colVolume}%<br/>
+                                        Peso: {printConfig.colPeso}% | Transp: {printConfig.colTransp}%
+                                    </div>
+                                </div>
                             </div>
                             </div>
                             </div>

@@ -42,7 +42,11 @@ export default function ImportacaoCard({
                     colPeso: 10,
                     colTransp: 20,
                     fontSize: 8,
-                    orientation: "portrait"
+                    orientation: "portrait",
+                    marginTop: 10,
+                    marginBottom: 10,
+                    marginLeft: 10,
+                    marginRight: 10
                 };
             }
         }
@@ -54,7 +58,11 @@ export default function ImportacaoCard({
             colPeso: 10,
             colTransp: 20,
             fontSize: 8,
-            orientation: "portrait"
+            orientation: "portrait",
+            marginTop: 10,
+            marginBottom: 10,
+            marginLeft: 10,
+            marginRight: 10
         };
     });
 
@@ -208,13 +216,19 @@ export default function ImportacaoCard({
 
         // Gerar linhas da tabela (incluir todas, placa em branco se não tiver)
         let rowsHtml = "";
+        let placaAnterior = null;
         notasParaImprimir.forEach(nota => {
             const placaDisplay = nota.placa || "";
+            const placaMudou = placaAnterior !== null && placaAnterior !== nota.placa;
+            placaAnterior = nota.placa;
+            
+            // Adicionar triângulo quando a placa muda
+            const indicadorPlaca = placaMudou && placaDisplay ? '▲ ' : '';
             
             rowsHtml += `
                 <tr>
                     <td>${nota.numero_nf || "-"}</td>
-                    <td class="${nota.placa ? 'placa-cell' : ''}">${placaDisplay}</td>
+                    <td class="${nota.placa ? 'placa-cell' : ''}">${indicadorPlaca}${placaDisplay}</td>
                     <td>${nota.destinatario || "-"}</td>
                     <td>${nota.volume || "-"}</td>
                     <td>${nota.peso || "-"}</td>
@@ -693,6 +707,57 @@ export default function ImportacaoCard({
                             </div>
                         </div>
 
+                        {/* Margens da Página */}
+                        <div>
+                            <Label className="text-sm font-semibold mb-3 block">Margens da Página (mm)</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label className="text-xs text-slate-600">Margem Superior</Label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="30"
+                                        value={printConfig.marginTop}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, marginTop: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Margem Inferior</Label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="30"
+                                        value={printConfig.marginBottom}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, marginBottom: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Margem Esquerda</Label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="30"
+                                        value={printConfig.marginLeft}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, marginLeft: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Margem Direita</Label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="30"
+                                        value={printConfig.marginRight}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, marginRight: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Largura das Colunas */}
                         <div>
                             <Label className="text-sm font-semibold mb-3 block">
@@ -782,7 +847,11 @@ export default function ImportacaoCard({
                                     colPeso: 10,
                                     colTransp: 20,
                                     fontSize: 8,
-                                    orientation: "portrait"
+                                    orientation: "portrait",
+                                    marginTop: 10,
+                                    marginBottom: 10,
+                                    marginLeft: 10,
+                                    marginRight: 10
                                 })}
                             >
                                 Restaurar Padrão

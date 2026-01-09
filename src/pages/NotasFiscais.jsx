@@ -1080,11 +1080,18 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     let pagesHtml = "";
 
     Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+      // Ordenar notas por transportadora
+      const notasOrdenadas = [...notasPlaca].sort((a, b) => {
+        const transpA = (a.transportadora || "").toUpperCase();
+        const transpB = (b.transportadora || "").toUpperCase();
+        return transpA.localeCompare(transpB);
+      });
+
       const NOTAS_POR_PAGINA = 6;
-      const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+      const totalPaginas = Math.ceil(notasOrdenadas.length / NOTAS_POR_PAGINA);
 
       for (let pagina = 0; pagina < totalPaginas; pagina++) {
-        const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+        const notasDaPagina = notasOrdenadas.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
 
         let rowsHtml = "";
         notasDaPagina.forEach((nota) => {
@@ -1143,7 +1150,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
                             </div>
                             <div class="romaneio-info">
-                                <p class="date">${dataFormatada}</p>
+                                <p class="date">${format(new Date(dataRomaneio), "dd/MM/yyyy")}</p>
                                 <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
                                 <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
                             </div>

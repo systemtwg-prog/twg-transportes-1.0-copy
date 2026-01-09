@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { 
-    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw, Settings
+    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw, Settings, Pencil, MapPin
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,6 +26,9 @@ export default function ImportacaoCard({
     const [loading, setLoading] = useState(false);
     const [notasParaImprimir, setNotasParaImprimir] = useState([]);
     const [notasDaMascara, setNotasDaMascara] = useState([]);
+    const [notasSelecionadasExpanded, setNotasSelecionadasExpanded] = useState([]);
+    const [showEditFilialDialog, setShowEditFilialDialog] = useState(false);
+    const [filialParaAtribuir, setFilialParaAtribuir] = useState("");
     
     // Carregar configurações salvas do localStorage
     const [printConfig, setPrintConfig] = useState(() => {
@@ -173,6 +176,40 @@ export default function ImportacaoCard({
             setNotasParaImprimir(prev => prev.filter(n => n.id !== nota.id));
         } else {
             setNotasParaImprimir(prev => [...prev, nota]);
+        }
+    };
+
+    const toggleNotaExpanded = (notaId) => {
+        setNotasSelecionadasExpanded(prev =>
+            prev.includes(notaId) ? prev.filter(id => id !== notaId) : [...prev, notaId]
+        );
+    };
+
+    const selecionarTodasExpanded = () => {
+        if (notasSelecionadasExpanded.length === notasDaImportacao.length) {
+            setNotasSelecionadasExpanded([]);
+        } else {
+            setNotasSelecionadasExpanded(notasDaImportacao.map(n => n.id));
+        }
+    };
+
+    const handleAtualizarFilialEmMassa = async () => {
+        if (!filialParaAtribuir) {
+            toast.error("Selecione uma filial");
+            return;
+        }
+
+        try {
+            for (const id of notasSelecionadasExpanded) {
+                await base44.entities.NotaFiscal.update(id, { filial: filialParaAtribuir });
+            }
+            
+            // Recarregar dados
+            window.location.reload();
+            toast.success(`${notasSelecionadasExpanded.length} nota(s) atualizada(s)!`);
+        } catch (error) {
+            console.error("Erro ao atualizar:", error);
+            toast.error("Erro ao atualizar notas");
         }
     };
 
@@ -717,19 +754,57 @@ export default function ImportacaoCard({
                     {/* Lista de notas expandida */}
                     {expanded && (
                         <div className="mt-4 pt-4 border-t">
-                            <h4 className="text-sm font-medium text-slate-600 mb-2">Notas desta importação:</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-48 overflow-y-auto">
-                                {notasDaImportacao.map(nota => (
-                                    <div 
-                                        key={nota.id} 
-                                        className="bg-white p-2 rounded-lg border text-xs"
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-medium text-slate-600">Notas desta importação:</h4>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={selecionarTodasExpanded}
                                     >
-                                        <p className="font-bold text-blue-600">{nota.numero_nf}</p>
-                                        <p className="text-slate-600 truncate" title={nota.destinatario}>
-                                            {nota.destinatario}
-                                        </p>
-                                    </div>
-                                ))}
+                                        {notasSelecionadasExpanded.length === notasDaImportacao.length ? "Desmarcar" : "Selecionar"} Todas
+                                    </Button>
+                                    {notasSelecionadasExpanded.length > 0 && (
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => setShowEditFilialDialog(true)}
+                                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                                        >
+                                            <Pencil className="w-4 h-4 mr-1" />
+                                            Atribuir Filial ({notasSelecionadasExpanded.length})
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-48 overflow-y-auto">
+                                {notasDaImportacao.map(nota => {
+                                    const selecionada = notasSelecionadasExpanded.includes(nota.id);
+                                    return (
+                                        <div 
+                                            key={nota.id} 
+                                            onClick={() => toggleNotaExpanded(nota.id)}
+                                            className={`p-2 rounded-lg border text-xs cursor-pointer transition-all ${
+                                                selecionada ? "bg-purple-50 border-purple-500" : "bg-white border-slate-200 hover:border-purple-300"
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                <Checkbox checked={selecionada} className="pointer-events-none" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-blue-600">{nota.numero_nf}</p>
+                                                    <p className="text-slate-600 truncate" title={nota.destinatario}>
+                                                        {nota.destinatario}
+                                                    </p>
+                                                    {nota.filial && (
+                                                        <p className="text-purple-600 font-medium mt-1">
+                                                            {nota.filial}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -1182,6 +1257,51 @@ export default function ImportacaoCard({
                                     Imprimir ({notasParaImprimir.length})
                                 </Button>
                             </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Atribuir Filial em Massa */}
+            <Dialog open={showEditFilialDialog} onOpenChange={setShowEditFilialDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-purple-600" />
+                            Atribuir Filial
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Atribuir filial a <strong>{notasSelecionadasExpanded.length}</strong> nota(s) desta importação.
+                        </p>
+                        <div className="space-y-2">
+                            <Label>Filial</Label>
+                            <Select value={filialParaAtribuir} onValueChange={setFilialParaAtribuir}>
+                                <SelectTrigger className="bg-white">
+                                    <SelectValue placeholder="Selecione a filial..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="SP">Filial SP</SelectItem>
+                                    <SelectItem value="SC">Filial SC</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => {
+                                setShowEditFilialDialog(false);
+                                setFilialParaAtribuir("");
+                            }}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={handleAtualizarFilialEmMassa}
+                                disabled={!filialParaAtribuir}
+                                className="bg-purple-600 hover:bg-purple-700"
+                            >
+                                <Save className="w-4 h-4 mr-1" />
+                                Salvar
+                            </Button>
                         </div>
                     </div>
                 </DialogContent>

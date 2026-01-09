@@ -991,7 +991,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
       numerosDigitados.forEach((num) => {
         const notaEncontrada = todasNotas.find((n) =>
-        n.numero_nf?.toLowerCase().includes(num.toLowerCase())
+        n.numero_nf?.toLowerCase() === num.toLowerCase()
         );
         if (notaEncontrada && !notasEncontradas.find((n) => n.id === notaEncontrada.id)) {
           notasEncontradas.push(notaEncontrada);

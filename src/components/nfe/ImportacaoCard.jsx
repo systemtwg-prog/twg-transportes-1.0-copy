@@ -156,18 +156,23 @@ export default function ImportacaoCard({
             return;
         }
 
+        if (notasSelecionadasExpanded.length === 0) {
+            toast.error("Selecione ao menos uma nota");
+            return;
+        }
+
         try {
             for (const id of notasSelecionadasExpanded) {
                 await base44.entities.NotaFiscal.update(id, { filial: filialParaAtribuir });
             }
-            
-            toast.success(`${notasSelecionadasExpanded.length} nota(s) atualizada(s)!`);
+
+            toast.success(`${notasSelecionadasExpanded.length} nota(s) atualizada(s) com filial ${filialParaAtribuir}!`);
             setShowEditFilialDialog(false);
             setFilialParaAtribuir("");
             setNotasSelecionadasExpanded([]);
-            
+
             // Recarregar dados após sucesso
-            setTimeout(() => window.location.reload(), 500);
+            window.location.reload();
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             toast.error("Erro ao atualizar notas");

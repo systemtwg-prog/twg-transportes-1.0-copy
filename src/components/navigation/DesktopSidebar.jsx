@@ -87,10 +87,10 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
     const menuFiltrado = menuItems;
 
     const handleLogout = () => {
-        sessionStorage.removeItem("appUnlocked");
-        sessionStorage.removeItem("desktopTabs");
         if (confirm("Deseja realmente sair do sistema?")) {
-            base44.auth.logout();
+            sessionStorage.clear();
+            localStorage.clear();
+            base44.auth.logout(window.location.origin);
         }
     };
 

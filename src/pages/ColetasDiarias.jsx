@@ -488,6 +488,22 @@ export default function ColetasDiarias() {
                     </div>
                     <div className="flex gap-2">
                         <Button 
+                            onClick={() => navigate(createPageUrl("Avisos"))}
+                            variant="outline" 
+                            className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                        >
+                            <Bell className="w-4 h-4 mr-2" />
+                            Avisos
+                        </Button>
+                        <Button 
+                            onClick={() => navigate(createPageUrl("AdicionarColetaDiaria"))}
+                            variant="outline" 
+                            className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                        >
+                            <Package className="w-4 h-4 mr-2" />
+                            Adicionar
+                        </Button>
+                        <Button 
                             onClick={() => {
                                 queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
                                 queryClient.invalidateQueries({ queryKey: ["coletas-diarias-home"] });

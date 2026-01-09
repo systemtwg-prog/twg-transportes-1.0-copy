@@ -1642,7 +1642,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
 
             </h3>
-                        <div className="bg-green-500 flex gap-2">
+                        <div className="bg-green-500 text-slate-50 flex gap-2">
                             <Input
                 placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
                 value={notasDigitadas}
@@ -2099,6 +2099,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 Exemplo:
 NF 123456 - Destinatário ABC LTDA - 5 volumes - Transportadora XYZ
 NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
+
+
+
+
 
 
 

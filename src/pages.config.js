@@ -36,6 +36,7 @@ import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
 import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
+import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
     "SincronizacaoFirebase": SincronizacaoFirebase,
+    "ConsultaSEFAZ": ConsultaSEFAZ,
 }
 
 export const pagesConfig = {

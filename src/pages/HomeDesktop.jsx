@@ -28,7 +28,7 @@ const allModules = [
     { id: "rotas", name: "Rotas GPS", href: "RotasGPS", icon: Navigation, color: "from-green-500 to-emerald-600" },
     { id: "veiculos", name: "Veículos", href: "Veiculos", icon: Car, color: "from-slate-500 to-gray-600" },
     { id: "multas", name: "Multas", href: "BuscaMultas", icon: AlertTriangle, color: "from-red-500 to-orange-600" },
-    { id: "notas_fiscais", name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600" },
+    { id: "notas_fiscais", name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600", large: true },
     { id: "romaneio", name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600" },
     { id: "romaneios_gerados", name: "Romaneios Gerados", href: "RomaneiosGerados", icon: BarChart3, color: "from-pink-500 to-rose-600" },
     { id: "relatorio", name: "Relatório", href: "ImpressaoRelatorio", icon: FileText, color: "from-indigo-500 to-purple-600" },
@@ -510,10 +510,10 @@ export default function HomeDesktop() {
                             <CardContent className="p-6">
                                 <div className="grid grid-cols-4 gap-4">
                                     {modulosVisiveis.map((item) => (
-                                        <Link key={item.id} to={createPageUrl(item.href)}>
-                                            <div className={`p-4 rounded-xl bg-gradient-to-br ${item.color} text-white hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer`}>
-                                                <item.icon className="w-8 h-8 mb-2" />
-                                                <p className="text-sm font-semibold">{item.name}</p>
+                                        <Link key={item.id} to={createPageUrl(item.href)} className={item.large ? "col-span-2" : ""}>
+                                            <div className={`${item.large ? "p-6" : "p-4"} rounded-xl bg-gradient-to-br ${item.color} text-white hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer`}>
+                                                <item.icon className={`${item.large ? "w-12 h-12" : "w-8 h-8"} mb-2`} />
+                                                <p className={`${item.large ? "text-lg" : "text-sm"} font-semibold`}>{item.name}</p>
                                             </div>
                                         </Link>
                                     ))}

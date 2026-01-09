@@ -941,18 +941,20 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     setAudioFileUrl("");
   };
 
-  // Substituir Washington Gonzales pela transportadora = destinatário
+  // Substituir Washington Gonzales pela transportadora = destinatário (TODAS as notas do banco)
   const handleSubstituirWashington = async () => {
-    const notasWashington = notas.filter((n) =>
-    n.transportadora?.toUpperCase().includes("WASHINGTON GONZALES")
+    // Buscar TODAS as notas do banco, não apenas as filtradas
+    const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+    const notasWashington = todasNotas.filter((n) =>
+      n.transportadora?.toUpperCase().includes("WASHINGTON")
     );
 
     if (notasWashington.length === 0) {
-      toast.info("Nenhuma nota com transportadora WASHINGTON GONZALES encontrada");
+      toast.info("Nenhuma nota com transportadora WASHINGTON encontrada em todo o banco");
       return;
     }
 
-    if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s)?`)) {
+    if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s) encontrada(s) em todo o banco de dados?`)) {
       return;
     }
 
@@ -965,7 +967,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     }
 
     queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-    toast.success(`${atualizadas} nota(s) atualizada(s)!`);
+    toast.success(`${atualizadas} nota(s) atualizada(s) em todo o banco!`);
   };
 
   // Buscar notas digitadas manualmente - busca no banco de dados
@@ -1477,7 +1479,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
               onClick={handleSubstituirWashington}
               variant="outline"
               className="border-orange-500 text-orange-700 hover:bg-orange-50"
-              title="Substituir WASHINGTON GONZALES pelo destinatário">
+              title="Substituir WASHINGTON em todas as notas do banco">
 
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
@@ -1485,9 +1487,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </div>
                 </div>
 
-                {/* Configurações do Romaneio */}
-                <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-0 shadow-lg">
-                    <CardContent className="bg-cyan-300 p-6">
+                {/* Layout da Impressão */}
+                <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-emerald-600" />
                             Configurações do Romaneio
@@ -1565,11 +1567,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </CardContent>
                 </Card>
 
-                {/* Layout da Impressão */}
-                <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-0 shadow-lg">
-                    <CardContent className="bg-fuchsia-200 p-6">
+                    <CardContent className="p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                            <Printer className="w-5 h-5 text-purple-600" />
                             Layout da Impressão (%)
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -1635,14 +1635,94 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </CardContent>
                 </Card>
 
+                {/* Configurações do Romaneio */}
+                <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-emerald-600" />
+                            Configurações do Romaneio
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label>Data do Romaneio</Label>
+                                <Input
+                  type="date"
+                  value={dataRomaneio}
+                  onChange={(e) => setDataRomaneio(e.target.value)}
+                  className="bg-white" />
+
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Motorista</Label>
+                                <Select value={motorista} onValueChange={setMotorista}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {motoristas.map((m) =>
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                    )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <Car className="w-4 h-4" /> Veículo (aplica em todos)
+                                </Label>
+                                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="individual">Usar individual</SelectItem>
+                                        {veiculos.map((v) =>
+                    <SelectItem key={v.id} value={v.placa}>
+                                                {v.placa}
+                                            </SelectItem>
+                    )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
+                                    </span>
+                                    <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCadastroRemetente(true)}
+                    className="text-green-600 hover:text-green-700 h-auto p-0">
+
+                                        <Plus className="w-4 h-4 mr-1" />
+                                        Cadastrar
+                                    </Button>
+                                </Label>
+                                <Select value={remetenteSelecionado || "individual"} onValueChange={(v) => setRemetenteSelecionado(v === "individual" ? "" : v)}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="individual">Usar individual</SelectItem>
+                                        {empresasRemetentes.map((emp) =>
+                    <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
+                    )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Notas para o Romaneio */}
                 <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-0 shadow-lg">
-                    <CardContent className="bg-neutral-400 p-6">
-                        <h3 className="text-slate-50 mb-4 text-lg font-semibold flex items-center gap-2">Notas para o Romaneio
-
-
-            </h3>
-                        <div className="bg-green-500 text-slate-50 flex gap-2">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            Notas para o Romaneio
+                        </h3>
+                        <div className="flex gap-2">
                             <Input
                 placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
                 value={notasDigitadas}
@@ -1700,7 +1780,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-700">
                                 <History className="w-5 h-5 text-indigo-600" />
-                                <h2 className="font-semibold">Última Importação</h2>
+                                <h2 className="font-semibold">Importações</h2>
                             </div>
                             {importacoes.length > 1 &&
             <Button
@@ -1791,54 +1871,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                     </div>
         }
 
-                {/* Search e Ações em Massa */}
-                <Card className="bg-white/60 border-0 shadow-md">
-                    <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <Input
-                  placeholder="Buscar por NF, destinatário ou transportadora..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 bg-white" />
-
-                            </div>
-                            <Select value={filterFilial} onValueChange={setFilterFilial}>
-                                <SelectTrigger className="w-40 bg-white">
-                                    <SelectValue placeholder="Filial" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todas">Todas Filiais</SelectItem>
-                                    {[...new Set(notas.map((n) => n.filial).filter(Boolean))].map((filial) =>
-                  <SelectItem key={filial} value={filial}>{filial}</SelectItem>
-                  )}
-                                </SelectContent>
-                            </Select>
-                            <div className="flex gap-2 flex-wrap">
-                                <Button variant="outline" onClick={selecionarTodos}>
-                                    {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
-                                </Button>
-                                {selecionados.length > 0 &&
-                <Button
-                  variant="outline"
-                  className="border-red-500 text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
-                      deleteEmMassaMutation.mutate(selecionados);
-                    }
-                  }}>
-
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        Excluir ({selecionados.length})
-                                    </Button>
-                }
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Dashboard Resumo da Última Importação */}
+                {/* Resumo da Última Importação */}
                 {dashboardImportacao && Object.keys(dashboardImportacao.porPlaca).length > 0 &&
         <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-lg">
                         <CardHeader>
@@ -1897,6 +1930,57 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         </CardContent>
                     </Card>
         }
+
+                {/* Busca por Nota Fiscal, Destinatário e Transportadora */}
+                <Card className="bg-white/60 border-0 shadow-md">
+                    <CardContent className="p-4">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <Search className="w-5 h-5 text-blue-600" />
+                            Busca e Filtros
+                        </h3>
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                  placeholder="Buscar por NF, destinatário ou transportadora..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 bg-white" />
+
+                            </div>
+                            <Select value={filterFilial} onValueChange={setFilterFilial}>
+                                <SelectTrigger className="w-40 bg-white">
+                                    <SelectValue placeholder="Filial" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todas">Todas Filiais</SelectItem>
+                                    {[...new Set(notas.map((n) => n.filial).filter(Boolean))].map((filial) =>
+                  <SelectItem key={filial} value={filial}>{filial}</SelectItem>
+                  )}
+                                </SelectContent>
+                            </Select>
+                            <div className="flex gap-2 flex-wrap">
+                                <Button variant="outline" onClick={selecionarTodos}>
+                                    {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
+                                </Button>
+                                {selecionados.length > 0 &&
+                <Button
+                  variant="outline"
+                  className="border-red-500 text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
+                      deleteEmMassaMutation.mutate(selecionados);
+                    }
+                  }}>
+
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Excluir ({selecionados.length})
+                                    </Button>
+                }
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Tabela */}
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl overflow-hidden">

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
     Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw, Settings, Pencil, MapPin
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export default function ImportacaoCard({
     const [notasSelecionadasExpanded, setNotasSelecionadasExpanded] = useState([]);
     const [showEditFilialDialog, setShowEditFilialDialog] = useState(false);
     const [filialParaAtribuir, setFilialParaAtribuir] = useState("");
+    const [filtroNotas, setFiltroNotas] = useState("");
     
     // Carregar configurações salvas do localStorage
     const [printConfig, setPrintConfig] = useState(() => {
@@ -792,9 +794,10 @@ export default function ImportacaoCard({
                     {/* Lista de notas expandida */}
                     {expanded && (
                         <div className="mt-4 pt-4 border-t">
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-sm font-medium text-slate-600">Notas desta importação:</h4>
-                                <div className="flex gap-2">
+                            <div className="flex flex-col gap-3 mb-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium text-slate-600">Notas desta importação:</h4>
+                                    <div className="flex gap-2">
                                     <Button 
                                         variant="outline" 
                                         size="sm"
@@ -814,9 +817,23 @@ export default function ImportacaoCard({
                                         </Button>
                                     )}
                                 </div>
+                                </div>
+                                <Input
+                                    placeholder="Filtrar por NF ou Destinatário (começa com)..."
+                                    value={filtroNotas}
+                                    onChange={(e) => setFiltroNotas(e.target.value)}
+                                    className="bg-white"
+                                />
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-48 overflow-y-auto">
-                                {notasDaImportacao.map(nota => {
+                                {notasDaImportacao
+                                    .filter(nota => {
+                                        if (!filtroNotas) return true;
+                                        const termo = filtroNotas.toLowerCase();
+                                        return nota.numero_nf?.toLowerCase().startsWith(termo) || 
+                                               nota.destinatario?.toLowerCase().startsWith(termo);
+                                    })
+                                    .map(nota => {
                                     const selecionada = notasSelecionadasExpanded.includes(nota.id);
                                     return (
                                         <div 

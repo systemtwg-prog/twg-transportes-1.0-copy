@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
     Plus, Search, Pencil, Trash2, Calendar, Package,
-    X, Save, Star, Copy, AlertTriangle, UserPlus, Loader2
+    X, Save, Star, Copy, AlertTriangle, UserPlus, Loader2, GripVertical
 } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -413,6 +414,8 @@ export default function AdicionarColetaDiaria() {
     const [showCadastroCliente, setShowCadastroCliente] = useState(false);
     const [tipoClienteCadastro, setTipoClienteCadastro] = useState("remetente");
     const [buscandoCNPJ, setBuscandoCNPJ] = useState(false);
+    const [reordenando, setReordenando] = useState(false);
+    const [ordemAlterada, setOrdemAlterada] = useState(false);
     const [clienteForm, setClienteForm] = useState({
         razao_social: "",
         nome_fantasia: "",
@@ -552,6 +555,20 @@ export default function AdicionarColetaDiaria() {
         }
     });
 
+    const updateOrdemMutation = useMutation({
+        mutationFn: async (items) => {
+            for (const item of items) {
+                await base44.entities.ColetaDiaria.update(item.id, { ordem: item.ordem });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
+            setOrdemAlterada(false);
+            setReordenando(false);
+            toast.success("Ordem salva com sucesso!");
+        }
+    });
+
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.ColetaDiaria.delete(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
@@ -594,6 +611,44 @@ export default function AdicionarColetaDiaria() {
         )
     );
 
+    // Ordenar por campo ordem
+    filtered = filtered.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+    const handleDragEnd = (result) => {
+        if (!result.destination) return;
+
+        const items = Array.from(filtered);
+        const [reordered] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reordered);
+
+        // Atualizar ordens
+        const updatedItems = items.map((item, index) => ({
+            id: item.id,
+            ordem: index
+        }));
+
+        // Atualizar estado local imediatamente
+        queryClient.setQueryData(["coletas-diarias"], (old) => {
+            return old.map(coleta => {
+                const updated = updatedItems.find(u => u.id === coleta.id);
+                if (updated) {
+                    return { ...coleta, ordem: updated.ordem };
+                }
+                return coleta;
+            });
+        });
+
+        setOrdemAlterada(true);
+    };
+
+    const handleSalvarOrdem = () => {
+        const items = filtered.map((item, index) => ({
+            id: item.id,
+            ordem: index
+        }));
+        updateOrdemMutation.mutate(items);
+    };
+
     const statusColors = {
         pendente: "bg-yellow-100 text-yellow-800",
         realizado: "bg-green-100 text-green-800",
@@ -621,13 +676,33 @@ export default function AdicionarColetaDiaria() {
                             <p className="text-slate-500">Cadastre novas coletas diárias</p>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="bg-gradient-to-r from-indigo-500 to-purple-600"
-                    >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Nova Coleta
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={() => setReordenando(!reordenando)}
+                            variant={reordenando ? "default" : "outline"}
+                            className={reordenando ? "bg-purple-600 hover:bg-purple-700" : "border-purple-500 text-purple-600"}
+                        >
+                            <GripVertical className="w-4 h-4 mr-2" />
+                            {reordenando ? "Reordenando..." : "Reordenar"}
+                        </Button>
+                        {ordemAlterada && (
+                            <Button 
+                                onClick={handleSalvarOrdem}
+                                disabled={updateOrdemMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                {updateOrdemMutation.isPending ? "Salvando..." : "Salvar Ordem"}
+                            </Button>
+                        )}
+                        <Button 
+                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600"
+                        >
+                            <Plus className="w-5 h-5 mr-2" />
+                            Nova Coleta
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -650,6 +725,7 @@ export default function AdicionarColetaDiaria() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-slate-50">
+                                    {reordenando && <TableHead className="w-10"></TableHead>}
                                     <TableHead>Data</TableHead>
                                     <TableHead>Remetente</TableHead>
                                     <TableHead>Destinatário</TableHead>
@@ -659,83 +735,112 @@ export default function AdicionarColetaDiaria() {
                                     <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12">
-                                            <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
-                                        </TableCell>
-                                    </TableRow>
-                                ) : filtered.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12 text-slate-500">
-                                            Nenhuma coleta encontrada
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filtered.map((coleta) => (
-                                        <TableRow key={coleta.id} className={`hover:bg-slate-50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    {coleta.prioridade && (
-                                                        <span className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                                                            <AlertTriangle className="w-3 h-3 text-yellow-900" />
-                                                        </span>
-                                                    )}
-                                                    {formatDate(coleta.data_coleta)}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{coleta.remetente_nome}</TableCell>
-                                            <TableCell>{coleta.destinatario_nome}</TableCell>
-                                            <TableCell className="text-sm">
-                                                {coleta.volume} / {coleta.peso}
-                                                {coleta.nfe && <span className="block text-xs text-slate-500">NFe: {coleta.nfe}</span>}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge className={statusColors[coleta.status]}>
-                                                    {statusLabels[coleta.status]}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Switch
-                                                    checked={coleta.prioridade || false}
-                                                    onCheckedChange={(v) => updateMutation.mutate({ id: coleta.id, data: { prioridade: v } })}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => handleDuplicate(coleta)}
-                                                        title="Duplicar"
+                            <DragDropContext onDragEnd={handleDragEnd}>
+                                <Droppable droppableId="coletas">
+                                    {(provided) => (
+                                        <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+                                            {isLoading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={reordenando ? 8 : 7} className="text-center py-12">
+                                                        <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : filtered.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={reordenando ? 8 : 7} className="text-center py-12 text-slate-500">
+                                                        Nenhuma coleta encontrada
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                filtered.map((coleta, index) => (
+                                                    <Draggable 
+                                                        key={coleta.id} 
+                                                        draggableId={coleta.id} 
+                                                        index={index}
+                                                        isDragDisabled={!reordenando}
                                                     >
-                                                        <Copy className="w-4 h-4 text-purple-600" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => { setEditing(coleta); setShowForm(true); }}
-                                                    >
-                                                        <Pencil className="w-4 h-4 text-blue-600" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                            if (confirm("Excluir esta coleta?")) {
-                                                                deleteMutation.mutate(coleta.id);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Trash2 className="w-4 h-4 text-red-600" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
+                                                        {(provided, snapshot) => (
+                                                            <TableRow 
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                className={`hover:bg-slate-50 ${coleta.prioridade ? "bg-yellow-50" : ""} ${snapshot.isDragging ? "bg-indigo-100 shadow-lg" : ""}`}
+                                                            >
+                                                                {reordenando && (
+                                                                    <TableCell {...provided.dragHandleProps}>
+                                                                        <GripVertical className="w-5 h-5 text-slate-400 cursor-grab active:cursor-grabbing" />
+                                                                    </TableCell>
+                                                                )}
+                                                                <TableCell className="font-medium">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {coleta.prioridade && (
+                                                                            <span className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                                                                                <AlertTriangle className="w-3 h-3 text-yellow-900" />
+                                                                            </span>
+                                                                        )}
+                                                                        {formatDate(coleta.data_coleta)}
+                                                                    </div>
+                                                                </TableCell>
+                                                                <TableCell>{coleta.remetente_nome}</TableCell>
+                                                                <TableCell>{coleta.destinatario_nome}</TableCell>
+                                                                <TableCell className="text-sm">
+                                                                    {coleta.volume} / {coleta.peso}
+                                                                    {coleta.nfe && <span className="block text-xs text-slate-500">NFe: {coleta.nfe}</span>}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Badge className={statusColors[coleta.status]}>
+                                                                        {statusLabels[coleta.status]}
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Switch
+                                                                        checked={coleta.prioridade || false}
+                                                                        onCheckedChange={(v) => updateMutation.mutate({ id: coleta.id, data: { prioridade: v } })}
+                                                                        disabled={reordenando}
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => handleDuplicate(coleta)}
+                                                                            title="Duplicar"
+                                                                            disabled={reordenando}
+                                                                        >
+                                                                            <Copy className="w-4 h-4 text-purple-600" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => { setEditing(coleta); setShowForm(true); }}
+                                                                            disabled={reordenando}
+                                                                        >
+                                                                            <Pencil className="w-4 h-4 text-blue-600" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => {
+                                                                                if (confirm("Excluir esta coleta?")) {
+                                                                                    deleteMutation.mutate(coleta.id);
+                                                                                }
+                                                                            }}
+                                                                            disabled={reordenando}
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </Draggable>
+                                                ))
+                                            )}
+                                            {provided.placeholder}
+                                        </TableBody>
+                                    )}
+                                </Droppable>
+                            </DragDropContext>
                         </Table>
                     </CardContent>
                 </Card>

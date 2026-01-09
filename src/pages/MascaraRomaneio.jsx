@@ -31,6 +31,8 @@ export default function MascaraRomaneio() {
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
     const [remetenteForm, setRemetenteForm] = useState({ nome: "", cnpj: "", endereco: "", telefone: "" });
     const [editingRemetente, setEditingRemetente] = useState(null);
+    const [ordenacaoNotas, setOrdenacaoNotas] = useState("digitacao");
+    const [otimizandoRota, setOtimizandoRota] = useState(false);
 
     // Carregar notas da URL se houver
     React.useEffect(() => {
@@ -271,7 +273,7 @@ export default function MascaraRomaneio() {
         }
     };
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         const winPrint = window.open('', '_blank', 'width=900,height=650');
         if (!winPrint) {
             alert("Por favor, permita pop-ups para imprimir.");
@@ -289,6 +291,77 @@ export default function MascaraRomaneio() {
             }
             notasPorPlaca[placa].push(nota);
         });
+
+        // Ordenar notas conforme a opção escolhida
+        for (const placa in notasPorPlaca) {
+            if (ordenacaoNotas === "transportadora") {
+                // Ordenar por transportadora
+                notasPorPlaca[placa].sort((a, b) => {
+                    const transpA = (a.transportadora || "").toUpperCase();
+                    const transpB = (b.transportadora || "").toUpperCase();
+                    return transpA.localeCompare(transpB);
+                });
+            } else if (ordenacaoNotas === "localizacao") {
+                // Otimizar rota por localização
+                const notasDaPlaca = notasPorPlaca[placa];
+                if (notasDaPlaca.length > 1) {
+                    setOtimizandoRota(true);
+                    try {
+                        const transportadorasInfo = notasDaPlaca.map(n => ({
+                            id: n.id,
+                            transportadora: n.transportadora || n.destinatario || "",
+                            destinatario: n.destinatario || ""
+                        }));
+
+                        const result = await base44.integrations.Core.InvokeLLM({
+                            prompt: `Você é um otimizador de rotas de entregas. Receba a lista de transportadoras/destinatários e ordene-as por proximidade geográfica para criar um itinerário eficiente.
+
+LISTA DE TRANSPORTADORAS/DESTINATÁRIOS:
+${transportadorasInfo.map((t, i) => `${i + 1}. ${t.transportadora} - ${t.destinatario}`).join('\n')}
+
+INSTRUÇÕES:
+1. Busque a localização de cada transportadora/destinatário na internet
+2. Calcule a rota mais eficiente considerando proximidade geográfica
+3. Retorne a lista de IDs na ordem otimizada
+
+Retorne apenas a lista de IDs na ordem ideal de entrega.`,
+                            add_context_from_internet: true,
+                            response_json_schema: {
+                                type: "object",
+                                properties: {
+                                    ids_ordenados: {
+                                        type: "array",
+                                        items: { type: "string" },
+                                        description: "IDs das notas na ordem otimizada"
+                                    }
+                                }
+                            }
+                        });
+
+                        if (result?.ids_ordenados) {
+                            const notasOrdenadas = [];
+                            result.ids_ordenados.forEach(id => {
+                                const nota = notasDaPlaca.find(n => n.id === id);
+                                if (nota) notasOrdenadas.push(nota);
+                            });
+                            // Adicionar notas que não foram ordenadas
+                            notasDaPlaca.forEach(nota => {
+                                if (!notasOrdenadas.find(n => n.id === nota.id)) {
+                                    notasOrdenadas.push(nota);
+                                }
+                            });
+                            notasPorPlaca[placa] = notasOrdenadas;
+                            toast.success("Rota otimizada por localização!");
+                        }
+                    } catch (error) {
+                        console.error("Erro ao otimizar rota:", error);
+                        toast.error("Erro ao otimizar rota. Usando ordem de digitação.");
+                    }
+                    setOtimizandoRota(false);
+                }
+            }
+            // Se for "digitacao", mantém a ordem original (não faz nada)
+        }
 
         let pagesHtml = "";
 
@@ -587,11 +660,20 @@ export default function MascaraRomaneio() {
                     </div>
                     <Button 
                         onClick={handlePrint}
-                        disabled={notasSelecionadas.length === 0}
+                        disabled={notasSelecionadas.length === 0 || otimizandoRota}
                         className="bg-gradient-to-r from-emerald-500 to-teal-600 h-14 px-8 text-lg"
                     >
-                        <Printer className="w-6 h-6 mr-2" />
-                        Imprimir Romaneio ({notasSelecionadas.length})
+                        {otimizandoRota ? (
+                            <>
+                                <div className="animate-spin w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                Otimizando...
+                            </>
+                        ) : (
+                            <>
+                                <Printer className="w-6 h-6 mr-2" />
+                                Imprimir Romaneio ({notasSelecionadas.length})
+                            </>
+                        )}
                     </Button>
                 </div>
 
@@ -602,7 +684,7 @@ export default function MascaraRomaneio() {
                             <Calendar className="w-5 h-5 text-emerald-600" />
                             Configurações do Romaneio
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                                         <div className="space-y-2">
                                                             <Label>Data do Romaneio</Label>
                                                             <Input

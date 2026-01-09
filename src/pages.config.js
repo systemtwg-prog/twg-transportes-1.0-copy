@@ -4,6 +4,7 @@ import AtualizarLocalizacao from './pages/AtualizarLocalizacao';
 import Avisos from './pages/Avisos';
 import Backup from './pages/Backup';
 import BuscaMultas from './pages/BuscaMultas';
+import Canhoto from './pages/Canhoto';
 import Clientes from './pages/Clientes';
 import ClientesSNF from './pages/ClientesSNF';
 import ColetasDiarias from './pages/ColetasDiarias';
@@ -34,7 +35,6 @@ import ServicosSNF from './pages/ServicosSNF';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import Canhoto from './pages/Canhoto';
 import __Layout from './Layout.jsx';
 
 
@@ -45,6 +45,7 @@ export const PAGES = {
     "Avisos": Avisos,
     "Backup": Backup,
     "BuscaMultas": BuscaMultas,
+    "Canhoto": Canhoto,
     "Clientes": Clientes,
     "ClientesSNF": ClientesSNF,
     "ColetasDiarias": ColetasDiarias,
@@ -75,7 +76,6 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "Canhoto": Canhoto,
 }
 
 export const pagesConfig = {

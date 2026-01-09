@@ -12,7 +12,7 @@ import {
     ClipboardList, Settings, BarChart3,
     Navigation, Building2, Upload,
     Camera, ChevronRight, Bell, Grip, Check, X,
-    AlertTriangle, Clock, TrendingUp, Calendar, Printer
+    AlertTriangle, Clock, TrendingUp, Calendar, Printer, Plus
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
@@ -22,11 +22,13 @@ import { ptBR } from "date-fns/locale";
 const allModules = [
     { id: "nota_deposito", name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 to-indigo-700" },
     { id: "comprovantes", name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-cyan-500 to-blue-600" },
-    { id: "coletas", name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 to-violet-600" },
+    { id: "coletas_diarias", name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 to-violet-600" },
+    { id: "adicionar_coleta", name: "Adicionar Coleta", href: "AdicionarColetaDiaria", icon: Plus, color: "from-emerald-600 to-teal-600" },
     { id: "ordens", name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 to-indigo-600" },
     { id: "cracha", name: "Crachá", href: "CrachaIdentificacao", icon: Users, color: "from-emerald-500 to-cyan-500" },
     { id: "rotas", name: "Rotas GPS", href: "RotasGPS", icon: Navigation, color: "from-green-500 to-emerald-600" },
     { id: "veiculos", name: "Veículos", href: "Veiculos", icon: Car, color: "from-slate-500 to-gray-600" },
+    { id: "motoristas", name: "Motoristas", href: "Motoristas", icon: Users, color: "from-teal-500 to-cyan-600" },
     { id: "multas", name: "Multas", href: "BuscaMultas", icon: AlertTriangle, color: "from-red-500 to-orange-600" },
     { id: "notas_fiscais", name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600" },
     { id: "romaneio", name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600" },
@@ -34,9 +36,13 @@ const allModules = [
     { id: "relatorio", name: "Relatório", href: "ImpressaoRelatorio", icon: FileText, color: "from-indigo-500 to-purple-600" },
     { id: "ctes", name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText, color: "from-amber-500 to-yellow-600" },
     { id: "clientes", name: "Clientes", href: "Clientes", icon: Users, color: "from-purple-500 to-indigo-600" },
+    { id: "clientes_snf", name: "Clientes SNF", href: "ClientesSNF", icon: Users, color: "from-indigo-500 to-blue-600" },
+    { id: "servicos_snf", name: "Serviços SNF", href: "ServicosSNF", icon: ClipboardList, color: "from-blue-500 to-cyan-600" },
+    { id: "destinatarios", name: "Destinatários", href: "Destinatarios", icon: Building2, color: "from-cyan-500 to-blue-600" },
     { id: "transportadoras", name: "Transportadoras", href: "Transportadoras", icon: Building2, color: "from-slate-500 to-gray-600" },
-    { id: "motoristas", name: "Motoristas", href: "Motoristas", icon: Users, color: "from-teal-500 to-cyan-600" },
-    { id: "comprovantes_cte", name: "Comprovantes CTEs", href: "ComprovantesCtes", icon: FileText, color: "from-amber-500 to-yellow-600" },
+    { id: "avisos", name: "Avisos", href: "Avisos", icon: Bell, color: "from-yellow-500 to-amber-600" },
+    { id: "rastreamento", name: "Rastreamento", href: "Rastreamento", icon: Navigation, color: "from-green-600 to-emerald-700" },
+    { id: "relatorios", name: "Relatórios", href: "Relatorios", icon: BarChart3, color: "from-indigo-600 to-purple-600" },
 ];
 
 export default function HomeDesktop() {
@@ -90,15 +96,12 @@ export default function HomeDesktop() {
         queryFn: () => base44.entities.Veiculo.list()
     });
 
-    const { data: ordensColeta = [] } = useQuery({
-        queryKey: ["ordens-coleta-home"],
-        queryFn: () => base44.entities.OrdemColeta.list("-created_date", 10)
-    });
+
 
     const isAdmin = currentUser?.role === "admin";
 
     // Módulos ativos do usuário
-    const modulosAtivos = currentUser?.modulos_desktop || ["nota_deposito", "comprovantes", "coletas", "ordens", "rotas", "veiculos"];
+    const modulosAtivos = currentUser?.modulos_desktop || ["nota_deposito", "comprovantes", "coletas_diarias", "adicionar_coleta", "ordens", "rotas", "veiculos", "motoristas", "notas_fiscais", "romaneio"];
 
     const updateUserMutation = useMutation({
         mutationFn: (data) => base44.auth.updateMe(data),
@@ -373,7 +376,7 @@ export default function HomeDesktop() {
     const stats = {
         totalEntregas: Object.values(dashboardPorVeiculo).reduce((acc, v) => acc + v.entregas, 0),
         totalColetas: coletasDiarias.filter(c => c.status === "pendente").length,
-        ordensHoje: ordensColeta.filter(o => o.data_ordem === format(new Date(), "yyyy-MM-dd")).length,
+        totalNotas: notasFiscais.length,
         veiculosAtivos: veiculos.filter(v => v.status === "disponivel" || v.status === "em_uso").length
     };
 
@@ -476,10 +479,10 @@ export default function HomeDesktop() {
                         <CardContent className="p-5">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm opacity-90">Ordens Hoje</p>
-                                    <p className="text-3xl font-bold">{stats.ordensHoje}</p>
+                                    <p className="text-sm opacity-90">Notas Fiscais</p>
+                                    <p className="text-3xl font-bold">{stats.totalNotas}</p>
                                 </div>
-                                <ClipboardList className="w-10 h-10 opacity-80" />
+                                <FileText className="w-10 h-10 opacity-80" />
                             </div>
                         </CardContent>
                     </Card>
@@ -617,42 +620,6 @@ export default function HomeDesktop() {
 
                     {/* Coluna Lateral */}
                     <div className="space-y-6">
-                        {/* Últimas Ordens */}
-                        <Card className="border-0 shadow-lg">
-                            <CardHeader className="border-b">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-violet-600" />
-                                    Últimas Ordens
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-4">
-                                <div className="space-y-3">
-                                    {ordensColeta.slice(0, 5).map((ordem) => (
-                                        <Link key={ordem.id} to={createPageUrl("OrdensColeta")}>
-                                            <div className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className="font-semibold text-sm text-slate-800">#{ordem.numero}</span>
-                                                    <Badge className={`text-xs ${
-                                                        ordem.status === "pendente" ? "bg-yellow-100 text-yellow-700" :
-                                                        ordem.status === "coletado" ? "bg-blue-100 text-blue-700" :
-                                                        ordem.status === "entregue" ? "bg-green-100 text-green-700" :
-                                                        "bg-slate-100 text-slate-700"
-                                                    }`}>
-                                                        {ordem.status}
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-xs text-slate-600 truncate">{ordem.remetente_nome}</p>
-                                                <p className="text-xs text-slate-500">→ {ordem.destinatario_nome}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                    {ordensColeta.length === 0 && (
-                                        <p className="text-center text-slate-500 py-4">Nenhuma ordem recente</p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-
                         {/* Acesso Admin */}
                         {isAdmin && (
                             <Card className="border-0 shadow-lg">

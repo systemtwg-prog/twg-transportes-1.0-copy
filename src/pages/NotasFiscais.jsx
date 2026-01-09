@@ -1417,29 +1417,13 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             <div className="max-w-7xl mx-auto space-y-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
-                                <FileText className="w-8 h-8 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-800">Notas Fiscais</h1>
-                                <p className="text-slate-500">Gerencie notas fiscais para romaneios</p>
-                            </div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                            <FileText className="w-8 h-8 text-white" />
                         </div>
-                        <div className="flex gap-2">
-                            <Link to={createPageUrl("MascaraRomaneio")}>
-                                <Button variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50">
-                                    <Truck className="w-4 h-4 mr-2" />
-                                    Máscara Romaneio
-                                </Button>
-                            </Link>
-                            <Link to={createPageUrl("RomaneiosGerados")}>
-                                <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
-                                    <Package className="w-4 h-4 mr-2" />
-                                    Romaneios Gerados
-                                </Button>
-                            </Link>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Notas Fiscais</h1>
+                            <p className="text-sm md:text-base text-slate-500">Gerencie notas fiscais para romaneios</p>
                         </div>
                     </div>
 
@@ -1469,6 +1453,12 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
                         </Button>
+                        <Link to={createPageUrl("RomaneiosGerados")}>
+                            <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
+                                <Package className="w-4 h-4 mr-2" />
+                                Romaneios Gerados
+                            </Button>
+                        </Link>
                         
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1486,7 +1476,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     Chave de Acesso
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                    <Link to={createPageUrl("MascaraRomaneio")} className="cursor-pointer">
+                                    <Link to={createPageUrl("MascaraRomaneio")} className="cursor-pointer flex items-center">
                                         <Truck className="w-4 h-4 mr-2" />
                                         Máscara Romaneio
                                     </Link>

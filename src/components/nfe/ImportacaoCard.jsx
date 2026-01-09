@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { 
-    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw
+    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save, RotateCcw, Settings
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -174,6 +174,15 @@ export default function ImportacaoCard({
         } else {
             setNotasParaImprimir(prev => [...prev, nota]);
         }
+    };
+
+    const handleAbrirConfigFinal = () => {
+        if (notasParaImprimir.length === 0) {
+            toast.error("Selecione ao menos uma nota para imprimir");
+            return;
+        }
+        setShowPrintDialog(false);
+        setShowConfigDialog(true);
     };
 
     const handleImprimir = () => {
@@ -1081,6 +1090,15 @@ export default function ImportacaoCard({
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={() => setShowPrintDialog(false)}>
                                     Cancelar
+                                </Button>
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowConfigDialog(false);
+                                        setShowPrintDialog(true);
+                                    }}
+                                >
+                                    Voltar
                                 </Button>
                                 <Button 
                                     onClick={handleImprimir}

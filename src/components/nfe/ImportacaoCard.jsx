@@ -324,61 +324,46 @@ export default function ImportacaoCard({
         if (Object.keys(resumoPorPlaca).length > 0) {
             resumoHtml = '<div class="resumo"><h3>RESUMO - NOTAS COM PLACA</h3>';
 
-            // Agrupar por placa
+            // Agrupar por placa - UNIFICADO COM FILIAIS
             resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Placa:</h4><div class="resumo-grid">';
 
             Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
+                // Calcular totais por filial para esta placa
+                const filiaisPlaca = {};
+                notasParaImprimir.forEach(nota => {
+                    if (nota.placa === placa && nota.filial) {
+                        if (!filiaisPlaca[nota.filial]) filiaisPlaca[nota.filial] = 0;
+                        filiaisPlaca[nota.filial]++;
+                    }
+                });
+
                 resumoHtml += `
-                    <div class="resumo-placa">
-                        <h4>PLACA: ${placa}</h4>
-                        <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Entregas:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
-                        <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                        <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
+                    <div class="resumo-placa-unificado">
+                        <div class="resumo-placa-dados">
+                            <h4>PLACA: ${placa}</h4>
+                            <div class="resumo-item-grande"><strong>NOTAS:</strong> ${dados.totalNotas}</div>
+                            <div class="resumo-item-grande"><strong>ENTREGAS:</strong> ${dados.transportadoras.size || dados.totalNotas}</div>
+                            <div class="resumo-item-grande"><strong>PESO:</strong> ${dados.pesoTotal.toFixed(2)} KG</div>
+                            <div class="resumo-item-grande"><strong>VOLUME:</strong> ${dados.volumeTotal}</div>
+                        </div>
+                        ${Object.keys(filiaisPlaca).length > 0 ? `
+                        <div class="resumo-placa-filiais">
+                            ${Object.entries(filiaisPlaca).map(([filial, qtd]) => 
+                                `<div class="resumo-filial-item">FILIAL ${filial}: <strong>${qtd} NOTAS</strong></div>`
+                            ).join('')}
+                        </div>
+                        ` : ''}
                     </div>
                 `;
             });
 
             resumoHtml += '</div></div>';
 
-            // Agrupar por filial (apenas notas com placa)
-            const resumoPorFilial = {};
-            notasParaImprimir.forEach(nota => {
-                if (!nota.placa || !nota.filial) return;
-                const filial = nota.filial;
-                const placa = nota.placa;
 
-                if (!resumoPorFilial[placa]) {
-                    resumoPorFilial[placa] = {};
-                }
-                if (!resumoPorFilial[placa][filial]) {
-                    resumoPorFilial[placa][filial] = 0;
-                }
-                resumoPorFilial[placa][filial]++;
-            });
-
-            if (Object.keys(resumoPorFilial).length > 0) {
-                resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Filial e Placa:</h4><div class="resumo-grid">';
-
-                Object.entries(resumoPorFilial).forEach(([placa, filiais]) => {
-                    const totalNotasPlaca = Object.values(filiais).reduce((a, b) => a + b, 0);
-                    resumoHtml += `
-                        <div class="resumo-filial">
-                            <h4>PLACA: ${placa}</h4>
-                            ${Object.entries(filiais).map(([filial, qtd]) => 
-                                `<div class="resumo-item"><strong>${filial}:</strong> ${qtd} nota(s)</div>`
-                            ).join('')}
-                            <div class="resumo-item" style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd;"><strong>Total:</strong> ${totalNotasPlaca} nota(s)</div>
-                        </div>
-                    `;
-                });
-
-                resumoHtml += '</div></div>';
-                }
 
                 // Agrupar por transportadora (apenas notas com placa)
-            const resumoPorTransp = {};
-            notasParaImprimir.forEach(nota => {
+                const resumoPorTransp = {};
+                notasParaImprimir.forEach(nota => {
                 if (!nota.placa) return;
                 const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
                 if (!resumoPorTransp[transp]) {
@@ -393,10 +378,10 @@ export default function ImportacaoCard({
                 resumoPorTransp[transp].pesoTotal += pesoNum;
                 const volNum = parseFloat((nota.volume || "").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
                 resumoPorTransp[transp].volumeTotal += volNum;
-            });
+                });
 
-            if (Object.keys(resumoPorTransp).length > 0) {
-                resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid">';
+                if (Object.keys(resumoPorTransp).length > 0) {
+                resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid-transportadora">';
 
                 Object.entries(resumoPorTransp)
                     .sort((a, b) => b[1].totalNotas - a[1].totalNotas)
@@ -412,7 +397,7 @@ export default function ImportacaoCard({
                     });
 
                 resumoHtml += '</div></div>';
-            }
+                }
 
             // Totais consolidados
             resumoHtml += `
@@ -540,93 +525,74 @@ export default function ImportacaoCard({
                     }
                     .resumo-grid {
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
                         gap: ${printConfig.resumoGap}px;
                         margin-bottom: ${printConfig.resumoGap}px;
                     }
-                    .resumo-placa {
-                        background: white;
-                        padding: 10px;
-                        border-left: 4px solid #059669;
-                        border-radius: 4px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    .resumo-grid-transportadora {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: ${printConfig.resumoGap}px;
+                        margin-bottom: ${printConfig.resumoGap}px;
                     }
-                    .resumo-placa h4 {
+                    .resumo-placa-unificado {
+                        background: white;
+                        padding: 12px;
+                        border-left: 4px solid #059669;
+                        border-radius: 6px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+                        display: grid;
+                        grid-template-columns: 1fr auto;
+                        gap: 12px;
+                        align-items: start;
+                    }
+                    .resumo-placa-dados {
+                        flex: 1;
+                    }
+                    .resumo-placa-dados h4 {
                         color: #047857;
-                        font-size: ${printConfig.resumoFontSize + 2}px;
-                        margin-bottom: 6px;
+                        font-size: ${printConfig.resumoFontSize + 4}px;
+                        margin-bottom: 8px;
                         font-weight: bold;
                         text-align: center;
                         background: #d1fae5;
-                        padding: 4px;
+                        padding: 6px;
+                        border-radius: 4px;
+                    }
+                    .resumo-item-grande {
+                        font-size: ${printConfig.resumoFontSize + 3}px;
+                        color: #1e293b;
+                        margin: 5px 0;
+                        font-weight: 600;
+                    }
+                    .resumo-placa-filiais {
+                        border-left: 2px solid #e2e8f0;
+                        padding-left: 12px;
+                        min-width: 160px;
+                    }
+                    .resumo-filial-item {
+                        font-size: ${printConfig.resumoFontSize + 2}px;
+                        color: #334155;
+                        margin: 4px 0;
+                        padding: 4px 8px;
+                        background: #f1f5f9;
                         border-radius: 3px;
                     }
                     .resumo-transp {
                         background: white;
-                        padding: 10px;
+                        padding: 8px;
                         border-left: 4px solid #7c3aed;
                         border-radius: 4px;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     }
                     .resumo-transp h4 {
                         color: #6d28d9;
-                        font-size: ${printConfig.resumoFontSize + 1}px;
-                        margin-bottom: 6px;
+                        font-size: ${printConfig.resumoFontSize}px;
+                        margin-bottom: 4px;
                         font-weight: bold;
                         text-align: center;
                         background: #ede9fe;
-                        padding: 4px;
-                        border-radius: 3px;
-                    }
-                    .resumo-filial {
-                        background: white;
-                        padding: 10px;
-                        border-left: 4px solid #0284c7;
-                        border-radius: 4px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    }
-                    .resumo-filial h4 {
-                        color: #0369a1;
-                        font-size: ${printConfig.resumoFontSize + 2}px;
-                        margin-bottom: 6px;
-                        font-weight: bold;
-                        text-align: center;
-                        background: #e0f2fe;
-                        padding: 4px;
-                        border-radius: 3px;
-                    }
-                    .resumo-filial {
-                        background: white;
-                        padding: 10px;
-                        border-left: 4px solid #0284c7;
-                        border-radius: 4px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    }
-                    .resumo-filial h4 {
-                        color: #0369a1;
-                        font-size: ${printConfig.resumoFontSize + 2}px;
-                        margin-bottom: 6px;
-                        font-weight: bold;
-                        text-align: center;
-                        background: #e0f2fe;
-                        padding: 4px;
-                        border-radius: 3px;
-                    }
-                    .resumo-filial {
-                        background: white;
-                        padding: 10px;
-                        border-left: 4px solid #0284c7;
-                        border-radius: 4px;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    }
-                    .resumo-filial h4 {
-                        color: #0369a1;
-                        font-size: ${printConfig.resumoFontSize + 2}px;
-                        margin-bottom: 6px;
-                        font-weight: bold;
-                        text-align: center;
-                        background: #e0f2fe;
-                        padding: 4px;
+                        padding: 3px;
                         border-radius: 3px;
                     }
                     .resumo-item {
@@ -637,33 +603,36 @@ export default function ImportacaoCard({
                         justify-content: space-between;
                     }
                     .resumo-total {
-                        background: #1e40af;
-                        color: white;
-                        padding: 12px;
-                        margin-top: 10px;
-                        border-radius: 6px;
+                        background: #dbeafe;
+                        color: #1e3a8a;
+                        padding: 14px;
+                        margin-top: 12px;
+                        border-radius: 8px;
                         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        border: 2px solid #3b82f6;
                     }
                     .resumo-total h4 {
-                        color: white;
-                        font-size: ${printConfig.resumoFontSize + 4}px;
-                        margin-bottom: 8px;
+                        color: #1e3a8a;
+                        font-size: ${printConfig.resumoFontSize + 6}px;
+                        margin-bottom: 10px;
                         font-weight: bold;
                         text-align: center;
-                        border-bottom: 2px solid rgba(255,255,255,0.3);
-                        padding-bottom: 6px;
+                        border-bottom: 2px solid #3b82f6;
+                        padding-bottom: 8px;
                     }
                     .resumo-grid-total {
                         display: grid;
                         grid-template-columns: repeat(2, 1fr);
-                        gap: ${printConfig.resumoGap}px;
+                        gap: ${printConfig.resumoGap + 2}px;
                     }
                     .resumo-total .resumo-item {
-                        color: white;
-                        font-size: ${printConfig.resumoFontSize + 1}px;
-                        background: rgba(255,255,255,0.1);
-                        padding: 6px;
+                        color: #1e293b;
+                        font-size: ${printConfig.resumoFontSize + 4}px;
+                        background: white;
+                        padding: 8px;
                         border-radius: 4px;
+                        font-weight: bold;
+                        border: 1px solid #cbd5e1;
                     }
                 </style>
             </head>

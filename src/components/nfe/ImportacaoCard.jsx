@@ -891,11 +891,10 @@ export default function ImportacaoCard({
                                     />
                                 </div>
                             </div>
-                            </div>
-                            </div>
+                        </div>
 
-                            {/* Painel de Preview */}
-                            <div className="bg-slate-50 rounded-lg p-4 border-2 border-slate-200">
+                        {/* Painel de Preview */}
+                        <div className="bg-slate-50 rounded-lg p-4 border-2 border-slate-200">
                             <h3 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
                                 <Eye className="w-4 h-4" />
                                 Preview das Configurações

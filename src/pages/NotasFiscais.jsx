@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-    Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key
-} from "lucide-react";
+import {
+  Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key } from
+"lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import ImportacaoCard from "@/components/nfe/ImportacaoCard";
@@ -24,195 +24,195 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function NotasFiscais() {
-    const [showForm, setShowForm] = useState(false);
-    const [showPasteForm, setShowPasteForm] = useState(false);
-    const [pasteText, setPasteText] = useState("");
-    const [processingPaste, setProcessingPaste] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [search, setSearch] = useState("");
-    const [columnFilters, setColumnFilters] = useState({
-        destinatario: [],
-        transportadora: [],
-        filial: [],
-        placa: []
-    });
-    const [filterFilial, setFilterFilial] = useState("");
-    const [filterDataImportacao, setFilterDataImportacao] = useState("");
-    const [importing, setImporting] = useState(false);
-    const [selecionados, setSelecionados] = useState([]);
-    const [showEditDialog, setShowEditDialog] = useState(false);
-    const [placaEmMassa, setPlacaEmMassa] = useState("");
-    const [showCadastroTransp, setShowCadastroTransp] = useState(false);
-    const [transpExtraidas, setTranspExtraidas] = useState([]);
-    const [transpSelecionadas, setTranspSelecionadas] = useState([]);
-    const [buscandoDados, setBuscandoDados] = useState({});
-    const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
-    const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
-    const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
-    const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
-    const [showArquivados, setShowArquivados] = useState(false);
-    
-    // Estados para funcionalidades do romaneio
-    const [motorista, setMotorista] = useState("");
-    const [dataRomaneio, setDataRomaneio] = useState(format(new Date(), "yyyy-MM-dd"));
-    const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
-    const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
-    const [notasDigitadas, setNotasDigitadas] = useState("");
-    const [layoutConfig, setLayoutConfig] = useState({
-        colRemetente: 18,
-        colDestinatario: 42,
-        colNfe: 15,
-        colCarimbo: 25,
-        alturaLinha: 45
-    });
-    
-    // Estados para gravação de áudio
-    const [showAudioDialog, setShowAudioDialog] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [audioUrl, setAudioUrl] = useState(null);
-    const [transcription, setTranscription] = useState("");
-    const [isTranscribing, setIsTranscribing] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [audioFileUrl, setAudioFileUrl] = useState("");
-    const [buscandoOnline, setBuscandoOnline] = useState(false);
-    const [dadosExtraidos, setDadosExtraidos] = useState(null);
-    const [destinoSelecionado, setDestinoSelecionado] = useState("");
-    const [showImportador, setShowImportador] = useState(false);
-    const [showChaveAcesso, setShowChaveAcesso] = useState(false);
-    const [chaveAcesso, setChaveAcesso] = useState("");
-    const [consultandoChave, setConsultandoChave] = useState(false);
-    const mediaRecorderRef = React.useRef(null);
-    const audioChunksRef = React.useRef([]);
-    const audioRef = React.useRef(null);
-    
-    const queryClient = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [showPasteForm, setShowPasteForm] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [processingPaste, setProcessingPaste] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [search, setSearch] = useState("");
+  const [columnFilters, setColumnFilters] = useState({
+    destinatario: [],
+    transportadora: [],
+    filial: [],
+    placa: []
+  });
+  const [filterFilial, setFilterFilial] = useState("");
+  const [filterDataImportacao, setFilterDataImportacao] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [placaEmMassa, setPlacaEmMassa] = useState("");
+  const [showCadastroTransp, setShowCadastroTransp] = useState(false);
+  const [transpExtraidas, setTranspExtraidas] = useState([]);
+  const [transpSelecionadas, setTranspSelecionadas] = useState([]);
+  const [buscandoDados, setBuscandoDados] = useState({});
+  const [showCadastroDestinatario, setShowCadastroDestinatario] = useState(false);
+  const [novoDestinatario, setNovoDestinatario] = useState({ nome: "" });
+  const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
+  const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
+  const [showArquivados, setShowArquivados] = useState(false);
 
-    const [form, setForm] = useState({
-        numero_nf: "",
-        destinatario: "",
-        peso: "",
-        volume: "",
-        transportadora: "",
-        filial: "",
-        placa: "",
-        data: format(new Date(), "yyyy-MM-dd"),
-        observacoes: ""
-    });
+  // Estados para funcionalidades do romaneio
+  const [motorista, setMotorista] = useState("");
+  const [dataRomaneio, setDataRomaneio] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+  const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
+  const [notasDigitadas, setNotasDigitadas] = useState("");
+  const [layoutConfig, setLayoutConfig] = useState({
+    colRemetente: 18,
+    colDestinatario: 42,
+    colNfe: 15,
+    colCarimbo: 25,
+    alturaLinha: 45
+  });
 
-    const { data: notas = [], isLoading } = useQuery({
-        queryKey: ["notas-fiscais"],
-        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
-    });
+  // Estados para gravação de áudio
+  const [showAudioDialog, setShowAudioDialog] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [transcription, setTranscription] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioFileUrl, setAudioFileUrl] = useState("");
+  const [buscandoOnline, setBuscandoOnline] = useState(false);
+  const [dadosExtraidos, setDadosExtraidos] = useState(null);
+  const [destinoSelecionado, setDestinoSelecionado] = useState("");
+  const [showImportador, setShowImportador] = useState(false);
+  const [showChaveAcesso, setShowChaveAcesso] = useState(false);
+  const [chaveAcesso, setChaveAcesso] = useState("");
+  const [consultandoChave, setConsultandoChave] = useState(false);
+  const mediaRecorderRef = React.useRef(null);
+  const audioChunksRef = React.useRef([]);
+  const audioRef = React.useRef(null);
 
-    const { data: veiculos = [] } = useQuery({
-        queryKey: ["veiculos-notas"],
-        queryFn: () => base44.entities.Veiculo.list()
-    });
+  const queryClient = useQueryClient();
 
-    const { data: transportadoras = [] } = useQuery({
-        queryKey: ["transportadoras-notas"],
-        queryFn: () => base44.entities.Transportadora.list()
-    });
+  const [form, setForm] = useState({
+    numero_nf: "",
+    destinatario: "",
+    peso: "",
+    volume: "",
+    transportadora: "",
+    filial: "",
+    placa: "",
+    data: format(new Date(), "yyyy-MM-dd"),
+    observacoes: ""
+  });
 
-    const { data: destinatarios = [] } = useQuery({
-        queryKey: ["destinatarios-notas"],
-        queryFn: () => base44.entities.Destinatario.list()
-    });
+  const { data: notas = [], isLoading } = useQuery({
+    queryKey: ["notas-fiscais"],
+    queryFn: () => base44.entities.NotaFiscal.list("-created_date")
+  });
 
-    const { data: importacoes = [] } = useQuery({
-        queryKey: ["registros-importacao"],
-        queryFn: () => base44.entities.RegistroImportacao.list("-created_date", 10)
-    });
+  const { data: veiculos = [] } = useQuery({
+    queryKey: ["veiculos-notas"],
+    queryFn: () => base44.entities.Veiculo.list()
+  });
 
-    const { data: motoristas = [] } = useQuery({
-        queryKey: ["motoristas-romaneio"],
-        queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
-    });
+  const { data: transportadoras = [] } = useQuery({
+    queryKey: ["transportadoras-notas"],
+    queryFn: () => base44.entities.Transportadora.list()
+  });
 
-    const { data: empresasRemetentes = [] } = useQuery({
-        queryKey: ["empresas-remetentes"],
-        queryFn: () => base44.entities.EmpresaRemetente.list()
-    });
+  const { data: destinatarios = [] } = useQuery({
+    queryKey: ["destinatarios-notas"],
+    queryFn: () => base44.entities.Destinatario.list()
+  });
 
-    const { data: configs = [] } = useQuery({
-        queryKey: ["configuracoes"],
-        queryFn: () => base44.entities.Configuracoes.list()
-    });
+  const { data: importacoes = [] } = useQuery({
+    queryKey: ["registros-importacao"],
+    queryFn: () => base44.entities.RegistroImportacao.list("-created_date", 10)
+  });
 
-    const config = configs[0] || {};
+  const { data: motoristas = [] } = useQuery({
+    queryKey: ["motoristas-romaneio"],
+    queryFn: () => base44.entities.Motorista.filter({ status: "ativo" })
+  });
 
-    // Mutation para criar registro de importação
-    const createImportacaoMutation = useMutation({
-        mutationFn: (data) => base44.entities.RegistroImportacao.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-        }
-    });
+  const { data: empresasRemetentes = [] } = useQuery({
+    queryKey: ["empresas-remetentes"],
+    queryFn: () => base44.entities.EmpresaRemetente.list()
+  });
 
-    // Mutation para salvar romaneio gerado
-    const createRomaneioMutation = useMutation({
-        mutationFn: (data) => base44.entities.RomaneioGerado.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
-            toast.success("Romaneio salvo com sucesso!");
-        }
-    });
+  const { data: configs = [] } = useQuery({
+    queryKey: ["configuracoes"],
+    queryFn: () => base44.entities.Configuracoes.list()
+  });
 
-    // Mutation para excluir registro de importação (SEM excluir as notas)
-    const deleteImportacaoMutation = useMutation({
-        mutationFn: (id) => base44.entities.RegistroImportacao.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-            toast.success("Registro excluído. As notas foram mantidas no sistema.");
-        }
-    });
+  const config = configs[0] || {};
 
-    // Verificar CNPJ duplicado
-    const cnpjJaCadastrado = (cnpj) => {
-        if (!cnpj) return false;
-        const cnpjLimpo = cnpj.replace(/\D/g, "");
-        return transportadoras.some(t => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
-    };
+  // Mutation para criar registro de importação
+  const createImportacaoMutation = useMutation({
+    mutationFn: (data) => base44.entities.RegistroImportacao.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+    }
+  });
 
-    // Criar transportadora
-    const createTranspMutation = useMutation({
-        mutationFn: (data) => base44.entities.Transportadora.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
-        }
-    });
+  // Mutation para salvar romaneio gerado
+  const createRomaneioMutation = useMutation({
+    mutationFn: (data) => base44.entities.RomaneioGerado.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+      toast.success("Romaneio salvo com sucesso!");
+    }
+  });
 
-    // Criar destinatário
-    const createDestinatarioMutation = useMutation({
-        mutationFn: (data) => base44.entities.Destinatario.create(data),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ["destinatarios-notas"] });
-            setForm({ ...form, destinatario: data.nome });
-            setShowCadastroDestinatario(false);
-            setNovoDestinatario({ nome: "" });
-            toast.success("Destinatário cadastrado!");
-        }
-    });
+  // Mutation para excluir registro de importação (SEM excluir as notas)
+  const deleteImportacaoMutation = useMutation({
+    mutationFn: (id) => base44.entities.RegistroImportacao.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+      toast.success("Registro excluído. As notas foram mantidas no sistema.");
+    }
+  });
 
-    // Criar remetente
-    const createRemetenteMutation = useMutation({
-        mutationFn: (data) => base44.entities.EmpresaRemetente.create(data),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] });
-            setRemetenteSelecionado(data.nome);
-            setShowCadastroRemetente(false);
-            setNovoRemetente({ nome: "" });
-            toast.success("Remetente cadastrado!");
-        }
-    });
+  // Verificar CNPJ duplicado
+  const cnpjJaCadastrado = (cnpj) => {
+    if (!cnpj) return false;
+    const cnpjLimpo = cnpj.replace(/\D/g, "");
+    return transportadoras.some((t) => t.cnpj?.replace(/\D/g, "") === cnpjLimpo);
+  };
 
-    // Buscar dados online da transportadora
-    const buscarDadosOnline = async (index, nome) => {
-        setBuscandoDados(prev => ({ ...prev, [index]: true }));
-        
-        try {
-            const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Busque informações sobre a transportadora "${nome}" no Brasil.
+  // Criar transportadora
+  const createTranspMutation = useMutation({
+    mutationFn: (data) => base44.entities.Transportadora.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+    }
+  });
+
+  // Criar destinatário
+  const createDestinatarioMutation = useMutation({
+    mutationFn: (data) => base44.entities.Destinatario.create(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["destinatarios-notas"] });
+      setForm({ ...form, destinatario: data.nome });
+      setShowCadastroDestinatario(false);
+      setNovoDestinatario({ nome: "" });
+      toast.success("Destinatário cadastrado!");
+    }
+  });
+
+  // Criar remetente
+  const createRemetenteMutation = useMutation({
+    mutationFn: (data) => base44.entities.EmpresaRemetente.create(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["empresas-remetentes"] });
+      setRemetenteSelecionado(data.nome);
+      setShowCadastroRemetente(false);
+      setNovoRemetente({ nome: "" });
+      toast.success("Remetente cadastrado!");
+    }
+  });
+
+  // Buscar dados online da transportadora
+  const buscarDadosOnline = async (index, nome) => {
+    setBuscandoDados((prev) => ({ ...prev, [index]: true }));
+
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Busque informações sobre a transportadora "${nome}" no Brasil.
 
 Retorne os dados encontrados sobre esta empresa de transporte/logística:
 - razao_social: nome completo da empresa
@@ -228,129 +228,129 @@ Retorne os dados encontrados sobre esta empresa de transporte/logística:
 - horario_funcionamento: horário de funcionamento (ex: 08:00 às 18:00)
 
 Se não encontrar algum dado, deixe em branco.`,
-                add_context_from_internet: true,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        razao_social: { type: "string" },
-                        nome_fantasia: { type: "string" },
-                        cnpj: { type: "string" },
-                        telefone: { type: "string" },
-                        email: { type: "string" },
-                        endereco: { type: "string" },
-                        bairro: { type: "string" },
-                        cidade: { type: "string" },
-                        uf: { type: "string" },
-                        cep: { type: "string" },
-                        horario_funcionamento: { type: "string" }
-                    }
-                }
-            });
-
-            if (result) {
-                setTranspExtraidas(prev => {
-                    const newList = [...prev];
-                    newList[index] = {
-                        ...newList[index],
-                        ...result,
-                        razao_social: result.razao_social || newList[index].nome
-                    };
-                    return newList;
-                });
-                toast.success(`Dados atualizados para ${nome}!`);
-            }
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-            toast.error("Não foi possível buscar dados online.");
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            razao_social: { type: "string" },
+            nome_fantasia: { type: "string" },
+            cnpj: { type: "string" },
+            telefone: { type: "string" },
+            email: { type: "string" },
+            endereco: { type: "string" },
+            bairro: { type: "string" },
+            cidade: { type: "string" },
+            uf: { type: "string" },
+            cep: { type: "string" },
+            horario_funcionamento: { type: "string" }
+          }
         }
-        
-        setBuscandoDados(prev => ({ ...prev, [index]: false }));
-    };
+      });
 
-    const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.NotaFiscal.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            setShowForm(false);
-            resetForm();
-            toast.success("Nota fiscal cadastrada com sucesso!");
-        }
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.NotaFiscal.update(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            setShowForm(false);
-            resetForm();
-            toast.success("Nota fiscal atualizada!");
-        }
-    });
-
-    const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.NotaFiscal.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            toast.success("Nota fiscal excluída!");
-        }
-    });
-
-    // Mutation para atualizar em massa
-    const updateEmMassaMutation = useMutation({
-        mutationFn: async ({ ids, data }) => {
-            for (const id of ids) {
-                await base44.entities.NotaFiscal.update(id, data);
-            }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            setShowEditDialog(false);
-            setSelecionados([]);
-            setPlacaEmMassa("");
-            toast.success("Notas fiscais atualizadas!");
-        }
-    });
-
-    // Mutation para excluir em massa
-    const deleteEmMassaMutation = useMutation({
-        mutationFn: async (ids) => {
-            for (const id of ids) {
-                await base44.entities.NotaFiscal.delete(id);
-            }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-            setSelecionados([]);
-            toast.success("Notas fiscais excluídas!");
-        }
-    });
-
-    const resetForm = () => {
-        setForm({
-            numero_nf: "",
-            destinatario: "",
-            peso: "",
-            volume: "",
-            transportadora: "",
-            filial: "",
-            placa: "",
-            data: format(new Date(), "yyyy-MM-dd"),
-            observacoes: ""
+      if (result) {
+        setTranspExtraidas((prev) => {
+          const newList = [...prev];
+          newList[index] = {
+            ...newList[index],
+            ...result,
+            razao_social: result.razao_social || newList[index].nome
+          };
+          return newList;
         });
-        setEditing(null);
-    };
+        toast.success(`Dados atualizados para ${nome}!`);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      toast.error("Não foi possível buscar dados online.");
+    }
 
-    // Consultar chave de acesso
-    const handleConsultarChave = async () => {
-        if (!chaveAcesso || chaveAcesso.length !== 44) {
-            toast.error("Chave de acesso deve ter 44 dígitos");
-            return;
-        }
+    setBuscandoDados((prev) => ({ ...prev, [index]: false }));
+  };
 
-        setConsultandoChave(true);
-        try {
-            const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `A partir da chave de acesso de NFe: ${chaveAcesso}
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.NotaFiscal.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      setShowForm(false);
+      resetForm();
+      toast.success("Nota fiscal cadastrada com sucesso!");
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.NotaFiscal.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      setShowForm(false);
+      resetForm();
+      toast.success("Nota fiscal atualizada!");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.NotaFiscal.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      toast.success("Nota fiscal excluída!");
+    }
+  });
+
+  // Mutation para atualizar em massa
+  const updateEmMassaMutation = useMutation({
+    mutationFn: async ({ ids, data }) => {
+      for (const id of ids) {
+        await base44.entities.NotaFiscal.update(id, data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      setShowEditDialog(false);
+      setSelecionados([]);
+      setPlacaEmMassa("");
+      toast.success("Notas fiscais atualizadas!");
+    }
+  });
+
+  // Mutation para excluir em massa
+  const deleteEmMassaMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await base44.entities.NotaFiscal.delete(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+      setSelecionados([]);
+      toast.success("Notas fiscais excluídas!");
+    }
+  });
+
+  const resetForm = () => {
+    setForm({
+      numero_nf: "",
+      destinatario: "",
+      peso: "",
+      volume: "",
+      transportadora: "",
+      filial: "",
+      placa: "",
+      data: format(new Date(), "yyyy-MM-dd"),
+      observacoes: ""
+    });
+    setEditing(null);
+  };
+
+  // Consultar chave de acesso
+  const handleConsultarChave = async () => {
+    if (!chaveAcesso || chaveAcesso.length !== 44) {
+      toast.error("Chave de acesso deve ter 44 dígitos");
+      return;
+    }
+
+    setConsultandoChave(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `A partir da chave de acesso de NFe: ${chaveAcesso}
                 
 Extraia as seguintes informações:
 - Número da nota fiscal (posições 25-33 da chave)
@@ -358,66 +358,66 @@ Extraia as seguintes informações:
 - Data de emissão (posições 3-8 no formato AAMM)
 
 Retorne apenas o número da nota fiscal extraído.`,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        numero_nf: { type: "string" }
-                    }
-                }
-            });
-
-            if (result?.numero_nf) {
-                setForm({ ...form, numero_nf: result.numero_nf });
-                setShowChaveAcesso(false);
-                setChaveAcesso("");
-                toast.success("Número da NF extraído da chave!");
-            } else {
-                toast.error("Não foi possível extrair dados da chave");
-            }
-        } catch (error) {
-            console.error("Erro ao consultar chave:", error);
-            toast.error("Erro ao processar chave de acesso");
+        response_json_schema: {
+          type: "object",
+          properties: {
+            numero_nf: { type: "string" }
+          }
         }
-        setConsultandoChave(false);
-    };
+      });
 
-    const handleEdit = (nota) => {
-        setForm(nota);
-        setEditing(nota);
-        setShowForm(true);
-    };
+      if (result?.numero_nf) {
+        setForm({ ...form, numero_nf: result.numero_nf });
+        setShowChaveAcesso(false);
+        setChaveAcesso("");
+        toast.success("Número da NF extraído da chave!");
+      } else {
+        toast.error("Não foi possível extrair dados da chave");
+      }
+    } catch (error) {
+      console.error("Erro ao consultar chave:", error);
+      toast.error("Erro ao processar chave de acesso");
+    }
+    setConsultandoChave(false);
+  };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (editing) {
-            updateMutation.mutate({ id: editing.id, data: form });
-        } else {
-            createMutation.mutate(form);
-        }
-    };
+  const handleEdit = (nota) => {
+    setForm(nota);
+    setEditing(nota);
+    setShowForm(true);
+  };
 
-    const toggleSelecionado = (id) => {
-        setSelecionados(prev => 
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
-    };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editing) {
+      updateMutation.mutate({ id: editing.id, data: form });
+    } else {
+      createMutation.mutate(form);
+    }
+  };
 
-    const selecionarTodos = () => {
-        if (selecionados.length === filtered.length) {
-            setSelecionados([]);
-        } else {
-            setSelecionados(filtered.map(n => n.id));
-        }
-    };
+  const toggleSelecionado = (id) => {
+    setSelecionados((prev) =>
+    prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
 
-    const handleProcessPaste = async () => {
-        if (!pasteText.trim()) return;
-        
-        setProcessingPaste(true);
-        
-        try {
-            const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de notas fiscais.
+  const selecionarTodos = () => {
+    if (selecionados.length === filtered.length) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(filtered.map((n) => n.id));
+    }
+  };
+
+  const handleProcessPaste = async () => {
+    if (!pasteText.trim()) return;
+
+    setProcessingPaste(true);
+
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de notas fiscais.
 
 TEXTO PARA ANALISAR:
 """
@@ -428,372 +428,372 @@ IMPORTANTE:
 - Extraia TODAS as notas fiscais encontradas
 - NÃO preencha o campo remetente, deixe em branco
 - Extraia o nome da transportadora de cada nota`,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        notas: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    numero_nf: { type: "string", description: "Número da NF" },
-                                    destinatario: { type: "string", description: "Destinatário" },
-                                    peso: { type: "string", description: "Peso" },
-                                    volume: { type: "string", description: "Volumes" },
-                                    transportadora: { type: "string", description: "Transportadora" }
-                                }
-                            }
-                        }
-                    },
-                    required: ["notas"]
+        response_json_schema: {
+          type: "object",
+          properties: {
+            notas: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  numero_nf: { type: "string", description: "Número da NF" },
+                  destinatario: { type: "string", description: "Destinatário" },
+                  peso: { type: "string", description: "Peso" },
+                  volume: { type: "string", description: "Volumes" },
+                  transportadora: { type: "string", description: "Transportadora" }
                 }
-            });
-
-            console.log("Resultado LLM:", result);
-
-            const notasEncontradas = result?.notas || [];
-            
-            // Buscar notas existentes para verificar duplicados
-            const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
-            const numerosExistentes = new Set(
-                todasNotasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
-            );
-            
-            if (notasEncontradas.length > 0) {
-                let importados = 0;
-                let duplicados = 0;
-                const transportadorasUnicas = new Set();
-                const notasIdsImportadas = [];
-                
-                for (const nota of notasEncontradas) {
-                    if (nota.numero_nf || nota.destinatario) {
-                        const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
-                        
-                        // Verificar duplicidade
-                        if (numeroNf && numerosExistentes.has(numeroNf)) {
-                            duplicados++;
-                            continue;
-                        }
-                        
-                        const novaNota = await base44.entities.NotaFiscal.create({
-                            numero_nf: nota.numero_nf || "",
-                            destinatario: nota.destinatario || "",
-                            peso: nota.peso || "",
-                            volume: nota.volume || "",
-                            transportadora: nota.transportadora || "",
-                            remetente: "",
-                            data: format(new Date(), "yyyy-MM-dd")
-                        });
-                        importados++;
-                        notasIdsImportadas.push(novaNota.id);
-                        
-                        // Adicionar ao set para evitar duplicados no mesmo lote
-                        if (numeroNf) numerosExistentes.add(numeroNf);
-                        
-                        // Coletar transportadoras únicas
-                        if (nota.transportadora) {
-                            transportadorasUnicas.add(nota.transportadora.trim());
-                        }
-                    }
-                }
-                
-                // Criar registro de importação
-                if (importados > 0) {
-                    await createImportacaoMutation.mutateAsync({
-                        data_importacao: new Date().toISOString(),
-                        quantidade_notas: importados,
-                        origem: "colagem",
-                        notas_ids: notasIdsImportadas,
-                        status: "processado"
-                    });
-                }
-                
-                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                
-                if (duplicados > 0) {
-                    toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
-                } else {
-                    toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
-                }
-                
-                // Extrair transportadoras para cadastro
-                if (transportadorasUnicas.size > 0) {
-                    const transpList = Array.from(transportadorasUnicas).map(nome => ({
-                        nome,
-                        razao_social: nome,
-                        selecionada: true
-                    }));
-                    setTranspExtraidas(transpList);
-                    setTranspSelecionadas(transpList.map((_, i) => i));
-                    setShowCadastroTransp(true);
-                }
-                
-                setShowPasteForm(false);
-                setPasteText("");
-            } else {
-                toast.error("Não foi possível identificar notas fiscais no texto.");
+              }
             }
-        } catch (error) {
-            console.error("Erro ao processar texto:", error);
-            toast.error("Erro ao processar texto. Tente novamente.");
+          },
+          required: ["notas"]
         }
-        
-        setProcessingPaste(false);
-    };
+      });
 
-    // Cadastrar transportadoras selecionadas
-    const handleCadastrarTransportadoras = async () => {
-        let cadastradas = 0;
-        let ignoradas = 0;
-        
-        for (const index of transpSelecionadas) {
-            const transp = transpExtraidas[index];
-            if (transp) {
-                // Verificar se já existe pelo CNPJ ou nome
-                if (transp.cnpj && cnpjJaCadastrado(transp.cnpj)) {
-                    ignoradas++;
-                    continue;
-                }
-                
-                // Verificar se já existe pelo nome
-                const nomeExiste = transportadoras.some(t => 
-                    t.razao_social?.toLowerCase() === transp.razao_social?.toLowerCase() ||
-                    t.nome_fantasia?.toLowerCase() === transp.nome?.toLowerCase()
-                );
-                
-                if (nomeExiste) {
-                    ignoradas++;
-                    continue;
-                }
-                
-                await createTranspMutation.mutateAsync({
-                    razao_social: transp.razao_social || transp.nome,
-                    nome_fantasia: transp.nome_fantasia || transp.nome,
-                    cnpj: transp.cnpj || "",
-                    telefone: transp.telefone || "",
-                    email: transp.email || "",
-                    endereco: transp.endereco || "",
-                    bairro: transp.bairro || "",
-                    cidade: transp.cidade || "",
-                    uf: transp.uf || "",
-                    cep: transp.cep || "",
-                    observacoes: transp.horario_funcionamento ? `Horário: ${transp.horario_funcionamento}` : "",
-                    status: "ativo"
-                });
-                cadastradas++;
+      console.log("Resultado LLM:", result);
+
+      const notasEncontradas = result?.notas || [];
+
+      // Buscar notas existentes para verificar duplicados
+      const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
+      const numerosExistentes = new Set(
+        todasNotasExistentes.map((n) => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
+      );
+
+      if (notasEncontradas.length > 0) {
+        let importados = 0;
+        let duplicados = 0;
+        const transportadorasUnicas = new Set();
+        const notasIdsImportadas = [];
+
+        for (const nota of notasEncontradas) {
+          if (nota.numero_nf || nota.destinatario) {
+            const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
+
+            // Verificar duplicidade
+            if (numeroNf && numerosExistentes.has(numeroNf)) {
+              duplicados++;
+              continue;
             }
-        }
-        
-        queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
-        
-        if (ignoradas > 0) {
-            toast.warning(`${cadastradas} transportadora(s) cadastrada(s). ${ignoradas} ignorada(s) (já existentes).`);
-        } else if (cadastradas > 0) {
-            toast.success(`✅ ${cadastradas} transportadora(s) cadastrada(s)!`);
-        }
-        
-        setShowCadastroTransp(false);
-        setTranspExtraidas([]);
-        setTranspSelecionadas([]);
-    };
 
-    const handleImportFile = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setImporting(true);
-        
-        try {
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-            const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-                file_url,
-                json_schema: {
-                    type: "object",
-                    properties: {
-                        notas: {
-                            type: "array",
-                            description: "Lista de notas fiscais extraídas do documento. NÃO extraia o campo remetente.",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    numero_nf: { type: "string", description: "Número da nota fiscal (NFE)" },
-                                    destinatario: { type: "string", description: "Nome do destinatário" },
-                                    peso: { type: "string", description: "Peso da carga" },
-                                    volume: { type: "string", description: "Quantidade de volumes" },
-                                    transportadora: { type: "string", description: "Nome da transportadora" }
-                                }
-                            }
-                        }
-                    }
-                }
+            const novaNota = await base44.entities.NotaFiscal.create({
+              numero_nf: nota.numero_nf || "",
+              destinatario: nota.destinatario || "",
+              peso: nota.peso || "",
+              volume: nota.volume || "",
+              transportadora: nota.transportadora || "",
+              remetente: "",
+              data: format(new Date(), "yyyy-MM-dd")
             });
+            importados++;
+            notasIdsImportadas.push(novaNota.id);
 
-            if (result.status === "success" && result.output) {
-                const notasImport = result.output.notas || (Array.isArray(result.output) ? result.output : [result.output]);
+            // Adicionar ao set para evitar duplicados no mesmo lote
+            if (numeroNf) numerosExistentes.add(numeroNf);
 
-                // Buscar notas existentes
-                const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
-                const numerosExistentes = new Set(
-                    todasNotasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
-                );
-
-                let importados = 0;
-                let duplicados = 0;
-                const notasIdsImportadas = [];
-
-                for (const nota of notasImport) {
-                    if (nota.numero_nf || nota.destinatario) {
-                        const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
-
-                        // Verificar duplicidade
-                        if (numeroNf && numerosExistentes.has(numeroNf)) {
-                            duplicados++;
-                            continue;
-                        }
-
-                        const novaNota = await base44.entities.NotaFiscal.create({
-                            numero_nf: nota.numero_nf || "",
-                            destinatario: nota.destinatario || "",
-                            peso: nota.peso || "",
-                            volume: nota.volume || "",
-                            transportadora: nota.transportadora || "",
-                            remetente: "", // Sempre em branco
-                            data: format(new Date(), "yyyy-MM-dd")
-                        });
-                        importados++;
-                        notasIdsImportadas.push(novaNota.id);
-
-                        // Adicionar ao set para evitar duplicados no mesmo lote
-                        if (numeroNf) numerosExistentes.add(numeroNf);
-                    }
-                }
-                
-                // Criar registro de importação
-                if (importados > 0) {
-                    await createImportacaoMutation.mutateAsync({
-                        data_importacao: new Date().toISOString(),
-                        quantidade_notas: importados,
-                        origem: "arquivo",
-                        nome_arquivo: file.name,
-                        notas_ids: notasIdsImportadas,
-                        status: "processado"
-                    });
-                }
-                
-                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-
-                if (duplicados > 0) {
-                    toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
-                } else {
-                    toast.success(`✅ Importado com sucesso! ${importados} nota(s) fiscal(is) adicionada(s).`);
-                }
-                } else {
-                toast.error("Erro ao processar arquivo. Verifique o formato.");
-                }
-        } catch (error) {
-            console.error("Erro na importação:", error);
-            toast.error("Erro ao importar arquivo. Tente novamente.");
+            // Coletar transportadoras únicas
+            if (nota.transportadora) {
+              transportadorasUnicas.add(nota.transportadora.trim());
+            }
+          }
         }
-        
-        setImporting(false);
-        e.target.value = "";
-    };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "-";
-        try {
-            return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
-        } catch {
-            return dateStr;
+        // Criar registro de importação
+        if (importados > 0) {
+          await createImportacaoMutation.mutateAsync({
+            data_importacao: new Date().toISOString(),
+            quantidade_notas: importados,
+            origem: "colagem",
+            notas_ids: notasIdsImportadas,
+            status: "processado"
+          });
         }
-    };
 
-    // Funções de gravação de áudio
-    const startRecording = async () => {
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+
+        if (duplicados > 0) {
+          toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
+        } else {
+          toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
+        }
+
+        // Extrair transportadoras para cadastro
+        if (transportadorasUnicas.size > 0) {
+          const transpList = Array.from(transportadorasUnicas).map((nome) => ({
+            nome,
+            razao_social: nome,
+            selecionada: true
+          }));
+          setTranspExtraidas(transpList);
+          setTranspSelecionadas(transpList.map((_, i) => i));
+          setShowCadastroTransp(true);
+        }
+
+        setShowPasteForm(false);
+        setPasteText("");
+      } else {
+        toast.error("Não foi possível identificar notas fiscais no texto.");
+      }
+    } catch (error) {
+      console.error("Erro ao processar texto:", error);
+      toast.error("Erro ao processar texto. Tente novamente.");
+    }
+
+    setProcessingPaste(false);
+  };
+
+  // Cadastrar transportadoras selecionadas
+  const handleCadastrarTransportadoras = async () => {
+    let cadastradas = 0;
+    let ignoradas = 0;
+
+    for (const index of transpSelecionadas) {
+      const transp = transpExtraidas[index];
+      if (transp) {
+        // Verificar se já existe pelo CNPJ ou nome
+        if (transp.cnpj && cnpjJaCadastrado(transp.cnpj)) {
+          ignoradas++;
+          continue;
+        }
+
+        // Verificar se já existe pelo nome
+        const nomeExiste = transportadoras.some((t) =>
+        t.razao_social?.toLowerCase() === transp.razao_social?.toLowerCase() ||
+        t.nome_fantasia?.toLowerCase() === transp.nome?.toLowerCase()
+        );
+
+        if (nomeExiste) {
+          ignoradas++;
+          continue;
+        }
+
+        await createTranspMutation.mutateAsync({
+          razao_social: transp.razao_social || transp.nome,
+          nome_fantasia: transp.nome_fantasia || transp.nome,
+          cnpj: transp.cnpj || "",
+          telefone: transp.telefone || "",
+          email: transp.email || "",
+          endereco: transp.endereco || "",
+          bairro: transp.bairro || "",
+          cidade: transp.cidade || "",
+          uf: transp.uf || "",
+          cep: transp.cep || "",
+          observacoes: transp.horario_funcionamento ? `Horário: ${transp.horario_funcionamento}` : "",
+          status: "ativo"
+        });
+        cadastradas++;
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+
+    if (ignoradas > 0) {
+      toast.warning(`${cadastradas} transportadora(s) cadastrada(s). ${ignoradas} ignorada(s) (já existentes).`);
+    } else if (cadastradas > 0) {
+      toast.success(`✅ ${cadastradas} transportadora(s) cadastrada(s)!`);
+    }
+
+    setShowCadastroTransp(false);
+    setTranspExtraidas([]);
+    setTranspSelecionadas([]);
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: {
+          type: "object",
+          properties: {
+            notas: {
+              type: "array",
+              description: "Lista de notas fiscais extraídas do documento. NÃO extraia o campo remetente.",
+              items: {
+                type: "object",
+                properties: {
+                  numero_nf: { type: "string", description: "Número da nota fiscal (NFE)" },
+                  destinatario: { type: "string", description: "Nome do destinatário" },
+                  peso: { type: "string", description: "Peso da carga" },
+                  volume: { type: "string", description: "Quantidade de volumes" },
+                  transportadora: { type: "string", description: "Nome da transportadora" }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (result.status === "success" && result.output) {
+        const notasImport = result.output.notas || (Array.isArray(result.output) ? result.output : [result.output]);
+
+        // Buscar notas existentes
+        const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
+        const numerosExistentes = new Set(
+          todasNotasExistentes.map((n) => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
+        );
+
+        let importados = 0;
+        let duplicados = 0;
+        const notasIdsImportadas = [];
+
+        for (const nota of notasImport) {
+          if (nota.numero_nf || nota.destinatario) {
+            const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
+
+            // Verificar duplicidade
+            if (numeroNf && numerosExistentes.has(numeroNf)) {
+              duplicados++;
+              continue;
+            }
+
+            const novaNota = await base44.entities.NotaFiscal.create({
+              numero_nf: nota.numero_nf || "",
+              destinatario: nota.destinatario || "",
+              peso: nota.peso || "",
+              volume: nota.volume || "",
+              transportadora: nota.transportadora || "",
+              remetente: "", // Sempre em branco
+              data: format(new Date(), "yyyy-MM-dd")
+            });
+            importados++;
+            notasIdsImportadas.push(novaNota.id);
+
+            // Adicionar ao set para evitar duplicados no mesmo lote
+            if (numeroNf) numerosExistentes.add(numeroNf);
+          }
+        }
+
+        // Criar registro de importação
+        if (importados > 0) {
+          await createImportacaoMutation.mutateAsync({
+            data_importacao: new Date().toISOString(),
+            quantidade_notas: importados,
+            origem: "arquivo",
+            nome_arquivo: file.name,
+            notas_ids: notasIdsImportadas,
+            status: "processado"
+          });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+
+        if (duplicados > 0) {
+          toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
+        } else {
+          toast.success(`✅ Importado com sucesso! ${importados} nota(s) fiscal(is) adicionada(s).`);
+        }
+      } else {
+        toast.error("Erro ao processar arquivo. Verifique o formato.");
+      }
+    } catch (error) {
+      console.error("Erro na importação:", error);
+      toast.error("Erro ao importar arquivo. Tente novamente.");
+    }
+
+    setImporting(false);
+    e.target.value = "";
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    try {
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Funções de gravação de áudio
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+
+        // Upload do áudio
+        const file = new File([audioBlob], "audio_busca.webm", { type: "audio/webm" });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        setAudioFileUrl(file_url);
+
+        // Transcrever áudio
+        setIsTranscribing(true);
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    audioChunksRef.current.push(e.data);
-                }
-            };
-
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-                const url = URL.createObjectURL(audioBlob);
-                setAudioUrl(url);
-
-                // Upload do áudio
-                const file = new File([audioBlob], "audio_busca.webm", { type: "audio/webm" });
-                const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                setAudioFileUrl(file_url);
-
-                // Transcrever áudio
-                setIsTranscribing(true);
-                try {
-                    const result = await base44.integrations.Core.InvokeLLM({
-                        prompt: "Transcreva o áudio anexado. Retorne apenas o texto transcrito, sem comentários adicionais.",
-                        file_urls: [file_url],
-                        response_json_schema: {
-                            type: "object",
-                            properties: {
-                                transcricao: { type: "string" }
-                            }
-                        }
-                    });
-                    const texto = result.transcricao || "";
-                    setTranscription(texto);
-                } catch (err) {
-                    console.error("Erro na transcrição:", err);
-                    toast.error("Erro ao transcrever áudio");
-                }
-                setIsTranscribing(false);
-
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            mediaRecorder.start();
-            setIsRecording(true);
+          const result = await base44.integrations.Core.InvokeLLM({
+            prompt: "Transcreva o áudio anexado. Retorne apenas o texto transcrito, sem comentários adicionais.",
+            file_urls: [file_url],
+            response_json_schema: {
+              type: "object",
+              properties: {
+                transcricao: { type: "string" }
+              }
+            }
+          });
+          const texto = result.transcricao || "";
+          setTranscription(texto);
         } catch (err) {
-            console.error("Erro ao acessar microfone:", err);
-            toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
+          console.error("Erro na transcrição:", err);
+          toast.error("Erro ao transcrever áudio");
         }
-    };
+        setIsTranscribing(false);
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-        }
-    };
+        stream.getTracks().forEach((track) => track.stop());
+      };
 
-    const togglePlayback = () => {
-        if (audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
-            } else {
-                audioRef.current.play();
-            }
-            setIsPlaying(!isPlaying);
-        }
-    };
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Erro ao acessar microfone:", err);
+      toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
+    }
+  };
 
-    // Buscar dados online com base na transcrição
-    const buscarDadosOnlineAudio = async () => {
-        if (!transcription.trim()) {
-            toast.error("Grave um áudio primeiro");
-            return;
-        }
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
-        setBuscandoOnline(true);
-        try {
-            const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Você é um assistente de busca de dados empresariais. Analise o texto transcrito e busque informações COMPLETAS e REAIS na internet.
+  const togglePlayback = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Buscar dados online com base na transcrição
+  const buscarDadosOnlineAudio = async () => {
+    if (!transcription.trim()) {
+      toast.error("Grave um áudio primeiro");
+      return;
+    }
+
+    setBuscandoOnline(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Você é um assistente de busca de dados empresariais. Analise o texto transcrito e busque informações COMPLETAS e REAIS na internet.
 
 TEXTO TRANSCRITO DO ÁUDIO:
 "${transcription}"
@@ -829,284 +829,284 @@ EXTRAIA TODOS OS DADOS DISPONÍVEIS:
 - Ramo de atividade
 
 IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto mais dados melhor.`,
-                add_context_from_internet: true,
-                response_json_schema: {
-                    type: "object",
-                    properties: {
-                        tipo_dado: { type: "string", description: "Tipo: transportadora, cliente, nota_fiscal, endereco, outro" },
-                        razao_social: { type: "string" },
-                        nome_fantasia: { type: "string" },
-                        cnpj: { type: "string" },
-                        telefone: { type: "string" },
-                        telefone2: { type: "string" },
-                        email: { type: "string" },
-                        site: { type: "string" },
-                        endereco: { type: "string" },
-                        bairro: { type: "string" },
-                        cidade: { type: "string" },
-                        uf: { type: "string" },
-                        cep: { type: "string" },
-                        horario_funcionamento: { type: "string" },
-                        ramo_atividade: { type: "string" },
-                        observacoes: { type: "string" },
-                        numero_nf: { type: "string" },
-                        destinatario: { type: "string" },
-                        peso: { type: "string" },
-                        volume: { type: "string" }
-                    }
-                }
-            });
-
-            if (result) {
-                setDadosExtraidos(result);
-                toast.success("Dados encontrados! Escolha onde cadastrar.");
-            } else {
-                toast.warning("Não foi possível encontrar dados relevantes.");
-            }
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-            toast.error("Erro ao buscar dados online.");
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            tipo_dado: { type: "string", description: "Tipo: transportadora, cliente, nota_fiscal, endereco, outro" },
+            razao_social: { type: "string" },
+            nome_fantasia: { type: "string" },
+            cnpj: { type: "string" },
+            telefone: { type: "string" },
+            telefone2: { type: "string" },
+            email: { type: "string" },
+            site: { type: "string" },
+            endereco: { type: "string" },
+            bairro: { type: "string" },
+            cidade: { type: "string" },
+            uf: { type: "string" },
+            cep: { type: "string" },
+            horario_funcionamento: { type: "string" },
+            ramo_atividade: { type: "string" },
+            observacoes: { type: "string" },
+            numero_nf: { type: "string" },
+            destinatario: { type: "string" },
+            peso: { type: "string" },
+            volume: { type: "string" }
+          }
         }
-        setBuscandoOnline(false);
-    };
+      });
 
-    // Cadastrar dados extraídos
-    const cadastrarDados = async () => {
-        if (!dadosExtraidos || !destinoSelecionado) {
-            toast.error("Selecione onde deseja cadastrar");
-            return;
-        }
+      if (result) {
+        setDadosExtraidos(result);
+        toast.success("Dados encontrados! Escolha onde cadastrar.");
+      } else {
+        toast.warning("Não foi possível encontrar dados relevantes.");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      toast.error("Erro ao buscar dados online.");
+    }
+    setBuscandoOnline(false);
+  };
 
-        try {
-            if (destinoSelecionado === "nota_fiscal") {
-                await base44.entities.NotaFiscal.create({
-                    numero_nf: dadosExtraidos.numero_nf || "",
-                    destinatario: dadosExtraidos.destinatario || dadosExtraidos.razao_social || "",
-                    peso: dadosExtraidos.peso || "",
-                    volume: dadosExtraidos.volume || "",
-                    transportadora: dadosExtraidos.nome_fantasia || "",
-                    data: format(new Date(), "yyyy-MM-dd"),
-                    observacoes: dadosExtraidos.observacoes || ""
-                });
-                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                toast.success("Nota fiscal cadastrada!");
-            } else if (destinoSelecionado === "transportadora") {
-                await base44.entities.Transportadora.create({
-                    razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
-                    nome_fantasia: dadosExtraidos.nome_fantasia || "",
-                    cnpj: dadosExtraidos.cnpj || "",
-                    telefone: dadosExtraidos.telefone || "",
-                    email: dadosExtraidos.email || "",
-                    endereco: dadosExtraidos.endereco || "",
-                    bairro: dadosExtraidos.bairro || "",
-                    cidade: dadosExtraidos.cidade || "",
-                    uf: dadosExtraidos.uf || "",
-                    cep: dadosExtraidos.cep || "",
-                    status: "ativo"
-                });
-                queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
-                toast.success("Transportadora cadastrada!");
-            } else if (destinoSelecionado === "cliente") {
-                await base44.entities.Cliente.create({
-                    razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
-                    nome_fantasia: dadosExtraidos.nome_fantasia || "",
-                    cnpj_cpf: dadosExtraidos.cnpj || "",
-                    telefone: dadosExtraidos.telefone || "",
-                    email: dadosExtraidos.email || "",
-                    endereco: dadosExtraidos.endereco || "",
-                    bairro: dadosExtraidos.bairro || "",
-                    cidade: dadosExtraidos.cidade || "",
-                    uf: dadosExtraidos.uf || "",
-                    cep: dadosExtraidos.cep || "",
-                    tipo: "ambos"
-                });
-                queryClient.invalidateQueries({ queryKey: ["clientes"] });
-                toast.success("Cliente cadastrado!");
-            }
+  // Cadastrar dados extraídos
+  const cadastrarDados = async () => {
+    if (!dadosExtraidos || !destinoSelecionado) {
+      toast.error("Selecione onde deseja cadastrar");
+      return;
+    }
 
-            // Limpar e fechar
-            resetAudioDialog();
-        } catch (error) {
-            console.error("Erro ao cadastrar:", error);
-            toast.error("Erro ao cadastrar dados.");
-        }
-    };
-
-    const resetAudioDialog = () => {
-        setShowAudioDialog(false);
-        setAudioUrl(null);
-        setTranscription("");
-        setDadosExtraidos(null);
-        setDestinoSelecionado("");
-        setAudioFileUrl("");
-    };
-
-    // Substituir Washington Gonzales pela transportadora = destinatário
-    const handleSubstituirWashington = async () => {
-        const notasWashington = notas.filter(n => 
-            n.transportadora?.toUpperCase().includes("WASHINGTON GONZALES")
-        );
-
-        if (notasWashington.length === 0) {
-            toast.info("Nenhuma nota com transportadora WASHINGTON GONZALES encontrada");
-            return;
-        }
-
-        if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s)?`)) {
-            return;
-        }
-
-        let atualizadas = 0;
-        for (const nota of notasWashington) {
-            await base44.entities.NotaFiscal.update(nota.id, {
-                transportadora: nota.destinatario || "SEM TRANSPORTADORA"
-            });
-            atualizadas++;
-        }
-
+    try {
+      if (destinoSelecionado === "nota_fiscal") {
+        await base44.entities.NotaFiscal.create({
+          numero_nf: dadosExtraidos.numero_nf || "",
+          destinatario: dadosExtraidos.destinatario || dadosExtraidos.razao_social || "",
+          peso: dadosExtraidos.peso || "",
+          volume: dadosExtraidos.volume || "",
+          transportadora: dadosExtraidos.nome_fantasia || "",
+          data: format(new Date(), "yyyy-MM-dd"),
+          observacoes: dadosExtraidos.observacoes || ""
+        });
         queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        toast.success(`${atualizadas} nota(s) atualizada(s)!`);
-    };
+        toast.success("Nota fiscal cadastrada!");
+      } else if (destinoSelecionado === "transportadora") {
+        await base44.entities.Transportadora.create({
+          razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
+          nome_fantasia: dadosExtraidos.nome_fantasia || "",
+          cnpj: dadosExtraidos.cnpj || "",
+          telefone: dadosExtraidos.telefone || "",
+          email: dadosExtraidos.email || "",
+          endereco: dadosExtraidos.endereco || "",
+          bairro: dadosExtraidos.bairro || "",
+          cidade: dadosExtraidos.cidade || "",
+          uf: dadosExtraidos.uf || "",
+          cep: dadosExtraidos.cep || "",
+          status: "ativo"
+        });
+        queryClient.invalidateQueries({ queryKey: ["transportadoras-notas"] });
+        toast.success("Transportadora cadastrada!");
+      } else if (destinoSelecionado === "cliente") {
+        await base44.entities.Cliente.create({
+          razao_social: dadosExtraidos.razao_social || dadosExtraidos.nome_fantasia || "",
+          nome_fantasia: dadosExtraidos.nome_fantasia || "",
+          cnpj_cpf: dadosExtraidos.cnpj || "",
+          telefone: dadosExtraidos.telefone || "",
+          email: dadosExtraidos.email || "",
+          endereco: dadosExtraidos.endereco || "",
+          bairro: dadosExtraidos.bairro || "",
+          cidade: dadosExtraidos.cidade || "",
+          uf: dadosExtraidos.uf || "",
+          cep: dadosExtraidos.cep || "",
+          tipo: "ambos"
+        });
+        queryClient.invalidateQueries({ queryKey: ["clientes"] });
+        toast.success("Cliente cadastrado!");
+      }
 
-    // Buscar notas digitadas manualmente - busca no banco de dados
-    const buscarNotasDigitadas = async () => {
-        if (!notasDigitadas.trim()) return;
-        
-        const numerosDigitados = notasDigitadas
-            .split(/[,;\s\n]+/)
-            .map(n => n.trim())
-            .filter(Boolean);
-        
-        try {
-            // Buscar TODAS as notas do banco de dados
-            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
-            
-            const notasEncontradas = [];
-            const naoEncontradas = [];
-            
-            numerosDigitados.forEach(num => {
-                const notaEncontrada = todasNotas.find(n => 
-                    n.numero_nf?.toLowerCase().includes(num.toLowerCase())
-                );
-                if (notaEncontrada && !notasEncontradas.find(n => n.id === notaEncontrada.id)) {
-                    notasEncontradas.push(notaEncontrada);
-                } else if (!notaEncontrada) {
-                    naoEncontradas.push(num);
-                }
-            });
-            
-            if (notasEncontradas.length > 0) {
-                setSelecionados(notasEncontradas.map(n => n.id));
-                if (naoEncontradas.length > 0) {
-                    toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
-                } else {
-                    toast.success(`${notasEncontradas.length} nota(s) selecionada(s)`);
-                }
-            } else {
-                toast.error("Nenhuma nota encontrada no banco de dados");
-            }
-        } catch (error) {
-            console.error("Erro ao buscar notas:", error);
-            toast.error("Erro ao buscar notas no banco de dados");
+      // Limpar e fechar
+      resetAudioDialog();
+    } catch (error) {
+      console.error("Erro ao cadastrar:", error);
+      toast.error("Erro ao cadastrar dados.");
+    }
+  };
+
+  const resetAudioDialog = () => {
+    setShowAudioDialog(false);
+    setAudioUrl(null);
+    setTranscription("");
+    setDadosExtraidos(null);
+    setDestinoSelecionado("");
+    setAudioFileUrl("");
+  };
+
+  // Substituir Washington Gonzales pela transportadora = destinatário
+  const handleSubstituirWashington = async () => {
+    const notasWashington = notas.filter((n) =>
+    n.transportadora?.toUpperCase().includes("WASHINGTON GONZALES")
+    );
+
+    if (notasWashington.length === 0) {
+      toast.info("Nenhuma nota com transportadora WASHINGTON GONZALES encontrada");
+      return;
+    }
+
+    if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s)?`)) {
+      return;
+    }
+
+    let atualizadas = 0;
+    for (const nota of notasWashington) {
+      await base44.entities.NotaFiscal.update(nota.id, {
+        transportadora: nota.destinatario || "SEM TRANSPORTADORA"
+      });
+      atualizadas++;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+    toast.success(`${atualizadas} nota(s) atualizada(s)!`);
+  };
+
+  // Buscar notas digitadas manualmente - busca no banco de dados
+  const buscarNotasDigitadas = async () => {
+    if (!notasDigitadas.trim()) return;
+
+    const numerosDigitados = notasDigitadas.
+    split(/[,;\s\n]+/).
+    map((n) => n.trim()).
+    filter(Boolean);
+
+    try {
+      // Buscar TODAS as notas do banco de dados
+      const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+
+      const notasEncontradas = [];
+      const naoEncontradas = [];
+
+      numerosDigitados.forEach((num) => {
+        const notaEncontrada = todasNotas.find((n) =>
+        n.numero_nf?.toLowerCase().includes(num.toLowerCase())
+        );
+        if (notaEncontrada && !notasEncontradas.find((n) => n.id === notaEncontrada.id)) {
+          notasEncontradas.push(notaEncontrada);
+        } else if (!notaEncontrada) {
+          naoEncontradas.push(num);
         }
-    };
+      });
 
-    // Imprimir romaneio
-    const handlePrintRomaneio = async () => {
-        const notasSelecionadas = selecionados
-            .map(id => notas.find(n => n.id === id))
-            .filter(Boolean);
-
-        if (notasSelecionadas.length === 0) {
-            toast.error("Selecione ao menos uma nota");
-            return;
+      if (notasEncontradas.length > 0) {
+        setSelecionados(notasEncontradas.map((n) => n.id));
+        if (naoEncontradas.length > 0) {
+          toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
+        } else {
+          toast.success(`${notasEncontradas.length} nota(s) selecionada(s)`);
         }
+      } else {
+        toast.error("Nenhuma nota encontrada no banco de dados");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar notas:", error);
+      toast.error("Erro ao buscar notas no banco de dados");
+    }
+  };
 
-        const ultimaImportacao = importacoes[0];
-        if (!ultimaImportacao) {
-            toast.error("Nenhuma importação encontrada");
-            return;
-        }
+  // Imprimir romaneio
+  const handlePrintRomaneio = async () => {
+    const notasSelecionadas = selecionados.
+    map((id) => notas.find((n) => n.id === id)).
+    filter(Boolean);
 
-        // 1. Atualizar placa das notas selecionadas
-        const placaParaAtribuir = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
-        
-        for (const nota of notasSelecionadas) {
-            const placa = placaParaAtribuir || nota.placa || "";
-            await base44.entities.NotaFiscal.update(nota.id, { placa });
-        }
+    if (notasSelecionadas.length === 0) {
+      toast.error("Selecione ao menos uma nota");
+      return;
+    }
 
-        // 2. Adicionar notas à última importação
-        const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
-        for (const nota of notasSelecionadas) {
-            notasIdsImportacao.add(nota.id);
-        }
+    const ultimaImportacao = importacoes[0];
+    if (!ultimaImportacao) {
+      toast.error("Nenhuma importação encontrada");
+      return;
+    }
 
-        await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
-            notas_ids: Array.from(notasIdsImportacao),
-            quantidade_notas: notasIdsImportacao.size
+    // 1. Atualizar placa das notas selecionadas
+    const placaParaAtribuir = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
+
+    for (const nota of notasSelecionadas) {
+      const placa = placaParaAtribuir || nota.placa || "";
+      await base44.entities.NotaFiscal.update(nota.id, { placa });
+    }
+
+    // 2. Adicionar notas à última importação
+    const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
+    for (const nota of notasSelecionadas) {
+      notasIdsImportacao.add(nota.id);
+    }
+
+    await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
+      notas_ids: Array.from(notasIdsImportacao),
+      quantidade_notas: notasIdsImportacao.size
+    });
+
+    // Recarregar dados
+    await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+    await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+
+    // 3. Imprimir
+    const notasAtualizadas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+    const notasParaImprimir = selecionados.
+    map((id) => notasAtualizadas.find((n) => n.id === id)).
+    filter(Boolean);
+
+    const motoristaObj = motoristas.find((m) => m.id === motorista);
+    const winPrint = window.open('', '_blank', 'width=900,height=650');
+    if (!winPrint) {
+      alert("Por favor, permita pop-ups para imprimir.");
+      return;
+    }
+
+    // Agrupar por placa
+    const notasPorPlaca = {};
+    notasParaImprimir.forEach((nota) => {
+      const placa = nota.placa || "SEM_PLACA";
+      if (!notasPorPlaca[placa]) notasPorPlaca[placa] = [];
+      notasPorPlaca[placa].push(nota);
+    });
+
+    let pagesHtml = "";
+
+    Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+      const NOTAS_POR_PAGINA = 6;
+      const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
+
+      for (let pagina = 0; pagina < totalPaginas; pagina++) {
+        const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+
+        let rowsHtml = "";
+        notasDaPagina.forEach((nota) => {
+          const remetenteNota = remetenteSelecionado || nota.remetente || "";
+          const destinatarioNota = nota.destinatario || "";
+          const numeroNf = nota.numero_nf || "";
+          const transportadoraOriginal = nota.transportadora || "";
+          const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") ?
+          destinatarioNota :
+          transportadoraOriginal;
+          const volumeNota = nota.volume ? nota.volume + " vol" : "";
+
+          rowsHtml += '<tr class="nota-row">';
+          rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
+          rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
+          rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+          rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+          rowsHtml += '</tr>';
+          rowsHtml += '<tr class="transportadora-row">';
+          rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
+          rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+          rowsHtml += '</tr>';
         });
 
-        // Recarregar dados
-        await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-
-        // 3. Imprimir
-        const notasAtualizadas = await base44.entities.NotaFiscal.list("-created_date", 5000);
-        const notasParaImprimir = selecionados
-            .map(id => notasAtualizadas.find(n => n.id === id))
-            .filter(Boolean);
-
-        const motoristaObj = motoristas.find(m => m.id === motorista);
-        const winPrint = window.open('', '_blank', 'width=900,height=650');
-        if (!winPrint) {
-            alert("Por favor, permita pop-ups para imprimir.");
-            return;
-        }
-
-        // Agrupar por placa
-        const notasPorPlaca = {};
-        notasParaImprimir.forEach(nota => {
-            const placa = nota.placa || "SEM_PLACA";
-            if (!notasPorPlaca[placa]) notasPorPlaca[placa] = [];
-            notasPorPlaca[placa].push(nota);
-        });
-
-        let pagesHtml = "";
-
-        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-            const NOTAS_POR_PAGINA = 6;
-            const totalPaginas = Math.ceil(notasPlaca.length / NOTAS_POR_PAGINA);
-
-            for (let pagina = 0; pagina < totalPaginas; pagina++) {
-                const notasDaPagina = notasPlaca.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
-
-                let rowsHtml = "";
-                notasDaPagina.forEach((nota) => {
-                    const remetenteNota = remetenteSelecionado || nota.remetente || "";
-                    const destinatarioNota = nota.destinatario || "";
-                    const numeroNf = nota.numero_nf || "";
-                    const transportadoraOriginal = nota.transportadora || "";
-                    const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") 
-                        ? destinatarioNota 
-                        : transportadoraOriginal;
-                    const volumeNota = nota.volume ? nota.volume + " vol" : "";
-                            
-                    rowsHtml += '<tr class="nota-row">';
-                    rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
-                    rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
-                    rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-                    rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-                    rowsHtml += '</tr>';
-                    rowsHtml += '<tr class="transportadora-row">';
-                    rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
-                    rowsHtml += '<td class="volume">' + volumeNota + '</td>';
-                    rowsHtml += '</tr>';
-                });
-
-                const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
-                for (let i = 0; i < linhasRestantes; i++) {
-                    rowsHtml += `
+        const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
+        for (let i = 0; i < linhasRestantes; i++) {
+          rowsHtml += `
                         <tr class="nota-row vazia">
                             <td class="remetente"></td>
                             <td class="destinatario"></td>
@@ -1118,15 +1118,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <td class="volume"></td>
                         </tr>
                     `;
-                }
+        }
 
-                const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
-                const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
-                const veiculoInfo = veiculos.find(v => v.placa === placa);
-                const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
-                const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
+        const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+        const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
+        const veiculoInfo = veiculos.find((v) => v.placa === placa);
+        const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
+        const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
 
-                pagesHtml += `
+        pagesHtml += `
                     <div class="page">
                         <div class="header">
                             <div class="logo">
@@ -1159,10 +1159,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                         </table>
                     </div>
                 `;
-            }
-        });
+      }
+    });
 
-        winPrint.document.write(`
+    winPrint.document.write(`
             <html>
             <head>
                 <meta charset="UTF-8">
@@ -1283,134 +1283,134 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             </body>
             </html>
         `);
-        
-        winPrint.document.close();
-        setTimeout(() => {
-            winPrint.print();
-            winPrint.close();
-        }, 500);
 
-        // 4. Salvar romaneios gerados
-        Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-            if (placa === "SEM_PLACA") return;
+    winPrint.document.close();
+    setTimeout(() => {
+      winPrint.print();
+      winPrint.close();
+    }, 500);
 
-            const notasPorTransp = {};
-            notasPlaca.forEach(nota => {
-                const transp = nota.transportadora || "Sem transportadora";
-                if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
-                notasPorTransp[transp]++;
-            });
+    // 4. Salvar romaneios gerados
+    Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+      if (placa === "SEM_PLACA") return;
 
-            const pesoTotal = notasPlaca.reduce((acc, nota) => {
-                const pesoStr = nota.peso || "";
-                const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-                return acc + pesoNum;
-            }, 0);
+      const notasPorTransp = {};
+      notasPlaca.forEach((nota) => {
+        const transp = nota.transportadora || "Sem transportadora";
+        if (!notasPorTransp[transp]) notasPorTransp[transp] = 0;
+        notasPorTransp[transp]++;
+      });
 
-            const destinatarios = [...new Set(notasPlaca.map(n => n.destinatario).filter(Boolean))];
-            const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
+      const pesoTotal = notasPlaca.reduce((acc, nota) => {
+        const pesoStr = nota.peso || "";
+        const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+        return acc + pesoNum;
+      }, 0);
 
-            createRomaneioMutation.mutate({
-                nome: `Romaneio ${placa} - ${format(new Date(dataRomaneio), "dd/MM/yyyy")}`,
-                placa: placa,
-                data: dataRomaneio,
-                motorista_id: motorista || "",
-                motorista_nome: motoristaObj?.nome || "",
-                total_notas: notasPlaca.length,
-                total_entregas: transportadorasUnicas.size || notasPlaca.length,
-                peso_total: pesoTotal,
-                notas_por_transportadora: Object.entries(notasPorTransp).map(([t, q]) => ({
-                    transportadora: t,
-                    quantidade: q
-                })),
-                notas_ids: notasPlaca.map(n => n.id),
-                destinatarios: destinatarios,
-                status: "gerado"
-            });
-        });
+      const destinatarios = [...new Set(notasPlaca.map((n) => n.destinatario).filter(Boolean))];
+      const transportadorasUnicas = new Set(notasPlaca.map((n) => n.transportadora?.trim().toUpperCase()).filter(Boolean));
 
-        toast.success("Romaneio impresso e registrado!");
-    };
+      createRomaneioMutation.mutate({
+        nome: `Romaneio ${placa} - ${format(new Date(dataRomaneio), "dd/MM/yyyy")}`,
+        placa: placa,
+        data: dataRomaneio,
+        motorista_id: motorista || "",
+        motorista_nome: motoristaObj?.nome || "",
+        total_notas: notasPlaca.length,
+        total_entregas: transportadorasUnicas.size || notasPlaca.length,
+        peso_total: pesoTotal,
+        notas_por_transportadora: Object.entries(notasPorTransp).map(([t, q]) => ({
+          transportadora: t,
+          quantidade: q
+        })),
+        notas_ids: notasPlaca.map((n) => n.id),
+        destinatarios: destinatarios,
+        status: "gerado"
+      });
+    });
 
-    // Dashboard resumo da última importação
-    const dashboardImportacao = React.useMemo(() => {
-        if (!importacoes[0]) return null;
-        
-        const ultimaImportacao = importacoes[0];
-        const notasDaImportacao = notas.filter(n => ultimaImportacao.notas_ids?.includes(n.id));
-        
-        // Agrupar por placa
-        const porPlaca = {};
-        let pesoConsolidado = 0;
-        let totalNotas = 0;
-        let totalEntregas = 0;
-        
-        notasDaImportacao.forEach(nota => {
-            if (!nota.placa) return; // Ignorar notas sem placa
-            
-            const placa = nota.placa;
-            if (!porPlaca[placa]) {
-                porPlaca[placa] = {
-                    notas: 0,
-                    transportadoras: new Set(),
-                    peso: 0
-                };
-            }
-            
-            porPlaca[placa].notas++;
-            totalNotas++;
-            
-            if (nota.transportadora) {
-                porPlaca[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
-            }
-            
-            const pesoStr = nota.peso || "";
-            const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-            porPlaca[placa].peso += pesoNum;
-            pesoConsolidado += pesoNum;
-        });
-        
-        // Calcular total de entregas
-        Object.values(porPlaca).forEach(dados => {
-            totalEntregas += dados.transportadoras.size || dados.notas;
-        });
-        
-        return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
-    }, [importacoes, notas]);
+    toast.success("Romaneio impresso e registrado!");
+  };
 
-    // Verificar se há alguma busca/filtro ativo
-    const hasBuscaAtiva = search || 
-        filterFilial && filterFilial !== "todas" ||
-        columnFilters.destinatario.length > 0 ||
-        columnFilters.transportadora.length > 0 ||
-        columnFilters.filial.length > 0 ||
-        columnFilters.placa.length > 0;
+  // Dashboard resumo da última importação
+  const dashboardImportacao = React.useMemo(() => {
+    if (!importacoes[0]) return null;
 
-    const filtered = hasBuscaAtiva ? notas.filter(n => {
-        // Busca geral
-        const matchSearch = !search || 
-            n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
-            n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
-            n.transportadora?.toLowerCase().includes(search.toLowerCase());
+    const ultimaImportacao = importacoes[0];
+    const notasDaImportacao = notas.filter((n) => ultimaImportacao.notas_ids?.includes(n.id));
 
-        // Filtro de filial (select)
-        const matchFilialSelect = !filterFilial || filterFilial === "todas" || n.filial === filterFilial;
+    // Agrupar por placa
+    const porPlaca = {};
+    let pesoConsolidado = 0;
+    let totalNotas = 0;
+    let totalEntregas = 0;
 
-        // Filtros de coluna
-        const matchDestinatario = columnFilters.destinatario.length === 0 || 
-            columnFilters.destinatario.includes(n.destinatario || "");
-        const matchTransportadora = columnFilters.transportadora.length === 0 || 
-            columnFilters.transportadora.includes(n.transportadora || "");
-        const matchFilial = columnFilters.filial.length === 0 || 
-            columnFilters.filial.includes(n.filial || "");
-        const matchPlaca = columnFilters.placa.length === 0 || 
-            columnFilters.placa.includes(n.placa || "");
+    notasDaImportacao.forEach((nota) => {
+      if (!nota.placa) return; // Ignorar notas sem placa
 
-        return matchSearch && matchFilialSelect && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
-    }) : [];
+      const placa = nota.placa;
+      if (!porPlaca[placa]) {
+        porPlaca[placa] = {
+          notas: 0,
+          transportadoras: new Set(),
+          peso: 0
+        };
+      }
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-2 md:p-4 pb-2">
+      porPlaca[placa].notas++;
+      totalNotas++;
+
+      if (nota.transportadora) {
+        porPlaca[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
+      }
+
+      const pesoStr = nota.peso || "";
+      const pesoNum = parseFloat(pesoStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+      porPlaca[placa].peso += pesoNum;
+      pesoConsolidado += pesoNum;
+    });
+
+    // Calcular total de entregas
+    Object.values(porPlaca).forEach((dados) => {
+      totalEntregas += dados.transportadoras.size || dados.notas;
+    });
+
+    return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
+  }, [importacoes, notas]);
+
+  // Verificar se há alguma busca/filtro ativo
+  const hasBuscaAtiva = search ||
+  filterFilial && filterFilial !== "todas" ||
+  columnFilters.destinatario.length > 0 ||
+  columnFilters.transportadora.length > 0 ||
+  columnFilters.filial.length > 0 ||
+  columnFilters.placa.length > 0;
+
+  const filtered = hasBuscaAtiva ? notas.filter((n) => {
+    // Busca geral
+    const matchSearch = !search ||
+    n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
+    n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
+    n.transportadora?.toLowerCase().includes(search.toLowerCase());
+
+    // Filtro de filial (select)
+    const matchFilialSelect = !filterFilial || filterFilial === "todas" || n.filial === filterFilial;
+
+    // Filtros de coluna
+    const matchDestinatario = columnFilters.destinatario.length === 0 ||
+    columnFilters.destinatario.includes(n.destinatario || "");
+    const matchTransportadora = columnFilters.transportadora.length === 0 ||
+    columnFilters.transportadora.includes(n.transportadora || "");
+    const matchFilial = columnFilters.filial.length === 0 ||
+    columnFilters.filial.includes(n.filial || "");
+    const matchPlaca = columnFilters.placa.length === 0 ||
+    columnFilters.placa.includes(n.placa || "");
+
+    return matchSearch && matchFilialSelect && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
+  }) : [];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-2 md:p-4 pb-2">
             <div className="max-w-7xl mx-auto space-y-4">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
@@ -1442,43 +1442,43 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
                     {/* Botões de ação organizados */}
                     <div className="flex gap-2 flex-wrap">
-                        <Button 
-                            onClick={() => { resetForm(); setShowForm(true); }}
-                            className="bg-gradient-to-r from-blue-500 to-indigo-600"
-                        >
+                        <Button
+              onClick={() => {resetForm();setShowForm(true);}}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600">
+
                             <Plus className="w-4 h-4 mr-2" />
                             Nova Nota
                         </Button>
-                        <Button 
-                            onClick={() => setShowChaveAcesso(true)}
-                            variant="outline"
-                            className="border-green-500 text-green-700 hover:bg-green-50"
-                        >
+                        <Button
+              onClick={() => setShowChaveAcesso(true)}
+              variant="outline"
+              className="border-green-500 text-green-700 hover:bg-green-50">
+
                             <Key className="w-4 h-4 mr-2" />
                             Chave de Acesso
                         </Button>
-                        <Button 
-                            onClick={() => setShowImportador(true)}
-                            variant="outline" 
-                            className="border-blue-500 text-blue-700 hover:bg-blue-50"
-                        >
+                        <Button
+              onClick={() => setShowImportador(true)}
+              variant="outline"
+              className="border-blue-500 text-blue-700 hover:bg-blue-50">
+
                             <Upload className="w-4 h-4 mr-2" />
                             Importar Arquivo
                         </Button>
-                        <Button 
-                            onClick={() => setShowPasteForm(true)}
-                            variant="outline"
-                            className="border-purple-500 text-purple-700 hover:bg-purple-50"
-                        >
+                        <Button
+              onClick={() => setShowPasteForm(true)}
+              variant="outline"
+              className="border-purple-500 text-purple-700 hover:bg-purple-50">
+
                             <ClipboardPaste className="w-4 h-4 mr-2" />
                             Colar Texto
                         </Button>
-                        <Button 
-                            onClick={handleSubstituirWashington}
-                            variant="outline"
-                            className="border-orange-500 text-orange-700 hover:bg-orange-50"
-                            title="Substituir WASHINGTON GONZALES pelo destinatário"
-                        >
+                        <Button
+              onClick={handleSubstituirWashington}
+              variant="outline"
+              className="border-orange-500 text-orange-700 hover:bg-orange-50"
+              title="Substituir WASHINGTON GONZALES pelo destinatário">
+
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
                         </Button>
@@ -1487,7 +1487,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
                 {/* Configurações do Romaneio */}
                 <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-0 shadow-lg">
-                    <CardContent className="p-6">
+                    <CardContent className="bg-cyan-300 p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-emerald-600" />
                             Configurações do Romaneio
@@ -1496,11 +1496,11 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <div className="space-y-2">
                                 <Label>Data do Romaneio</Label>
                                 <Input
-                                    type="date"
-                                    value={dataRomaneio}
-                                    onChange={(e) => setDataRomaneio(e.target.value)}
-                                    className="bg-white"
-                                />
+                  type="date"
+                  value={dataRomaneio}
+                  onChange={(e) => setDataRomaneio(e.target.value)}
+                  className="bg-white" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label>Motorista</Label>
@@ -1509,9 +1509,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         <SelectValue placeholder="Selecione..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {motoristas.map(m => (
-                                            <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
-                                        ))}
+                                        {motoristas.map((m) =>
+                    <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                    )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1525,11 +1525,11 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="individual">Usar individual</SelectItem>
-                                        {veiculos.map(v => (
-                                            <SelectItem key={v.id} value={v.placa}>
+                                        {veiculos.map((v) =>
+                    <SelectItem key={v.id} value={v.placa}>
                                                 {v.placa}
                                             </SelectItem>
-                                        ))}
+                    )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1539,12 +1539,12 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         <Building2 className="w-4 h-4" /> Remetente (aplica em todas)
                                     </span>
                                     <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowCadastroRemetente(true)}
-                                        className="text-green-600 hover:text-green-700 h-auto p-0"
-                                    >
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCadastroRemetente(true)}
+                    className="text-green-600 hover:text-green-700 h-auto p-0">
+
                                         <Plus className="w-4 h-4 mr-1" />
                                         Cadastrar
                                     </Button>
@@ -1555,9 +1555,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="individual">Usar individual</SelectItem>
-                                        {empresasRemetentes.map(emp => (
-                                            <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
-                                        ))}
+                                        {empresasRemetentes.map((emp) =>
+                    <SelectItem key={emp.id} value={emp.nome}>{emp.nome}</SelectItem>
+                    )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1567,7 +1567,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
                 {/* Layout da Impressão */}
                 <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-0 shadow-lg">
-                    <CardContent className="p-6">
+                    <CardContent className="bg-fuchsia-200 p-6">
                         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                             <BarChart3 className="w-5 h-5 text-purple-600" />
                             Layout da Impressão (%)
@@ -1576,57 +1576,57 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <div className="space-y-2">
                                 <Label className="text-xs">Remetente (%)</Label>
                                 <Input
-                                    type="number"
-                                    min="5"
-                                    max="50"
-                                    value={layoutConfig.colRemetente}
-                                    onChange={(e) => setLayoutConfig({...layoutConfig, colRemetente: parseInt(e.target.value) || 18})}
-                                    className="bg-white"
-                                />
+                  type="number"
+                  min="5"
+                  max="50"
+                  value={layoutConfig.colRemetente}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, colRemetente: parseInt(e.target.value) || 18 })}
+                  className="bg-white" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs">Destinatário (%)</Label>
                                 <Input
-                                    type="number"
-                                    min="10"
-                                    max="60"
-                                    value={layoutConfig.colDestinatario}
-                                    onChange={(e) => setLayoutConfig({...layoutConfig, colDestinatario: parseInt(e.target.value) || 42})}
-                                    className="bg-white"
-                                />
+                  type="number"
+                  min="10"
+                  max="60"
+                  value={layoutConfig.colDestinatario}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, colDestinatario: parseInt(e.target.value) || 42 })}
+                  className="bg-white" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs">NFE (%)</Label>
                                 <Input
-                                    type="number"
-                                    min="5"
-                                    max="30"
-                                    value={layoutConfig.colNfe}
-                                    onChange={(e) => setLayoutConfig({...layoutConfig, colNfe: parseInt(e.target.value) || 15})}
-                                    className="bg-white"
-                                />
+                  type="number"
+                  min="5"
+                  max="30"
+                  value={layoutConfig.colNfe}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, colNfe: parseInt(e.target.value) || 15 })}
+                  className="bg-white" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs">Carimbo (%)</Label>
                                 <Input
-                                    type="number"
-                                    min="10"
-                                    max="40"
-                                    value={layoutConfig.colCarimbo}
-                                    onChange={(e) => setLayoutConfig({...layoutConfig, colCarimbo: parseInt(e.target.value) || 25})}
-                                    className="bg-white"
-                                />
+                  type="number"
+                  min="10"
+                  max="40"
+                  value={layoutConfig.colCarimbo}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, colCarimbo: parseInt(e.target.value) || 25 })}
+                  className="bg-white" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs">Altura Linha (px)</Label>
                                 <Input
-                                    type="number"
-                                    min="30"
-                                    max="80"
-                                    value={layoutConfig.alturaLinha}
-                                    onChange={(e) => setLayoutConfig({...layoutConfig, alturaLinha: parseInt(e.target.value) || 45})}
-                                    className="bg-white"
-                                />
+                  type="number"
+                  min="30"
+                  max="80"
+                  value={layoutConfig.alturaLinha}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, alturaLinha: parseInt(e.target.value) || 45 })}
+                  className="bg-white" />
+
                             </div>
                         </div>
                         <p className="text-xs text-slate-500 mt-2">
@@ -1637,28 +1637,28 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
 
                 {/* Notas para o Romaneio */}
                 <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-0 shadow-lg">
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                            Notas para o Romaneio
-                        </h3>
-                        <div className="flex gap-2">
+                    <CardContent className="bg-neutral-400 p-6">
+                        <h3 className="text-slate-50 mb-4 text-lg font-semibold flex items-center gap-2">Notas para o Romaneio
+
+
+            </h3>
+                        <div className="bg-green-500 flex gap-2">
                             <Input
-                                placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
-                                value={notasDigitadas}
-                                onChange={(e) => setNotasDigitadas(e.target.value)}
-                                className="bg-white flex-1"
-                                onKeyDown={(e) => { if (e.key === "Enter") buscarNotasDigitadas(); }}
-                            />
+                placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
+                value={notasDigitadas}
+                onChange={(e) => setNotasDigitadas(e.target.value)}
+                className="bg-white flex-1"
+                onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
+
                             <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
                                 <Search className="w-4 h-4 mr-2" />
                                 Buscar e Selecionar
                             </Button>
-                            <Button 
-                                onClick={handlePrintRomaneio}
-                                disabled={selecionados.length === 0}
-                                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6"
-                            >
+                            <Button
+                onClick={handlePrintRomaneio}
+                disabled={selecionados.length === 0}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6">
+
                                 <Printer className="w-5 h-5 mr-2" />
                                 Imprimir Romaneio ({selecionados.length})
                             </Button>
@@ -1675,81 +1675,81 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 <Label className="font-medium">Filtrar Importações por Data:</Label>
                             </div>
                             <Input
-                                type="date"
-                                className="w-48 bg-white"
-                                value={filterDataImportacao}
-                                onChange={(e) => setFilterDataImportacao(e.target.value)}
-                            />
-                            {filterDataImportacao && (
-                                <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setFilterDataImportacao("")}
-                                >
+                type="date"
+                className="w-48 bg-white"
+                value={filterDataImportacao}
+                onChange={(e) => setFilterDataImportacao(e.target.value)} />
+
+                            {filterDataImportacao &&
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFilterDataImportacao("")}>
+
                                     <X className="w-4 h-4 mr-1" />
                                     Limpar
                                 </Button>
-                            )}
+              }
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Registros de Importação */}
-                {importacoes.length > 0 && (
-                    <div className="space-y-3">
+                {importacoes.length > 0 &&
+        <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-700">
                                 <History className="w-5 h-5 text-indigo-600" />
                                 <h2 className="font-semibold">Última Importação</h2>
                             </div>
-                            {importacoes.length > 1 && (
-                                <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setShowArquivados(!showArquivados)}
-                                    className="border-slate-400 text-slate-700 hover:bg-slate-100"
-                                >
+                            {importacoes.length > 1 &&
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowArquivados(!showArquivados)}
+              className="border-slate-400 text-slate-700 hover:bg-slate-100">
+
                                     <History className="w-4 h-4 mr-1" />
                                     {showArquivados ? "Ocultar" : "Ver"} Arquivadas ({importacoes.length - 1})
                                 </Button>
-                            )}
+            }
                         </div>
                         
                         {/* Última Importação */}
                         <div className="space-y-2">
-                            {importacoes
-                                .filter(imp => {
-                                    if (!filterDataImportacao) return true;
-                                    try {
-                                        const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
-                                        return dataImp === filterDataImportacao;
-                                    } catch {
-                                        return true;
-                                    }
-                                })
-                                .slice(0, 1)
-                                .map(importacao => (
-                                <ImportacaoCard
-                                    key={importacao.id}
-                                    importacao={importacao}
-                                    notas={notas}
-                                    notasSelecionadas={selecionados}
-                                    onDelete={(id) => {
-                                        if (confirm("Excluir este registro de importação?")) {
-                                            deleteImportacaoMutation.mutate(id);
-                                        }
-                                    }}
-                                    onPrint={(notasParaImprimir) => {
-                                        const notasIds = notasParaImprimir.map(n => n.id).join(",");
-                                        window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
-                                    }}
-                                />
-                            ))}
+                            {importacoes.
+            filter((imp) => {
+              if (!filterDataImportacao) return true;
+              try {
+                const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
+                return dataImp === filterDataImportacao;
+              } catch {
+                return true;
+              }
+            }).
+            slice(0, 1).
+            map((importacao) =>
+            <ImportacaoCard
+              key={importacao.id}
+              importacao={importacao}
+              notas={notas}
+              notasSelecionadas={selecionados}
+              onDelete={(id) => {
+                if (confirm("Excluir este registro de importação?")) {
+                  deleteImportacaoMutation.mutate(id);
+                }
+              }}
+              onPrint={(notasParaImprimir) => {
+                const notasIds = notasParaImprimir.map((n) => n.id).join(",");
+                window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
+              }} />
+
+            )}
                         </div>
 
                         {/* Importações Arquivadas */}
-                        {showArquivados && importacoes.length > 1 && (
-                            <Card className="bg-slate-50 border-slate-300">
+                        {showArquivados && importacoes.length > 1 &&
+          <Card className="bg-slate-50 border-slate-300">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
                                         <Package className="w-4 h-4" />
@@ -1757,39 +1757,39 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-                                    {importacoes
-                                        .filter(imp => {
-                                            if (!filterDataImportacao) return true;
-                                            try {
-                                                const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
-                                                return dataImp === filterDataImportacao;
-                                            } catch {
-                                                return true;
-                                            }
-                                        })
-                                        .slice(1)
-                                        .map(importacao => (
-                                        <ImportacaoCard
-                                            key={importacao.id}
-                                            importacao={importacao}
-                                            notas={notas}
-                                            notasSelecionadas={selecionados}
-                                            onDelete={(id) => {
-                                                if (confirm("Excluir este registro de importação?")) {
-                                                    deleteImportacaoMutation.mutate(id);
-                                                }
-                                            }}
-                                            onPrint={(notasParaImprimir) => {
-                                                const notasIds = notasParaImprimir.map(n => n.id).join(",");
-                                                window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
-                                            }}
-                                        />
-                                    ))}
+                                    {importacoes.
+              filter((imp) => {
+                if (!filterDataImportacao) return true;
+                try {
+                  const dataImp = new Date(imp.data_importacao).toISOString().split('T')[0];
+                  return dataImp === filterDataImportacao;
+                } catch {
+                  return true;
+                }
+              }).
+              slice(1).
+              map((importacao) =>
+              <ImportacaoCard
+                key={importacao.id}
+                importacao={importacao}
+                notas={notas}
+                notasSelecionadas={selecionados}
+                onDelete={(id) => {
+                  if (confirm("Excluir este registro de importação?")) {
+                    deleteImportacaoMutation.mutate(id);
+                  }
+                }}
+                onPrint={(notasParaImprimir) => {
+                  const notasIds = notasParaImprimir.map((n) => n.id).join(",");
+                  window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
+                }} />
+
+              )}
                                 </CardContent>
                             </Card>
-                        )}
+          }
                     </div>
-                )}
+        }
 
                 {/* Search e Ações em Massa */}
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -1798,11 +1798,11 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <Input
-                                    placeholder="Buscar por NF, destinatário ou transportadora..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 bg-white"
-                                />
+                  placeholder="Buscar por NF, destinatário ou transportadora..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 bg-white" />
+
                             </div>
                             <Select value={filterFilial} onValueChange={setFilterFilial}>
                                 <SelectTrigger className="w-40 bg-white">
@@ -1810,37 +1810,37 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="todas">Todas Filiais</SelectItem>
-                                    {[...new Set(notas.map(n => n.filial).filter(Boolean))].map(filial => (
-                                        <SelectItem key={filial} value={filial}>{filial}</SelectItem>
-                                    ))}
+                                    {[...new Set(notas.map((n) => n.filial).filter(Boolean))].map((filial) =>
+                  <SelectItem key={filial} value={filial}>{filial}</SelectItem>
+                  )}
                                 </SelectContent>
                             </Select>
                             <div className="flex gap-2 flex-wrap">
                                 <Button variant="outline" onClick={selecionarTodos}>
                                     {selecionados.length === filtered.length && filtered.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
                                 </Button>
-                                {selecionados.length > 0 && (
-                                    <Button 
-                                        variant="outline"
-                                        className="border-red-500 text-red-700 hover:bg-red-50"
-                                        onClick={() => {
-                                            if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
-                                                deleteEmMassaMutation.mutate(selecionados);
-                                            }
-                                        }}
-                                    >
+                                {selecionados.length > 0 &&
+                <Button
+                  variant="outline"
+                  className="border-red-500 text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    if (confirm(`Excluir ${selecionados.length} nota(s) fiscal(is)?`)) {
+                      deleteEmMassaMutation.mutate(selecionados);
+                    }
+                  }}>
+
                                         <Trash2 className="w-4 h-4 mr-1" />
                                         Excluir ({selecionados.length})
                                     </Button>
-                                )}
+                }
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Dashboard Resumo da Última Importação */}
-                {dashboardImportacao && Object.keys(dashboardImportacao.porPlaca).length > 0 && (
-                    <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-lg">
+                {dashboardImportacao && Object.keys(dashboardImportacao.porPlaca).length > 0 &&
+        <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-lg">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-emerald-600" />
@@ -1872,8 +1872,8 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <div>
                                 <h4 className="font-semibold text-sm text-slate-700 mb-2">Por Veículo:</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {Object.entries(dashboardImportacao.porPlaca).map(([placa, dados]) => (
-                                        <div key={placa} className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-emerald-500">
+                                    {Object.entries(dashboardImportacao.porPlaca).map(([placa, dados]) =>
+                <div key={placa} className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-emerald-500">
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="font-bold text-emerald-700">{placa}</span>
                                                 <Badge className="bg-emerald-100 text-emerald-700">
@@ -1891,12 +1891,12 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
+                )}
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
-                )}
+        }
 
                 {/* Tabela */}
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl overflow-hidden">
@@ -1906,22 +1906,22 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                 <TableHeader>
                                     <TableRow className="bg-slate-50">
                                         <TableHead className="w-10">
-                                            <Checkbox 
-                                                checked={selecionados.length === filtered.length && filtered.length > 0}
-                                                onCheckedChange={selecionarTodos}
-                                            />
+                                            <Checkbox
+                        checked={selecionados.length === filtered.length && filtered.length > 0}
+                        onCheckedChange={selecionarTodos} />
+
                                         </TableHead>
                                         <TableHead>NF</TableHead>
                                         <TableHead>
                                             <div className="flex items-center gap-1">
                                                 Destinatário
                                                 <TableColumnFilter
-                                                    data={notas}
-                                                    columnKey="destinatario"
-                                                    columnLabel="Destinatário"
-                                                    selectedValues={columnFilters.destinatario}
-                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, destinatario: v }))}
-                                                />
+                          data={notas}
+                          columnKey="destinatario"
+                          columnLabel="Destinatário"
+                          selectedValues={columnFilters.destinatario}
+                          onFilterChange={(v) => setColumnFilters((prev) => ({ ...prev, destinatario: v }))} />
+
                                             </div>
                                         </TableHead>
                                         <TableHead>Peso</TableHead>
@@ -1930,36 +1930,36 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                             <div className="flex items-center gap-1">
                                                 Transportadora
                                                 <TableColumnFilter
-                                                    data={notas}
-                                                    columnKey="transportadora"
-                                                    columnLabel="Transportadora"
-                                                    selectedValues={columnFilters.transportadora}
-                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, transportadora: v }))}
-                                                />
+                          data={notas}
+                          columnKey="transportadora"
+                          columnLabel="Transportadora"
+                          selectedValues={columnFilters.transportadora}
+                          onFilterChange={(v) => setColumnFilters((prev) => ({ ...prev, transportadora: v }))} />
+
                                             </div>
                                         </TableHead>
                                         <TableHead>
                                             <div className="flex items-center gap-1">
                                                 Filial
                                                 <TableColumnFilter
-                                                    data={notas}
-                                                    columnKey="filial"
-                                                    columnLabel="Filial"
-                                                    selectedValues={columnFilters.filial}
-                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, filial: v }))}
-                                                />
+                          data={notas}
+                          columnKey="filial"
+                          columnLabel="Filial"
+                          selectedValues={columnFilters.filial}
+                          onFilterChange={(v) => setColumnFilters((prev) => ({ ...prev, filial: v }))} />
+
                                             </div>
                                         </TableHead>
                                         <TableHead>
                                             <div className="flex items-center gap-1">
                                                 Placa
                                                 <TableColumnFilter
-                                                    data={notas}
-                                                    columnKey="placa"
-                                                    columnLabel="Placa"
-                                                    selectedValues={columnFilters.placa}
-                                                    onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, placa: v }))}
-                                                />
+                          data={notas}
+                          columnKey="placa"
+                          columnLabel="Placa"
+                          selectedValues={columnFilters.placa}
+                          onFilterChange={(v) => setColumnFilters((prev) => ({ ...prev, placa: v }))} />
+
                                             </div>
                                         </TableHead>
                                         <TableHead>Data</TableHead>
@@ -1967,35 +1967,35 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {isLoading ? (
-                                        <TableRow>
+                                    {isLoading ?
+                  <TableRow>
                                             <TableCell colSpan={11} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
                                             </TableCell>
-                                        </TableRow>
-                                    ) : !hasBuscaAtiva ? (
-                                        <TableRow>
+                                        </TableRow> :
+                  !hasBuscaAtiva ?
+                  <TableRow>
                                             <TableCell colSpan={11} className="text-center py-12 text-slate-500">
                                                 <Search className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 <p className="text-lg font-medium">Use a busca para visualizar as notas fiscais</p>
                                                 <p className="text-sm text-slate-400 mt-1">Digite no campo de busca ou use os filtros acima</p>
                                             </TableCell>
-                                        </TableRow>
-                                    ) : filtered.length === 0 ? (
-                                        <TableRow>
+                                        </TableRow> :
+                  filtered.length === 0 ?
+                  <TableRow>
                                             <TableCell colSpan={11} className="text-center py-12 text-slate-500">
                                                 <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 Nenhuma nota fiscal encontrada
                                             </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        filtered.map((nota) => (
-                                            <TableRow key={nota.id} className={`hover:bg-slate-50 ${selecionados.includes(nota.id) ? "bg-blue-50" : ""}`}>
+                                        </TableRow> :
+
+                  filtered.map((nota) =>
+                  <TableRow key={nota.id} className={`hover:bg-slate-50 ${selecionados.includes(nota.id) ? "bg-blue-50" : ""}`}>
                                                 <TableCell>
-                                                    <Checkbox 
-                                                        checked={selecionados.includes(nota.id)}
-                                                        onCheckedChange={() => toggleSelecionado(nota.id)}
-                                                    />
+                                                    <Checkbox
+                        checked={selecionados.includes(nota.id)}
+                        onCheckedChange={() => toggleSelecionado(nota.id)} />
+
                                                 </TableCell>
                                                 <TableCell className="font-bold text-blue-600">{nota.numero_nf}</TableCell>
                                                 <TableCell className="font-medium">{nota.destinatario}</TableCell>
@@ -2011,15 +2011,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                                             <Pencil className="w-4 h-4 text-blue-600" />
                                                         </Button>
                                                         <Button variant="ghost" size="icon" onClick={() => {
-                                                            if (confirm("Excluir esta nota fiscal?")) deleteMutation.mutate(nota.id);
-                                                        }}>
+                          if (confirm("Excluir esta nota fiscal?")) deleteMutation.mutate(nota.id);
+                        }}>
                                                             <Trash2 className="w-4 h-4 text-red-600" />
                                                         </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
-                                        ))
-                                    )}
+                  )
+                  }
                                 </TableBody>
                             </Table>
                         </div>
@@ -2049,11 +2049,11 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                     <SelectValue placeholder="Selecione a placa..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {veiculos.map(v => (
-                                        <SelectItem key={v.id} value={v.placa}>
+                                    {veiculos.map((v) =>
+                  <SelectItem key={v.id} value={v.placa}>
                                             {v.placa} - {v.modelo}
                                         </SelectItem>
-                                    ))}
+                  )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -2061,15 +2061,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                                 Cancelar
                             </Button>
-                            <Button 
-                                onClick={() => {
-                                    if (placaEmMassa) {
-                                        updateEmMassaMutation.mutate({ ids: selecionados, data: { placa: placaEmMassa } });
-                                    }
-                                }}
-                                disabled={updateEmMassaMutation.isPending || !placaEmMassa}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
+                            <Button
+                onClick={() => {
+                  if (placaEmMassa) {
+                    updateEmMassaMutation.mutate({ ids: selecionados, data: { placa: placaEmMassa } });
+                  }
+                }}
+                disabled={updateEmMassaMutation.isPending || !placaEmMassa}
+                className="bg-green-600 hover:bg-green-700">
+
                                 {updateEmMassaMutation.isPending ? "Salvando..." : "Salvar"}
                             </Button>
                         </div>
@@ -2092,35 +2092,55 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <strong className="block mt-1 text-orange-600">Obs: O campo remetente será deixado em branco para você preencher depois.</strong>
                         </p>
                         <Textarea
-                            value={pasteText}
-                            onChange={(e) => setPasteText(e.target.value)}
-                            placeholder="Cole aqui as informações das notas fiscais...
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="Cole aqui as informações das notas fiscais...
 
 Exemplo:
 NF 123456 - Destinatário ABC LTDA - 5 volumes - Transportadora XYZ
 NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
-                            rows={10}
-                            className="font-mono text-sm"
-                        />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              rows={10}
+              className="font-mono text-sm" />
+
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => { setShowPasteForm(false); setPasteText(""); }}>
+                            <Button variant="outline" onClick={() => {setShowPasteForm(false);setPasteText("");}}>
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
-                            <Button 
-                                onClick={handleProcessPaste}
-                                disabled={processingPaste || !pasteText.trim()}
-                                className="bg-purple-600 hover:bg-purple-700"
-                            >
-                                {processingPaste ? (
-                                    <>
+                            <Button
+                onClick={handleProcessPaste}
+                disabled={processingPaste || !pasteText.trim()}
+                className="bg-purple-600 hover:bg-purple-700">
+
+                                {processingPaste ?
+                <>
                                         <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
                                         Processando...
-                                    </>
-                                ) : (
-                                    <>
+                                    </> :
+
+                <>
                                         <Sparkles className="w-4 h-4 mr-1" /> Processar
                                     </>
-                                )}
+                }
                             </Button>
                         </div>
                     </div>
@@ -2143,95 +2163,95 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                         </p>
                         
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {transpExtraidas.map((transp, index) => (
-                                <div 
-                                    key={index} 
-                                    className={`p-4 rounded-xl border-2 transition-colors ${
-                                        transpSelecionadas.includes(index) 
-                                            ? "border-violet-500 bg-violet-50" 
-                                            : "border-slate-200 bg-white"
-                                    }`}
-                                >
+                            {transpExtraidas.map((transp, index) =>
+              <div
+                key={index}
+                className={`p-4 rounded-xl border-2 transition-colors ${
+                transpSelecionadas.includes(index) ?
+                "border-violet-500 bg-violet-50" :
+                "border-slate-200 bg-white"}`
+                }>
+
                                     <div className="flex items-start gap-3">
-                                        <Checkbox 
-                                            checked={transpSelecionadas.includes(index)}
-                                            onCheckedChange={(checked) => {
-                                                if (checked) {
-                                                    setTranspSelecionadas(prev => [...prev, index]);
-                                                } else {
-                                                    setTranspSelecionadas(prev => prev.filter(i => i !== index));
-                                                }
-                                            }}
-                                            className="mt-1"
-                                        />
+                                        <Checkbox
+                    checked={transpSelecionadas.includes(index)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setTranspSelecionadas((prev) => [...prev, index]);
+                      } else {
+                        setTranspSelecionadas((prev) => prev.filter((i) => i !== index));
+                      }
+                    }}
+                    className="mt-1" />
+
                                         <div className="flex-1 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <h4 className="font-semibold text-lg text-slate-800">{transp.nome}</h4>
                                                 <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => buscarDadosOnline(index, transp.nome)}
-                                                    disabled={buscandoDados[index]}
-                                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                                                >
-                                                    {buscandoDados[index] ? (
-                                                        <>
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => buscarDadosOnline(index, transp.nome)}
+                        disabled={buscandoDados[index]}
+                        className="border-blue-500 text-blue-600 hover:bg-blue-50">
+
+                                                    {buscandoDados[index] ?
+                        <>
                                                             <div className="animate-spin w-4 h-4 mr-1 border-2 border-blue-500 border-t-transparent rounded-full" />
                                                             Buscando...
-                                                        </>
-                                                    ) : (
-                                                        <>
+                                                        </> :
+
+                        <>
                                                             <Globe className="w-4 h-4 mr-1" />
                                                             Atualizar Dados
                                                         </>
-                                                    )}
+                        }
                                                 </Button>
                                             </div>
                                             
                                             {/* Dados preenchidos */}
                                             <div className="grid grid-cols-2 gap-2 text-sm">
-                                                {transp.cnpj && (
-                                                    <div className="flex items-center gap-1">
+                                                {transp.cnpj &&
+                      <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-xs">CNPJ</Badge>
                                                         <span>{transp.cnpj}</span>
                                                     </div>
-                                                )}
-                                                {transp.telefone && (
-                                                    <div className="flex items-center gap-1">
+                      }
+                                                {transp.telefone &&
+                      <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-xs">Tel</Badge>
                                                         <span>{transp.telefone}</span>
                                                     </div>
-                                                )}
-                                                {transp.cidade && transp.uf && (
-                                                    <div className="flex items-center gap-1">
+                      }
+                                                {transp.cidade && transp.uf &&
+                      <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-xs">Cidade</Badge>
                                                         <span>{transp.cidade}/{transp.uf}</span>
                                                     </div>
-                                                )}
-                                                {transp.endereco && (
-                                                    <div className="flex items-center gap-1 col-span-2">
+                      }
+                                                {transp.endereco &&
+                      <div className="flex items-center gap-1 col-span-2">
                                                         <Badge variant="outline" className="text-xs">End</Badge>
                                                         <span className="truncate">{transp.endereco}</span>
                                                     </div>
-                                                )}
-                                                {transp.horario_funcionamento && (
-                                                    <div className="flex items-center gap-1 col-span-2">
+                      }
+                                                {transp.horario_funcionamento &&
+                      <div className="flex items-center gap-1 col-span-2">
                                                         <Badge variant="outline" className="text-xs">Horário</Badge>
                                                         <span>{transp.horario_funcionamento}</span>
                                                     </div>
-                                                )}
+                      }
                                             </div>
                                             
-                                            {!transp.cnpj && !transp.telefone && !transp.cidade && (
-                                                <p className="text-xs text-slate-400 italic">
+                                            {!transp.cnpj && !transp.telefone && !transp.cidade &&
+                    <p className="text-xs text-slate-400 italic">
                                                     Clique em "Atualizar Dados" para buscar informações online
                                                 </p>
-                                            )}
+                    }
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+              )}
                         </div>
                         
                         <div className="flex justify-between items-center pt-4 border-t">
@@ -2239,14 +2259,14 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                 {transpSelecionadas.length} de {transpExtraidas.length} selecionada(s)
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => { setShowCadastroTransp(false); setTranspExtraidas([]); }}>
+                                <Button variant="outline" onClick={() => {setShowCadastroTransp(false);setTranspExtraidas([]);}}>
                                     <X className="w-4 h-4 mr-1" /> Cancelar
                                 </Button>
-                                <Button 
-                                    onClick={handleCadastrarTransportadoras}
-                                    disabled={transpSelecionadas.length === 0}
-                                    className="bg-violet-600 hover:bg-violet-700"
-                                >
+                                <Button
+                  onClick={handleCadastrarTransportadoras}
+                  disabled={transpSelecionadas.length === 0}
+                  className="bg-violet-600 hover:bg-violet-700">
+
                                     <Building2 className="w-4 h-4 mr-1" />
                                     Cadastrar ({transpSelecionadas.length})
                                 </Button>
@@ -2257,7 +2277,7 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
             </Dialog>
 
             {/* Dialog Gravar Áudio e Buscar Online */}
-            <Dialog open={showAudioDialog} onOpenChange={(open) => { if (!open) resetAudioDialog(); else setShowAudioDialog(true); }}>
+            <Dialog open={showAudioDialog} onOpenChange={(open) => {if (!open) resetAudioDialog();else setShowAudioDialog(true);}}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -2273,131 +2293,131 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
 
                         {/* Controles de Gravação */}
                         <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                            {!isRecording ? (
-                                <Button
-                                    onClick={startRecording}
-                                    className="bg-red-500 hover:bg-red-600"
-                                    disabled={isTranscribing}
-                                >
+                            {!isRecording ?
+              <Button
+                onClick={startRecording}
+                className="bg-red-500 hover:bg-red-600"
+                disabled={isTranscribing}>
+
                                     <Mic className="w-5 h-5 mr-2" />
                                     Iniciar Gravação
-                                </Button>
-                            ) : (
-                                <Button
-                                    onClick={stopRecording}
-                                    variant="destructive"
-                                    className="animate-pulse"
-                                >
+                                </Button> :
+
+              <Button
+                onClick={stopRecording}
+                variant="destructive"
+                className="animate-pulse">
+
                                     <Square className="w-5 h-5 mr-2" />
                                     Parar Gravação
                                 </Button>
-                            )}
+              }
 
-                            {audioUrl && !isRecording && (
-                                <Button
-                                    variant="outline"
-                                    onClick={togglePlayback}
-                                    className="border-blue-500 text-blue-600"
-                                >
+                            {audioUrl && !isRecording &&
+              <Button
+                variant="outline"
+                onClick={togglePlayback}
+                className="border-blue-500 text-blue-600">
+
                                     {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                                     {isPlaying ? "Pausar" : "Ouvir"}
                                 </Button>
-                            )}
+              }
 
-                            {isTranscribing && (
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                            {isTranscribing &&
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Transcrevendo...
                                 </div>
-                            )}
+              }
 
-                            {isRecording && (
-                                <div className="flex items-center gap-2">
+                            {isRecording &&
+              <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
                                     <span className="text-red-600 font-medium">Gravando...</span>
                                 </div>
-                            )}
+              }
                         </div>
 
                         {audioUrl && <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} className="hidden" />}
 
                         {/* Transcrição */}
-                        {transcription && (
-                            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        {transcription &&
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                                 <p className="text-xs text-blue-600 font-medium mb-2">Transcrição do áudio:</p>
                                 <p className="text-slate-700">{transcription}</p>
                             </div>
-                        )}
+            }
 
                         {/* Botão Buscar Online */}
-                        {transcription && !dadosExtraidos && (
-                            <Button 
-                                onClick={buscarDadosOnlineAudio}
-                                disabled={buscandoOnline}
-                                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600"
-                            >
-                                {buscandoOnline ? (
-                                    <>
+                        {transcription && !dadosExtraidos &&
+            <Button
+              onClick={buscarDadosOnlineAudio}
+              disabled={buscandoOnline}
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600">
+
+                                {buscandoOnline ?
+              <>
                                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                                         Buscando na internet...
-                                    </>
-                                ) : (
-                                    <>
+                                    </> :
+
+              <>
                                         <Globe className="w-5 h-5 mr-2" />
                                         Buscar Dados Online
                                     </>
-                                )}
+              }
                             </Button>
-                        )}
+            }
 
                         {/* Dados Encontrados */}
-                        {dadosExtraidos && (
-                            <div className="space-y-4">
+                        {dadosExtraidos &&
+            <div className="space-y-4">
                                 <div className="p-4 bg-green-50 rounded-xl border border-green-200">
                                     <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
                                         <Search className="w-4 h-4" />
                                         Dados Encontrados
                                     </h4>
                                     <div className="grid grid-cols-2 gap-2 text-sm">
-                                        {dadosExtraidos.razao_social && (
-                                            <div><span className="text-slate-500">Razão Social:</span> <strong>{dadosExtraidos.razao_social}</strong></div>
-                                        )}
-                                        {dadosExtraidos.nome_fantasia && (
-                                            <div><span className="text-slate-500">Nome Fantasia:</span> <strong>{dadosExtraidos.nome_fantasia}</strong></div>
-                                        )}
-                                        {dadosExtraidos.cnpj && (
-                                            <div><span className="text-slate-500">CNPJ:</span> <strong>{dadosExtraidos.cnpj}</strong></div>
-                                        )}
-                                        {dadosExtraidos.telefone && (
-                                            <div><span className="text-slate-500">Telefone:</span> <strong>{dadosExtraidos.telefone}</strong></div>
-                                        )}
-                                        {dadosExtraidos.telefone2 && (
-                                            <div><span className="text-slate-500">Telefone 2:</span> <strong>{dadosExtraidos.telefone2}</strong></div>
-                                        )}
-                                        {dadosExtraidos.email && (
-                                            <div><span className="text-slate-500">Email:</span> <strong>{dadosExtraidos.email}</strong></div>
-                                        )}
-                                        {dadosExtraidos.site && (
-                                            <div><span className="text-slate-500">Site:</span> <strong>{dadosExtraidos.site}</strong></div>
-                                        )}
-                                        {dadosExtraidos.endereco && (
-                                            <div className="col-span-2"><span className="text-slate-500">Endereço:</span> <strong>{dadosExtraidos.endereco}</strong></div>
-                                        )}
-                                        {dadosExtraidos.bairro && (
-                                            <div><span className="text-slate-500">Bairro:</span> <strong>{dadosExtraidos.bairro}</strong></div>
-                                        )}
-                                        {dadosExtraidos.cidade && dadosExtraidos.uf && (
-                                            <div><span className="text-slate-500">Cidade:</span> <strong>{dadosExtraidos.cidade}/{dadosExtraidos.uf}</strong></div>
-                                        )}
-                                        {dadosExtraidos.cep && (
-                                            <div><span className="text-slate-500">CEP:</span> <strong>{dadosExtraidos.cep}</strong></div>
-                                        )}
-                                        {dadosExtraidos.horario_funcionamento && (
-                                            <div className="col-span-2"><span className="text-slate-500">Horário:</span> <strong>{dadosExtraidos.horario_funcionamento}</strong></div>
-                                        )}
-                                        {dadosExtraidos.ramo_atividade && (
-                                            <div className="col-span-2"><span className="text-slate-500">Ramo:</span> <strong>{dadosExtraidos.ramo_atividade}</strong></div>
-                                        )}
+                                        {dadosExtraidos.razao_social &&
+                  <div><span className="text-slate-500">Razão Social:</span> <strong>{dadosExtraidos.razao_social}</strong></div>
+                  }
+                                        {dadosExtraidos.nome_fantasia &&
+                  <div><span className="text-slate-500">Nome Fantasia:</span> <strong>{dadosExtraidos.nome_fantasia}</strong></div>
+                  }
+                                        {dadosExtraidos.cnpj &&
+                  <div><span className="text-slate-500">CNPJ:</span> <strong>{dadosExtraidos.cnpj}</strong></div>
+                  }
+                                        {dadosExtraidos.telefone &&
+                  <div><span className="text-slate-500">Telefone:</span> <strong>{dadosExtraidos.telefone}</strong></div>
+                  }
+                                        {dadosExtraidos.telefone2 &&
+                  <div><span className="text-slate-500">Telefone 2:</span> <strong>{dadosExtraidos.telefone2}</strong></div>
+                  }
+                                        {dadosExtraidos.email &&
+                  <div><span className="text-slate-500">Email:</span> <strong>{dadosExtraidos.email}</strong></div>
+                  }
+                                        {dadosExtraidos.site &&
+                  <div><span className="text-slate-500">Site:</span> <strong>{dadosExtraidos.site}</strong></div>
+                  }
+                                        {dadosExtraidos.endereco &&
+                  <div className="col-span-2"><span className="text-slate-500">Endereço:</span> <strong>{dadosExtraidos.endereco}</strong></div>
+                  }
+                                        {dadosExtraidos.bairro &&
+                  <div><span className="text-slate-500">Bairro:</span> <strong>{dadosExtraidos.bairro}</strong></div>
+                  }
+                                        {dadosExtraidos.cidade && dadosExtraidos.uf &&
+                  <div><span className="text-slate-500">Cidade:</span> <strong>{dadosExtraidos.cidade}/{dadosExtraidos.uf}</strong></div>
+                  }
+                                        {dadosExtraidos.cep &&
+                  <div><span className="text-slate-500">CEP:</span> <strong>{dadosExtraidos.cep}</strong></div>
+                  }
+                                        {dadosExtraidos.horario_funcionamento &&
+                  <div className="col-span-2"><span className="text-slate-500">Horário:</span> <strong>{dadosExtraidos.horario_funcionamento}</strong></div>
+                  }
+                                        {dadosExtraidos.ramo_atividade &&
+                  <div className="col-span-2"><span className="text-slate-500">Ramo:</span> <strong>{dadosExtraidos.ramo_atividade}</strong></div>
+                  }
                                     </div>
                                 </div>
 
@@ -2406,45 +2426,45 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     <Label className="font-semibold">Onde deseja cadastrar?</Label>
                                     <div className="grid grid-cols-3 gap-3">
                                         <Button
-                                            type="button"
-                                            variant={destinoSelecionado === "nota_fiscal" ? "default" : "outline"}
-                                            onClick={() => setDestinoSelecionado("nota_fiscal")}
-                                            className={destinoSelecionado === "nota_fiscal" ? "bg-blue-600" : ""}
-                                        >
+                    type="button"
+                    variant={destinoSelecionado === "nota_fiscal" ? "default" : "outline"}
+                    onClick={() => setDestinoSelecionado("nota_fiscal")}
+                    className={destinoSelecionado === "nota_fiscal" ? "bg-blue-600" : ""}>
+
                                             <FileText className="w-4 h-4 mr-1" />
                                             Nota Fiscal
                                         </Button>
                                         <Button
-                                            type="button"
-                                            variant={destinoSelecionado === "transportadora" ? "default" : "outline"}
-                                            onClick={() => setDestinoSelecionado("transportadora")}
-                                            className={destinoSelecionado === "transportadora" ? "bg-violet-600" : ""}
-                                        >
+                    type="button"
+                    variant={destinoSelecionado === "transportadora" ? "default" : "outline"}
+                    onClick={() => setDestinoSelecionado("transportadora")}
+                    className={destinoSelecionado === "transportadora" ? "bg-violet-600" : ""}>
+
                                             <Truck className="w-4 h-4 mr-1" />
                                             Transportadora
                                         </Button>
                                         <Button
-                                            type="button"
-                                            variant={destinoSelecionado === "cliente" ? "default" : "outline"}
-                                            onClick={() => setDestinoSelecionado("cliente")}
-                                            className={destinoSelecionado === "cliente" ? "bg-emerald-600" : ""}
-                                        >
+                    type="button"
+                    variant={destinoSelecionado === "cliente" ? "default" : "outline"}
+                    onClick={() => setDestinoSelecionado("cliente")}
+                    className={destinoSelecionado === "cliente" ? "bg-emerald-600" : ""}>
+
                                             <Users className="w-4 h-4 mr-1" />
                                             Cliente
                                         </Button>
                                     </div>
                                 </div>
 
-                                <Button 
-                                    onClick={cadastrarDados}
-                                    disabled={!destinoSelecionado}
-                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
-                                >
+                                <Button
+                onClick={cadastrarDados}
+                disabled={!destinoSelecionado}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600">
+
                                     <Save className="w-5 h-5 mr-2" />
                                     Cadastrar como {destinoSelecionado === "nota_fiscal" ? "Nota Fiscal" : destinoSelecionado === "transportadora" ? "Transportadora" : destinoSelecionado === "cliente" ? "Cliente" : "..."}
                                 </Button>
                             </div>
-                        )}
+            }
 
                         <div className="flex justify-end">
                             <Button variant="outline" onClick={resetAudioDialog}>
@@ -2456,14 +2476,14 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
             </Dialog>
 
             {/* Importador de Arquivos */}
-            <ImportadorNFE 
-                open={showImportador} 
-                onClose={() => setShowImportador(false)}
-                onImportSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-                    queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-                }}
-                />
+            <ImportadorNFE
+        open={showImportador}
+        onClose={() => setShowImportador(false)}
+        onImportSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+          queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+        }} />
+
 
                 {/* Dialog Chave de Acesso */}
                 <Dialog open={showChaveAcesso} onOpenChange={setShowChaveAcesso}>
@@ -2479,34 +2499,34 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             Digite a chave de acesso da NFe (44 dígitos):
                         </p>
                         <Input
-                            value={chaveAcesso}
-                            onChange={(e) => setChaveAcesso(e.target.value.replace(/\D/g, ""))}
-                            placeholder="00000000000000000000000000000000000000000000"
-                            maxLength={44}
-                            className="font-mono"
-                        />
+              value={chaveAcesso}
+              onChange={(e) => setChaveAcesso(e.target.value.replace(/\D/g, ""))}
+              placeholder="00000000000000000000000000000000000000000000"
+              maxLength={44}
+              className="font-mono" />
+
                         <p className="text-xs text-slate-500">
                             {chaveAcesso.length}/44 dígitos
                         </p>
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => { setShowChaveAcesso(false); setChaveAcesso(""); }}>
+                            <Button variant="outline" onClick={() => {setShowChaveAcesso(false);setChaveAcesso("");}}>
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
-                            <Button 
-                                onClick={handleConsultarChave}
-                                disabled={consultandoChave || chaveAcesso.length !== 44}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                {consultandoChave ? (
-                                    <>
+                            <Button
+                onClick={handleConsultarChave}
+                disabled={consultandoChave || chaveAcesso.length !== 44}
+                className="bg-green-600 hover:bg-green-700">
+
+                                {consultandoChave ?
+                <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                         Consultando...
-                                    </>
-                                ) : (
-                                    <>
+                                    </> :
+
+                <>
                                         <Search className="w-4 h-4 mr-1" /> Consultar
                                     </>
-                                )}
+                }
                             </Button>
                         </div>
                     </div>
@@ -2529,30 +2549,30 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                         <div className="space-y-2">
                             <Label>Nome *</Label>
                             <Input
-                                value={novoDestinatario.nome}
-                                onChange={(e) => setNovoDestinatario({ nome: e.target.value })}
-                                placeholder="Nome do destinatário"
-                                autoFocus
-                            />
+                value={novoDestinatario.nome}
+                onChange={(e) => setNovoDestinatario({ nome: e.target.value })}
+                placeholder="Nome do destinatário"
+                autoFocus />
+
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => { setShowCadastroDestinatario(false); setNovoDestinatario({ nome: "" }); }}
-                            >
+                            <Button
+                type="button"
+                variant="outline"
+                onClick={() => {setShowCadastroDestinatario(false);setNovoDestinatario({ nome: "" });}}>
+
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
-                            <Button 
-                                onClick={() => createDestinatarioMutation.mutate(novoDestinatario)}
-                                disabled={!novoDestinatario.nome || createDestinatarioMutation.isPending}
-                                className="bg-blue-600 hover:bg-blue-700"
-                            >
-                                {createDestinatarioMutation.isPending ? "Salvando..." : (
-                                    <>
+                            <Button
+                onClick={() => createDestinatarioMutation.mutate(novoDestinatario)}
+                disabled={!novoDestinatario.nome || createDestinatarioMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700">
+
+                                {createDestinatarioMutation.isPending ? "Salvando..." :
+                <>
                                         <Save className="w-4 h-4 mr-1" /> Salvar
                                     </>
-                                )}
+                }
                             </Button>
                         </div>
                     </div>
@@ -2575,30 +2595,30 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                         <div className="space-y-2">
                             <Label>Nome da Empresa *</Label>
                             <Input
-                                value={novoRemetente.nome}
-                                onChange={(e) => setNovoRemetente({ nome: e.target.value })}
-                                placeholder="Nome da empresa remetente"
-                                autoFocus
-                            />
+                value={novoRemetente.nome}
+                onChange={(e) => setNovoRemetente({ nome: e.target.value })}
+                placeholder="Nome da empresa remetente"
+                autoFocus />
+
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => { setShowCadastroRemetente(false); setNovoRemetente({ nome: "" }); }}
-                            >
+                            <Button
+                type="button"
+                variant="outline"
+                onClick={() => {setShowCadastroRemetente(false);setNovoRemetente({ nome: "" });}}>
+
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
-                            <Button 
-                                onClick={() => createRemetenteMutation.mutate(novoRemetente)}
-                                disabled={!novoRemetente.nome || createRemetenteMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                {createRemetenteMutation.isPending ? "Salvando..." : (
-                                    <>
+                            <Button
+                onClick={() => createRemetenteMutation.mutate(novoRemetente)}
+                disabled={!novoRemetente.nome || createRemetenteMutation.isPending}
+                className="bg-green-600 hover:bg-green-700">
+
+                                {createRemetenteMutation.isPending ? "Salvando..." :
+                <>
                                         <Save className="w-4 h-4 mr-1" /> Salvar
                                     </>
-                                )}
+                }
                             </Button>
                         </div>
                     </div>
@@ -2619,19 +2639,19 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             <div className="space-y-2">
                                 <Label>Número NF *</Label>
                                 <Input
-                                    value={form.numero_nf}
-                                    onChange={(e) => setForm({ ...form, numero_nf: e.target.value })}
-                                    required
-                                    placeholder="Ex: 123456"
-                                />
+                  value={form.numero_nf}
+                  onChange={(e) => setForm({ ...form, numero_nf: e.target.value })}
+                  required
+                  placeholder="Ex: 123456" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label>Data</Label>
                                 <Input
-                                    type="date"
-                                    value={form.data}
-                                    onChange={(e) => setForm({ ...form, data: e.target.value })}
-                                />
+                  type="date"
+                  value={form.data}
+                  onChange={(e) => setForm({ ...form, data: e.target.value })} />
+
                             </div>
                         </div>
 
@@ -2639,42 +2659,42 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             <Label className="flex items-center justify-between">
                                 <span>Destinatário *</span>
                                 <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowCadastroDestinatario(true)}
-                                    className="text-blue-600 hover:text-blue-700 h-auto p-0"
-                                >
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCadastroDestinatario(true)}
+                  className="text-blue-600 hover:text-blue-700 h-auto p-0">
+
                                     <Plus className="w-4 h-4 mr-1" />
                                     Cadastrar Novo
                                 </Button>
                             </Label>
                             <div className="space-y-2">
                                 <Input
-                                    value={form.destinatario}
-                                    onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
-                                    required
-                                    placeholder="Digite o nome do destinatário..."
-                                    className="bg-white"
-                                    list="destinatarios-list"
-                                />
+                  value={form.destinatario}
+                  onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
+                  required
+                  placeholder="Digite o nome do destinatário..."
+                  className="bg-white"
+                  list="destinatarios-list" />
+
                                 <datalist id="destinatarios-list">
-                                    {destinatarios
-                                        .sort((a, b) => a.nome.localeCompare(b.nome))
-                                        .filter(d => d.nome.toLowerCase().includes(form.destinatario.toLowerCase()))
-                                        .map(d => (
-                                            <option key={d.id} value={d.nome}>
+                                    {destinatarios.
+                  sort((a, b) => a.nome.localeCompare(b.nome)).
+                  filter((d) => d.nome.toLowerCase().includes(form.destinatario.toLowerCase())).
+                  map((d) =>
+                  <option key={d.id} value={d.nome}>
                                                 {d.cidade && `${d.nome} (${d.cidade})`}
                                             </option>
-                                        ))}
+                  )}
                                 </datalist>
-                                {form.destinatario && (
-                                    <div className="text-xs text-slate-500">
-                                        {destinatarios.filter(d => 
-                                            d.nome.toLowerCase().includes(form.destinatario.toLowerCase())
-                                        ).length} destinatário(s) encontrado(s)
+                                {form.destinatario &&
+                <div className="text-xs text-slate-500">
+                                        {destinatarios.filter((d) =>
+                  d.nome.toLowerCase().includes(form.destinatario.toLowerCase())
+                  ).length} destinatário(s) encontrado(s)
                                     </div>
-                                )}
+                }
                             </div>
                         </div>
 
@@ -2682,18 +2702,18 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             <div className="space-y-2">
                                 <Label>Peso</Label>
                                 <Input
-                                    value={form.peso}
-                                    onChange={(e) => setForm({ ...form, peso: e.target.value })}
-                                    placeholder="Ex: 100kg"
-                                />
+                  value={form.peso}
+                  onChange={(e) => setForm({ ...form, peso: e.target.value })}
+                  placeholder="Ex: 100kg" />
+
                             </div>
                             <div className="space-y-2">
                                 <Label>Volume</Label>
                                 <Input
-                                    value={form.volume}
-                                    onChange={(e) => setForm({ ...form, volume: e.target.value })}
-                                    placeholder="Ex: 5"
-                                />
+                  value={form.volume}
+                  onChange={(e) => setForm({ ...form, volume: e.target.value })}
+                  placeholder="Ex: 5" />
+
                             </div>
                         </div>
 
@@ -2701,42 +2721,42 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                             <div className="space-y-2">
                                 <Label>Transportadora</Label>
                                 <Input
-                                    value={form.transportadora}
-                                    onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
-                                    placeholder="Nome da transportadora"
-                                    className="bg-white"
-                                    list="transportadoras-list"
-                                />
+                  value={form.transportadora}
+                  onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
+                  placeholder="Nome da transportadora"
+                  className="bg-white"
+                  list="transportadoras-list" />
+
                                 <datalist id="transportadoras-list">
-                                    {transportadoras
-                                        .sort((a, b) => (a.razao_social || a.nome_fantasia || "").localeCompare(b.razao_social || b.nome_fantasia || ""))
-                                        .filter(t => {
-                                            const nome = (t.razao_social || t.nome_fantasia || "").toLowerCase();
-                                            return nome.includes((form.transportadora || "").toLowerCase());
-                                        })
-                                        .map(t => (
-                                            <option key={t.id} value={t.razao_social || t.nome_fantasia}>
+                                    {transportadoras.
+                  sort((a, b) => (a.razao_social || a.nome_fantasia || "").localeCompare(b.razao_social || b.nome_fantasia || "")).
+                  filter((t) => {
+                    const nome = (t.razao_social || t.nome_fantasia || "").toLowerCase();
+                    return nome.includes((form.transportadora || "").toLowerCase());
+                  }).
+                  map((t) =>
+                  <option key={t.id} value={t.razao_social || t.nome_fantasia}>
                                                 {t.cidade && `${t.razao_social || t.nome_fantasia} (${t.cidade})`}
                                             </option>
-                                        ))}
+                  )}
                                 </datalist>
-                                {form.transportadora && (
-                                    <div className="text-xs text-slate-500">
-                                        {transportadoras.filter(t => 
-                                            (t.razao_social || t.nome_fantasia || "").toLowerCase().includes(form.transportadora.toLowerCase())
-                                        ).length} transportadora(s) encontrada(s)
+                                {form.transportadora &&
+                <div className="text-xs text-slate-500">
+                                        {transportadoras.filter((t) =>
+                  (t.razao_social || t.nome_fantasia || "").toLowerCase().includes(form.transportadora.toLowerCase())
+                  ).length} transportadora(s) encontrada(s)
                                     </div>
-                                )}
+                }
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4" /> Filial
                                 </Label>
                                 <Input
-                                    value={form.filial}
-                                    onChange={(e) => setForm({ ...form, filial: e.target.value })}
-                                    placeholder="Ex: SP, RJ, MG..."
-                                />
+                  value={form.filial}
+                  onChange={(e) => setForm({ ...form, filial: e.target.value })}
+                  placeholder="Ex: SP, RJ, MG..." />
+
                             </div>
                         </div>
 
@@ -2749,17 +2769,17 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                                     <SelectValue placeholder="Selecione a placa..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {veiculos.map(v => (
-                                        <SelectItem key={v.id} value={v.placa}>
+                                    {veiculos.map((v) =>
+                  <SelectItem key={v.id} value={v.placa}>
                                             {v.placa} - {v.modelo}
                                         </SelectItem>
-                                    ))}
+                  )}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
+                            <Button type="button" variant="outline" onClick={() => {setShowForm(false);resetForm();}}>
                                 <X className="w-4 h-4 mr-1" /> Cancelar
                             </Button>
                             <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
@@ -2769,6 +2789,6 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
                     </form>
                 </DialogContent>
             </Dialog>
-        </div>
-    );
+        </div>);
+
 }

@@ -35,6 +35,7 @@ import ServicosSNF from './pages/ServicosSNF';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
+import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import __Layout from './Layout.jsx';
 
 
@@ -76,6 +77,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
+    "SincronizacaoFirebase": SincronizacaoFirebase,
 }
 
 export const pagesConfig = {

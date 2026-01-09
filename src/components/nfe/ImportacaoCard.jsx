@@ -62,7 +62,11 @@ export default function ImportacaoCard({
             marginTop: 10,
             marginBottom: 10,
             marginLeft: 10,
-            marginRight: 10
+            marginRight: 10,
+            resumoFontSize: 10,
+            resumoGap: 8,
+            resumoLineSpacing: 3,
+            resumoTotalSpacing: 10
         };
     });
 
@@ -425,11 +429,11 @@ export default function ImportacaoCard({
                         padding-bottom: 6px;
                     }
                     .resumo-section {
-                        margin-bottom: 12px;
+                        margin-bottom: ${printConfig.resumoTotalSpacing}px;
                     }
                     .resumo-section-title {
                         color: #1e40af;
-                        font-size: 12px;
+                        font-size: ${printConfig.resumoFontSize + 2}px;
                         font-weight: bold;
                         margin-bottom: 6px;
                         padding-bottom: 3px;
@@ -438,8 +442,8 @@ export default function ImportacaoCard({
                     .resumo-grid {
                         display: grid;
                         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                        gap: 8px;
-                        margin-bottom: 8px;
+                        gap: ${printConfig.resumoGap}px;
+                        margin-bottom: ${printConfig.resumoGap}px;
                     }
                     .resumo-placa {
                         background: white;
@@ -450,7 +454,7 @@ export default function ImportacaoCard({
                     }
                     .resumo-placa h4 {
                         color: #047857;
-                        font-size: 12px;
+                        font-size: ${printConfig.resumoFontSize + 2}px;
                         margin-bottom: 6px;
                         font-weight: bold;
                         text-align: center;
@@ -467,7 +471,7 @@ export default function ImportacaoCard({
                     }
                     .resumo-transp h4 {
                         color: #6d28d9;
-                        font-size: 11px;
+                        font-size: ${printConfig.resumoFontSize + 1}px;
                         margin-bottom: 6px;
                         font-weight: bold;
                         text-align: center;
@@ -476,9 +480,9 @@ export default function ImportacaoCard({
                         border-radius: 3px;
                     }
                     .resumo-item {
-                        font-size: 10px;
+                        font-size: ${printConfig.resumoFontSize}px;
                         color: #334155;
-                        margin: 3px 0;
+                        margin: ${printConfig.resumoLineSpacing}px 0;
                         display: flex;
                         justify-content: space-between;
                     }
@@ -492,7 +496,7 @@ export default function ImportacaoCard({
                     }
                     .resumo-total h4 {
                         color: white;
-                        font-size: 14px;
+                        font-size: ${printConfig.resumoFontSize + 4}px;
                         margin-bottom: 8px;
                         font-weight: bold;
                         text-align: center;
@@ -502,11 +506,11 @@ export default function ImportacaoCard({
                     .resumo-grid-total {
                         display: grid;
                         grid-template-columns: repeat(2, 1fr);
-                        gap: 8px;
+                        gap: ${printConfig.resumoGap}px;
                     }
                     .resumo-total .resumo-item {
                         color: white;
-                        font-size: 11px;
+                        font-size: ${printConfig.resumoFontSize + 1}px;
                         background: rgba(255,255,255,0.1);
                         padding: 6px;
                         border-radius: 4px;
@@ -656,7 +660,7 @@ export default function ImportacaoCard({
 
             {/* Dialog de Configuração de Impressão */}
             <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-5xl max-h-[90vh]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Printer className="w-5 h-5 text-indigo-600" />
@@ -664,7 +668,9 @@ export default function ImportacaoCard({
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                        {/* Painel de Configurações */}
+                        <div className="space-y-6">
                         {/* Orientação */}
                         <div>
                             <Label className="text-sm font-semibold mb-2 block">Orientação da Página</Label>
@@ -758,6 +764,57 @@ export default function ImportacaoCard({
                             </div>
                         </div>
 
+                        {/* Espaçamento do Resumo */}
+                        <div>
+                            <Label className="text-sm font-semibold mb-3 block">Configurações do Resumo</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label className="text-xs text-slate-600">Tamanho Fonte (px)</Label>
+                                    <input
+                                        type="number"
+                                        min="6"
+                                        max="16"
+                                        value={printConfig.resumoFontSize}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, resumoFontSize: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Espaço entre Placas (px)</Label>
+                                    <input
+                                        type="number"
+                                        min="2"
+                                        max="20"
+                                        value={printConfig.resumoGap}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, resumoGap: parseInt(e.target.value) || 8 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Espaço entre Linhas (px)</Label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value={printConfig.resumoLineSpacing}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, resumoLineSpacing: parseInt(e.target.value) || 3 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-slate-600">Espaço Resumo Total (px)</Label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="30"
+                                        value={printConfig.resumoTotalSpacing}
+                                        onChange={(e) => setPrintConfig({ ...printConfig, resumoTotalSpacing: parseInt(e.target.value) || 10 })}
+                                        className="w-full px-2 py-1 border rounded text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Largura das Colunas */}
                         <div>
                             <Label className="text-sm font-semibold mb-3 block">
@@ -834,9 +891,51 @@ export default function ImportacaoCard({
                                     />
                                 </div>
                             </div>
-                        </div>
+                            </div>
+                            </div>
 
-                        <div className="flex justify-between pt-4 border-t">
+                            {/* Painel de Preview */}
+                            <div className="bg-slate-50 rounded-lg p-4 border-2 border-slate-200">
+                            <h3 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
+                            <Eye className="w-4 h-4" />
+                            Preview das Configurações
+                            </h3>
+                            <div className="bg-white rounded p-3 space-y-2 text-xs border">
+                            <div className="border-b pb-2">
+                                <p className="text-slate-500">Margens:</p>
+                                <p className="font-mono">
+                                    Superior: {printConfig.marginTop}mm | Inferior: {printConfig.marginBottom}mm<br/>
+                                    Esquerda: {printConfig.marginLeft}mm | Direita: {printConfig.marginRight}mm
+                                </p>
+                            </div>
+                            <div className="border-b pb-2">
+                                <p className="text-slate-500">Tabela:</p>
+                                <p className="font-mono">
+                                    Fonte: {printConfig.fontSize}px | Orientação: {printConfig.orientation === "portrait" ? "Retrato" : "Paisagem"}
+                                </p>
+                            </div>
+                            <div className="border-b pb-2">
+                                <p className="text-slate-500">Resumo:</p>
+                                <p className="font-mono">
+                                    Fonte: {printConfig.resumoFontSize}px<br/>
+                                    Espaço Placas: {printConfig.resumoGap}px<br/>
+                                    Espaço Linhas: {printConfig.resumoLineSpacing}px<br/>
+                                    Espaço Total: {printConfig.resumoTotalSpacing}px
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Colunas (Total: {totalColunas}%):</p>
+                                <div className="font-mono text-xs">
+                                    NF: {printConfig.colNF}% | Placa: {printConfig.colPlaca}%<br/>
+                                    Cliente: {printConfig.colCliente}% | Vol: {printConfig.colVolume}%<br/>
+                                    Peso: {printConfig.colPeso}% | Transp: {printConfig.colTransp}%
+                                </div>
+                            </div>
+                            </div>
+                            </div>
+                            </div>
+
+                            <div className="flex justify-between pt-4 border-t">
                             <Button 
                                 variant="outline" 
                                 onClick={() => setPrintConfig({
@@ -851,7 +950,11 @@ export default function ImportacaoCard({
                                     marginTop: 10,
                                     marginBottom: 10,
                                     marginLeft: 10,
-                                    marginRight: 10
+                                    marginRight: 10,
+                                    resumoFontSize: 10,
+                                    resumoGap: 8,
+                                    resumoLineSpacing: 3,
+                                    resumoTotalSpacing: 10
                                 })}
                             >
                                 Restaurar Padrão

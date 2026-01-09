@@ -60,6 +60,8 @@ export default function NotasFiscais() {
   const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
   const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
   const [notasDigitadas, setNotasDigitadas] = useState("");
+  const [ordenacaoNotas, setOrdenacaoNotas] = useState("digitacao");
+  const [otimizandoRota, setOtimizandoRota] = useState(false);
   const [layoutConfig, setLayoutConfig] = useState({
     colRemetente: 18,
     colDestinatario: 42,
@@ -1077,15 +1079,81 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       notasPorPlaca[placa].push(nota);
     });
 
+    // Ordenar notas conforme a opção escolhida
+    for (const placa in notasPorPlaca) {
+      if (ordenacaoNotas === "transportadora") {
+        // Ordenar por transportadora
+        notasPorPlaca[placa].sort((a, b) => {
+          const transpA = (a.transportadora || "").toUpperCase();
+          const transpB = (b.transportadora || "").toUpperCase();
+          return transpA.localeCompare(transpB);
+        });
+      } else if (ordenacaoNotas === "localizacao") {
+        // Otimizar rota por localização
+        const notasDaPlaca = notasPorPlaca[placa];
+        if (notasDaPlaca.length > 1) {
+          setOtimizandoRota(true);
+          try {
+            const transportadorasInfo = notasDaPlaca.map(n => ({
+              id: n.id,
+              transportadora: n.transportadora || n.destinatario || "",
+              destinatario: n.destinatario || ""
+            }));
+
+            const result = await base44.integrations.Core.InvokeLLM({
+              prompt: `Você é um otimizador de rotas de entregas. Receba a lista de transportadoras/destinatários e ordene-as por proximidade geográfica para criar um itinerário eficiente.
+
+LISTA DE TRANSPORTADORAS/DESTINATÁRIOS:
+${transportadorasInfo.map((t, i) => `${i + 1}. ${t.transportadora} - ${t.destinatario}`).join('\n')}
+
+INSTRUÇÕES:
+1. Busque a localização de cada transportadora/destinatário na internet
+2. Calcule a rota mais eficiente considerando proximidade geográfica
+3. Retorne a lista de IDs na ordem otimizada
+
+Retorne apenas a lista de IDs na ordem ideal de entrega.`,
+              add_context_from_internet: true,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  ids_ordenados: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "IDs das notas na ordem otimizada"
+                  }
+                }
+              }
+            });
+
+            if (result?.ids_ordenados) {
+              const notasOrdenadas = [];
+              result.ids_ordenados.forEach(id => {
+                const nota = notasDaPlaca.find(n => n.id === id);
+                if (nota) notasOrdenadas.push(nota);
+              });
+              // Adicionar notas que não foram ordenadas
+              notasDaPlaca.forEach(nota => {
+                if (!notasOrdenadas.find(n => n.id === nota.id)) {
+                  notasOrdenadas.push(nota);
+                }
+              });
+              notasPorPlaca[placa] = notasOrdenadas;
+              toast.success(`Rota otimizada para placa ${placa}!`);
+            }
+          } catch (error) {
+            console.error("Erro ao otimizar rota:", error);
+            toast.error("Erro ao otimizar rota. Usando ordem de digitação.");
+          }
+          setOtimizandoRota(false);
+        }
+      }
+      // Se for "digitacao", mantém a ordem original (não faz nada)
+    }
+
     let pagesHtml = "";
 
     Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
-      // Ordenar notas por transportadora
-      const notasOrdenadas = [...notasPlaca].sort((a, b) => {
-        const transpA = (a.transportadora || "").toUpperCase();
-        const transpB = (b.transportadora || "").toUpperCase();
-        return transpA.localeCompare(transpB);
-      });
+      const notasOrdenadas = notasPlaca;
 
       const NOTAS_POR_PAGINA = 6;
       const totalPaginas = Math.ceil(notasOrdenadas.length / NOTAS_POR_PAGINA);
@@ -1652,25 +1720,76 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <FileText className="w-5 h-5 text-blue-600" />
                             Notas para o Romaneio
                         </h3>
-                        <div className="flex gap-2">
-                            <Input
-                placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
-                value={notasDigitadas}
-                onChange={(e) => setNotasDigitadas(e.target.value)}
-                className="bg-white flex-1"
-                onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
+                        <div className="space-y-3">
+                            {/* Campo de busca */}
+                            <div className="flex gap-2">
+                                <Input
+                    placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
+                    value={notasDigitadas}
+                    onChange={(e) => setNotasDigitadas(e.target.value)}
+                    className="bg-white flex-1"
+                    onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
 
-                            <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
-                                <Search className="w-4 h-4 mr-2" />
-                                Buscar e Selecionar
-                            </Button>
+                                <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Buscar e Selecionar
+                                </Button>
+                            </div>
+                            
+                            {/* Faixa de ordenação */}
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border-2 border-indigo-200">
+                                <Label className="text-sm font-semibold text-indigo-900 mb-2 block">Ordenação das Notas na Impressão</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={ordenacaoNotas === "digitacao" ? "default" : "outline"}
+                                        onClick={() => setOrdenacaoNotas("digitacao")}
+                                        className={ordenacaoNotas === "digitacao" ? "bg-indigo-600 hover:bg-indigo-700" : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"}
+                                        size="sm"
+                                    >
+                                        <FileText className="w-4 h-4 mr-1" />
+                                        Ordem de Digitação
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={ordenacaoNotas === "transportadora" ? "default" : "outline"}
+                                        onClick={() => setOrdenacaoNotas("transportadora")}
+                                        className={ordenacaoNotas === "transportadora" ? "bg-indigo-600 hover:bg-indigo-700" : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"}
+                                        size="sm"
+                                    >
+                                        <Truck className="w-4 h-4 mr-1" />
+                                        Por Transportadora
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={ordenacaoNotas === "localizacao" ? "default" : "outline"}
+                                        onClick={() => setOrdenacaoNotas("localizacao")}
+                                        className={ordenacaoNotas === "localizacao" ? "bg-indigo-600 hover:bg-indigo-700" : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"}
+                                        size="sm"
+                                    >
+                                        <MapPin className="w-4 h-4 mr-1" />
+                                        Por Localização
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Botão de imprimir */}
                             <Button
-                onClick={handlePrintRomaneio}
-                disabled={selecionados.length === 0}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6">
-
-                                <Printer className="w-5 h-5 mr-2" />
-                                Imprimir Romaneio ({selecionados.length})
+                                onClick={handlePrintRomaneio}
+                                disabled={selecionados.length === 0 || otimizandoRota}
+                                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 w-full h-12 text-lg font-semibold"
+                            >
+                                {otimizandoRota ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        Otimizando Rota...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Printer className="w-5 h-5 mr-2" />
+                                        Imprimir Romaneio ({selecionados.length})
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </CardContent>

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { 
-    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2
+    Printer, FileText, Clock, Package, ChevronDown, ChevronUp, Eye, Trash2, Loader2, Save
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,15 +26,36 @@ export default function ImportacaoCard({
     const [loading, setLoading] = useState(false);
     const [notasParaImprimir, setNotasParaImprimir] = useState([]);
     const [notasDaMascara, setNotasDaMascara] = useState([]);
-    const [printConfig, setPrintConfig] = useState({
-        colNF: 10,
-        colPlaca: 10,
-        colCliente: 40,
-        colVolume: 10,
-        colPeso: 10,
-        colTransp: 20,
-        fontSize: 8,
-        orientation: "portrait"
+    
+    // Carregar configurações salvas do localStorage
+    const [printConfig, setPrintConfig] = useState(() => {
+        const saved = localStorage.getItem("importacaoPrintConfig");
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch {
+                return {
+                    colNF: 10,
+                    colPlaca: 10,
+                    colCliente: 40,
+                    colVolume: 10,
+                    colPeso: 10,
+                    colTransp: 20,
+                    fontSize: 8,
+                    orientation: "portrait"
+                };
+            }
+        }
+        return {
+            colNF: 10,
+            colPlaca: 10,
+            colCliente: 40,
+            colVolume: 10,
+            colPeso: 10,
+            colTransp: 20,
+            fontSize: 8,
+            orientation: "portrait"
+        };
     });
 
     // Filtrar notas desta importação
@@ -521,6 +542,12 @@ export default function ImportacaoCard({
     const totalColunas = printConfig.colNF + printConfig.colPlaca + printConfig.colCliente + 
                          printConfig.colVolume + printConfig.colPeso + printConfig.colTransp;
 
+    // Salvar configurações no localStorage
+    const handleSalvarConfig = () => {
+        localStorage.setItem("importacaoPrintConfig", JSON.stringify(printConfig));
+        toast.success("Configurações de impressão salvas!");
+    };
+
     return (
         <>
             <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-l-indigo-500 shadow-md hover:shadow-lg transition-shadow">
@@ -761,6 +788,14 @@ export default function ImportacaoCard({
                                 Restaurar Padrão
                             </Button>
                             <div className="flex gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={handleSalvarConfig}
+                                    className="border-green-500 text-green-600 hover:bg-green-50"
+                                >
+                                    <Save className="w-4 h-4 mr-1" />
+                                    Salvar Configuração
+                                </Button>
                                 <Button variant="outline" onClick={() => setShowConfigDialog(false)}>
                                     Cancelar
                                 </Button>

@@ -1378,7 +1378,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
     }, [importacoes, notas]);
 
-    const filtered = notas.filter(n => {
+    // Verificar se há alguma busca/filtro ativo
+    const hasBuscaAtiva = search || 
+        filterFilial && filterFilial !== "todas" ||
+        columnFilters.destinatario.length > 0 ||
+        columnFilters.transportadora.length > 0 ||
+        columnFilters.filial.length > 0 ||
+        columnFilters.placa.length > 0;
+
+    const filtered = hasBuscaAtiva ? notas.filter(n => {
         // Busca geral
         const matchSearch = !search || 
             n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
@@ -1399,7 +1407,7 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
             columnFilters.placa.includes(n.placa || "");
 
         return matchSearch && matchFilialSelect && matchDestinatario && matchTransportadora && matchFilial && matchPlaca;
-    });
+    }) : [];
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-2 md:p-4 pb-2">
@@ -1963,6 +1971,14 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                                         <TableRow>
                                             <TableCell colSpan={11} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : !hasBuscaAtiva ? (
+                                        <TableRow>
+                                            <TableCell colSpan={11} className="text-center py-12 text-slate-500">
+                                                <Search className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                                                <p className="text-lg font-medium">Use a busca para visualizar as notas fiscais</p>
+                                                <p className="text-sm text-slate-400 mt-1">Digite no campo de busca ou use os filtros acima</p>
                                             </TableCell>
                                         </TableRow>
                                     ) : filtered.length === 0 ? (

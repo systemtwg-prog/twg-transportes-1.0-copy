@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key } from
+  Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key, MoreVertical } from
 "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import ImportacaoCard from "@/components/nfe/ImportacaoCard";
@@ -1452,22 +1453,6 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             Nova Nota
                         </Button>
                         <Button
-              onClick={() => setShowChaveAcesso(true)}
-              variant="outline"
-              className="border-green-500 text-green-700 hover:bg-green-50">
-
-                            <Key className="w-4 h-4 mr-2" />
-                            Chave de Acesso
-                        </Button>
-                        <Button
-              onClick={() => setShowImportador(true)}
-              variant="outline"
-              className="border-blue-500 text-blue-700 hover:bg-blue-50">
-
-                            <Upload className="w-4 h-4 mr-2" />
-                            Importar Arquivo
-                        </Button>
-                        <Button
               onClick={() => setShowPasteForm(true)}
               variant="outline"
               className="border-purple-500 text-purple-700 hover:bg-purple-50">
@@ -1484,6 +1469,30 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
                         </Button>
+                        
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setShowImportador(true)}>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Importar Arquivo
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setShowChaveAcesso(true)}>
+                                    <Key className="w-4 h-4 mr-2" />
+                                    Chave de Acesso
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to={createPageUrl("MascaraRomaneio")} className="cursor-pointer">
+                                        <Truck className="w-4 h-4 mr-2" />
+                                        Máscara Romaneio
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

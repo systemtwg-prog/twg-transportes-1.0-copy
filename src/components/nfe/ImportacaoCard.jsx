@@ -205,9 +205,13 @@ export default function ImportacaoCard({
                 await base44.entities.NotaFiscal.update(id, { filial: filialParaAtribuir });
             }
             
-            // Recarregar dados
-            window.location.reload();
             toast.success(`${notasSelecionadasExpanded.length} nota(s) atualizada(s)!`);
+            setShowEditFilialDialog(false);
+            setFilialParaAtribuir("");
+            setNotasSelecionadasExpanded([]);
+            
+            // Recarregar dados após sucesso
+            setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             toast.error("Erro ao atualizar notas");
@@ -263,6 +267,22 @@ export default function ImportacaoCard({
             const volStr = nota.volume || "";
             const volNum = parseFloat(volStr.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
             resumoPorPlaca[placa].volumeTotal += volNum;
+        });
+
+        // Calcular resumo por filial e placa (apenas notas com placa)
+        const resumoPorFilial = {};
+        notasParaImprimir.forEach(nota => {
+            if (!nota.placa || !nota.filial) return;
+            const filial = nota.filial;
+            const placa = nota.placa;
+
+            if (!resumoPorFilial[placa]) {
+                resumoPorFilial[placa] = {};
+            }
+            if (!resumoPorFilial[placa][filial]) {
+                resumoPorFilial[placa][filial] = 0;
+            }
+            resumoPorFilial[placa][filial]++;
         });
 
         // Gerar linhas da tabela (incluir todas, placa em branco se não tiver)
@@ -558,6 +578,23 @@ export default function ImportacaoCard({
                         font-weight: bold;
                         text-align: center;
                         background: #ede9fe;
+                        padding: 4px;
+                        border-radius: 3px;
+                    }
+                    .resumo-filial {
+                        background: white;
+                        padding: 10px;
+                        border-left: 4px solid #0284c7;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    .resumo-filial h4 {
+                        color: #0369a1;
+                        font-size: ${printConfig.resumoFontSize + 2}px;
+                        margin-bottom: 6px;
+                        font-weight: bold;
+                        text-align: center;
+                        background: #e0f2fe;
                         padding: 4px;
                         border-radius: 3px;
                     }

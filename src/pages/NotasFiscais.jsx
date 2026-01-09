@@ -44,6 +44,7 @@ export default function NotasFiscais() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [placaEmMassa, setPlacaEmMassa] = useState("");
   const [filialEmMassa, setFilialEmMassa] = useState("");
+  const [filialEmMassa, setFilialEmMassa] = useState("");
   const [showCadastroTransp, setShowCadastroTransp] = useState(false);
   const [transpExtraidas, setTranspExtraidas] = useState([]);
   const [transpSelecionadas, setTranspSelecionadas] = useState([]);

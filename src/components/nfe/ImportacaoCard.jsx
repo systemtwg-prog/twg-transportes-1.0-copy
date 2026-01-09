@@ -321,6 +321,22 @@ export default function ImportacaoCard({
                 resumoHtml += '</div></div>';
             }
 
+            // Agrupar por filial e placa (apenas notas com placa)
+            const resumoPorFilial = {};
+            notasParaImprimir.forEach(nota => {
+                if (!nota.placa || !nota.filial) return;
+                const filial = nota.filial;
+                const placa = nota.placa;
+
+                if (!resumoPorFilial[placa]) {
+                    resumoPorFilial[placa] = {};
+                }
+                if (!resumoPorFilial[placa][filial]) {
+                    resumoPorFilial[placa][filial] = 0;
+                }
+                resumoPorFilial[placa][filial]++;
+            });
+
             // Agrupar por transportadora (apenas notas com placa)
             const resumoPorTransp = {};
             notasParaImprimir.forEach(nota => {
@@ -520,6 +536,23 @@ export default function ImportacaoCard({
                         font-weight: bold;
                         text-align: center;
                         background: #ede9fe;
+                        padding: 4px;
+                        border-radius: 3px;
+                    }
+                    .resumo-filial {
+                        background: white;
+                        padding: 10px;
+                        border-left: 4px solid #0284c7;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    }
+                    .resumo-filial h4 {
+                        color: #0369a1;
+                        font-size: ${printConfig.resumoFontSize + 2}px;
+                        margin-bottom: 6px;
+                        font-weight: bold;
+                        text-align: center;
+                        background: #e0f2fe;
                         padding: 4px;
                         border-radius: 3px;
                     }

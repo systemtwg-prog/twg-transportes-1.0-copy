@@ -509,14 +509,19 @@ export default function HomeDesktop() {
                             </CardHeader>
                             <CardContent className="p-6">
                                 <div className="grid grid-cols-4 gap-4">
-                                    {modulosVisiveis.map((item) => (
-                                        <Link key={item.id} to={createPageUrl(item.href)}>
-                                            <div className={`p-4 rounded-xl bg-gradient-to-br ${item.color} text-white hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer`}>
-                                                <item.icon className="w-8 h-8 mb-2" />
-                                                <p className="text-sm font-semibold">{item.name}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
+                                    {modulosVisiveis.map((item) => {
+                                        const isNotasFiscais = item.id === "notas_fiscais";
+                                        return (
+                                            <Link key={item.id} to={createPageUrl(item.href)} className={isNotasFiscais ? "col-span-2" : ""}>
+                                                <div className={`p-4 rounded-xl bg-gradient-to-br ${item.color} text-white hover:scale-105 hover:shadow-xl transition-all duration-300 cursor-pointer ${isNotasFiscais ? "h-full flex items-center justify-center" : ""}`}>
+                                                    <div className={isNotasFiscais ? "flex items-center gap-4" : ""}>
+                                                        <item.icon className={`${isNotasFiscais ? "w-12 h-12" : "w-8 h-8 mb-2"}`} />
+                                                        <p className={`${isNotasFiscais ? "text-xl" : "text-sm"} font-semibold`}>{item.name}</p>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </CardContent>
                         </Card>

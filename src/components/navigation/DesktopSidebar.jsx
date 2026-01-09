@@ -9,7 +9,7 @@ import {
     Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, 
     Search, Database, Printer, ChevronLeft, ChevronRight, Truck, Building2,
-    Camera, ClipboardList, AlertTriangle, Upload, Mail
+    Camera, ClipboardList, AlertTriangle, Upload, Mail, FileText as FileTextIcon
 } from "lucide-react";
 
 const menuItems = [
@@ -21,6 +21,7 @@ const menuItems = [
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package, category: "operacional" },
     { name: "Ordens de Coleta", href: "OrdensColeta", icon: ClipboardList, category: "operacional" },
     { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, category: "documentos" },
+    { name: "Consulta SEFAZ", href: "ConsultaSEFAZ", icon: Search, category: "documentos" },
     { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, category: "documentos" },
     { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package, category: "documentos" },
     { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer, category: "documentos" },

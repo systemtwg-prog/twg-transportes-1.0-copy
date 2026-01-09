@@ -12,7 +12,7 @@ import {
     ClipboardList, Settings, BarChart3,
     Navigation, Building2, Upload,
     Camera, ChevronRight, Bell, Grip, Check, X,
-    AlertTriangle, Clock, TrendingUp, Calendar, Printer
+    AlertTriangle, Clock, TrendingUp, Calendar, Printer, Search
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
@@ -29,6 +29,7 @@ const allModules = [
     { id: "veiculos", name: "Veículos", href: "Veiculos", icon: Car, color: "from-slate-500 to-gray-600" },
     { id: "multas", name: "Multas", href: "BuscaMultas", icon: AlertTriangle, color: "from-red-500 to-orange-600" },
     { id: "notas_fiscais", name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600", large: true },
+    { id: "consulta_sefaz", name: "Consulta SEFAZ", href: "ConsultaSEFAZ", icon: Search, color: "from-indigo-500 to-blue-600" },
     { id: "romaneio", name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600" },
     { id: "romaneios_gerados", name: "Romaneios Gerados", href: "RomaneiosGerados", icon: BarChart3, color: "from-pink-500 to-rose-600" },
     { id: "relatorio", name: "Relatório", href: "ImpressaoRelatorio", icon: FileText, color: "from-indigo-500 to-purple-600" },

@@ -183,14 +183,34 @@ export default function ImportacaoCard({
         setShowConfigDialog(true);
     };
 
-    const handleImprimir = () => {
+    const handleImprimir = async () => {
         if (notasParaImprimir.length === 0) {
             toast.error("Selecione ao menos uma nota para imprimir");
             return;
         }
 
+        // Buscar romaneios gerados (não entregues)
+        const romaneiosGerados = await base44.entities.RomaneioGerado.filter({ status: "gerado" });
+        const notasIdsEmRomaneiosGerados = new Set();
+        romaneiosGerados.forEach(rom => {
+            (rom.notas_ids || []).forEach(id => notasIdsEmRomaneiosGerados.add(id));
+        });
+
+        // Filtrar apenas notas que estejam em romaneios gerados ou que não tenham placa
+        const notasFiltradas = notasParaImprimir.filter(nota => {
+            // Se não tem placa, incluir
+            if (!nota.placa) return true;
+            // Se tem placa, só incluir se estiver em romaneio gerado
+            return notasIdsEmRomaneiosGerados.has(nota.id);
+        });
+
+        if (notasFiltradas.length === 0) {
+            toast.error("Nenhuma nota com romaneio gerado encontrada");
+            return;
+        }
+
         // Ordenar notas por transportadora antes de imprimir
-        const notasOrdenadas = [...notasParaImprimir].sort((a, b) => {
+        const notasOrdenadas = [...notasFiltradas].sort((a, b) => {
             const transpA = (a.transportadora || "").toUpperCase();
             const transpB = (b.transportadora || "").toUpperCase();
             return transpA.localeCompare(transpB);

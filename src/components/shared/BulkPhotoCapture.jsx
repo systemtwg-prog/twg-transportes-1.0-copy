@@ -294,7 +294,7 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                     alt={`Foto ${idx + 1}`} 
                                     className="w-16 h-16 object-cover rounded-lg border-2 border-white/50 flex-shrink-0" 
                                 />
-                                <div className="flex-1 min-w-0 space-y-2">
+                                <div className="flex-1 min-w-0 space-y-3">
                                     <Input
                                         type="number"
                                         inputMode="numeric"
@@ -302,10 +302,10 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                         placeholder="Nº Nota Fiscal"
                                         value={foto.notaFiscal || ""}
                                         onChange={(e) => updateNotaFiscal(foto.id, e.target.value)}
-                                        className="h-11 bg-white text-slate-800 text-base font-medium"
+                                        className="h-16 bg-white text-slate-800 text-xl font-bold"
                                     />
                                     <Select value={foto.empresa || ""} onValueChange={(v) => updateEmpresa(foto.id, v)}>
-                                        <SelectTrigger className="h-11 bg-white text-slate-800 text-base">
+                                        <SelectTrigger className="h-16 bg-white text-slate-800 text-lg">
                                             <SelectValue placeholder="Empresa" />
                                         </SelectTrigger>
                                         <SelectContent className="z-[100]">
@@ -323,15 +323,15 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                                 {/* Botão OK para confirmar */}
                                 <button
                                     onClick={() => confirmarFoto(foto.id)}
-                                    className="w-9 h-9 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
                                 >
-                                    <Check className="w-5 h-5 text-white" />
+                                    <Check className="w-7 h-7 text-white" />
                                 </button>
                                 <button
                                     onClick={() => removePhoto(foto.id)}
-                                    className="w-9 h-9 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0"
+                                    className="w-14 h-14 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
                                 >
-                                    <X className="w-5 h-5 text-white" />
+                                    <X className="w-7 h-7 text-white" />
                                 </button>
                             </div>
                         ))}
@@ -347,12 +347,12 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                         <button
                             onClick={capturePhoto}
                             disabled={capturing}
-                            className="w-24 h-24 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-[6px] border-orange-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
+                            className="w-28 h-28 rounded-full bg-white hover:bg-gray-100 shadow-2xl border-[8px] border-orange-400 flex items-center justify-center active:scale-90 transition-all disabled:opacity-50"
                         >
                             {capturing ? (
-                                <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+                                <div className="animate-spin w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full" />
                             ) : (
-                                <Camera className="w-12 h-12 text-orange-500" />
+                                <Camera className="w-14 h-14 text-orange-500" />
                             )}
                         </button>
 
@@ -360,9 +360,9 @@ export default function BulkPhotoCapture({ onComplete, onClose }) {
                         {fotos.length > 0 && (
                             <Button
                                 onClick={handleFinish}
-                                className="h-20 px-8 rounded-2xl bg-green-500 hover:bg-green-600 text-white shadow-2xl text-lg font-bold"
+                                className="h-24 px-10 rounded-2xl bg-green-500 hover:bg-green-600 text-white shadow-2xl text-2xl font-bold"
                             >
-                                <Save className="w-7 h-7 mr-2" />
+                                <Save className="w-9 h-9 mr-3" />
                                 Salvar ({fotos.length})
                             </Button>
                         )}

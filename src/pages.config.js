@@ -12,6 +12,7 @@ import ComprovantesCtes from './pages/ComprovantesCtes';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import Configuracoes from './pages/Configuracoes';
+import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import Destinatarios from './pages/Destinatarios';
 import EmailManager from './pages/EmailManager';
@@ -32,11 +33,10 @@ import Relatorios from './pages/Relatorios';
 import RomaneiosGerados from './pages/RomaneiosGerados';
 import RotasGPS from './pages/RotasGPS';
 import ServicosSNF from './pages/ServicosSNF';
+import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
-import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import __Layout from './Layout.jsx';
 
 
@@ -55,6 +55,7 @@ export const PAGES = {
     "ComprovantesInternos": ComprovantesInternos,
     "ConfiguracaoModulos": ConfiguracaoModulos,
     "Configuracoes": Configuracoes,
+    "ConsultaSEFAZ": ConsultaSEFAZ,
     "CrachaIdentificacao": CrachaIdentificacao,
     "Destinatarios": Destinatarios,
     "EmailManager": EmailManager,
@@ -75,11 +76,10 @@ export const PAGES = {
     "RomaneiosGerados": RomaneiosGerados,
     "RotasGPS": RotasGPS,
     "ServicosSNF": ServicosSNF,
+    "SincronizacaoFirebase": SincronizacaoFirebase,
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "SincronizacaoFirebase": SincronizacaoFirebase,
-    "ConsultaSEFAZ": ConsultaSEFAZ,
 }
 
 export const pagesConfig = {

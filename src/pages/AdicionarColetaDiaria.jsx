@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import CepAutoComplete from "@/components/cep/CepAutoComplete";
 
-function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente }) {
+function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente, numeroColeta }) {
     const { data: clientes = [] } = useQuery({
         queryKey: ["clientes"],
         queryFn: () => base44.entities.Cliente.list()
@@ -30,6 +30,7 @@ function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente }) {
     const [searchRemetente, setSearchRemetente] = useState("");
     const [searchDestinatario, setSearchDestinatario] = useState("");
     const [form, setForm] = useState({
+        numero_coleta: coleta?.numero_coleta || numeroColeta || "",
         data_coleta: coleta?.data_coleta || format(new Date(), "yyyy-MM-dd"),
         remetente_id: coleta?.remetente_id || "",
         remetente_nome: coleta?.remetente_nome || "",
@@ -130,7 +131,17 @@ function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente }) {
             </CardHeader>
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                            <Label>Nº Coleta</Label>
+                            <Input
+                                value={form.numero_coleta}
+                                onChange={(e) => setForm({ ...form, numero_coleta: e.target.value })}
+                                placeholder="Auto"
+                                className="font-bold text-indigo-600"
+                                readOnly
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label>Data da Coleta *</Label>
                             <Input
@@ -538,6 +549,22 @@ export default function AdicionarColetaDiaria() {
         queryFn: () => base44.entities.ColetaDiaria.list("-created_date")
     });
 
+    // Gerar próximo número de coleta
+    const proximoNumeroColeta = () => {
+        if (coletas.length === 0) return "COL-001";
+        
+        const numeros = coletas
+            .map(c => c.numero_coleta)
+            .filter(n => n && n.startsWith("COL-"))
+            .map(n => parseInt(n.replace("COL-", "")))
+            .filter(n => !isNaN(n));
+        
+        if (numeros.length === 0) return "COL-001";
+        
+        const maior = Math.max(...numeros);
+        return `COL-${String(maior + 1).padStart(3, "0")}`;
+    };
+
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.ColetaDiaria.create(data),
         onSuccess: () => {
@@ -590,6 +617,7 @@ export default function AdicionarColetaDiaria() {
         delete nova.created_by;
         nova.data_coleta = new Date().toISOString().split("T")[0];
         nova.status = "pendente";
+        nova.numero_coleta = proximoNumeroColeta();
         setEditing(nova);
         setShowForm(true);
     };
@@ -603,12 +631,10 @@ export default function AdicionarColetaDiaria() {
         }
     };
 
-    // Filtrar apenas coletas pendentes (excluir cancelado e realizado)
+    // Mostrar todas as coletas (pendentes, realizadas e canceladas)
     let filtered = coletas.filter(c => 
-        c.status === "pendente" && (
-            c.remetente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-            c.destinatario_nome?.toLowerCase().includes(search.toLowerCase())
-        )
+        c.remetente_nome?.toLowerCase().includes(search.toLowerCase()) ||
+        c.destinatario_nome?.toLowerCase().includes(search.toLowerCase())
     );
 
     // Ordenar por campo ordem
@@ -696,7 +722,10 @@ export default function AdicionarColetaDiaria() {
                             </Button>
                         )}
                         <Button 
-                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            onClick={() => { 
+                                setEditing({ numero_coleta: proximoNumeroColeta() }); 
+                                setShowForm(true); 
+                            }}
                             className="bg-gradient-to-r from-indigo-500 to-purple-600"
                         >
                             <Plus className="w-5 h-5 mr-2" />
@@ -716,7 +745,7 @@ export default function AdicionarColetaDiaria() {
                                 className="pl-10 bg-white"
                             />
                         </div>
-                        <p className="text-sm text-slate-500 mt-2">Exibindo apenas coletas pendentes ({filtered.length})</p>
+                        <p className="text-sm text-slate-500 mt-2">Total de coletas: {filtered.length} | Pendentes: {coletas.filter(c => c.status === "pendente").length}</p>
                     </CardContent>
                 </Card>
 
@@ -726,6 +755,7 @@ export default function AdicionarColetaDiaria() {
                             <TableHeader>
                                 <TableRow className="bg-slate-50">
                                     {reordenando && <TableHead className="w-10"></TableHead>}
+                                    <TableHead>Nº Coleta</TableHead>
                                     <TableHead>Data</TableHead>
                                     <TableHead>Remetente</TableHead>
                                     <TableHead>Destinatário</TableHead>
@@ -741,15 +771,15 @@ export default function AdicionarColetaDiaria() {
                                         <TableBody {...provided.droppableProps} ref={provided.innerRef}>
                                             {isLoading ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={reordenando ? 8 : 7} className="text-center py-12">
-                                                        <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
-                                                    </TableCell>
+                                                <TableCell colSpan={reordenando ? 9 : 8} className="text-center py-12">
+                                                <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
+                                                </TableCell>
                                                 </TableRow>
-                                            ) : filtered.length === 0 ? (
+                                                ) : filtered.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={reordenando ? 8 : 7} className="text-center py-12 text-slate-500">
-                                                        Nenhuma coleta encontrada
-                                                    </TableCell>
+                                                <TableCell colSpan={reordenando ? 9 : 8} className="text-center py-12 text-slate-500">
+                                                Nenhuma coleta encontrada
+                                                </TableCell>
                                                 </TableRow>
                                             ) : (
                                                 filtered.map((coleta, index) => (
@@ -770,6 +800,9 @@ export default function AdicionarColetaDiaria() {
                                                                         <GripVertical className="w-5 h-5 text-slate-400 cursor-grab active:cursor-grabbing" />
                                                                     </TableCell>
                                                                 )}
+                                                                <TableCell className="font-semibold text-indigo-600">
+                                                                    {coleta.numero_coleta || "-"}
+                                                                </TableCell>
                                                                 <TableCell className="font-medium">
                                                                     <div className="flex items-center gap-2">
                                                                         {coleta.prioridade && (
@@ -850,6 +883,7 @@ export default function AdicionarColetaDiaria() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-transparent border-0">
                     <ColetaForm
                         coleta={editing}
+                        numeroColeta={editing?.id ? editing.numero_coleta : proximoNumeroColeta()}
                         onSubmit={handleSubmit}
                         onCancel={() => { setShowForm(false); setEditing(null); }}
                         onOpenCadastroCliente={handleOpenCadastroCliente}

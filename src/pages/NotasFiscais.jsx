@@ -992,10 +992,18 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       const notasEncontradas = [];
       const naoEncontradas = [];
 
+      // Função para normalizar número (remove zeros à esquerda e converte para minúsculas)
+      const normalizar = (num) => {
+        if (!num) return "";
+        return parseInt(num.replace(/\D/g, ""), 10).toString().toLowerCase();
+      };
+
       numerosDigitados.forEach((num) => {
-        const notaEncontrada = todasNotas.find((n) =>
-        n.numero_nf?.toLowerCase() === num.toLowerCase()
-        );
+        const numNormalizado = normalizar(num);
+        const notaEncontrada = todasNotas.find((n) => {
+          const nfNormalizada = normalizar(n.numero_nf);
+          return nfNormalizada === numNormalizado || n.numero_nf?.toLowerCase() === num.toLowerCase();
+        });
         if (notaEncontrada && !notasEncontradas.find((n) => n.id === notaEncontrada.id)) {
           notasEncontradas.push(notaEncontrada);
         } else if (!notaEncontrada) {

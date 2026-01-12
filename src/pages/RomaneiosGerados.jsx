@@ -43,6 +43,8 @@ export default function RomaneiosGerados() {
     const [showResultadoBusca, setShowResultadoBusca] = useState(false);
     const [gravandoBusca, setGravandoBusca] = useState(false);
     const [mediaRecorderBusca, setMediaRecorderBusca] = useState(null);
+    const [buscaNota, setBuscaNota] = useState("");
+    const [resultadoBuscaNota, setResultadoBuscaNota] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: romaneios = [], isLoading } = useQuery({
@@ -302,6 +304,45 @@ export default function RomaneiosGerados() {
         } catch {
             return dateStr;
         }
+    };
+
+    // Buscar nota nos romaneios
+    const buscarNotaNosRomaneios = () => {
+        if (!buscaNota.trim()) {
+            setResultadoBuscaNota(null);
+            return;
+        }
+
+        const normalizar = (num) => {
+            if (!num) return "";
+            return parseInt(num.replace(/\D/g, ""), 10).toString().toLowerCase();
+        };
+
+        const numeroNormalizado = normalizar(buscaNota);
+        
+        // Procurar em todos os romaneios
+        for (const romaneio of romaneios) {
+            const notasDoRomaneio = (romaneio.notas_ids || [])
+                .map(id => notasFiscais.find(n => n.id === id))
+                .filter(Boolean);
+            
+            const notaEncontrada = notasDoRomaneio.find(n => {
+                const nfNormalizada = normalizar(n.numero_nf);
+                return nfNormalizada === numeroNormalizado || n.numero_nf?.toLowerCase() === buscaNota.toLowerCase();
+            });
+
+            if (notaEncontrada) {
+                setResultadoBuscaNota({
+                    nota: notaEncontrada,
+                    romaneio: romaneio
+                });
+                toast.success(`Nota encontrada no romaneio!`);
+                return;
+            }
+        }
+
+        setResultadoBuscaNota({ notFound: true });
+        toast.error("Nota não encontrada em nenhum romaneio");
     };
 
     const handleEdit = (romaneio) => {
@@ -792,6 +833,87 @@ export default function RomaneiosGerados() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Buscar Nota em Romaneios */}
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <Search className="w-5 h-5 text-green-600" />
+                            Buscar Nota nos Romaneios
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Digite o número da nota fiscal..."
+                                    value={buscaNota}
+                                    onChange={(e) => {
+                                        setBuscaNota(e.target.value);
+                                        if (!e.target.value.trim()) setResultadoBuscaNota(null);
+                                    }}
+                                    className="bg-white"
+                                    onKeyDown={(e) => { if (e.key === "Enter") buscarNotaNosRomaneios(); }}
+                                />
+                                <Button 
+                                    onClick={buscarNotaNosRomaneios}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Buscar
+                                </Button>
+                            </div>
+
+                            {/* Resultado da Busca */}
+                            {resultadoBuscaNota && !resultadoBuscaNota.notFound && (
+                                <div className="bg-green-100 border-2 border-green-300 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-0.5">
+                                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-green-800 mb-2">✓ Nota Encontrada!</p>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="bg-white rounded-lg p-3">
+                                                    <p className="text-slate-600">Número NF: <span className="font-bold text-blue-600">{resultadoBuscaNota.nota.numero_nf}</span></p>
+                                                    <p className="text-slate-600">Destinatário: <span className="font-semibold">{resultadoBuscaNota.nota.destinatario}</span></p>
+                                                    <p className="text-slate-600">Transportadora: <span className="font-semibold">{resultadoBuscaNota.nota.transportadora || "-"}</span></p>
+                                                </div>
+                                                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                                                    <p className="text-indigo-800 font-semibold mb-1">Romaneio:</p>
+                                                    <p className="text-slate-700">{resultadoBuscaNota.romaneio.nome}</p>
+                                                    <div className="flex gap-3 mt-2 text-xs">
+                                                        <span className="text-slate-600">Placa: <strong>{resultadoBuscaNota.romaneio.placa}</strong></span>
+                                                        <span className="text-slate-600">Data: <strong>{formatDate(resultadoBuscaNota.romaneio.data)}</strong></span>
+                                                        <Badge className={statusColors[resultadoBuscaNota.romaneio.status || "gerado"]}>
+                                                            {statusLabels[resultadoBuscaNota.romaneio.status || "gerado"]}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {resultadoBuscaNota?.notFound && (
+                                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-semibold text-red-800">Nota não encontrada</p>
+                                            <p className="text-sm text-red-600 mt-1">
+                                                A nota fiscal <strong>{buscaNota}</strong> não foi encontrada em nenhum romaneio gerado.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Tabela de Romaneios */}
                 <Card className="bg-white/90 border-0 shadow-lg">

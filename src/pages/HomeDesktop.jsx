@@ -129,27 +129,37 @@ export default function HomeDesktop() {
             if (r.status === "gerado" || r.status === "em_transito") {
                 const placa = r.placa || "SEM_PLACA";
                 if (!porVeiculo[placa]) {
-                    porVeiculo[placa] = { entregas: 0, totalNotas: 0, coletas: 0, notas: [], notasIds: [] };
+                    porVeiculo[placa] = { entregas: 0, totalNotas: 0, coletas: 0, notas: [], notasIds: [], transportadoras: new Set() };
                 }
-                // Contar entregas (destinatários únicos)
-                porVeiculo[placa].entregas += r.total_entregas || (r.destinatarios?.length || 0);
+                
+                // Buscar as notas reais deste romaneio
+                const notasDoRomaneio = (r.notas_ids || [])
+                    .map(id => notasFiscais.find(n => n.id === id))
+                    .filter(Boolean);
+                
                 // Contar notas
-                porVeiculo[placa].totalNotas += r.total_notas || (r.notas_ids?.length || 0);
+                porVeiculo[placa].totalNotas += notasDoRomaneio.length;
+                
+                // Contar transportadoras únicas (entregas)
+                notasDoRomaneio.forEach(nota => {
+                    if (nota.transportadora) {
+                        porVeiculo[placa].transportadoras.add(nota.transportadora.trim().toUpperCase());
+                    }
+                });
+                
                 if (r.notas_ids) {
                     porVeiculo[placa].notasIds = [...porVeiculo[placa].notasIds, ...r.notas_ids];
                 }
             }
         });
 
+        // Calcular entregas baseado nas transportadoras únicas
         Object.keys(porVeiculo).forEach(placa => {
             const notasDoVeiculo = notasFiscais.filter(n => 
-                porVeiculo[placa].notasIds.includes(n.id) || n.placa === placa
+                porVeiculo[placa].notasIds.includes(n.id)
             );
             porVeiculo[placa].notas = notasDoVeiculo;
-            // Atualizar totalNotas baseado nas notas reais encontradas
-            if (notasDoVeiculo.length > 0) {
-                porVeiculo[placa].totalNotas = notasDoVeiculo.length;
-            }
+            porVeiculo[placa].entregas = porVeiculo[placa].transportadoras.size;
         });
 
         const coletasPendentes = coletasDiarias.filter(c => c.status === "pendente").length;

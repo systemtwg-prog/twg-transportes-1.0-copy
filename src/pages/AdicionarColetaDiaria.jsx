@@ -137,9 +137,8 @@ function ColetaForm({ coleta, onSubmit, onCancel, onOpenCadastroCliente, numeroC
                             <Input
                                 value={form.numero_coleta}
                                 onChange={(e) => setForm({ ...form, numero_coleta: e.target.value })}
-                                placeholder="Auto"
-                                className="font-bold text-indigo-600"
-                                readOnly
+                                placeholder="Automático"
+                                className="font-bold text-indigo-600 bg-indigo-50"
                             />
                         </div>
                         <div className="space-y-2">

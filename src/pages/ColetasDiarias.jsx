@@ -347,6 +347,14 @@ export default function ColetasDiarias() {
         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
     };
 
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    
+    React.useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     const renderColetaRow = (coleta, index) => {
         const endereco = [
             coleta.remetente_endereco,
@@ -364,6 +372,9 @@ export default function ColetasDiarias() {
                         <span className="text-xs text-slate-500">
                             {coleta.created_date ? format(new Date(coleta.created_date), "dd/MM", { locale: ptBR }) : ""}
                         </span>
+                        {coleta.numero_coleta && (
+                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">{coleta.numero_coleta}</Badge>
+                        )}
                         {coleta.prioridade && (
                             <Badge className="bg-yellow-400 text-yellow-900 text-xs">PRIORIDADE</Badge>
                         )}
@@ -465,6 +476,17 @@ export default function ColetasDiarias() {
                             >
                                 <Copy className="w-3 h-3 text-purple-600" />
                             </Button>
+                            {isDesktop && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => navigate(createPageUrl("AdicionarColetaDiaria"))}
+                                    title="Editar Coleta"
+                                >
+                                    <FileText className="w-3 h-3 text-green-600" />
+                                </Button>
+                            )}
                         </div>
                     </div>
                     </td>

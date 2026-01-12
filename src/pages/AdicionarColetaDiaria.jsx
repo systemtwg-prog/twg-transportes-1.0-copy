@@ -601,6 +601,44 @@ export default function AdicionarColetaDiaria() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
     });
 
+    const gerarNumerosColetaMutation = useMutation({
+        mutationFn: async () => {
+            // Buscar coletas sem número, ordenadas por data (mais antiga primeiro)
+            const semNumero = coletas
+                .filter(c => !c.numero_coleta)
+                .sort((a, b) => new Date(a.data_coleta) - new Date(b.data_coleta));
+
+            if (semNumero.length === 0) {
+                throw new Error("Todas as coletas já possuem número!");
+            }
+
+            // Encontrar o próximo número disponível
+            const numeros = coletas
+                .map(c => c.numero_coleta)
+                .filter(n => n && n.startsWith("COL-"))
+                .map(n => parseInt(n.replace("COL-", "")))
+                .filter(n => !isNaN(n));
+            
+            let proximoNumero = numeros.length > 0 ? Math.max(...numeros) + 1 : 1;
+
+            // Gerar números sequenciais
+            for (const coleta of semNumero) {
+                const numeroColeta = `COL-${String(proximoNumero).padStart(3, "0")}`;
+                await base44.entities.ColetaDiaria.update(coleta.id, { numero_coleta: numeroColeta });
+                proximoNumero++;
+            }
+
+            return semNumero.length;
+        },
+        onSuccess: (quantidade) => {
+            queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
+            toast.success(`${quantidade} coletas numeradas com sucesso!`);
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    });
+
     const handleSubmit = (data) => {
         if (editing && editing.id) {
             updateMutation.mutate({ id: editing.id, data });
@@ -703,6 +741,23 @@ export default function AdicionarColetaDiaria() {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button 
+                            onClick={() => {
+                                if (confirm(`Gerar números automáticos para todas as coletas sem número?\n\nAs coletas serão numeradas da mais antiga para a mais recente.`)) {
+                                    gerarNumerosColetaMutation.mutate();
+                                }
+                            }}
+                            disabled={gerarNumerosColetaMutation.isPending}
+                            variant="outline"
+                            className="border-amber-500 text-amber-700 hover:bg-amber-50"
+                        >
+                            {gerarNumerosColetaMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                                <Calendar className="w-4 h-4 mr-2" />
+                            )}
+                            {gerarNumerosColetaMutation.isPending ? "Gerando..." : "Gerar Números"}
+                        </Button>
                         <Button 
                             onClick={() => setReordenando(!reordenando)}
                             variant={reordenando ? "default" : "outline"}

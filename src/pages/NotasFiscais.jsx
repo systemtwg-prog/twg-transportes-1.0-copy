@@ -53,6 +53,7 @@ export default function NotasFiscais() {
   const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
   const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
   const [showArquivados, setShowArquivados] = useState(false);
+  const [notasNaoEncontradas, setNotasNaoEncontradas] = useState([]);
 
   // Estados para funcionalidades do romaneio
   const [motorista, setMotorista] = useState("");
@@ -1002,6 +1003,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
         }
       });
 
+      // Atualizar lista de não encontradas
+      setNotasNaoEncontradas(naoEncontradas);
+
       if (notasEncontradas.length > 0) {
         setSelecionados(notasEncontradas.map((n) => n.id));
         if (naoEncontradas.length > 0) {
@@ -1722,18 +1726,48 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         </h3>
                         <div className="space-y-3">
                             {/* Campo de busca */}
-                            <div className="flex gap-2">
-                                <Input
-                    placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
-                    value={notasDigitadas}
-                    onChange={(e) => setNotasDigitadas(e.target.value)}
-                    className="bg-white flex-1"
-                    onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    <Input
+                        placeholder="Digite os números das notas separados por vírgula, espaço ou enter..."
+                        value={notasDigitadas}
+                        onChange={(e) => {
+                          setNotasDigitadas(e.target.value);
+                          if (!e.target.value.trim()) setNotasNaoEncontradas([]);
+                        }}
+                        className="bg-white flex-1"
+                        onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
 
-                                <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
-                                    <Search className="w-4 h-4 mr-2" />
-                                    Buscar e Selecionar
-                                </Button>
+                                    <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
+                                        <Search className="w-4 h-4 mr-2" />
+                                        Buscar e Selecionar
+                                    </Button>
+                                </div>
+
+                                {/* Notas não encontradas */}
+                                {notasNaoEncontradas.length > 0 && (
+                                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                                        <div className="flex items-start gap-2">
+                                            <div className="mt-0.5">
+                                                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-red-800 mb-2">
+                                                    {notasNaoEncontradas.length} nota(s) não encontrada(s) no banco de dados:
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {notasNaoEncontradas.map((numero, idx) => (
+                                                        <Badge key={idx} variant="outline" className="bg-white border-red-300 text-red-700 font-mono">
+                                                            {numero}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Faixa de ordenação */}

@@ -366,15 +366,15 @@ export default function ColetasDiarias() {
             <tr key={coleta.id} className={`border-b-4 border-slate-400 hover:bg-sky-50/50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
                 <td className="p-3 text-center">
                     <div className="flex flex-col items-center gap-1">
+                        {coleta.numero_coleta && (
+                            <Badge className="bg-indigo-100 text-indigo-700 text-xs font-bold">{coleta.numero_coleta}</Badge>
+                        )}
                         <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${coleta.prioridade ? "bg-yellow-400 text-yellow-900" : "bg-sky-100 text-sky-700"}`}>
                             {index + 1}
                         </span>
                         <span className="text-xs text-slate-500">
                             {coleta.created_date ? format(new Date(coleta.created_date), "dd/MM", { locale: ptBR }) : ""}
                         </span>
-                        {coleta.numero_coleta && (
-                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">{coleta.numero_coleta}</Badge>
-                        )}
                         {coleta.prioridade && (
                             <Badge className="bg-yellow-400 text-yellow-900 text-xs">PRIORIDADE</Badge>
                         )}

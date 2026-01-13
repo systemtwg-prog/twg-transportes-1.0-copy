@@ -421,15 +421,34 @@ export default function ImportacaoCard({
                 if (Object.keys(resumoPorTransp).length > 0) {
                 resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid-transportadora">';
 
+                // Agrupar notas por placa para cada transportadora
+                const notasPorTranspEPlaca = {};
+                notasParaImprimir.forEach(nota => {
+                    if (!nota.placa) return;
+                    const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
+                    if (!notasPorTranspEPlaca[transp]) {
+                        notasPorTranspEPlaca[transp] = new Set();
+                    }
+                    notasPorTranspEPlaca[transp].add(nota.placa);
+                });
+
                 Object.entries(resumoPorTransp)
                     .sort((a, b) => b[1].totalNotas - a[1].totalNotas)
                     .forEach(([transp, dados]) => {
+                        const placas = Array.from(notasPorTranspEPlaca[transp] || []);
+                        const placasDisplay = placas.length > 0 ? placas.join(', ') : '';
+                        
                         resumoHtml += `
-                            <div class="resumo-transp">
-                                <h4>${transp}</h4>
-                                <div class="resumo-item"><strong>Notas:</strong> ${dados.totalNotas}</div>
-                                <div class="resumo-item"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
-                                <div class="resumo-item"><strong>Volume:</strong> ${dados.volumeTotal}</div>
+                            <div class="resumo-transp-novo">
+                                <div class="resumo-transp-header">${transp}</div>
+                                <div class="resumo-transp-body">
+                                    <div class="resumo-transp-info">
+                                        <div class="resumo-transp-linha"><strong>Notas:</strong> ${dados.totalNotas}</div>
+                                        <div class="resumo-transp-linha"><strong>Peso:</strong> ${dados.pesoTotal.toFixed(2)} kg</div>
+                                        <div class="resumo-transp-linha"><strong>Volumes:</strong> ${dados.volumeTotal}</div>
+                                    </div>
+                                    ${placasDisplay ? `<div class="resumo-transp-placas">${placasDisplay}</div>` : ''}
+                                </div>
                             </div>
                         `;
                     });
@@ -623,22 +642,48 @@ export default function ImportacaoCard({
                         border-radius: 3px;
                         line-height: 1.6;
                     }
-                    .resumo-transp {
+                    .resumo-transp-novo {
                         background: white;
-                        padding: 8px;
-                        border-left: 4px solid #7c3aed;
-                        border-radius: 4px;
+                        border: 1px solid #cbd5e1;
+                        border-radius: 6px;
+                        overflow: hidden;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     }
-                    .resumo-transp h4 {
-                        color: #6d28d9;
-                        font-size: ${printConfig.resumoFontSize}px;
-                        margin-bottom: 4px;
-                        font-weight: bold;
+                    .resumo-transp-header {
+                        background: #e2e8f0;
+                        padding: 8px 10px;
                         text-align: center;
-                        background: #ede9fe;
-                        padding: 3px;
-                        border-radius: 3px;
+                        font-weight: bold;
+                        font-size: ${printConfig.resumoFontSize}px;
+                        color: #1e293b;
+                        border-bottom: 2px solid #cbd5e1;
+                    }
+                    .resumo-transp-body {
+                        display: flex;
+                        padding: 0;
+                    }
+                    .resumo-transp-info {
+                        flex: 1;
+                        padding: 10px;
+                    }
+                    .resumo-transp-linha {
+                        font-size: ${printConfig.resumoFontSize}px;
+                        color: #334155;
+                        margin: 4px 0;
+                    }
+                    .resumo-transp-placas {
+                        background: #334155;
+                        color: white;
+                        writing-mode: vertical-rl;
+                        text-orientation: mixed;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 10px 8px;
+                        font-weight: bold;
+                        font-size: ${printConfig.resumoFontSize}px;
+                        letter-spacing: 2px;
+                        min-width: 35px;
                     }
                     .resumo-item {
                         font-size: ${printConfig.resumoFontSize}px;

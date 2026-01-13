@@ -804,31 +804,55 @@ export default function RomaneiosGerados() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 pt-2">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {Object.entries(dashboard.porPlaca).map(([placa, dados]) => (
-                                    <div key={placa} className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Car className="w-5 h-5 text-indigo-600" />
-                                            <span className="font-bold text-lg text-indigo-700">
-                                                {placa === "SEM_PLACA" ? "Sem Placa" : placa}
-                                            </span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {Object.entries(dashboard.porPlaca).map(([placa, dados]) => {
+                                    // Calcular volume total das notas desta placa
+                                    const notasPlaca = notasDosFiltrados.filter(n => {
+                                        const romaneio = filtered.find(r => r.placa === placa && (r.notas_ids || []).includes(n.id));
+                                        return !!romaneio;
+                                    });
+                                    const volumeTotal = notasPlaca.reduce((acc, nota) => {
+                                        const volStr = nota.volume || "0";
+                                        const volNum = parseInt(volStr.replace(/\D/g, "")) || 0;
+                                        return acc + volNum;
+                                    }, 0);
+
+                                    // Pegar o destinatário mais comum como nome da transportadora
+                                    const transportadorasCount = {};
+                                    notasPlaca.forEach(n => {
+                                        const transp = n.transportadora || n.destinatario || "SEM TRANSPORTADORA";
+                                        transportadorasCount[transp] = (transportadorasCount[transp] || 0) + 1;
+                                    });
+                                    const transportadoraPrincipal = Object.entries(transportadorasCount)
+                                        .sort((a, b) => b[1] - a[1])[0]?.[0] || "SEM TRANSPORTADORA";
+
+                                    return (
+                                        <div key={placa} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+                                            {/* Transportadora no topo */}
+                                            <div className="bg-slate-100 p-3 text-center border-b border-slate-300">
+                                                <p className="font-bold text-sm text-slate-800 leading-tight">
+                                                    {transportadoraPrincipal}
+                                                </p>
+                                            </div>
+                                            
+                                            {/* Conteúdo com placa vertical */}
+                                            <div className="flex">
+                                                <div className="flex-1 p-3 space-y-1">
+                                                    <p className="text-sm"><span className="font-semibold">Notas:</span> {dados.notas}</p>
+                                                    <p className="text-sm"><span className="font-semibold">Peso:</span> {dados.peso.toFixed(2)} kg</p>
+                                                    <p className="text-sm"><span className="font-semibold">Volumes:</span> {volumeTotal}</p>
+                                                </div>
+                                                
+                                                {/* Placa vertical */}
+                                                <div className="bg-slate-800 text-white flex items-center justify-center px-2 min-w-[40px]">
+                                                    <div className="transform -rotate-90 whitespace-nowrap font-bold text-sm tracking-wider">
+                                                        {placa === "SEM_PLACA" ? "S/PLACA" : placa}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 text-sm">
-                                            <div>
-                                                <p className="text-slate-500">Notas</p>
-                                                <p className="font-bold text-blue-600">{dados.notas}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-slate-500">Entregas</p>
-                                                <p className="font-bold text-emerald-600">{dados.entregas}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-slate-500">Peso</p>
-                                                <p className="font-bold text-orange-600">{dados.peso.toFixed(1)}kg</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>

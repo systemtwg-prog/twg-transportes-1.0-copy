@@ -21,7 +21,8 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
         alturaLinha: 25,
         alturaCabecalho: 35,
         alturaTitulo: 40,
-        simbolosPlaca: true
+        simbolosPlaca: true,
+        orientation: "landscape"
     };
 
     const [config, setConfig] = useState(defaultConfig);
@@ -84,8 +85,8 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
 
                 <div className="space-y-6">
                     <div className="p-4 bg-slate-50 rounded-lg space-y-4">
-                        <h4 className="font-semibold text-slate-700">Fonte</h4>
-                        <div className="grid grid-cols-2 gap-4">
+                        <h4 className="font-semibold text-slate-700">Fonte e Orientação</h4>
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label>Tamanho da Fonte</Label>
                                 <Input
@@ -106,6 +107,18 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                                     <SelectContent>
                                         <SelectItem value="normal">Normal</SelectItem>
                                         <SelectItem value="bold">Negrito</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Orientação da Página</Label>
+                                <Select value={config.orientation} onValueChange={(v) => setConfig({ ...config, orientation: v })}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="portrait">Retrato</SelectItem>
+                                        <SelectItem value="landscape">Paisagem</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

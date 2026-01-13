@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import ImportacaoCard from "@/components/nfe/ImportacaoCard";
+import PrintConfigNFE from "@/components/nfe/PrintConfigNFE";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -70,6 +71,7 @@ export default function NotasFiscais() {
     colCarimbo: 25,
     alturaLinha: 45
   });
+  const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
 
   // Estados para gravação de áudio
   const [showAudioDialog, setShowAudioDialog] = useState(false);
@@ -1030,8 +1032,13 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     }
   };
 
+  // Função de impressão de romaneio com configurações
+  const handlePrintRomaneioComConfig = async (printConfig) => {
+    await handlePrintRomaneio(printConfig);
+  };
+
   // Imprimir romaneio
-  const handlePrintRomaneio = async () => {
+  const handlePrintRomaneio = async (printConfig = null) => {
     const notasSelecionadas = selecionados.
     map((id) => notas.find((n) => n.id === id)).
     filter(Boolean);
@@ -1083,6 +1090,29 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       return;
     }
 
+    // Configurações de impressão
+    const cfg = printConfig || {
+      fontSize: 10,
+      fontWeight: "normal",
+      colNotaFiscal: 12,
+      colPlaca: 8,
+      colCliente: 35,
+      colVolume: 12,
+      colPeso: 12,
+      colTransportadora: 21,
+      alturaLinha: 25,
+      alturaCabecalho: 35,
+      alturaTitulo: 40,
+      simbolosPlaca: true
+    };
+
+    // Símbolos para placas
+    const simbolosPorPlaca = ["▲", "●", "■", "◆", "★", "▼", "◉", "◈", "♦", "✦"];
+    const getSimboloPlaca = (placa, index) => {
+      if (!cfg.simbolosPlaca) return "";
+      return simbolosPorPlaca[index % simbolosPorPlaca.length] + " ";
+    };
+
     // Agrupar por placa
     const notasPorPlaca = {};
     notasParaImprimir.forEach((nota) => {
@@ -1091,8 +1121,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       notasPorPlaca[placa].push(nota);
     });
 
-    // Ordenar notas conforme a opção escolhida
+    // SEMPRE ordenar por número de nota fiscal (do menor para o maior)
     for (const placa in notasPorPlaca) {
+      notasPorPlaca[placa].sort((a, b) => {
+        const numA = parseInt(a.numero_nf?.replace(/\D/g, "") || "0");
+        const numB = parseInt(b.numero_nf?.replace(/\D/g, "") || "0");
+        return numA - numB;
+      });
+
+      // Aplicar ordenação adicional se configurado
       if (ordenacaoNotas === "transportadora") {
         // Ordenar por transportadora
         notasPorPlaca[placa].sort((a, b) => {
@@ -1163,8 +1200,11 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
     }
 
     let pagesHtml = "";
+    let placaIndex = 0;
 
     Object.entries(notasPorPlaca).forEach(([placa, notasPlaca]) => {
+      const simboloPlaca = getSimboloPlaca(placa, placaIndex);
+      placaIndex++;
       const notasOrdenadas = notasPlaca;
 
       const NOTAS_POR_PAGINA = 6;
@@ -1175,24 +1215,27 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
         let rowsHtml = "";
         notasDaPagina.forEach((nota) => {
-          const remetenteNota = remetenteSelecionado || nota.remetente || "";
-          const destinatarioNota = nota.destinatario || "";
           const numeroNf = nota.numero_nf || "";
+          const placaNota = simboloPlaca + (nota.placa || "");
+          
+          // Pegar apenas 3 primeiras palavras do destinatário
+          const destinatarioCompleto = nota.destinatario || "";
+          const destinatarioPalavras = destinatarioCompleto.split(" ");
+          const destinatarioNota = destinatarioPalavras.slice(0, 3).join(" ");
+          
+          const volumeNota = nota.volume || "";
+          const pesoNota = nota.peso || "";
           const transportadoraOriginal = nota.transportadora || "";
           const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") ?
-          destinatarioNota :
-          transportadoraOriginal;
-          const volumeNota = nota.volume ? nota.volume + " vol" : "";
+            destinatarioNota : transportadoraOriginal;
 
           rowsHtml += '<tr class="nota-row">';
-          rowsHtml += '<td class="remetente">' + remetenteNota + '</td>';
-          rowsHtml += '<td class="destinatario">' + destinatarioNota + '</td>';
-          rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-          rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-          rowsHtml += '</tr>';
-          rowsHtml += '<tr class="transportadora-row">';
-          rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadoraNota + '</td>';
-          rowsHtml += '<td class="volume">' + volumeNota + '</td>';
+          rowsHtml += '<td class="col-nf">' + numeroNf + '</td>';
+          rowsHtml += '<td class="col-placa">' + placaNota + '</td>';
+          rowsHtml += '<td class="col-cliente">' + destinatarioNota + '</td>';
+          rowsHtml += '<td class="col-volume">' + volumeNota + '</td>';
+          rowsHtml += '<td class="col-peso">' + pesoNota + '</td>';
+          rowsHtml += '<td class="col-transportadora">' + transportadoraNota + '</td>';
           rowsHtml += '</tr>';
         });
 
@@ -1200,14 +1243,12 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         for (let i = 0; i < linhasRestantes; i++) {
           rowsHtml += `
                         <tr class="nota-row vazia">
-                            <td class="remetente"></td>
-                            <td class="destinatario"></td>
-                            <td class="nfe"></td>
-                            <td class="carimbo" rowspan="2"></td>
-                        </tr>
-                        <tr class="transportadora-row vazia">
-                            <td class="transportadora-nome" colspan="2"></td>
-                            <td class="volume"></td>
+                            <td class="col-nf"></td>
+                            <td class="col-placa"></td>
+                            <td class="col-cliente"></td>
+                            <td class="col-volume"></td>
+                            <td class="col-peso"></td>
+                            <td class="col-transportadora"></td>
                         </tr>
                     `;
         }
@@ -1222,7 +1263,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     <div class="page">
                         <div class="header">
                             <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 60px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
                             </div>
                             <div class="company-info">
                                 <p class="company-name">TWG TRANSPORTES</p>
@@ -1239,10 +1280,12 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <table>
                             <thead>
                                 <tr>
-                                    <th class="col-remetente">Remetente</th>
-                                    <th class="col-destinatario">Destinatário</th>
-                                    <th class="col-nfe">NFE</th>
-                                    <th class="col-carimbo">Carimbo</th>
+                                    <th class="col-nf">Nota Fiscal</th>
+                                    <th class="col-placa">Placa</th>
+                                    <th class="col-cliente">Nome do Cliente</th>
+                                    <th class="col-volume">Qtde. Volume</th>
+                                    <th class="col-peso">Peso</th>
+                                    <th class="col-transportadora">Transportadora</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1267,7 +1310,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         .page:last-child { page-break-after: avoid; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; }
+                    body { font-family: Arial, sans-serif; font-size: ${cfg.fontSize}px; }
                     .page { 
                         padding: 5mm; 
                         height: 287mm; 
@@ -1277,96 +1320,57 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .header { 
                         display: flex; 
                         align-items: flex-start; 
-                        margin-bottom: 8px; 
-                        border-bottom: 3px solid #000; 
-                        padding-bottom: 8px; 
+                        margin-bottom: 6px; 
+                        border-bottom: 2px solid #000; 
+                        padding-bottom: 6px;
+                        min-height: ${cfg.alturaTitulo}px;
                     }
-                    .logo { width: 120px; margin-right: 20px; }
-                    .logo img { max-width: 100%; max-height: 80px; object-fit: contain; }
+                    .logo { width: 80px; margin-right: 15px; }
+                    .logo img { max-width: 100%; max-height: 50px; object-fit: contain; }
                     .logo-placeholder { 
-                        width: 100px; height: 60px; background: #0ea5e9; 
+                        width: 70px; height: 40px; background: #0ea5e9; 
                         display: flex; align-items: center; justify-content: center; 
-                        color: white; font-weight: bold; font-size: 20px; 
+                        color: white; font-weight: bold; font-size: 16px; 
                     }
                     .company-info { flex: 1; }
-                    .company-name { font-size: 24px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: 11px; color: #333; margin: 2px 0; }
+                    .company-name { font-size: ${cfg.fontSize + 8}px; font-weight: bold; margin: 0; }
+                    .company-address { font-size: ${cfg.fontSize - 1}px; color: #333; margin: 1px 0; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: 20px; font-weight: bold; margin: 0; }
-                    .motorista-veiculo { font-size: 14px; font-weight: bold; margin: 5px 0; }
-                    .date { font-size: 22px; font-weight: bold; }
+                    .romaneio-title { font-size: ${cfg.fontSize + 6}px; font-weight: bold; margin: 0; }
+                    .motorista-veiculo { font-size: ${cfg.fontSize + 2}px; font-weight: bold; margin: 3px 0; }
+                    .date { font-size: ${cfg.fontSize + 8}px; font-weight: bold; }
                     
                     table { width: 100%; border-collapse: collapse; flex: 1; }
                     th { 
                         background: #d0d0d0; 
-                        padding: 10px; 
-                        text-align: left; 
+                        padding: 6px; 
+                        text-align: center; 
                         border: 2px solid #000; 
-                        font-size: 16px; 
+                        font-size: ${cfg.fontSize + 2}px;
+                        height: ${cfg.alturaCabecalho}px;
+                        font-weight: bold;
+                        vertical-align: middle;
                     }
                     td { 
                         border: 2px solid #000; 
-                        font-size: 14px; 
-                        vertical-align: top;
+                        font-size: ${cfg.fontSize}px; 
+                        vertical-align: middle;
+                        text-align: center;
+                        padding: 4px;
+                        height: ${cfg.alturaLinha}px;
+                        font-weight: ${cfg.fontWeight};
                     }
                     
-                    .col-remetente { width: ${layoutConfig.colRemetente}%; }
-                    .col-destinatario { width: ${layoutConfig.colDestinatario}%; }
-                    .col-nfe { width: ${layoutConfig.colNfe}%; text-align: center; }
-                    .col-carimbo { width: ${layoutConfig.colCarimbo}%; }
-                    
-                    .nota-row .remetente { 
-                        padding: 6px 8px; 
-                        font-size: 12px;
-                        font-weight: bold;
-                        text-align: center;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .destinatario { 
-                        text-align: center; 
-                        font-weight: bold; 
-                        font-size: 18px; 
-                        padding: 6px 8px;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .nfe { 
-                        text-align: center; 
-                        font-weight: bold; 
-                        font-size: 20px; 
-                        padding: 6px 8px;
-                        vertical-align: middle;
-                        border-bottom: 1px solid #999;
-                    }
-                    .nota-row .carimbo { 
-                        min-height: ${layoutConfig.alturaLinha * 2}px;
-                        padding: 6px;
-                        vertical-align: middle;
-                    }
+                    .col-nf { width: ${cfg.colNotaFiscal}%; font-weight: bold; }
+                    .col-placa { width: ${cfg.colPlaca}%; font-weight: bold; }
+                    .col-cliente { width: ${cfg.colCliente}%; }
+                    .col-volume { width: ${cfg.colVolume}%; }
+                    .col-peso { width: ${cfg.colPeso}%; }
+                    .col-transportadora { width: ${cfg.colTransportadora}%; }
 
-                    .transportadora-row td { 
-                        border-top: none; 
-                        padding: 8px; 
-                        text-align: center;
-                        vertical-align: middle;
-                    }
-                    .transportadora-row .transportadora-nome { 
-                        font-size: 16px; 
-                        font-weight: bold;
-                        line-height: 1.3;
-                        text-transform: uppercase;
-                        color: #333;
-                    }
-                    .transportadora-row .volume { 
-                        text-align: center; 
-                        font-size: 16px; 
-                        font-weight: bold; 
-                    }
-
-                    .nota-row.vazia td,
-                    .transportadora-row.vazia td {
-                        border: none !important;
+                    .nota-row.vazia td {
+                        border: 2px solid #000 !important;
+                        background: #fff;
                     }
                 </style>
             </head>
@@ -1815,24 +1819,35 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                 </div>
                             </div>
 
-                            {/* Botão de imprimir */}
-                            <Button
-                                onClick={handlePrintRomaneio}
-                                disabled={selecionados.length === 0 || otimizandoRota}
-                                className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 w-full h-12 text-lg font-semibold"
-                            >
-                                {otimizandoRota ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        Otimizando Rota...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Printer className="w-5 h-5 mr-2" />
-                                        Imprimir Romaneio ({selecionados.length})
-                                    </>
-                                )}
-                            </Button>
+                            {/* Botões de impressão */}
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => setShowPrintConfigNFE(true)}
+                                    disabled={selecionados.length === 0}
+                                    variant="outline"
+                                    className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+                                >
+                                    <Settings className="w-5 h-5 mr-2" />
+                                    Configurar
+                                </Button>
+                                <Button
+                                    onClick={() => handlePrintRomaneio()}
+                                    disabled={selecionados.length === 0 || otimizandoRota}
+                                    className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 flex-1 h-12 text-lg font-semibold"
+                                >
+                                    {otimizandoRota ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                            Otimizando Rota...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Printer className="w-5 h-5 mr-2" />
+                                            Imprimir Romaneio ({selecionados.length})
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -2700,6 +2715,14 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
           queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
           queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
         }} />
+
+            {/* Dialog de Configuração de Impressão */}
+            <PrintConfigNFE
+                open={showPrintConfigNFE}
+                onOpenChange={setShowPrintConfigNFE}
+                onPrint={handlePrintRomaneioComConfig}
+                configKey="nfePrintConfig"
+            />
 
 
                 {/* Dialog Chave de Acesso */}

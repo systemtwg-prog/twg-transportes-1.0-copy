@@ -33,42 +33,58 @@ export default function ImportacaoCard({
     const [filialParaAtribuir, setFilialParaAtribuir] = useState("");
     const [filtroNotas, setFiltroNotas] = useState("");
     
-    // Carregar configurações salvas do localStorage
+    // Carregar configurações do novo padrão PrintConfigNFE
     const [printConfig, setPrintConfig] = useState(() => {
-        const saved = localStorage.getItem("importacaoPrintConfig");
+        const saved = localStorage.getItem("nfePrintConfig");
         if (saved) {
             try {
-                return JSON.parse(saved);
-            } catch {
+                const config = JSON.parse(saved);
+                // Mapear as configurações do novo formato
                 return {
-                    colNF: 10,
-                    colPlaca: 10,
-                    colCliente: 40,
-                    colVolume: 10,
-                    colPeso: 10,
-                    colTransp: 20,
-                    fontSize: 8,
-                    orientation: "portrait",
+                    colNF: config.colNotaFiscal || 12,
+                    colPlaca: config.colPlaca || 8,
+                    colCliente: config.colCliente || 35,
+                    colVolume: config.colVolume || 12,
+                    colPeso: config.colPeso || 12,
+                    colTransp: config.colTransportadora || 21,
+                    fontSize: config.fontSize || 10,
+                    fontWeight: config.fontWeight || "normal",
+                    orientation: "landscape",
                     marginTop: 10,
                     marginBottom: 10,
                     marginLeft: 10,
-                    marginRight: 10
+                    marginRight: 10,
+                    alturaLinha: config.alturaLinha || 25,
+                    alturaCabecalho: config.alturaCabecalho || 35,
+                    alturaTitulo: config.alturaTitulo || 40,
+                    simbolosPlaca: config.simbolosPlaca !== undefined ? config.simbolosPlaca : true,
+                    resumoFontSize: 10,
+                    resumoGap: 8,
+                    resumoLineSpacing: 3,
+                    resumoTotalSpacing: 10
                 };
+            } catch {
+                // Fallback para configuração padrão
             }
         }
         return {
-            colNF: 10,
-            colPlaca: 10,
-            colCliente: 40,
-            colVolume: 10,
-            colPeso: 10,
-            colTransp: 20,
-            fontSize: 8,
-            orientation: "portrait",
+            colNF: 12,
+            colPlaca: 8,
+            colCliente: 35,
+            colVolume: 12,
+            colPeso: 12,
+            colTransp: 21,
+            fontSize: 10,
+            fontWeight: "normal",
+            orientation: "landscape",
             marginTop: 10,
             marginBottom: 10,
             marginLeft: 10,
             marginRight: 10,
+            alturaLinha: 25,
+            alturaCabecalho: 35,
+            alturaTitulo: 40,
+            simbolosPlaca: true,
             resumoFontSize: 10,
             resumoGap: 8,
             resumoLineSpacing: 3,
@@ -223,11 +239,11 @@ export default function ImportacaoCard({
             return;
         }
 
-        // Ordenar notas por transportadora antes de imprimir
+        // Ordenar notas por número de nota fiscal (do menor para o maior)
         const notasOrdenadas = [...notasFiltradas].sort((a, b) => {
-            const transpA = (a.transportadora || "").toUpperCase();
-            const transpB = (b.transportadora || "").toUpperCase();
-            return transpA.localeCompare(transpB);
+            const numA = parseInt(a.numero_nf?.replace(/\D/g, "") || "0");
+            const numB = parseInt(b.numero_nf?.replace(/\D/g, "") || "0");
+            return numA - numB;
         });
 
         // Gerar impressão no formato tabular
@@ -282,22 +298,30 @@ export default function ImportacaoCard({
             resumoPorFilial[placa][filial]++;
         });
 
-        // Gerar linhas da tabela (incluir todas, placa em branco se não tiver)
+        // Símbolos para diferenciar placas
+        const simbolosPorPlaca = ["▲", "●", "■", "◆", "★", "▼", "◉", "◈", "♦", "✦"];
+        const placasUnicas = [...new Set(notasOrdenadas.map(n => n.placa).filter(Boolean))];
+        const mapPlacaParaSimbolo = {};
+        placasUnicas.forEach((placa, index) => {
+            mapPlacaParaSimbolo[placa] = simbolosPorPlaca[index % simbolosPorPlaca.length];
+        });
+
+        // Gerar linhas da tabela
         let rowsHtml = "";
-        let placaAnterior = null;
         notasOrdenadas.forEach(nota => {
             const placaDisplay = nota.placa || "";
-            const placaMudou = placaAnterior !== null && placaAnterior !== nota.placa;
-            placaAnterior = nota.placa;
+            const simbolo = printConfig.simbolosPlaca && placaDisplay ? `${mapPlacaParaSimbolo[placaDisplay]} ` : '';
             
-            // Adicionar triângulo quando a placa muda
-            const indicadorPlaca = placaMudou && placaDisplay ? '▲ ' : '';
+            // Pegar apenas 3 primeiras palavras do nome do cliente
+            const clienteCompleto = nota.destinatario || "-";
+            const clientePalavras = clienteCompleto.split(" ");
+            const clienteDisplay = clientePalavras.slice(0, 3).join(" ");
             
             rowsHtml += `
                 <tr>
                     <td>${nota.numero_nf || "-"}</td>
-                    <td class="${nota.placa ? 'placa-cell' : ''}">${indicadorPlaca}${placaDisplay}</td>
-                    <td>${nota.destinatario || "-"}</td>
+                    <td class="${nota.placa ? 'placa-cell' : ''}">${simbolo}${placaDisplay}</td>
+                    <td>${clienteDisplay}</td>
                     <td>${nota.volume || "-"}</td>
                     <td>${nota.peso || "-"}</td>
                     <td>${nota.transportadora || "-"}</td>
@@ -450,6 +474,10 @@ export default function ImportacaoCard({
                         color: #1e3a8a;
                         margin-bottom: 5px;
                         font-size: 24px;
+                        min-height: ${printConfig.alturaTitulo || 40}px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
                     }
                     .info {
                         text-align: center;
@@ -474,9 +502,10 @@ export default function ImportacaoCard({
                         color: white;
                         padding: 3px 4px;
                         text-align: left;
-                        font-size: 9px;
+                        font-size: ${printConfig.fontSize + 2}px;
                         font-weight: 600;
                         border: 1px solid #2563eb;
+                        height: ${printConfig.alturaCabecalho || 35}px;
                     }
                     th:nth-child(1) { width: ${printConfig.colNF}%; }
                     th:nth-child(2) { width: ${printConfig.colPlaca}%; }
@@ -488,8 +517,10 @@ export default function ImportacaoCard({
                         padding: 2px 4px;
                         border: 1px solid #cbd5e1;
                         font-size: ${printConfig.fontSize}px;
+                        font-weight: ${printConfig.fontWeight || "normal"};
                         background: white;
                         line-height: 1.1;
+                        height: ${printConfig.alturaLinha || 25}px;
                     }
                     td.placa-cell {
                         font-weight: bold;

@@ -1646,6 +1646,18 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <p className="text-xs text-slate-500 mt-2">
                             Total: {layoutConfig.colRemetente + layoutConfig.colDestinatario + layoutConfig.colNfe + layoutConfig.colCarimbo}% (ideal: 100%)
                         </p>
+                        
+                        {/* Botão de Configuração de Impressão NFE */}
+                        <div className="pt-4 border-t mt-4">
+                            <Button
+                                onClick={() => setShowPrintConfigNFE(true)}
+                                variant="outline"
+                                className="w-full border-indigo-500 text-indigo-700 hover:bg-indigo-50"
+                            >
+                                <Settings className="w-5 h-5 mr-2" />
+                                Configurar Impressão de Importações
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -1821,15 +1833,6 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
                             {/* Botões de impressão */}
                             <div className="flex gap-2">
-                                <Button
-                                    onClick={() => setShowPrintConfigNFE(true)}
-                                    disabled={selecionados.length === 0}
-                                    variant="outline"
-                                    className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
-                                >
-                                    <Settings className="w-5 h-5 mr-2" />
-                                    Configurar Impressão
-                                </Button>
                                 <Button
                                     onClick={() => handlePrintRomaneio()}
                                     disabled={selecionados.length === 0 || otimizandoRota}

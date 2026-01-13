@@ -491,24 +491,8 @@ export default function ImportacaoCard({
                     h1 {
                         text-align: center;
                         color: #1e3a8a;
-                        margin-bottom: 5px;
-                        font-size: 24px;
-                        min-height: ${printConfig.alturaTitulo || 40}px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    .info {
-                        text-align: center;
-                        color: #475569;
                         margin-bottom: 10px;
-                        font-size: 9px;
-                    }
-                    .date-info {
-                        text-align: center;
-                        color: #1e3a8a;
-                        margin-bottom: 10px;
-                        font-size: 12px;
+                        font-size: 18px;
                         font-weight: bold;
                     }
                     table { 
@@ -727,13 +711,7 @@ export default function ImportacaoCard({
                 </style>
             </head>
             <body>
-                <h1>Relatório Diário</h1>
-                <div class="date-info">
-                    <p>${format(new Date(importacao.data_importacao), "dd/MM/yyyy", { locale: ptBR })}</p>
-                </div>
-                <div class="info">
-                    <p>Origem: ${getOrigemLabel(importacao.origem)} | Total: ${notasParaImprimir.length} nota(s)</p>
-                </div>
+                <h1>Relatório Diário - ${format(new Date(importacao.data_importacao), "dd/MM/yyyy", { locale: ptBR })}</h1>
                 
                 <table>
                     <thead>

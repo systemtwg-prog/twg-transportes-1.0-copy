@@ -26,7 +26,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
 
     const [config, setConfig] = useState(defaultConfig);
 
-    // Carregar configurações salvas
     useEffect(() => {
         const saved = localStorage.getItem(configKey);
         if (saved) {
@@ -39,7 +38,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
     }, [configKey]);
 
     const handleSaveAndPrint = () => {
-        // Validar que a soma das colunas seja 100%
         const somaPercentual = 
             config.colNotaFiscal + 
             config.colPlaca + 
@@ -53,11 +51,9 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
             return;
         }
 
-        // Salvar no localStorage
         localStorage.setItem(configKey, JSON.stringify(config));
         toast.success("Configurações salvas!");
         
-        // Fechar e imprimir
         onOpenChange(false);
         onPrint(config);
     };
@@ -87,7 +83,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                 </DialogHeader>
 
                 <div className="space-y-6">
-                    {/* Fontes */}
                     <div className="p-4 bg-slate-50 rounded-lg space-y-4">
                         <h4 className="font-semibold text-slate-700">Fonte</h4>
                         <div className="grid grid-cols-2 gap-4">
@@ -117,7 +112,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                         </div>
                     </div>
 
-                    {/* Largura das Colunas */}
                     <div className="p-4 bg-blue-50 rounded-lg space-y-4">
                         <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-blue-800">Largura das Colunas (%)</h4>
@@ -189,7 +183,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                         </div>
                     </div>
 
-                    {/* Alturas */}
                     <div className="p-4 bg-purple-50 rounded-lg space-y-4">
                         <h4 className="font-semibold text-purple-800">Altura dos Elementos (px)</h4>
                         <div className="grid grid-cols-3 gap-4">
@@ -226,7 +219,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                         </div>
                     </div>
 
-                    {/* Símbolos por Placa */}
                     <div className="p-4 bg-green-50 rounded-lg space-y-3">
                         <div className="flex items-center gap-3">
                             <Checkbox
@@ -259,7 +251,6 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                         )}
                     </div>
 
-                    {/* Botões */}
                     <div className="flex gap-2 pt-4">
                         <Button
                             type="button"

@@ -49,19 +49,19 @@ export default function ImportacaoCard({
                     colTransp: config.colTransportadora || 21,
                     fontSize: config.fontSize || 10,
                     fontWeight: config.fontWeight || "normal",
-                    orientation: "landscape",
-                    marginTop: 10,
-                    marginBottom: 10,
-                    marginLeft: 10,
-                    marginRight: 10,
+                    orientation: config.orientation || "landscape",
+                    marginTop: config.marginTop || 5,
+                    marginBottom: config.marginBottom || 5,
+                    marginLeft: config.marginLeft || 5,
+                    marginRight: config.marginRight || 5,
                     alturaLinha: config.alturaLinha || 25,
                     alturaCabecalho: config.alturaCabecalho || 35,
                     alturaTitulo: config.alturaTitulo || 40,
                     simbolosPlaca: config.simbolosPlaca !== undefined ? config.simbolosPlaca : true,
-                    resumoFontSize: 10,
-                    resumoGap: 8,
-                    resumoLineSpacing: 3,
-                    resumoTotalSpacing: 10
+                    resumoFontSize: config.resumoFontSize || 9,
+                    resumoGap: config.resumoGap || 6,
+                    resumoLineSpacing: config.resumoLineSpacing || 2,
+                    resumoTotalSpacing: 8
                 };
             } catch {
                 // Fallback para configuração padrão
@@ -77,18 +77,18 @@ export default function ImportacaoCard({
             fontSize: 10,
             fontWeight: "normal",
             orientation: "landscape",
-            marginTop: 10,
-            marginBottom: 10,
-            marginLeft: 10,
-            marginRight: 10,
+            marginTop: 5,
+            marginBottom: 5,
+            marginLeft: 5,
+            marginRight: 5,
             alturaLinha: 25,
             alturaCabecalho: 35,
             alturaTitulo: 40,
             simbolosPlaca: true,
-            resumoFontSize: 10,
-            resumoGap: 8,
-            resumoLineSpacing: 3,
-            resumoTotalSpacing: 10
+            resumoFontSize: 9,
+            resumoGap: 6,
+            resumoLineSpacing: 2,
+            resumoTotalSpacing: 8
         };
     });
 
@@ -479,7 +479,10 @@ export default function ImportacaoCard({
                 <title>Importação de Notas Fiscais</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4 ${printConfig.orientation}; }
+                        @page { 
+                            margin: ${printConfig.marginTop}mm ${printConfig.marginRight}mm ${printConfig.marginBottom}mm ${printConfig.marginLeft}mm; 
+                            size: A4 ${printConfig.orientation}; 
+                        }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -545,8 +548,8 @@ export default function ImportacaoCard({
                         border-top: 1px solid #e2e8f0;
                     }
                     .resumo {
-                        margin-top: 15px;
-                        padding: 12px;
+                        margin-top: 10px;
+                        padding: 8px;
                         border: 2px solid #2563eb;
                         background: #eff6ff;
                         page-break-inside: avoid;
@@ -585,11 +588,11 @@ export default function ImportacaoCard({
                     }
                     .resumo-placa-unificado {
                         background: white;
-                        padding: 12px;
-                        border-left: 4px solid #059669;
-                        border-radius: 6px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.12);
-                        margin-bottom: 10px;
+                        padding: 8px;
+                        border-left: 3px solid #059669;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                        margin-bottom: ${printConfig.resumoGap}px;
                     }
                     .resumo-placa-titulo {
                         color: #047857;

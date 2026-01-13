@@ -22,7 +22,14 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
         alturaCabecalho: 35,
         alturaTitulo: 40,
         simbolosPlaca: true,
-        orientation: "landscape"
+        orientation: "landscape",
+        marginTop: 5,
+        marginBottom: 5,
+        marginLeft: 5,
+        marginRight: 5,
+        resumoFontSize: 9,
+        resumoGap: 6,
+        resumoLineSpacing: 2
     };
 
     const [config, setConfig] = useState(defaultConfig);
@@ -227,6 +234,88 @@ export default function PrintConfigNFE({ open, onOpenChange, onPrint, configKey 
                                     max="80"
                                     value={config.alturaTitulo}
                                     onChange={(e) => setConfig({ ...config, alturaTitulo: parseInt(e.target.value) || 40 })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 rounded-lg space-y-4">
+                        <h4 className="font-semibold text-orange-800">Margens da Página (mm)</h4>
+                        <div className="grid grid-cols-4 gap-4">
+                            <div className="space-y-2">
+                                <Label>Superior</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="30"
+                                    value={config.marginTop}
+                                    onChange={(e) => setConfig({ ...config, marginTop: parseInt(e.target.value) || 5 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Inferior</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="30"
+                                    value={config.marginBottom}
+                                    onChange={(e) => setConfig({ ...config, marginBottom: parseInt(e.target.value) || 5 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Esquerda</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="30"
+                                    value={config.marginLeft}
+                                    onChange={(e) => setConfig({ ...config, marginLeft: parseInt(e.target.value) || 5 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Direita</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max="30"
+                                    value={config.marginRight}
+                                    onChange={(e) => setConfig({ ...config, marginRight: parseInt(e.target.value) || 5 })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-cyan-50 rounded-lg space-y-4">
+                        <h4 className="font-semibold text-cyan-800">Espaçamento do Resumo (px)</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Tamanho Fonte</Label>
+                                <Input
+                                    type="number"
+                                    min="6"
+                                    max="14"
+                                    value={config.resumoFontSize}
+                                    onChange={(e) => setConfig({ ...config, resumoFontSize: parseInt(e.target.value) || 9 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Espaço entre Cards</Label>
+                                <Input
+                                    type="number"
+                                    min="2"
+                                    max="15"
+                                    value={config.resumoGap}
+                                    onChange={(e) => setConfig({ ...config, resumoGap: parseInt(e.target.value) || 6 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Espaço entre Linhas</Label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    max="8"
+                                    value={config.resumoLineSpacing}
+                                    onChange={(e) => setConfig({ ...config, resumoLineSpacing: parseInt(e.target.value) || 2 })}
                                 />
                             </div>
                         </div>

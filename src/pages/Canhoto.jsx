@@ -135,6 +135,7 @@ export default function Canhoto() {
         setSalvando(true);
 
         try {
+            // 1. Salvar comprovantes
             for (let i = 0; i < fotos.length; i++) {
                 const foto = fotos[i];
                 toast.info(`Salvando canhoto ${i + 1} de ${fotos.length}...`);
@@ -155,6 +156,43 @@ export default function Canhoto() {
                         tipo: "image/jpeg"
                     }]
                 });
+            }
+
+            // 2. Verificar e atualizar status dos romaneios
+            const notasFiscaisComComprovante = fotos.map(f => f.notaFiscal);
+            
+            // Buscar todos os romaneios gerados
+            const romaneiosGerados = await base44.entities.RomaneioGerado.list();
+            
+            for (const romaneio of romaneiosGerados) {
+                if (romaneio.status === "gerado" && romaneio.notas_ids) {
+                    // Buscar as notas fiscais do romaneio
+                    const notasDoRomaneio = await Promise.all(
+                        romaneio.notas_ids.map(id => base44.entities.NotaFiscal.filter({ id }))
+                    );
+                    
+                    const numerosNotasRomaneio = notasDoRomaneio
+                        .flat()
+                        .map(n => n.numero_nf)
+                        .filter(Boolean);
+                    
+                    // Buscar todos os comprovantes dessas notas
+                    const todosComprovantes = await base44.entities.ComprovanteInterno.list();
+                    const numerosComComprovante = new Set(todosComprovantes.map(c => c.nota_fiscal));
+                    
+                    // Verificar se todas as notas do romaneio têm comprovante
+                    const todasNotasComComprovante = numerosNotasRomaneio.every(numero => 
+                        numerosComComprovante.has(numero)
+                    );
+                    
+                    if (todasNotasComComprovante && numerosNotasRomaneio.length > 0) {
+                        // Atualizar status do romaneio para "entregue"
+                        await base44.entities.RomaneioGerado.update(romaneio.id, {
+                            status: "entregue"
+                        });
+                        toast.success(`Romaneio ${romaneio.nome} marcado como entregue!`);
+                    }
+                }
             }
 
             fotos.forEach(f => URL.revokeObjectURL(f.url));

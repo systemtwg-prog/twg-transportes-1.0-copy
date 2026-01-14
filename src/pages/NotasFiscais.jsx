@@ -1090,20 +1090,15 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       return;
     }
 
-    // Configurações de impressão
-    const cfg = printConfig || {
+    // Usar configurações do layout configurado na página
+    const cfg = {
       fontSize: 10,
       fontWeight: "normal",
-      colNotaFiscal: 12,
-      colPlaca: 8,
-      colCliente: 35,
-      colVolume: 12,
-      colPeso: 12,
-      colTransportadora: 21,
-      alturaLinha: 25,
-      alturaCabecalho: 35,
-      alturaTitulo: 40,
-      simbolosPlaca: true
+      colRemetente: layoutConfig.colRemetente,
+      colDestinatario: layoutConfig.colDestinatario,
+      colNfe: layoutConfig.colNfe,
+      colCarimbo: layoutConfig.colCarimbo,
+      alturaLinha: layoutConfig.alturaLinha
     };
 
     // Símbolos para placas
@@ -1207,85 +1202,50 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
       placaIndex++;
       const notasOrdenadas = notasPlaca;
 
-      const NOTAS_POR_PAGINA = 6;
-      const totalPaginas = Math.ceil(notasOrdenadas.length / NOTAS_POR_PAGINA);
+      let rowsHtml = "";
+      notasOrdenadas.forEach((nota) => {
+      const remetente = remetenteSelecionado || nota.remetente || "";
+      const destinatario = nota.destinatario || "";
+      const numeroNf = nota.numero_nf || "";
 
-      for (let pagina = 0; pagina < totalPaginas; pagina++) {
-        const notasDaPagina = notasOrdenadas.slice(pagina * NOTAS_POR_PAGINA, (pagina + 1) * NOTAS_POR_PAGINA);
+      rowsHtml += '<tr>';
+      rowsHtml += '<td class="col-remetente">' + remetente + '</td>';
+      rowsHtml += '<td class="col-destinatario">' + destinatario + '</td>';
+      rowsHtml += '<td class="col-nfe">' + numeroNf + '</td>';
+      rowsHtml += '<td class="col-carimbo"></td>';
+      rowsHtml += '</tr>';
+      });
 
-        let rowsHtml = "";
-        notasDaPagina.forEach((nota) => {
-          const numeroNf = nota.numero_nf || "";
-          const placaNota = simboloPlaca + (nota.placa || "");
-          
-          // Pegar apenas 3 primeiras palavras do destinatário
-          const destinatarioCompleto = nota.destinatario || "";
-          const destinatarioPalavras = destinatarioCompleto.split(" ");
-          const destinatarioNota = destinatarioPalavras.slice(0, 3).join(" ");
-          
-          const volumeNota = nota.volume || "";
-          const pesoNota = nota.peso || "";
-          const transportadoraOriginal = nota.transportadora || "";
-          const transportadoraNota = transportadoraOriginal.toUpperCase().includes("WASHINGTON") ?
-            destinatarioNota : transportadoraOriginal;
+      const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
+      const veiculoInfo = veiculos.find((v) => v.placa === placa);
+      const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
 
-          rowsHtml += '<tr class="nota-row">';
-          rowsHtml += '<td class="col-nf">' + numeroNf + '</td>';
-          rowsHtml += '<td class="col-placa">' + placaNota + '</td>';
-          rowsHtml += '<td class="col-cliente">' + destinatarioNota + '</td>';
-          rowsHtml += '<td class="col-volume">' + volumeNota + '</td>';
-          rowsHtml += '<td class="col-peso">' + pesoNota + '</td>';
-          rowsHtml += '<td class="col-transportadora">' + transportadoraNota + '</td>';
-          rowsHtml += '</tr>';
-        });
-
-        const linhasRestantes = NOTAS_POR_PAGINA - notasDaPagina.length;
-        for (let i = 0; i < linhasRestantes; i++) {
-          rowsHtml += `
-                        <tr class="nota-row vazia">
-                            <td class="col-nf"></td>
-                            <td class="col-placa"></td>
-                            <td class="col-cliente"></td>
-                            <td class="col-volume"></td>
-                            <td class="col-peso"></td>
-                            <td class="col-transportadora"></td>
-                        </tr>
-                    `;
-        }
-
-        const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
-        const paginaInfo = totalPaginas > 1 ? ` (${pagina + 1}/${totalPaginas})` : "";
-        const veiculoInfo = veiculos.find((v) => v.placa === placa);
-        const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
-        const dataFormatada = format(new Date(dataRomaneio), "dd/MM/yyyy");
-
-        pagesHtml += `
+      pagesHtml += `
                     <div class="page">
                         <div class="header">
                             <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 60px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" />` : '<div class="logo-placeholder">LOGO</div>'}
                             </div>
                             <div class="company-info">
-                                <p class="company-name">TWG TRANSPORTES</p>
-                                <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
-                                <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
+                                <h2>${config.nome_empresa || "Empresa"}</h2>
+                                <p>${config.endereco || ""}</p>
+                                <p>${config.telefone || ""}</p>
                             </div>
                             <div class="romaneio-info">
                                 <p class="date">${format(new Date(dataRomaneio), "dd/MM/yyyy")}</p>
-                                <p class="romaneio-title">ROMANEIO DE CARGAS${paginaInfo}</p>
-                                <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+                                <p class="romaneio-title">ROMANEIO DE CARGAS - ${placaDisplay}</p>
+                                <p>Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"}</p>
+                                <p>Veículo: ${veiculoDisplay || "_________________"}</p>
                             </div>
                         </div>
                         
                         <table>
                             <thead>
                                 <tr>
-                                    <th class="col-nf">Nota Fiscal</th>
-                                    <th class="col-placa">Placa</th>
-                                    <th class="col-cliente">Nome do Cliente</th>
-                                    <th class="col-volume">Qtde. Volume</th>
-                                    <th class="col-peso">Peso</th>
-                                    <th class="col-transportadora">Transportadora</th>
+                                    <th class="col-remetente">Remetente</th>
+                                    <th class="col-destinatario">Destinatário</th>
+                                    <th class="col-nfe">NFE</th>
+                                    <th class="col-carimbo">Carimbo/Assinatura</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1304,16 +1264,15 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                 <title>Romaneio de Entregas</title>
                 <style>
                     @media print {
-                        @page { margin: 5mm; size: A4; }
+                        @page { margin: 10mm; size: A4; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                         .page { page-break-after: always; }
                         .page:last-child { page-break-after: avoid; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; font-size: ${cfg.fontSize}px; }
+                    body { font-family: Arial, sans-serif; font-size: 11px; }
                     .page { 
-                        padding: 5mm; 
-                        height: 287mm; 
+                        padding: 10mm; 
                         display: flex; 
                         flex-direction: column;
                     }
@@ -1340,33 +1299,27 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .motorista-veiculo { font-size: ${cfg.fontSize + 2}px; font-weight: bold; margin: 3px 0; }
                     .date { font-size: ${cfg.fontSize + 8}px; font-weight: bold; }
                     
-                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
                     th { 
-                        background: #d0d0d0; 
-                        padding: 6px; 
-                        text-align: center; 
-                        border: 2px solid #000; 
-                        font-size: ${cfg.fontSize + 2}px;
-                        height: ${cfg.alturaCabecalho}px;
+                        background: #e0e0e0; 
+                        padding: 8px; 
+                        text-align: left; 
+                        border: 1px solid #000; 
+                        font-size: 12px;
                         font-weight: bold;
-                        vertical-align: middle;
                     }
                     td { 
-                        border: 2px solid #000; 
-                        font-size: ${cfg.fontSize}px; 
-                        vertical-align: middle;
-                        text-align: center;
-                        padding: 4px;
+                        border: 1px solid #000; 
+                        padding: 8px; 
+                        vertical-align: top;
+                        text-align: left;
                         height: ${cfg.alturaLinha}px;
-                        font-weight: ${cfg.fontWeight};
                     }
                     
-                    .col-nf { width: ${cfg.colNotaFiscal}%; font-weight: bold; }
-                    .col-placa { width: ${cfg.colPlaca}%; font-weight: bold; }
-                    .col-cliente { width: ${cfg.colCliente}%; }
-                    .col-volume { width: ${cfg.colVolume}%; }
-                    .col-peso { width: ${cfg.colPeso}%; }
-                    .col-transportadora { width: ${cfg.colTransportadora}%; }
+                    .col-remetente { width: ${cfg.colRemetente}%; }
+                    .col-destinatario { width: ${cfg.colDestinatario}%; }
+                    .col-nfe { width: ${cfg.colNfe}%; text-align: center; }
+                    .col-carimbo { width: ${cfg.colCarimbo}%; }
 
                     .nota-row.vazia td {
                         border: 2px solid #000 !important;

@@ -1207,12 +1207,18 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         const remetente = remetenteSelecionado || nota.remetente || "";
         const destinatario = nota.destinatario || "";
         const numeroNf = nota.numero_nf || "";
+        const transportadora = nota.transportadora || "";
+        const volume = nota.volume ? nota.volume + " vol" : "";
 
-        rowsHtml += '<tr>';
-        rowsHtml += '<td class="col-remetente">' + remetente + '</td>';
-        rowsHtml += '<td class="col-destinatario">' + destinatario + '</td>';
-        rowsHtml += '<td class="col-nfe">' + numeroNf + '</td>';
-        rowsHtml += '<td class="col-carimbo"></td>';
+        rowsHtml += '<tr class="nota-row">';
+        rowsHtml += '<td class="remetente">' + remetente + '</td>';
+        rowsHtml += '<td class="destinatario">' + destinatario + '</td>';
+        rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+        rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+        rowsHtml += '</tr>';
+        rowsHtml += '<tr class="transportadora-row">';
+        rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadora + '</td>';
+        rowsHtml += '<td class="volume">' + volume + '</td>';
         rowsHtml += '</tr>';
       });
 
@@ -1298,27 +1304,33 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .romaneio-info .romaneio-title { font-size: 13px; font-weight: bold; margin: 2px 0; }
                     .romaneio-info p { font-size: 10px; margin: 1px 0; }
                     
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    table { width: 100%; border-collapse: collapse; flex: 1; }
                     th { 
-                        background: #e0e0e0; 
-                        padding: 8px; 
+                        background: #d0d0d0; 
+                        padding: 6px; 
                         text-align: left; 
-                        border: 1px solid #000; 
-                        font-size: 12px;
-                        font-weight: bold;
+                        border: 2px solid #000; 
+                        font-size: 13px;
                     }
                     td { 
-                        border: 1px solid #000; 
-                        padding: 8px; 
+                        border: 2px solid #000; 
+                        font-size: 12px; 
                         vertical-align: top;
-                        text-align: left;
-                        height: ${cfg.alturaLinha}px;
                     }
                     
                     .col-remetente { width: ${cfg.colRemetente}%; }
                     .col-destinatario { width: ${cfg.colDestinatario}%; }
                     .col-nfe { width: ${cfg.colNfe}%; text-align: center; }
                     .col-carimbo { width: ${cfg.colCarimbo}%; }
+                    
+                    .nota-row .remetente { padding: 3px 5px; font-size: 10px; font-weight: bold; text-align: center; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 15px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 16px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
+                    .nota-row .carimbo { min-height: 60px; padding: 4px; vertical-align: middle; }
+
+                    .transportadora-row td { border-top: none; padding: 4px; text-align: center; vertical-align: middle; }
+                    .transportadora-row .transportadora-nome { font-size: 13px; font-weight: bold; line-height: 1.2; text-transform: uppercase; color: #333; }
+                    .transportadora-row .volume { text-align: center; font-size: 13px; font-weight: bold; }
 
                     .nota-row.vazia td {
                         border: 2px solid #000 !important;

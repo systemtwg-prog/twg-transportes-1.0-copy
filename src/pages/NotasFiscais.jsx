@@ -69,7 +69,10 @@ export default function NotasFiscais() {
     colDestinatario: 42,
     colNfe: 15,
     colCarimbo: 25,
-    alturaLinha: 45
+    alturaLinha: 45,
+    margemTopo: 10,
+    margemLateral: 10,
+    espacamentoEntreLinhas: 0
   });
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
 
@@ -1098,7 +1101,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       colDestinatario: layoutConfig.colDestinatario,
       colNfe: layoutConfig.colNfe,
       colCarimbo: layoutConfig.colCarimbo,
-      alturaLinha: layoutConfig.alturaLinha
+      alturaLinha: layoutConfig.alturaLinha,
+      margemTopo: layoutConfig.margemTopo,
+      margemLateral: layoutConfig.margemLateral,
+      espacamentoEntreLinhas: layoutConfig.espacamentoEntreLinhas
     };
 
     // Símbolos para placas
@@ -1202,64 +1208,73 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
       placaIndex++;
       const notasOrdenadas = notasPlaca;
 
-      let rowsHtml = "";
-      notasOrdenadas.forEach((nota) => {
-        const remetente = remetenteSelecionado || nota.remetente || "";
-        const destinatario = nota.destinatario || "";
-        const numeroNf = nota.numero_nf || "";
-        const transportadora = nota.transportadora || "";
-        const volume = nota.volume ? nota.volume + " vol" : "";
-
-        rowsHtml += '<tr class="nota-row">';
-        rowsHtml += '<td class="remetente">' + remetente + '</td>';
-        rowsHtml += '<td class="destinatario">' + destinatario + '</td>';
-        rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-        rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-        rowsHtml += '</tr>';
-        rowsHtml += '<tr class="transportadora-row">';
-        rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadora + '</td>';
-        rowsHtml += '<td class="volume">' + volume + '</td>';
-        rowsHtml += '</tr>';
-      });
-
       const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
       const veiculoInfo = veiculos.find((v) => v.placa === placa);
       const veiculoDisplay = veiculoInfo ? `${veiculoInfo.modelo || ""} - ${veiculoInfo.placa}` : placaDisplay;
 
-      pagesHtml += `
-                    <div class="page">
-                        <div class="header">
-                            <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" />` : '<div class="logo-placeholder">LOGO</div>'}
-                            </div>
-                            <div class="company-info">
-                                <h2>${config.nome_empresa || "Empresa"}</h2>
-                                <p>${config.endereco || ""}</p>
-                                <p>${config.telefone || ""}</p>
-                            </div>
-                            <div class="romaneio-info">
-                                <p class="date">${format(new Date(dataRomaneio), "dd/MM/yyyy")}</p>
-                                <p class="romaneio-title">ROMANEIO DE CARGAS - ${placaDisplay}</p>
-                                <p>Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"}</p>
-                                <p>Veículo: ${veiculoDisplay || "_________________"}</p>
-                            </div>
-                        </div>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="col-remetente">Remetente</th>
-                                    <th class="col-destinatario">Destinatário</th>
-                                    <th class="col-nfe">NFE</th>
-                                    <th class="col-carimbo">Carimbo/Assinatura</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+      // Função para gerar o cabeçalho
+      const gerarCabecalho = () => `
+        <div class="header">
+          <div class="logo">
+            ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" />` : '<div class="logo-placeholder">LOGO</div>'}
+          </div>
+          <div class="company-info">
+            <h2>${config.nome_empresa || "Empresa"}</h2>
+            <p>${config.endereco || ""}</p>
+            <p>Tel: ${config.telefone || ""}</p>
+          </div>
+          <div class="romaneio-info">
+            <p class="date">${format(new Date(dataRomaneio), "dd/MM/yyyy")}</p>
+            <p class="romaneio-title">ROMANEIO DE CARGAS</p>
+            <p>Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
+          </div>
+        </div>
+      `;
+
+      // Dividir notas em blocos de 6
+      const BLOCOS_POR_PAGINA = 6;
+      for (let i = 0; i < notasOrdenadas.length; i += BLOCOS_POR_PAGINA) {
+        const notasDaPagina = notasOrdenadas.slice(i, i + BLOCOS_POR_PAGINA);
+        
+        let rowsHtml = "";
+        notasDaPagina.forEach((nota) => {
+          const remetente = remetenteSelecionado || nota.remetente || "";
+          const destinatario = nota.destinatario || "";
+          const numeroNf = nota.numero_nf || "";
+          const transportadora = nota.transportadora || "";
+          const volume = nota.volume ? nota.volume + " vol" : "";
+
+          rowsHtml += '<tr class="nota-row">';
+          rowsHtml += '<td class="remetente">' + remetente + '</td>';
+          rowsHtml += '<td class="destinatario">' + destinatario + '</td>';
+          rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+          rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+          rowsHtml += '</tr>';
+          rowsHtml += '<tr class="transportadora-row">';
+          rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadora + '</td>';
+          rowsHtml += '<td class="volume">' + volume + '</td>';
+          rowsHtml += '</tr>';
+        });
+
+        pagesHtml += `
+          <div class="page">
+            ${gerarCabecalho()}
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-remetente">Remetente</th>
+                  <th class="col-destinatario">Destinatário</th>
+                  <th class="col-nfe">NFE</th>
+                  <th class="col-carimbo">Carimbo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
     });
 
     winPrint.document.write(`
@@ -1269,7 +1284,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                 <title>Romaneio de Entregas</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4; }
+                        @page { 
+                            margin: ${cfg.margemTopo}mm ${cfg.margemLateral}mm; 
+                            size: A4; 
+                        }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                         .page { page-break-after: always; }
                         .page:last-child { page-break-after: avoid; }
@@ -1277,17 +1295,17 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     * { box-sizing: border-box; margin: 0; padding: 0; }
                     body { font-family: Arial, sans-serif; font-size: 11px; }
                     .page { 
-                        padding: 10mm; 
+                        padding: ${cfg.margemTopo}mm ${cfg.margemLateral}mm; 
                         display: flex; 
                         flex-direction: column;
+                        min-height: 100vh;
                     }
                     .header { 
                         display: flex; 
                         align-items: flex-start; 
-                        margin-bottom: 6px; 
-                        border-bottom: 2px solid #000; 
-                        padding-bottom: 6px;
-                        min-height: ${cfg.alturaTitulo}px;
+                        margin-bottom: 8px; 
+                        border-bottom: 3px solid #000; 
+                        padding-bottom: 8px;
                     }
                     .logo { width: 80px; margin-right: 15px; }
                     .logo img { max-width: 100%; max-height: 50px; object-fit: contain; }
@@ -1297,20 +1315,21 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         color: white; font-weight: bold; font-size: 16px; 
                     }
                     .company-info { flex: 1; }
-                    .company-info h2 { font-size: 14px; font-weight: bold; margin: 0; }
-                    .company-info p { font-size: 10px; color: #333; margin: 1px 0; }
+                    .company-info h2 { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                    .company-info p { font-size: 10px; color: #333; margin: 0; line-height: 1.4; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-info .date { font-size: 14px; font-weight: bold; }
-                    .romaneio-info .romaneio-title { font-size: 13px; font-weight: bold; margin: 2px 0; }
-                    .romaneio-info p { font-size: 10px; margin: 1px 0; }
+                    .romaneio-info .date { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+                    .romaneio-info .romaneio-title { font-size: 14px; font-weight: bold; margin: 2px 0; }
+                    .romaneio-info p { font-size: 11px; margin: 0; line-height: 1.3; }
                     
                     table { width: 100%; border-collapse: collapse; flex: 1; }
                     th { 
                         background: #d0d0d0; 
-                        padding: 6px; 
-                        text-align: left; 
+                        padding: 8px 4px; 
+                        text-align: center; 
                         border: 2px solid #000; 
                         font-size: 13px;
+                        font-weight: bold;
                     }
                     td { 
                         border: 2px solid #000; 
@@ -1323,18 +1342,59 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .col-nfe { width: ${cfg.colNfe}%; text-align: center; }
                     .col-carimbo { width: ${cfg.colCarimbo}%; }
                     
-                    .nota-row .remetente { padding: 3px 5px; font-size: 10px; font-weight: bold; text-align: center; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .destinatario { text-align: center; font-weight: bold; font-size: 15px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .nfe { text-align: center; font-weight: bold; font-size: 16px; padding: 3px 5px; vertical-align: middle; border-bottom: 2px solid #000; }
-                    .nota-row .carimbo { min-height: 60px; padding: 4px; vertical-align: middle; }
+                    .nota-row .remetente { 
+                        padding: 4px 5px; 
+                        font-size: 10px; 
+                        font-weight: bold; 
+                        text-align: center; 
+                        vertical-align: middle; 
+                        border-bottom: 2px solid #000; 
+                    }
+                    .nota-row .destinatario { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 15px; 
+                        padding: 4px 5px; 
+                        vertical-align: middle; 
+                        border-bottom: 2px solid #000; 
+                    }
+                    .nota-row .nfe { 
+                        text-align: center; 
+                        font-weight: bold; 
+                        font-size: 16px; 
+                        padding: 4px 5px; 
+                        vertical-align: middle; 
+                        border-bottom: 2px solid #000; 
+                    }
+                    .nota-row .carimbo { 
+                        min-height: 80px; 
+                        padding: 4px; 
+                        vertical-align: middle; 
+                    }
 
-                    .transportadora-row td { border-top: none; padding: 4px; text-align: center; vertical-align: middle; }
-                    .transportadora-row .transportadora-nome { font-size: 13px; font-weight: bold; line-height: 1.2; text-transform: uppercase; color: #333; }
-                    .transportadora-row .volume { text-align: center; font-size: 13px; font-weight: bold; }
-
-                    .nota-row.vazia td {
-                        border: 2px solid #000 !important;
-                        background: #fff;
+                    .transportadora-row td { 
+                        border-top: none; 
+                        padding: 4px; 
+                        text-align: center; 
+                        vertical-align: middle;
+                        padding-bottom: ${cfg.espacamentoEntreLinhas}px;
+                    }
+                    .transportadora-row .transportadora-nome { 
+                        font-size: 13px; 
+                        font-weight: bold; 
+                        line-height: 1.2; 
+                        text-transform: uppercase; 
+                        color: #333; 
+                    }
+                    .transportadora-row .volume { 
+                        text-align: center; 
+                        font-size: 13px; 
+                        font-weight: bold; 
+                    }
+                    
+                    /* Adiciona espaçamento extra entre blocos */
+                    .transportadora-row + .nota-row td {
+                        padding-top: ${cfg.espacamentoEntreLinhas}px;
                     }
                 </style>
             </head>
@@ -1610,6 +1670,43 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <p className="text-xs text-slate-500 mt-2">
                             Total: {layoutConfig.colRemetente + layoutConfig.colDestinatario + layoutConfig.colNfe + layoutConfig.colCarimbo}% (ideal: 100%)
                         </p>
+                        
+                        {/* Configurações de Margem e Espaçamento */}
+                        <div className="grid grid-cols-3 gap-4 pt-3 border-t">
+                            <div className="space-y-2">
+                                <Label className="text-xs">Margem Topo (mm)</Label>
+                                <Input
+                  type="number"
+                  min="5"
+                  max="30"
+                  value={layoutConfig.margemTopo}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, margemTopo: parseInt(e.target.value) || 10 })}
+                  className="bg-white" />
+
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Margem Lateral (mm)</Label>
+                                <Input
+                  type="number"
+                  min="5"
+                  max="30"
+                  value={layoutConfig.margemLateral}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, margemLateral: parseInt(e.target.value) || 10 })}
+                  className="bg-white" />
+
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Espaço Entre Blocos (px)</Label>
+                                <Input
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={layoutConfig.espacamentoEntreLinhas}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, espacamentoEntreLinhas: parseInt(e.target.value) || 0 })}
+                  className="bg-white" />
+
+                            </div>
+                        </div>
                         
                         {/* Botão de Configuração de Impressão NFE */}
                         <div className="pt-4 border-t mt-4">

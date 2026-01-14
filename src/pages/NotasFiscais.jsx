@@ -64,16 +64,27 @@ export default function NotasFiscais() {
   const [notasDigitadas, setNotasDigitadas] = useState("");
   const [ordenacaoNotas, setOrdenacaoNotas] = useState("digitacao");
   const [otimizandoRota, setOtimizandoRota] = useState(false);
-  const [layoutConfig, setLayoutConfig] = useState({
-    colRemetente: 18,
-    colDestinatario: 42,
-    colNfe: 15,
-    colCarimbo: 25,
-    alturaLinha: 45,
-    margemTopo: 10,
-    margemLateral: 10,
-    espacamentoEntreLinhas: 0
+  const [layoutConfig, setLayoutConfig] = useState(() => {
+    const saved = localStorage.getItem('mascaraRomaneioConfig');
+    return saved ? JSON.parse(saved) : {
+      colRemetente: 18,
+      colDestinatario: 42,
+      colNfe: 15,
+      colCarimbo: 25,
+      alturaLinha: 45,
+      margemTopo: 10,
+      margemLateral: 10,
+      espacamentoEntreLinhas: 0,
+      fonteSizeCampos: 13,
+      fonteSizeDados: 15,
+      alinhamentoDados: 'center'
+    };
   });
+
+  // Salvar configurações quando mudar
+  React.useEffect(() => {
+    localStorage.setItem('mascaraRomaneioConfig', JSON.stringify(layoutConfig));
+  }, [layoutConfig]);
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
 
   // Estados para gravação de áudio
@@ -1104,7 +1115,10 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       alturaLinha: layoutConfig.alturaLinha,
       margemTopo: layoutConfig.margemTopo,
       margemLateral: layoutConfig.margemLateral,
-      espacamentoEntreLinhas: layoutConfig.espacamentoEntreLinhas
+      espacamentoEntreLinhas: layoutConfig.espacamentoEntreLinhas,
+      fonteSizeCampos: layoutConfig.fonteSizeCampos,
+      fonteSizeDados: layoutConfig.fonteSizeDados,
+      alinhamentoDados: layoutConfig.alinhamentoDados
     };
 
     // Símbolos para placas
@@ -1231,29 +1245,48 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         </div>
       `;
 
-      // Dividir notas em blocos de 6
+      // Dividir notas em blocos de 6 (sempre 6 por página)
       const BLOCOS_POR_PAGINA = 6;
       for (let i = 0; i < notasOrdenadas.length; i += BLOCOS_POR_PAGINA) {
         const notasDaPagina = notasOrdenadas.slice(i, i + BLOCOS_POR_PAGINA);
         
+        // Completar com blocos vazios até ter 6 blocos
+        while (notasDaPagina.length < BLOCOS_POR_PAGINA) {
+          notasDaPagina.push({ vazio: true });
+        }
+        
         let rowsHtml = "";
         notasDaPagina.forEach((nota) => {
-          const remetente = remetenteSelecionado || nota.remetente || "";
-          const destinatario = nota.destinatario || "";
-          const numeroNf = nota.numero_nf || "";
-          const transportadora = nota.transportadora || "";
-          const volume = nota.volume ? nota.volume + " vol" : "";
+          if (nota.vazio) {
+            // Bloco vazio
+            rowsHtml += '<tr class="nota-row bloco-vazio">';
+            rowsHtml += '<td class="remetente">&nbsp;</td>';
+            rowsHtml += '<td class="destinatario">&nbsp;</td>';
+            rowsHtml += '<td class="nfe">&nbsp;</td>';
+            rowsHtml += '<td class="carimbo" rowspan="2">&nbsp;</td>';
+            rowsHtml += '</tr>';
+            rowsHtml += '<tr class="transportadora-row bloco-vazio">';
+            rowsHtml += '<td class="transportadora-nome" colspan="2">&nbsp;</td>';
+            rowsHtml += '<td class="volume">&nbsp;</td>';
+            rowsHtml += '</tr>';
+          } else {
+            const remetente = remetenteSelecionado || nota.remetente || "";
+            const destinatario = nota.destinatario || "";
+            const numeroNf = nota.numero_nf || "";
+            const transportadora = nota.transportadora || "";
+            const volume = nota.volume ? nota.volume + " vol" : "";
 
-          rowsHtml += '<tr class="nota-row">';
-          rowsHtml += '<td class="remetente">' + remetente + '</td>';
-          rowsHtml += '<td class="destinatario">' + destinatario + '</td>';
-          rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
-          rowsHtml += '<td class="carimbo" rowspan="2"></td>';
-          rowsHtml += '</tr>';
-          rowsHtml += '<tr class="transportadora-row">';
-          rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadora + '</td>';
-          rowsHtml += '<td class="volume">' + volume + '</td>';
-          rowsHtml += '</tr>';
+            rowsHtml += '<tr class="nota-row">';
+            rowsHtml += '<td class="remetente">' + remetente + '</td>';
+            rowsHtml += '<td class="destinatario">' + destinatario + '</td>';
+            rowsHtml += '<td class="nfe">' + numeroNf + '</td>';
+            rowsHtml += '<td class="carimbo" rowspan="2"></td>';
+            rowsHtml += '</tr>';
+            rowsHtml += '<tr class="transportadora-row">';
+            rowsHtml += '<td class="transportadora-nome" colspan="2">' + transportadora + '</td>';
+            rowsHtml += '<td class="volume">' + volume + '</td>';
+            rowsHtml += '</tr>';
+          }
         });
 
         pagesHtml += `
@@ -1322,13 +1355,18 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .romaneio-info .romaneio-title { font-size: 14px; font-weight: bold; margin: 2px 0; }
                     .romaneio-info p { font-size: 11px; margin: 0; line-height: 1.3; }
                     
-                    table { width: 100%; border-collapse: collapse; flex: 1; }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        flex: 1; 
+                        table-layout: fixed;
+                    }
                     th { 
                         background: #d0d0d0; 
                         padding: 8px 4px; 
                         text-align: center; 
                         border: 2px solid #000; 
-                        font-size: 13px;
+                        font-size: ${cfg.fonteSizeCampos}px;
                         font-weight: bold;
                     }
                     td { 
@@ -1342,32 +1380,36 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .col-nfe { width: ${cfg.colNfe}%; text-align: center; }
                     .col-carimbo { width: ${cfg.colCarimbo}%; }
                     
+                    /* Cada bloco (2 linhas) ocupa 1/6 da altura disponível da tabela */
+                    tbody { display: table-row-group; height: 100%; }
+                    .nota-row { height: 8.33%; } /* 50% de 1/6 da altura */
+                    .transportadora-row { height: 8.33%; } /* 50% de 1/6 da altura */
+                    
                     .nota-row .remetente { 
                         padding: 4px 5px; 
                         font-size: 10px; 
                         font-weight: bold; 
-                        text-align: center; 
+                        text-align: ${cfg.alinhamentoDados}; 
                         vertical-align: middle; 
                         border-bottom: 2px solid #000; 
                     }
                     .nota-row .destinatario { 
-                        text-align: center; 
+                        text-align: ${cfg.alinhamentoDados}; 
                         font-weight: bold; 
-                        font-size: 15px; 
+                        font-size: ${cfg.fonteSizeDados}px; 
                         padding: 4px 5px; 
                         vertical-align: middle; 
                         border-bottom: 2px solid #000; 
                     }
                     .nota-row .nfe { 
-                        text-align: center; 
+                        text-align: ${cfg.alinhamentoDados}; 
                         font-weight: bold; 
-                        font-size: 16px; 
+                        font-size: ${cfg.fonteSizeDados}px; 
                         padding: 4px 5px; 
                         vertical-align: middle; 
                         border-bottom: 2px solid #000; 
                     }
                     .nota-row .carimbo { 
-                        min-height: 80px; 
                         padding: 4px; 
                         vertical-align: middle; 
                     }
@@ -1375,26 +1417,31 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     .transportadora-row td { 
                         border-top: none; 
                         padding: 4px; 
-                        text-align: center; 
+                        text-align: ${cfg.alinhamentoDados}; 
                         vertical-align: middle;
                         padding-bottom: ${cfg.espacamentoEntreLinhas}px;
                     }
                     .transportadora-row .transportadora-nome { 
-                        font-size: 13px; 
+                        font-size: ${cfg.fonteSizeDados}px; 
                         font-weight: bold; 
                         line-height: 1.2; 
                         text-transform: uppercase; 
                         color: #333; 
                     }
                     .transportadora-row .volume { 
-                        text-align: center; 
-                        font-size: 13px; 
+                        text-align: ${cfg.alinhamentoDados}; 
+                        font-size: ${cfg.fonteSizeDados}px; 
                         font-weight: bold; 
                     }
                     
                     /* Adiciona espaçamento extra entre blocos */
                     .transportadora-row + .nota-row td {
                         padding-top: ${cfg.espacamentoEntreLinhas}px;
+                    }
+                    
+                    /* Blocos vazios mantêm a estrutura mas sem conteúdo visível */
+                    .bloco-vazio td {
+                        color: transparent;
                     }
                 </style>
             </head>
@@ -1705,6 +1752,48 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                   onChange={(e) => setLayoutConfig({ ...layoutConfig, espacamentoEntreLinhas: parseInt(e.target.value) || 0 })}
                   className="bg-white" />
 
+                            </div>
+                        </div>
+                        
+                        {/* Configurações de Fonte */}
+                        <div className="grid grid-cols-3 gap-4 pt-3 border-t">
+                            <div className="space-y-2">
+                                <Label className="text-xs">Fonte Cabeçalhos (px)</Label>
+                                <Input
+                  type="number"
+                  min="10"
+                  max="20"
+                  value={layoutConfig.fonteSizeCampos}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, fonteSizeCampos: parseInt(e.target.value) || 13 })}
+                  className="bg-white" />
+
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Fonte Dados (px)</Label>
+                                <Input
+                  type="number"
+                  min="10"
+                  max="24"
+                  value={layoutConfig.fonteSizeDados}
+                  onChange={(e) => setLayoutConfig({ ...layoutConfig, fonteSizeDados: parseInt(e.target.value) || 15 })}
+                  className="bg-white" />
+
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs">Alinhamento Dados</Label>
+                                <Select 
+                                    value={layoutConfig.alinhamentoDados} 
+                                    onValueChange={(v) => setLayoutConfig({ ...layoutConfig, alinhamentoDados: v })}
+                                >
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="left">Esquerda</SelectItem>
+                                        <SelectItem value="center">Centro</SelectItem>
+                                        <SelectItem value="right">Direita</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                         

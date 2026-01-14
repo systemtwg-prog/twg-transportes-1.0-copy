@@ -1204,16 +1204,16 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
       let rowsHtml = "";
       notasOrdenadas.forEach((nota) => {
-      const remetente = remetenteSelecionado || nota.remetente || "";
-      const destinatario = nota.destinatario || "";
-      const numeroNf = nota.numero_nf || "";
+        const remetente = remetenteSelecionado || nota.remetente || "";
+        const destinatario = nota.destinatario || "";
+        const numeroNf = nota.numero_nf || "";
 
-      rowsHtml += '<tr>';
-      rowsHtml += '<td class="col-remetente">' + remetente + '</td>';
-      rowsHtml += '<td class="col-destinatario">' + destinatario + '</td>';
-      rowsHtml += '<td class="col-nfe">' + numeroNf + '</td>';
-      rowsHtml += '<td class="col-carimbo"></td>';
-      rowsHtml += '</tr>';
+        rowsHtml += '<tr>';
+        rowsHtml += '<td class="col-remetente">' + remetente + '</td>';
+        rowsHtml += '<td class="col-destinatario">' + destinatario + '</td>';
+        rowsHtml += '<td class="col-nfe">' + numeroNf + '</td>';
+        rowsHtml += '<td class="col-carimbo"></td>';
+        rowsHtml += '</tr>';
       });
 
       const placaDisplay = placa !== "SEM_PLACA" ? placa : "";
@@ -1292,12 +1292,12 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         color: white; font-weight: bold; font-size: 16px; 
                     }
                     .company-info { flex: 1; }
-                    .company-name { font-size: ${cfg.fontSize + 8}px; font-weight: bold; margin: 0; }
-                    .company-address { font-size: ${cfg.fontSize - 1}px; color: #333; margin: 1px 0; }
+                    .company-info h2 { font-size: 14px; font-weight: bold; margin: 0; }
+                    .company-info p { font-size: 10px; color: #333; margin: 1px 0; }
                     .romaneio-info { text-align: right; }
-                    .romaneio-title { font-size: ${cfg.fontSize + 6}px; font-weight: bold; margin: 0; }
-                    .motorista-veiculo { font-size: ${cfg.fontSize + 2}px; font-weight: bold; margin: 3px 0; }
-                    .date { font-size: ${cfg.fontSize + 8}px; font-weight: bold; }
+                    .romaneio-info .date { font-size: 14px; font-weight: bold; }
+                    .romaneio-info .romaneio-title { font-size: 13px; font-weight: bold; margin: 2px 0; }
+                    .romaneio-info p { font-size: 10px; margin: 1px 0; }
                     
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
                     th { 

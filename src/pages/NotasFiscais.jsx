@@ -42,6 +42,7 @@ export default function NotasFiscais() {
   const [filterDataImportacao, setFilterDataImportacao] = useState("");
   const [importing, setImporting] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
+  const [ordemDigitacao, setOrdemDigitacao] = useState([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [placaEmMassa, setPlacaEmMassa] = useState("");
   const [filialEmMassa, setFilialEmMassa] = useState("");
@@ -1031,7 +1032,9 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       setNotasNaoEncontradas(naoEncontradas);
 
       if (notasEncontradas.length > 0) {
-        setSelecionados(notasEncontradas.map((n) => n.id));
+        const idsOrdenados = notasEncontradas.map((n) => n.id);
+        setSelecionados(idsOrdenados);
+        setOrdemDigitacao(idsOrdenados); // Guardar ordem de digitação
         if (naoEncontradas.length > 0) {
           toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
         } else {
@@ -1136,16 +1139,25 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
       notasPorPlaca[placa].push(nota);
     });
 
-    // SEMPRE ordenar por número de nota fiscal (do menor para o maior)
+    // Aplicar ordenação conforme configurado
     for (const placa in notasPorPlaca) {
-      notasPorPlaca[placa].sort((a, b) => {
-        const numA = parseInt(a.numero_nf?.replace(/\D/g, "") || "0");
-        const numB = parseInt(b.numero_nf?.replace(/\D/g, "") || "0");
-        return numA - numB;
-      });
-
-      // Aplicar ordenação adicional se configurado
-      if (ordenacaoNotas === "transportadora") {
+      if (ordenacaoNotas === "digitacao" && ordemDigitacao.length > 0) {
+        // Ordenar pela ordem de digitação
+        notasPorPlaca[placa].sort((a, b) => {
+          const indexA = ordemDigitacao.indexOf(a.id);
+          const indexB = ordemDigitacao.indexOf(b.id);
+          // Se ambos estão na ordem de digitação, usar essa ordem
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          // Se só A está na ordem, A vem primeiro
+          if (indexA !== -1) return -1;
+          // Se só B está na ordem, B vem primeiro
+          if (indexB !== -1) return 1;
+          // Se nenhum está na ordem, ordenar por número de NF
+          const numA = parseInt(a.numero_nf?.replace(/\D/g, "") || "0");
+          const numB = parseInt(b.numero_nf?.replace(/\D/g, "") || "0");
+          return numA - numB;
+        });
+      } else if (ordenacaoNotas === "transportadora") {
         // Ordenar por transportadora
         notasPorPlaca[placa].sort((a, b) => {
           const transpA = (a.transportadora || "").toUpperCase();
@@ -1210,8 +1222,14 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
           }
           setOtimizandoRota(false);
         }
+      } else {
+        // Padrão: ordenar por número de nota fiscal
+        notasPorPlaca[placa].sort((a, b) => {
+          const numA = parseInt(a.numero_nf?.replace(/\D/g, "") || "0");
+          const numB = parseInt(b.numero_nf?.replace(/\D/g, "") || "0");
+          return numA - numB;
+        });
       }
-      // Se for "digitacao", mantém a ordem original (não faz nada)
     }
 
     let pagesHtml = "";

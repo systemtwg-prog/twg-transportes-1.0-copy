@@ -26,10 +26,7 @@ export default function CTEs() {
     const streamRef = useRef(null);
     const navigate = useNavigate();
 
-    const { data: empresasCadastradas = [] } = useQuery({
-        queryKey: ["empresas-comprovante"],
-        queryFn: () => base44.entities.EmpresaComprovante.list()
-    });
+
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user-ctes"],
@@ -96,8 +93,7 @@ export default function CTEs() {
                 setFotoAtual({
                     blob,
                     url: imageUrl,
-                    numeroCTE: "",
-                    empresa: ""
+                    numeroCTE: ""
                 });
                 stopCamera();
                 setMostrarCamera(false);
@@ -108,10 +104,6 @@ export default function CTEs() {
     const confirmarFoto = () => {
         if (!fotoAtual.numeroCTE) {
             toast.error("Informe o número do CTE");
-            return;
-        }
-        if (!fotoAtual.empresa) {
-            toast.error("Selecione a empresa");
             return;
         }
 
@@ -338,28 +330,6 @@ export default function CTEs() {
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-lg font-semibold text-slate-700 flex items-center gap-2">
-                                    <Building2 className="w-5 h-5" />
-                                    Empresa
-                                </label>
-                                <Select value={fotoAtual.empresa} onValueChange={(v) => setFotoAtual({ ...fotoAtual, empresa: v })}>
-                                    <SelectTrigger className="h-16 bg-white text-lg border-2">
-                                        <SelectValue placeholder="Selecione a empresa" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {empresasCadastradas.map(emp => (
-                                            <SelectItem key={emp.id} value={emp.nome}>
-                                                <div className="flex items-center gap-2">
-                                                    {emp.logo_url && <img src={emp.logo_url} alt="" className="w-6 h-6 object-contain" />}
-                                                    <span className="text-base">{emp.nome}</span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
                             <div className="flex gap-3 pt-4">
                                 <Button
                                     variant="outline"
@@ -395,9 +365,8 @@ export default function CTEs() {
                                             alt={`CTE ${foto.numeroCTE}`}
                                             className="w-full h-48 object-cover"
                                         />
-                                        <div className="p-4 space-y-2">
+                                        <div className="p-4">
                                             <p className="font-bold text-lg text-slate-800">CTE: {foto.numeroCTE}</p>
-                                            <p className="text-sm text-slate-600">{foto.empresa}</p>
                                         </div>
                                         <Button
                                             variant="destructive"

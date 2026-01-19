@@ -331,7 +331,6 @@ export default function Home() {
     const mainButtons = [
         { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 via-blue-700 to-indigo-700" },
         { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-cyan-500 via-sky-600 to-blue-600" },
-        { name: "CTEs", href: "CTEs", icon: FileText, color: "from-purple-600 via-indigo-600 to-blue-600" },
         { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 via-purple-600 to-violet-600" },
         { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600" },
     ];

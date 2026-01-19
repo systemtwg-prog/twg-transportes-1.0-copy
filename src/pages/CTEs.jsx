@@ -38,7 +38,7 @@ export default function CTEs() {
 
     const { data: todosComprovantes = [] } = useQuery({
         queryKey: ["comprovantes-ctes-todos"],
-        queryFn: () => base44.entities.ComprovanteCTE.list()
+        queryFn: () => base44.entities.ComprovanteInterno.list()
     });
 
     useEffect(() => {
@@ -139,8 +139,12 @@ export default function CTEs() {
     const verificarCTEsFaltando = async () => {
         setLoading(true);
         try {
-            // Buscar todos os comprovantes CTE
-            const ctes = todosComprovantes;
+            // Buscar todos os comprovantes com tipo CTE ou CTe
+            const ctes = todosComprovantes.filter(c => 
+                c.tipo_documento === "CTE" || 
+                c.tipo_documento === "CTe" ||
+                c.nota_fiscal?.toLowerCase().includes('cte')
+            );
 
             if (ctes.length === 0) {
                 toast.info("Nenhum CTE cadastrado para verificação");
@@ -151,7 +155,7 @@ export default function CTEs() {
             // Extrair apenas números dos CTEs
             const numerosCTEs = ctes
                 .map(c => {
-                    const numero = c.numero_cte?.match(/\d+/g)?.join('');
+                    const numero = c.nota_fiscal?.match(/\d+/g)?.join('');
                     return numero ? parseInt(numero) : null;
                 })
                 .filter(n => n !== null)
@@ -203,10 +207,13 @@ export default function CTEs() {
                 const file = new File([foto.blob], `cte_${foto.id}.jpg`, { type: "image/jpeg" });
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-                await base44.entities.ComprovanteCTE.create({
-                    numero_cte: foto.numeroCTE,
+                await base44.entities.ComprovanteInterno.create({
+                    nota_fiscal: foto.numeroCTE,
+                    tipo_documento: "CTE",
+                    empresa: foto.empresa,
                     data: new Date().toISOString().split('T')[0],
                     status: "pendente",
+                    usuario_foto: currentUser?.full_name || currentUser?.email || "Usuário",
                     arquivos: [{
                         nome: `cte_${foto.numeroCTE}.jpg`,
                         url: file_url,
@@ -217,7 +224,7 @@ export default function CTEs() {
 
             fotos.forEach(f => URL.revokeObjectURL(f.url));
             toast.success(`${fotos.length} CTE(s) salvo(s) com sucesso!`);
-            navigate(createPageUrl("ComprovantesCtes"));
+            navigate(createPageUrl("ComprovantesInternos"));
         } catch (error) {
             console.error("Erro ao salvar CTEs:", error);
             toast.error("Erro ao salvar CTEs");

@@ -10,10 +10,10 @@ const quickAccessTabs = [
     { name: "Início", href: "Home", icon: Home },
     { name: "Depósito", href: "NotaDeposito", icon: Camera },
     { name: "Comprov.", href: "ComprovantesInternos", icon: Upload },
+    { name: "CTEs", href: "CTEs", icon: FileText },
     { name: "NFs", href: "NotasFiscais", icon: FileText },
     { name: "Máscara", href: "MascaraRomaneio", icon: Truck },
     { name: "Coletas", href: "ColetasDiarias", icon: Package },
-    { name: "Clientes", href: "Clientes", icon: Users },
 ];
 
 export default function BottomTabBar({ currentPage, onMenuClick }) {

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function ComprovantesCTEsFotos() {
+export default function CTEs() {
     const [fotos, setFotos] = useState([]);
     const [fotoAtual, setFotoAtual] = useState(null);
     const [mostrarCamera, setMostrarCamera] = useState(false);
@@ -32,12 +32,12 @@ export default function ComprovantesCTEsFotos() {
     });
 
     const { data: currentUser } = useQuery({
-        queryKey: ["current-user-canhoto"],
+        queryKey: ["current-user-ctes"],
         queryFn: () => base44.auth.me()
     });
 
     const { data: todosComprovantes = [] } = useQuery({
-        queryKey: ["comprovantes-ctes-fotos"],
+        queryKey: ["comprovantes-ctes-todos"],
         queryFn: () => base44.entities.ComprovanteInterno.list()
     });
 
@@ -117,7 +117,7 @@ export default function ComprovantesCTEsFotos() {
 
         setFotos(prev => [...prev, { ...fotoAtual, id: Date.now() }]);
         setFotoAtual(null);
-        toast.success("Comprovante CTE adicionado!");
+        toast.success("CTE adicionado!");
     };
 
     const cancelarFoto = () => {
@@ -133,7 +133,7 @@ export default function ComprovantesCTEsFotos() {
             if (foto) URL.revokeObjectURL(foto.url);
             return prev.filter(f => f.id !== id);
         });
-        toast.info("Comprovante removido");
+        toast.info("CTE removido");
     };
 
     const verificarCTEsFaltando = async () => {
@@ -191,7 +191,7 @@ export default function ComprovantesCTEsFotos() {
         setLoading(false);
     };
 
-    const salvarComprovantes = async () => {
+    const salvarCTEs = async () => {
         if (fotos.length === 0) {
             toast.error("Tire pelo menos uma foto");
             return;
@@ -202,7 +202,7 @@ export default function ComprovantesCTEsFotos() {
         try {
             for (let i = 0; i < fotos.length; i++) {
                 const foto = fotos[i];
-                toast.info(`Salvando comprovante ${i + 1} de ${fotos.length}...`);
+                toast.info(`Salvando CTE ${i + 1} de ${fotos.length}...`);
 
                 const file = new File([foto.blob], `cte_${foto.id}.jpg`, { type: "image/jpeg" });
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -223,11 +223,11 @@ export default function ComprovantesCTEsFotos() {
             }
 
             fotos.forEach(f => URL.revokeObjectURL(f.url));
-            toast.success(`${fotos.length} comprovante(s) CTE salvos com sucesso!`);
+            toast.success(`${fotos.length} CTE(s) salvo(s) com sucesso!`);
             navigate(createPageUrl("ComprovantesInternos"));
         } catch (error) {
-            console.error("Erro ao salvar comprovantes:", error);
-            toast.error("Erro ao salvar comprovantes");
+            console.error("Erro ao salvar CTEs:", error);
+            toast.error("Erro ao salvar CTEs");
         } finally {
             setSalvando(false);
         }
@@ -243,7 +243,7 @@ export default function ComprovantesCTEsFotos() {
                             <FileText className="w-8 h-8 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Comprovantes CTEs</h1>
+                            <h1 className="text-3xl font-bold text-slate-800">CTEs</h1>
                             <p className="text-slate-500">Fotografe os comprovantes de CTEs</p>
                         </div>
                     </div>
@@ -271,7 +271,7 @@ export default function ComprovantesCTEsFotos() {
                                 className="w-full h-32 text-2xl font-bold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-xl"
                             >
                                 <Camera className="w-12 h-12 mr-4" />
-                                Tirar Foto do Comprovante CTE
+                                Tirar Foto do CTE
                             </Button>
                         </CardContent>
                     </Card>
@@ -321,7 +321,7 @@ export default function ComprovantesCTEsFotos() {
                         <CardContent className="p-6 space-y-6">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <FileText className="w-6 h-6 text-purple-600" />
-                                Preencha os Dados do Comprovante
+                                Preencha os Dados do CTE
                             </h3>
 
                             <img 
@@ -387,12 +387,12 @@ export default function ComprovantesCTEsFotos() {
                     </Card>
                 )}
 
-                {/* Lista de Comprovantes Capturados */}
+                {/* Lista de CTEs Capturados */}
                 {fotos.length > 0 && (
                     <Card className="bg-white/80 border-0 shadow-lg">
                         <CardContent className="p-6 space-y-4">
                             <h3 className="text-xl font-bold text-slate-800">
-                                Comprovantes Capturados ({fotos.length})
+                                CTEs Capturados ({fotos.length})
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {fotos.map(foto => (
@@ -426,7 +426,7 @@ export default function ComprovantesCTEsFotos() {
                     <Card className="bg-gradient-to-r from-green-500 to-emerald-600 border-0 shadow-2xl sticky bottom-4">
                         <CardContent className="p-6">
                             <Button
-                                onClick={salvarComprovantes}
+                                onClick={salvarCTEs}
                                 disabled={salvando}
                                 className="w-full h-20 text-2xl font-bold bg-white text-green-700 hover:bg-slate-50 shadow-xl"
                             >
@@ -438,7 +438,7 @@ export default function ComprovantesCTEsFotos() {
                                 ) : (
                                     <>
                                         <Save className="w-8 h-8 mr-3" />
-                                        Salvar {fotos.length} Comprovante(s)
+                                        Salvar {fotos.length} CTE(s)
                                     </>
                                 )}
                             </Button>

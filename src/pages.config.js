@@ -37,7 +37,7 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import ComprovantesCTEsFotos from './pages/ComprovantesCTEsFotos';
+import CTEs from './pages/CTEs';
 import __Layout from './Layout.jsx';
 
 
@@ -81,7 +81,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "ComprovantesCTEsFotos": ComprovantesCTEsFotos,
+    "CTEs": CTEs,
 }
 
 export const pagesConfig = {

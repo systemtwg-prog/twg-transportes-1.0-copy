@@ -613,7 +613,20 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
             // Contar entregas (transportadoras únicas)
             const transportadorasUnicas = new Set(notasPlaca.map(n => n.transportadora?.trim().toUpperCase()).filter(Boolean));
 
+            // Gerar número sequencial
+            const ultimoNumero = config.ultimo_numero_romaneio || 0;
+            const novoNumero = ultimoNumero + 1;
+            const numeroSequencial = String(novoNumero).padStart(6, '0');
+            
+            // Atualizar configuração com novo número
+            if (config.id) {
+                base44.entities.Configuracoes.update(config.id, {
+                    ultimo_numero_romaneio: novoNumero
+                });
+            }
+
             createRomaneioMutation.mutate({
+                numero: numeroSequencial,
                 nome: `Romaneio ${placa !== "SEM_PLACA" ? placa : ""} - ${formatDate(dataRomaneio)}`,
                 placa: placa !== "SEM_PLACA" ? placa : "",
                 data: dataRomaneio,

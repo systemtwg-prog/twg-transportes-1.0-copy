@@ -306,7 +306,7 @@ export default function RomaneiosGerados() {
         }
     };
 
-    // Buscar nota nos romaneios
+    // Buscar nota nos romaneios - busca em TODOS
     const buscarNotaNosRomaneios = () => {
         if (!buscaNota.trim()) {
             setResultadoBuscaNota(null);
@@ -320,7 +320,9 @@ export default function RomaneiosGerados() {
 
         const numeroNormalizado = normalizar(buscaNota);
         
-        // Procurar em todos os romaneios
+        // Procurar em TODOS os romaneios e guardar todas as ocorrências
+        const romaneiosEncontrados = [];
+        
         for (const romaneio of romaneios) {
             const notasDoRomaneio = (romaneio.notas_ids || [])
                 .map(id => notasFiscais.find(n => n.id === id))
@@ -332,17 +334,27 @@ export default function RomaneiosGerados() {
             });
 
             if (notaEncontrada) {
-                setResultadoBuscaNota({
+                romaneiosEncontrados.push({
                     nota: notaEncontrada,
                     romaneio: romaneio
                 });
-                toast.success(`Nota encontrada no romaneio!`);
-                return;
             }
         }
 
-        setResultadoBuscaNota({ notFound: true });
-        toast.error("Nota não encontrada em nenhum romaneio");
+        if (romaneiosEncontrados.length > 0) {
+            setResultadoBuscaNota({
+                multipleResults: romaneiosEncontrados.length > 1,
+                results: romaneiosEncontrados
+            });
+            if (romaneiosEncontrados.length > 1) {
+                toast.success(`Nota encontrada em ${romaneiosEncontrados.length} romaneios!`);
+            } else {
+                toast.success(`Nota encontrada no romaneio!`);
+            }
+        } else {
+            setResultadoBuscaNota({ notFound: true });
+            toast.error("Nota não encontrada em nenhum romaneio");
+        }
     };
 
     const handleEdit = (romaneio) => {
@@ -872,24 +884,31 @@ export default function RomaneiosGerados() {
                                             </svg>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-semibold text-green-800 mb-2">✓ Nota Encontrada!</p>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="bg-white rounded-lg p-3">
-                                                    <p className="text-slate-600">Número NF: <span className="font-bold text-blue-600">{resultadoBuscaNota.nota.numero_nf}</span></p>
-                                                    <p className="text-slate-600">Destinatário: <span className="font-semibold">{resultadoBuscaNota.nota.destinatario}</span></p>
-                                                    <p className="text-slate-600">Transportadora: <span className="font-semibold">{resultadoBuscaNota.nota.transportadora || "-"}</span></p>
-                                                </div>
-                                                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-                                                    <p className="text-indigo-800 font-semibold mb-1">Romaneio:</p>
-                                                    <p className="text-slate-700">{resultadoBuscaNota.romaneio.nome}</p>
-                                                    <div className="flex gap-3 mt-2 text-xs">
-                                                        <span className="text-slate-600">Placa: <strong>{resultadoBuscaNota.romaneio.placa}</strong></span>
-                                                        <span className="text-slate-600">Data: <strong>{formatDate(resultadoBuscaNota.romaneio.data)}</strong></span>
-                                                        <Badge className={statusColors[resultadoBuscaNota.romaneio.status || "gerado"]}>
-                                                            {statusLabels[resultadoBuscaNota.romaneio.status || "gerado"]}
-                                                        </Badge>
+                                            <p className="font-semibold text-green-800 mb-2">
+                                                ✓ Nota Encontrada{resultadoBuscaNota.multipleResults ? ` em ${resultadoBuscaNota.results.length} Romaneios!` : "!"}
+                                            </p>
+                                            <div className="space-y-3">
+                                                {resultadoBuscaNota.results.map((resultado, idx) => (
+                                                    <div key={idx} className="space-y-2 text-sm">
+                                                        <div className="bg-white rounded-lg p-3">
+                                                            <p className="text-slate-600">Número NF: <span className="font-bold text-blue-600">{resultado.nota.numero_nf}</span></p>
+                                                            <p className="text-slate-600">Destinatário: <span className="font-semibold">{resultado.nota.destinatario}</span></p>
+                                                            <p className="text-slate-600">Transportadora: <span className="font-semibold">{resultado.nota.transportadora || "-"}</span></p>
+                                                        </div>
+                                                        <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                                                            <p className="text-indigo-800 font-semibold mb-1">Romaneio {resultadoBuscaNota.multipleResults ? `#${idx + 1}` : ""}:</p>
+                                                            <p className="text-slate-700">{resultado.romaneio.nome || resultado.romaneio.numero || "-"}</p>
+                                                            <div className="flex gap-3 mt-2 text-xs flex-wrap">
+                                                                <span className="text-slate-600">Placa: <strong>{resultado.romaneio.placa}</strong></span>
+                                                                <span className="text-slate-600">Data: <strong>{formatDate(resultado.romaneio.data)}</strong></span>
+                                                                <span className="text-slate-600">Motorista: <strong>{resultado.romaneio.motorista_nome || "-"}</strong></span>
+                                                                <Badge className={statusColors[resultado.romaneio.status || "gerado"]}>
+                                                                    {statusLabels[resultado.romaneio.status || "gerado"]}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
@@ -984,9 +1003,16 @@ export default function RomaneiosGerados() {
                                         filtered.map((romaneio) => (
                                             <React.Fragment key={romaneio.id}>
                                                 <TableRow className="hover:bg-slate-50">
-                                                    <TableCell className="font-medium">{formatDate(romaneio.data)}</TableCell>
-                                                    <TableCell>{romaneio.nome || "-"}</TableCell>
-                                                    <TableCell className="font-bold text-indigo-600">{romaneio.placa || "-"}</TableCell>
+                                                   <TableCell className="font-medium">{formatDate(romaneio.data)}</TableCell>
+                                                   <TableCell>
+                                                       {romaneio.numero && (
+                                                           <Badge className="bg-purple-100 text-purple-700 mr-2">
+                                                               #{romaneio.numero}
+                                                           </Badge>
+                                                       )}
+                                                       {romaneio.nome || "-"}
+                                                   </TableCell>
+                                                   <TableCell className="font-bold text-indigo-600">{romaneio.placa || "-"}</TableCell>
                                                     <TableCell>{romaneio.motorista_nome || "-"}</TableCell>
                                                     <TableCell className="text-center">{romaneio.total_notas || 0}</TableCell>
                                                     <TableCell className="text-center">{romaneio.total_entregas || 0}</TableCell>

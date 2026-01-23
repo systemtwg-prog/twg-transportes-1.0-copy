@@ -337,8 +337,26 @@ export default function ImpressaoRelatorio() {
                                 className="border-purple-500 text-purple-600 hover:bg-purple-50"
                             >
                                 <Calendar className="w-4 h-4 mr-2" />
-                                Histórico ({relatoriosImportados.length})
+                                Histórico
                             </Button>
+                            <Link to={createPageUrl("RelatorioDestinatario")}>
+                                <Button 
+                                    variant="outline"
+                                    className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+                                >
+                                    <Building2 className="w-4 h-4 mr-2" />
+                                    Por Destinatário
+                                </Button>
+                            </Link>
+                            <Link to={createPageUrl("RelatorioNotaFiscal")}>
+                                <Button 
+                                    variant="outline"
+                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Por Nota Fiscal
+                                </Button>
+                            </Link>
                             {notasAdicionadas.length > 0 && (
                                 <Button 
                                     onClick={limparTodas}

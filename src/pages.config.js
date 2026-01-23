@@ -4,6 +4,7 @@ import AtualizarLocalizacao from './pages/AtualizarLocalizacao';
 import Avisos from './pages/Avisos';
 import Backup from './pages/Backup';
 import BuscaMultas from './pages/BuscaMultas';
+import CTEs from './pages/CTEs';
 import Canhoto from './pages/Canhoto';
 import Clientes from './pages/Clientes';
 import ClientesSNF from './pages/ClientesSNF';
@@ -37,7 +38,8 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import CTEs from './pages/CTEs';
+import RelatorioDestinatario from './pages/RelatorioDestinatario';
+import RelatorioNotaFiscal from './pages/RelatorioNotaFiscal';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +50,7 @@ export const PAGES = {
     "Avisos": Avisos,
     "Backup": Backup,
     "BuscaMultas": BuscaMultas,
+    "CTEs": CTEs,
     "Canhoto": Canhoto,
     "Clientes": Clientes,
     "ClientesSNF": ClientesSNF,
@@ -81,7 +84,8 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "CTEs": CTEs,
+    "RelatorioDestinatario": RelatorioDestinatario,
+    "RelatorioNotaFiscal": RelatorioNotaFiscal,
 }
 
 export const pagesConfig = {

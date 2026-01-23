@@ -1,44 +1,63 @@
 import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, Save, X, FileText, Building2, Trash2, AlertTriangle } from "lucide-react";
+import { Camera, Save, X, FileText, Trash2, AlertTriangle, Eye, Pencil, Share2, RotateCw, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 export default function CTEs() {
-    const [fotos, setFotos] = useState([]);
     const [fotoAtual, setFotoAtual] = useState(null);
     const [mostrarCamera, setMostrarCamera] = useState(false);
-    const [salvando, setSalvando] = useState(false);
     const [facingMode, setFacingMode] = useState("environment");
     const [showFaltandoDialog, setShowFaltandoDialog] = useState(false);
     const [ctesFaltando, setCtesFaltando] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showVisualizarDialog, setShowVisualizarDialog] = useState(false);
+    const [cteVisualizado, setCteVisualizado] = useState(null);
+    const [showEditarDialog, setShowEditarDialog] = useState(false);
+    const [cteEditando, setCteEditando] = useState(null);
+    const [rotacao, setRotacao] = useState(0);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const streamRef = useRef(null);
-    const navigate = useNavigate();
-
-    const { data: empresasCadastradas = [] } = useQuery({
-        queryKey: ["empresas-comprovante"],
-        queryFn: () => base44.entities.EmpresaComprovante.list()
-    });
+    const queryClient = useQueryClient();
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user-ctes"],
         queryFn: () => base44.auth.me()
     });
 
-    const { data: todosComprovantes = [] } = useQuery({
-        queryKey: ["comprovantes-ctes-todos"],
-        queryFn: () => base44.entities.ComprovanteInterno.list()
+    const { data: ctesSalvos = [], refetch: refetchCTEs } = useQuery({
+        queryKey: ["comprovantes-ctes"],
+        queryFn: async () => {
+            const todos = await base44.entities.ComprovanteInterno.list("-created_date");
+            return todos.filter(c => 
+                c.tipo_documento === "CTE" || 
+                c.tipo_documento === "CTe"
+            );
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => base44.entities.ComprovanteInterno.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
+            toast.success("CTE excluído");
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.ComprovanteInterno.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["comprovantes-ctes"] });
+            setShowEditarDialog(false);
+            setCteEditando(null);
+            toast.success("CTE atualizado");
+        }
     });
 
     useEffect(() => {
@@ -96,8 +115,7 @@ export default function CTEs() {
                 setFotoAtual({
                     blob,
                     url: imageUrl,
-                    numeroCTE: "",
-                    empresa: ""
+                    numeroCTE: ""
                 });
                 stopCamera();
                 setMostrarCamera(false);
@@ -105,19 +123,40 @@ export default function CTEs() {
         }, "image/jpeg", 0.85);
     };
 
-    const confirmarFoto = () => {
+    const confirmarFoto = async () => {
         if (!fotoAtual.numeroCTE) {
             toast.error("Informe o número do CTE");
             return;
         }
-        if (!fotoAtual.empresa) {
-            toast.error("Selecione a empresa");
-            return;
-        }
 
-        setFotos(prev => [...prev, { ...fotoAtual, id: Date.now() }]);
-        setFotoAtual(null);
-        toast.success("CTE adicionado!");
+        setLoading(true);
+        try {
+            const file = new File([fotoAtual.blob], `cte_${Date.now()}.jpg`, { type: "image/jpeg" });
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+            await base44.entities.ComprovanteInterno.create({
+                nota_fiscal: fotoAtual.numeroCTE,
+                tipo_documento: "CTE",
+                data: new Date().toISOString().split('T')[0],
+                status: "pendente",
+                usuario_foto: currentUser?.full_name || currentUser?.email || "Usuário",
+                arquivos: [{
+                    nome: `cte_${fotoAtual.numeroCTE}.jpg`,
+                    url: file_url,
+                    tipo: "image/jpeg"
+                }]
+            });
+
+            URL.revokeObjectURL(fotoAtual.url);
+            setFotoAtual(null);
+            toast.success("CTE salvo com sucesso!");
+            refetchCTEs();
+        } catch (error) {
+            console.error("Erro ao salvar CTE:", error);
+            toast.error("Erro ao salvar CTE");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const cancelarFoto = () => {
@@ -127,33 +166,16 @@ export default function CTEs() {
         setFotoAtual(null);
     };
 
-    const removerFoto = (id) => {
-        setFotos(prev => {
-            const foto = prev.find(f => f.id === id);
-            if (foto) URL.revokeObjectURL(foto.url);
-            return prev.filter(f => f.id !== id);
-        });
-        toast.info("CTE removido");
-    };
-
     const verificarCTEsFaltando = async () => {
         setLoading(true);
         try {
-            // Buscar todos os comprovantes com tipo CTE ou CTe
-            const ctes = todosComprovantes.filter(c => 
-                c.tipo_documento === "CTE" || 
-                c.tipo_documento === "CTe" ||
-                c.nota_fiscal?.toLowerCase().includes('cte')
-            );
-
-            if (ctes.length === 0) {
+            if (ctesSalvos.length === 0) {
                 toast.info("Nenhum CTE cadastrado para verificação");
                 setLoading(false);
                 return;
             }
 
-            // Extrair apenas números dos CTEs
-            const numerosCTEs = ctes
+            const numerosCTEs = ctesSalvos
                 .map(c => {
                     const numero = c.nota_fiscal?.match(/\d+/g)?.join('');
                     return numero ? parseInt(numero) : null;
@@ -167,7 +189,6 @@ export default function CTEs() {
                 return;
             }
 
-            // Identificar números faltando
             const faltando = [];
             const minNum = Math.min(...numerosCTEs);
             const maxNum = Math.max(...numerosCTEs);
@@ -191,46 +212,71 @@ export default function CTEs() {
         setLoading(false);
     };
 
-    const salvarCTEs = async () => {
-        if (fotos.length === 0) {
-            toast.error("Tire pelo menos uma foto");
+    const visualizarCTE = (cte) => {
+        setCteVisualizado(cte);
+        setRotacao(0);
+        setShowVisualizarDialog(true);
+    };
+
+    const editarCTE = (cte) => {
+        setCteEditando({ ...cte });
+        setShowEditarDialog(true);
+    };
+
+    const salvarEdicao = () => {
+        if (!cteEditando.nota_fiscal) {
+            toast.error("Número do CTE é obrigatório");
+            return;
+        }
+        updateMutation.mutate({
+            id: cteEditando.id,
+            data: {
+                nota_fiscal: cteEditando.nota_fiscal,
+                observacoes: cteEditando.observacoes
+            }
+        });
+    };
+
+    const compartilharCTE = async (cte) => {
+        const imageUrl = cte.arquivos?.[0]?.url;
+        if (!imageUrl) {
+            toast.error("Nenhuma imagem para compartilhar");
             return;
         }
 
-        setSalvando(true);
-
-        try {
-            for (let i = 0; i < fotos.length; i++) {
-                const foto = fotos[i];
-                toast.info(`Salvando CTE ${i + 1} de ${fotos.length}...`);
-
-                const file = new File([foto.blob], `cte_${foto.id}.jpg`, { type: "image/jpeg" });
-                const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-                await base44.entities.ComprovanteInterno.create({
-                    nota_fiscal: foto.numeroCTE,
-                    tipo_documento: "CTE",
-                    empresa: foto.empresa,
-                    data: new Date().toISOString().split('T')[0],
-                    status: "pendente",
-                    usuario_foto: currentUser?.full_name || currentUser?.email || "Usuário",
-                    arquivos: [{
-                        nome: `cte_${foto.numeroCTE}.jpg`,
-                        url: file_url,
-                        tipo: "image/jpeg"
-                    }]
+        if (navigator.share) {
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                const file = new File([blob], `CTE_${cte.nota_fiscal}.jpg`, { type: "image/jpeg" });
+                await navigator.share({
+                    title: `CTE ${cte.nota_fiscal}`,
+                    text: `Comprovante CTE: ${cte.nota_fiscal}`,
+                    files: [file]
                 });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    toast.error("Erro ao compartilhar");
+                }
             }
-
-            fotos.forEach(f => URL.revokeObjectURL(f.url));
-            toast.success(`${fotos.length} CTE(s) salvo(s) com sucesso!`);
-            navigate(createPageUrl("ComprovantesInternos"));
-        } catch (error) {
-            console.error("Erro ao salvar CTEs:", error);
-            toast.error("Erro ao salvar CTEs");
-        } finally {
-            setSalvando(false);
+        } else {
+            navigator.clipboard.writeText(imageUrl);
+            toast.success("Link copiado para área de transferência");
         }
+    };
+
+    const baixarCTE = (cte) => {
+        const imageUrl = cte.arquivos?.[0]?.url;
+        if (!imageUrl) {
+            toast.error("Nenhuma imagem para baixar");
+            return;
+        }
+        
+        const a = document.createElement('a');
+        a.href = imageUrl;
+        a.download = `CTE_${cte.nota_fiscal}.jpg`;
+        a.click();
+        toast.success("Download iniciado");
     };
 
     return (
@@ -244,7 +290,7 @@ export default function CTEs() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-slate-800">CTEs</h1>
-                            <p className="text-slate-500">Fotografe os comprovantes de CTEs</p>
+                            <p className="text-slate-500">Comprovantes de Conhecimento de Transporte</p>
                         </div>
                     </div>
                     <Button
@@ -321,7 +367,7 @@ export default function CTEs() {
                         <CardContent className="p-6 space-y-6">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <FileText className="w-6 h-6 text-purple-600" />
-                                Preencha os Dados do CTE
+                                Preencha o Número do CTE
                             </h3>
 
                             <img 
@@ -342,29 +388,8 @@ export default function CTEs() {
                                     value={fotoAtual.numeroCTE}
                                     onChange={(e) => setFotoAtual({ ...fotoAtual, numeroCTE: e.target.value })}
                                     className="h-16 text-xl font-bold bg-white border-2"
+                                    autoFocus
                                 />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-lg font-semibold text-slate-700 flex items-center gap-2">
-                                    <Building2 className="w-5 h-5" />
-                                    Empresa
-                                </label>
-                                <Select value={fotoAtual.empresa} onValueChange={(v) => setFotoAtual({ ...fotoAtual, empresa: v })}>
-                                    <SelectTrigger className="h-16 bg-white text-lg border-2">
-                                        <SelectValue placeholder="Selecione a empresa" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {empresasCadastradas.map(emp => (
-                                            <SelectItem key={emp.id} value={emp.nome}>
-                                                <div className="flex items-center gap-2">
-                                                    {emp.logo_url && <img src={emp.logo_url} alt="" className="w-6 h-6 object-contain" />}
-                                                    <span className="text-base">{emp.nome}</span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
                             </div>
 
                             <div className="flex gap-3 pt-4">
@@ -378,70 +403,98 @@ export default function CTEs() {
                                 </Button>
                                 <Button
                                     onClick={confirmarFoto}
+                                    disabled={loading}
                                     className="flex-1 h-14 text-lg bg-green-600 hover:bg-green-700"
                                 >
-                                    OK
+                                    {loading ? (
+                                        <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                    ) : (
+                                        <Save className="w-5 h-5 mr-2" />
+                                    )}
+                                    Salvar
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 )}
 
-                {/* Lista de CTEs Capturados */}
-                {fotos.length > 0 && (
+                {/* Lista de CTEs Salvos */}
+                {ctesSalvos.length > 0 && (
                     <Card className="bg-white/80 border-0 shadow-lg">
                         <CardContent className="p-6 space-y-4">
                             <h3 className="text-xl font-bold text-slate-800">
-                                CTEs Capturados ({fotos.length})
+                                CTEs Cadastrados ({ctesSalvos.length})
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {fotos.map(foto => (
-                                    <div key={foto.id} className="relative bg-white rounded-xl border-2 border-slate-200 overflow-hidden group">
-                                        <img 
-                                            src={foto.url} 
-                                            alt={`CTE ${foto.numeroCTE}`}
-                                            className="w-full h-48 object-cover"
-                                        />
-                                        <div className="p-4 space-y-2">
-                                            <p className="font-bold text-lg text-slate-800">CTE: {foto.numeroCTE}</p>
-                                            <p className="text-sm text-slate-600">{foto.empresa}</p>
+                                {ctesSalvos.map(cte => (
+                                    <div key={cte.id} className="relative bg-white rounded-xl border-2 border-slate-200 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                                        {cte.arquivos?.[0]?.url && (
+                                            <img 
+                                                src={cte.arquivos[0].url} 
+                                                alt={`CTE ${cte.nota_fiscal}`}
+                                                className="w-full h-48 object-cover cursor-pointer"
+                                                onClick={() => visualizarCTE(cte)}
+                                            />
+                                        )}
+                                        <div className="p-4 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <p className="font-bold text-lg text-slate-800">CTE: {cte.nota_fiscal}</p>
+                                                <Badge className={cte.status === "finalizado" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}>
+                                                    {cte.status === "finalizado" ? "Finalizado" : "Pendente"}
+                                                </Badge>
+                                            </div>
+                                            {cte.observacoes && (
+                                                <p className="text-sm text-slate-600">{cte.observacoes}</p>
+                                            )}
+                                            <p className="text-xs text-slate-400">
+                                                Por: {cte.usuario_foto || "Sistema"} • {new Date(cte.data).toLocaleDateString('pt-BR')}
+                                            </p>
+                                            
+                                            {/* Botões de Ação */}
+                                            <div className="flex gap-2 pt-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => visualizarCTE(cte)}
+                                                    className="flex-1"
+                                                >
+                                                    <Eye className="w-4 h-4 mr-1" />
+                                                    Ver
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => editarCTE(cte)}
+                                                    className="flex-1"
+                                                >
+                                                    <Pencil className="w-4 h-4 mr-1" />
+                                                    Editar
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => compartilharCTE(cte)}
+                                                    className="flex-1"
+                                                >
+                                                    <Share2 className="w-4 h-4 mr-1" />
+                                                    Enviar
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (confirm("Excluir este CTE?")) {
+                                                            deleteMutation.mutate(cte.id);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => removerFoto(foto.id)}
-                                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Botão Salvar */}
-                {fotos.length > 0 && (
-                    <Card className="bg-gradient-to-r from-green-500 to-emerald-600 border-0 shadow-2xl sticky bottom-4">
-                        <CardContent className="p-6">
-                            <Button
-                                onClick={salvarCTEs}
-                                disabled={salvando}
-                                className="w-full h-20 text-2xl font-bold bg-white text-green-700 hover:bg-slate-50 shadow-xl"
-                            >
-                                {salvando ? (
-                                    <>
-                                        <div className="animate-spin w-8 h-8 border-4 border-green-700 border-t-transparent rounded-full mr-3" />
-                                        Salvando...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-8 h-8 mr-3" />
-                                        Salvar {fotos.length} CTE(s)
-                                    </>
-                                )}
-                            </Button>
                         </CardContent>
                     </Card>
                 )}
@@ -475,6 +528,109 @@ export default function CTEs() {
                         >
                             Fechar
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Visualizar CTE */}
+            <Dialog open={showVisualizarDialog} onOpenChange={setShowVisualizarDialog}>
+                <DialogContent className="max-w-4xl max-h-[90vh]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-purple-600" />
+                                CTE: {cteVisualizado?.nota_fiscal}
+                            </span>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setRotacao((rotacao + 90) % 360)}
+                                >
+                                    <RotateCw className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => baixarCTE(cteVisualizado)}
+                                >
+                                    <Download className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => compartilharCTE(cteVisualizado)}
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {cteVisualizado?.arquivos?.[0]?.url && (
+                            <div className="bg-slate-100 rounded-lg p-4 flex justify-center items-center min-h-[500px]">
+                                <img 
+                                    src={cteVisualizado.arquivos[0].url}
+                                    alt={`CTE ${cteVisualizado.nota_fiscal}`}
+                                    className="max-w-full max-h-[70vh] object-contain"
+                                    style={{ transform: `rotate(${rotacao}deg)` }}
+                                />
+                            </div>
+                        )}
+                        <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                            <p className="text-sm"><strong>Número:</strong> {cteVisualizado?.nota_fiscal}</p>
+                            <p className="text-sm"><strong>Data:</strong> {new Date(cteVisualizado?.data).toLocaleDateString('pt-BR')}</p>
+                            <p className="text-sm"><strong>Status:</strong> {cteVisualizado?.status === "finalizado" ? "Finalizado" : "Pendente"}</p>
+                            {cteVisualizado?.observacoes && (
+                                <p className="text-sm"><strong>Observações:</strong> {cteVisualizado.observacoes}</p>
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Editar CTE */}
+            <Dialog open={showEditarDialog} onOpenChange={setShowEditarDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="w-5 h-5 text-purple-600" />
+                            Editar CTE
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Número do CTE</label>
+                            <Input
+                                value={cteEditando?.nota_fiscal || ""}
+                                onChange={(e) => setCteEditando({ ...cteEditando, nota_fiscal: e.target.value })}
+                                placeholder="Número do CTE"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Observações</label>
+                            <Input
+                                value={cteEditando?.observacoes || ""}
+                                onChange={(e) => setCteEditando({ ...cteEditando, observacoes: e.target.value })}
+                                placeholder="Observações..."
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowEditarDialog(false)}
+                                className="flex-1"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={salvarEdicao}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                Salvar
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

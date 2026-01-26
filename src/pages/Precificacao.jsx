@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2 } from "lucide-react";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Precificacao() {
@@ -18,6 +18,7 @@ export default function Precificacao() {
     const [editing, setEditing] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -572,8 +573,24 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                             <CardTitle>Precificações Salvas</CardTitle>
                         </CardHeader>
                         <CardContent>
+                            <div className="mb-4">
+                                <Input
+                                    placeholder="Buscar por data, remetente ou destinatário..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full"
+                                />
+                            </div>
                             <div className="space-y-4">
-                                {precificacoes.map((prec) => (
+                                {precificacoes.filter(prec => {
+                                    if (!searchTerm) return true;
+                                    const termo = searchTerm.toLowerCase();
+                                    return (
+                                        prec.remetente?.toLowerCase().includes(termo) ||
+                                        prec.destinatario?.toLowerCase().includes(termo) ||
+                                        prec.data?.includes(termo)
+                                    );
+                                }).map((prec) => (
                                     <div key={prec.id} className="border rounded-lg p-4 space-y-2">
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">

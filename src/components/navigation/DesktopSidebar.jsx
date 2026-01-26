@@ -15,7 +15,7 @@ import {
 const menuItems = [
     { name: "Início", href: "HomeDesktop", icon: Home, category: "principal" },
     { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, category: "operacional" },
-    { name: "Comprovantes Entrega", href: "ComprovantesInternos", icon: Upload, category: "operacional" },
+    { name: "Comprovantes Entrega", href: "ComprovantesEntrega", icon: Upload, category: "operacional" },
     { name: "CTEs", href: "CTEs", icon: FileText, category: "operacional" },
     { name: "Conhecimento de Transportes", href: "ComprovantesCtes", icon: FileText, category: "documentos" },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, category: "operacional" },

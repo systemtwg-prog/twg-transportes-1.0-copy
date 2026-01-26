@@ -68,6 +68,7 @@ export default function Precificacao() {
         mutationFn: ({ id, data }) => base44.entities.Precificacao.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['precificacoes']);
+            resetForm();
         }
     });
 

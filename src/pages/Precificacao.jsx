@@ -659,37 +659,37 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-100' : ''}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex-1">
+                                               {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
                                                <p className="font-semibold text-lg">
-                                                   {prec.remetente} / {prec.destinatario}
+                                                   {prec.remetente?.split(' ').slice(0, 4).join(' ')} / {prec.destinatario?.split(' ').slice(0, 4).join(' ')}
                                                </p>
+
+                                               {/* Linha 2: Volume, Peso e Valor da Nota */}
                                                <p className="text-sm text-gray-600">
-                                                   {prec.numero_documento && `Doc: ${prec.numero_documento} | `}
-                                                   {prec.data_emissao && `Emissão: ${prec.data_emissao} | `}
                                                    {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
                                                </p>
 
-                                               {/* Valores de Frete em Cinza */}
-                                               <div className="mt-2 space-y-1 text-sm text-gray-600">
-                                                   {prec.frete_peso > 0 && (
-                                                       <p>Frete Peso/Vol: R$ {prec.frete_peso?.toFixed(2)}</p>
-                                                   )}
-                                                   {prec.sec_cat > 0 && (
-                                                       <p>Sec/Cat: R$ {prec.sec_cat?.toFixed(2)}</p>
-                                                   )}
-                                                   {prec.despacho > 0 && (
-                                                       <p>Despacho: R$ {prec.despacho?.toFixed(2)}</p>
-                                                   )}
-                                                   {prec.pedagio > 0 && (
-                                                       <p>Pedágio: R$ {prec.pedagio?.toFixed(2)}</p>
-                                                   )}
-                                                   {prec.outros > 0 && (
-                                                       <p>Outros: R$ {prec.outros?.toFixed(2)}</p>
-                                                   )}
-                                               </div>
+                                               {/* Linha 3: Valores separados por + e = no final */}
+                                               <p className="text-sm text-gray-600 mt-1">
+                                                   {[
+                                                       prec.frete_peso > 0 ? prec.frete_peso?.toFixed(2) : null,
+                                                       prec.sec_cat > 0 ? prec.sec_cat?.toFixed(2) : null,
+                                                       prec.despacho > 0 ? prec.despacho?.toFixed(2) : null,
+                                                       prec.pedagio > 0 ? prec.pedagio?.toFixed(2) : null,
+                                                       prec.outros > 0 ? prec.outros?.toFixed(2) : null
+                                                   ].filter(Boolean).join(' + ')} = 
+                                               </p>
 
-                                               {/* Valores Principais em Azul */}
-                                               <p className="text-sm font-semibold text-blue-600 mt-2">
+                                               {/* Linha 4: Valor Total e Porcentagem em Azul */}
+                                               <p className="text-sm font-semibold text-blue-600">
                                                    R$ {prec.valor_servico?.toFixed(2)} ({prec.porcentagem}%)
+                                               </p>
+
+                                               {/* Linha 5: Nº e Data de Emissão */}
+                                               <p className="text-xs text-gray-500 mt-1">
+                                                   {prec.numero_documento && `Nº ${prec.numero_documento}`}
+                                                   {prec.numero_documento && prec.data_emissao && ' - '}
+                                                   {prec.data_emissao && `Emissão: ${prec.data_emissao}`}
                                                </p>
 
                                                {prec.confirmado && (

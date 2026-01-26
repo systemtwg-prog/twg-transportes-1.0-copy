@@ -153,49 +153,109 @@ export default function Precificacao() {
             
             // Extrair dados da imagem usando LLM com visão
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Extraia as seguintes informações deste documento de transporte (CTE/Romaneio):
-                
-                - Remetente (empresa que envia)
-                - Destinatário (empresa que recebe)
-                - Volume (quantidade de volumes, ex: "01 VOL")
-                - Peso em KG (ex: "520 KG" ou "520,000")
-                - Valor da Nota Fiscal (campo VALOR ou similar)
-                - Frete Peso/Vol (campo FRETE PESO/VOL)
-                - Sec/Cat (campo SEC/CAT)
-                - Despacho (campo DESPACHO)
-                - Pedágio (campo PEDÁGIO)
-                - Outros (campo OUTROS)
-                - Total Prestação (campo TOTAL PRESTAÇÃO)
-                
-                Retorne apenas os valores numéricos sem símbolos de moeda. Para campos não encontrados, retorne 0.
-                Para empresas, extraia o nome completo.`,
+                prompt: `Você é um especialista em extrair dados de documentos de transporte (CTe, Romaneios, Notas Fiscais).
+
+Analise cuidadosamente este documento e extraia TODAS as seguintes informações:
+
+**EMPRESAS:**
+- Remetente: Nome completo da empresa/pessoa que está enviando a mercadoria (EXPEDIDOR/REMETENTE)
+- Destinatário: Nome completo da empresa/pessoa que irá receber (DESTINATÁRIO/RECEBEDOR)
+
+**CARGA:**
+- Volume: Quantidade de volumes/pacotes (ex: "1 VOL", "3 VOLUMES", "10 UN")
+- Peso: Peso total em quilogramas (ex: "500 KG", "1.250,00 KG")
+
+**VALORES FINANCEIROS (extrair todos os valores numéricos):**
+- Valor da Nota Fiscal: Valor total da nota/mercadoria (campo "VALOR DA NOTA" ou "VALOR MERC")
+- Frete Peso/Vol: Valor do frete baseado em peso ou volume (campo "FRETE PESO" ou "FRETE PESO/VOL" ou "VL. FRETE PESO")
+- Sec/Cat: Valor de seguro ou CAT (campo "SEC/CAT" ou "SEGURO" ou "ADVALOREM")
+- Despacho: Taxa de despacho (campo "DESPACHO" ou "TX DESPACHO")
+- Pedágio: Valor do pedágio (campo "PEDÁGIO" ou "PEDAGIO")
+- Outros: Outras taxas/valores (campo "OUTROS" ou "OUTRAS TAXAS")
+- Total Prestação: Valor total do serviço de transporte (campo "TOTAL PRESTAÇÃO" ou "VL. TOTAL SERVIÇO" ou "TOTAL A PAGAR")
+
+**INSTRUÇÕES IMPORTANTES:**
+1. Extraia APENAS valores numéricos, removendo símbolos de moeda (R$), pontos de milhar e vírgulas decimais (converta vírgula em ponto)
+2. Se um campo não existir no documento, retorne 0 (zero)
+3. Para Volume e Peso, extraia o texto completo com a unidade (ex: "10 VOL", "850 KG")
+4. Seja preciso: procure por rótulos como "REMETENTE:", "DESTINATÁRIO:", "VALOR MERC:", etc.
+5. O Total Prestação geralmente é a SOMA de todos os valores de frete
+6. Extraia números mesmo que estejam formatados (ex: "1.250,00" deve virar 1250.00)`,
                 file_urls: [file_url],
                 response_json_schema: {
                     type: "object",
                     properties: {
-                        remetente: { type: "string" },
-                        destinatario: { type: "string" },
-                        volume: { type: "string" },
-                        peso: { type: "string" },
-                        valor_nota: { type: "number" },
-                        frete_peso: { type: "number" },
-                        sec_cat: { type: "number" },
-                        despacho: { type: "number" },
-                        pedagio: { type: "number" },
-                        outros: { type: "number" },
-                        total_prestacao: { type: "number" }
-                    }
+                        remetente: { 
+                            type: "string",
+                            description: "Nome completo do remetente/expedidor"
+                        },
+                        destinatario: { 
+                            type: "string",
+                            description: "Nome completo do destinatário/recebedor"
+                        },
+                        volume: { 
+                            type: "string",
+                            description: "Quantidade de volumes com unidade (ex: 10 VOL)"
+                        },
+                        peso: { 
+                            type: "string",
+                            description: "Peso com unidade (ex: 850 KG)"
+                        },
+                        valor_nota: { 
+                            type: "number",
+                            description: "Valor da nota fiscal em número decimal"
+                        },
+                        frete_peso: { 
+                            type: "number",
+                            description: "Valor do frete peso/volume"
+                        },
+                        sec_cat: { 
+                            type: "number",
+                            description: "Valor seguro/CAT/advalorem"
+                        },
+                        despacho: { 
+                            type: "number",
+                            description: "Valor da taxa de despacho"
+                        },
+                        pedagio: { 
+                            type: "number",
+                            description: "Valor do pedágio"
+                        },
+                        outros: { 
+                            type: "number",
+                            description: "Outros valores/taxas"
+                        },
+                        total_prestacao: { 
+                            type: "number",
+                            description: "Valor total do serviço de transporte"
+                        }
+                    },
+                    required: ["remetente", "destinatario", "volume", "peso", "valor_nota", "total_prestacao"]
                 }
             });
+
+            // Calcular automaticamente a porcentagem com base no Total Prestação e Valor da Nota
+            const valorNota = parseFloat(result.valor_nota) || 0;
+            const totalPrestacao = parseFloat(result.total_prestacao) || 0;
+            let porcentagem = 0;
+            
+            if (valorNota > 0 && totalPrestacao > 0) {
+                porcentagem = ((totalPrestacao / valorNota) * 100).toFixed(2);
+            }
 
             setFormData(prev => ({
                 ...prev,
                 ...result,
-                foto_url: file_url
+                foto_url: file_url,
+                valor_servico: totalPrestacao,
+                porcentagem: porcentagem
             }));
 
             setEditing(true);
-            toast({ title: "Dados extraídos com sucesso!" });
+            toast({ 
+                title: "Dados extraídos com sucesso!",
+                description: `Encontrados: ${result.remetente} → ${result.destinatario}`
+            });
         } catch (error) {
             toast({ 
                 title: "Erro ao processar imagem", 

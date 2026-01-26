@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -304,6 +304,25 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             setFormData(prev => ({ ...prev, porcentagem: percent.toFixed(2) }));
         }
     };
+
+    // Recalcular automaticamente valor_servico e porcentagem quando qualquer campo for editado
+    useEffect(() => {
+        const fretePeso = parseFloat(formData.frete_peso) || 0;
+        const secCat = parseFloat(formData.sec_cat) || 0;
+        const despacho = parseFloat(formData.despacho) || 0;
+        const pedagio = parseFloat(formData.pedagio) || 0;
+        const outros = parseFloat(formData.outros) || 0;
+        const valorNota = parseFloat(formData.valor_nota) || 0;
+
+        const valorServicoCalculado = fretePeso + secCat + despacho + pedagio + outros;
+        const porcentagemCalculada = valorNota > 0 ? ((valorServicoCalculado / valorNota) * 100).toFixed(2) : "0.00";
+
+        setFormData(prev => ({
+            ...prev,
+            valor_servico: valorServicoCalculado,
+            porcentagem: parseFloat(porcentagemCalculada)
+        }));
+    }, [formData.frete_peso, formData.sec_cat, formData.despacho, formData.pedagio, formData.outros, formData.valor_nota]);
 
     const handleSave = () => {
         createMutation.mutate(formData);

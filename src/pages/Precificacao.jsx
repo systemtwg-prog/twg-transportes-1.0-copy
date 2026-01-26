@@ -25,6 +25,7 @@ export default function Precificacao() {
     const pasteAreaRef = useRef(null);
 
     const [formData, setFormData] = useState({
+        id: null,
         remetente: "",
         destinatario: "",
         transportadora: "",
@@ -326,11 +327,19 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
     }, [formData.frete_peso, formData.sec_cat, formData.despacho, formData.pedagio, formData.outros, formData.valor_nota]);
 
     const handleSave = () => {
-        createMutation.mutate(formData);
+        if (formData.id) {
+            // Atualizar registro existente
+            const { id, ...dataToUpdate } = formData;
+            updateMutation.mutate({ id, data: dataToUpdate });
+        } else {
+            // Criar novo registro
+            createMutation.mutate(formData);
+        }
     };
 
     const resetForm = () => {
         setFormData({
+            id: null,
             remetente: "",
             destinatario: "",
             transportadora: "",
@@ -354,6 +363,13 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
         });
         setCapturedImage(null);
         setEditing(false);
+    };
+
+    const handleConfirm = (prec) => {
+        updateMutation.mutate({
+            id: prec.id,
+            data: { ...prec, confirmado: true }
+        });
     };
 
     return (
@@ -736,6 +752,16 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                                )}
                                            </div>
                                             <div className="flex gap-2">
+                                                {!prec.confirmado && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="outline"
+                                                        onClick={() => handleConfirm(prec)}
+                                                        className="text-green-600 hover:text-green-700"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     size="icon"
                                                     variant="outline"

@@ -21,6 +21,7 @@ export default function Precificacao() {
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
+    const pasteAreaRef = useRef(null);
 
     const [formData, setFormData] = useState({
         remetente: "",
@@ -115,6 +116,34 @@ export default function Precificacao() {
             await processImage(file);
         }
     };
+
+    const handlePaste = async (event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    setCapturedImage(URL.createObjectURL(blob));
+                    await processImage(blob);
+                    toast({ title: "Imagem colada com sucesso!" });
+                }
+                break;
+            }
+        }
+    };
+
+    React.useEffect(() => {
+        const handleGlobalPaste = (e) => {
+            if (!editing) {
+                handlePaste(e);
+            }
+        };
+
+        window.addEventListener('paste', handleGlobalPaste);
+        return () => window.removeEventListener('paste', handleGlobalPaste);
+    }, [editing]);
 
     const processImage = async (imageBlob) => {
         setExtracting(true);
@@ -224,31 +253,54 @@ export default function Precificacao() {
 
                 {/* Botões de Captura */}
                 {!editing && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button
-                            onClick={startCamera}
-                            className="h-32 flex flex-col gap-2"
-                            variant="outline"
+                    <>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Button
+                                onClick={startCamera}
+                                className="h-32 flex flex-col gap-2"
+                                variant="outline"
+                            >
+                                <Camera className="w-8 h-8" />
+                                <span>Tirar Foto</span>
+                            </Button>
+                            <Button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="h-32 flex flex-col gap-2"
+                                variant="outline"
+                            >
+                                <Upload className="w-8 h-8" />
+                                <span>Carregar Arquivo</span>
+                            </Button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                        </div>
+                        
+                        <Card 
+                            ref={pasteAreaRef}
+                            className="border-2 border-dashed border-blue-300 bg-blue-50/50 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                            onClick={() => {
+                                toast({ 
+                                    title: "Cole uma imagem aqui", 
+                                    description: "Pressione Ctrl+V (ou Cmd+V no Mac) para colar uma imagem do print screen"
+                                });
+                            }}
                         >
-                            <Camera className="w-8 h-8" />
-                            <span>Tirar Foto</span>
-                        </Button>
-                        <Button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="h-32 flex flex-col gap-2"
-                            variant="outline"
-                        >
-                            <Upload className="w-8 h-8" />
-                            <span>Carregar Arquivo</span>
-                        </Button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileUpload}
-                        />
-                    </div>
+                            <CardContent className="p-8 flex flex-col items-center gap-3">
+                                <Upload className="w-12 h-12 text-blue-500" />
+                                <div className="text-center">
+                                    <p className="font-semibold text-blue-700">Cole uma Imagem Aqui</p>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Pressione <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Ctrl+V</kbd> para colar do print screen
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </>
                 )}
 
                 {/* Câmera */}

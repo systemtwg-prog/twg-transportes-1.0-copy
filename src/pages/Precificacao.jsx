@@ -127,7 +127,6 @@ export default function Precificacao() {
                 if (blob) {
                     setCapturedImage(URL.createObjectURL(blob));
                     await processImage(blob);
-                    toast({ title: "Imagem colada com sucesso!" });
                 }
                 break;
             }
@@ -281,10 +280,6 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             }));
 
             setEditing(true);
-            toast({ 
-                title: "Dados extraídos com sucesso!",
-                description: `Encontrados: ${result.remetente} → ${result.destinatario}`
-            });
         } catch (error) {
             toast({ 
                 title: "Erro ao processar imagem", 

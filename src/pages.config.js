@@ -29,7 +29,9 @@ import NotasFiscais from './pages/NotasFiscais';
 import OrdensColeta from './pages/OrdensColeta';
 import PersonalizarHome from './pages/PersonalizarHome';
 import Rastreamento from './pages/Rastreamento';
+import RelatorioDestinatario from './pages/RelatorioDestinatario';
 import RelatorioMotoristas from './pages/RelatorioMotoristas';
+import RelatorioNotaFiscal from './pages/RelatorioNotaFiscal';
 import Relatorios from './pages/Relatorios';
 import RomaneiosGerados from './pages/RomaneiosGerados';
 import RotasGPS from './pages/RotasGPS';
@@ -38,8 +40,7 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import RelatorioDestinatario from './pages/RelatorioDestinatario';
-import RelatorioNotaFiscal from './pages/RelatorioNotaFiscal';
+import Precificacao from './pages/Precificacao';
 import __Layout from './Layout.jsx';
 
 
@@ -75,7 +76,9 @@ export const PAGES = {
     "OrdensColeta": OrdensColeta,
     "PersonalizarHome": PersonalizarHome,
     "Rastreamento": Rastreamento,
+    "RelatorioDestinatario": RelatorioDestinatario,
     "RelatorioMotoristas": RelatorioMotoristas,
+    "RelatorioNotaFiscal": RelatorioNotaFiscal,
     "Relatorios": Relatorios,
     "RomaneiosGerados": RomaneiosGerados,
     "RotasGPS": RotasGPS,
@@ -84,8 +87,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "RelatorioDestinatario": RelatorioDestinatario,
-    "RelatorioNotaFiscal": RelatorioNotaFiscal,
+    "Precificacao": Precificacao,
 }
 
 export const pagesConfig = {

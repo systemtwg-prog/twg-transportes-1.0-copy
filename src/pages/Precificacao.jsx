@@ -20,6 +20,7 @@ export default function Precificacao() {
     const [showCamera, setShowCamera] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
     const [showTextDialog, setShowTextDialog] = useState(false);
     const [pastedText, setPastedText] = useState("");
     const videoRef = useRef(null);
@@ -830,28 +831,64 @@ ${text}`,
                             <CardTitle>Precificações Salvas</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="mb-4">
+                            <div className="mb-4 space-y-3">
                                 <Input
-                                    placeholder="Buscar por data, remetente ou destinatário..."
+                                    placeholder="Buscar por remetente, destinatário ou transportadora..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full"
                                 />
+                                <div className="flex gap-2 items-center">
+                                    <Label className="text-sm">Data:</Label>
+                                    <Input
+                                        type="date"
+                                        value={dateFilter.start}
+                                        onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                                        className="flex-1"
+                                        placeholder="De"
+                                    />
+                                    <span className="text-gray-500">até</span>
+                                    <Input
+                                        type="date"
+                                        value={dateFilter.end}
+                                        onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                                        className="flex-1"
+                                        placeholder="Até"
+                                    />
+                                    {(dateFilter.start || dateFilter.end) && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setDateFilter({ start: "", end: "" })}
+                                        >
+                                            Limpar
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <div className="space-y-4">
                                 {precificacoes.filter(prec => {
-                                    if (!searchTerm) return true;
-                                    const termo = searchTerm.toLowerCase();
-                                    return (
-                                        prec.remetente?.toLowerCase().includes(termo) ||
-                                        prec.destinatario?.toLowerCase().includes(termo) ||
-                                        prec.transportadora?.toLowerCase().includes(termo) ||
-                                        prec.numero_documento?.toLowerCase().includes(termo) ||
-                                        prec.data_emissao?.includes(termo) ||
-                                        prec.data?.includes(termo)
-                                    );
+                                    // Filtro de texto
+                                    if (searchTerm) {
+                                        const termo = searchTerm.toLowerCase();
+                                        const matchText = 
+                                            prec.remetente?.toLowerCase().includes(termo) ||
+                                            prec.destinatario?.toLowerCase().includes(termo) ||
+                                            prec.transportadora?.toLowerCase().includes(termo) ||
+                                            prec.numero_documento?.toLowerCase().includes(termo);
+                                        if (!matchText) return false;
+                                    }
+                                    
+                                    // Filtro de data
+                                    if (dateFilter.start || dateFilter.end) {
+                                        const precData = prec.data || prec.created_date?.split('T')[0];
+                                        if (dateFilter.start && precData < dateFilter.start) return false;
+                                        if (dateFilter.end && precData > dateFilter.end) return false;
+                                    }
+                                    
+                                    return true;
                                 }).map((prec) => (
-                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-100' : ''}`}>
+                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-200 border-gray-300' : 'bg-white'}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex-1">
                                                 {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
@@ -868,23 +905,23 @@ ${text}`,
 
                                                 {/* Linha 2: Volume, Peso e Valor da Nota */}
                                                <p className="text-sm text-gray-600">
-                                                   {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
+                                                   {prec.volume} - {prec.peso} - R$ {Number(prec.valor_nota || 0).toFixed(2)}
                                                </p>
 
                                                {/* Linha 3: Valores separados por + e = no final */}
                                                <p className="text-sm text-gray-600 mt-1">
                                                    {[
-                                                       prec.frete_peso > 0 ? prec.frete_peso?.toFixed(2) : null,
-                                                       prec.sec_cat > 0 ? prec.sec_cat?.toFixed(2) : null,
-                                                       prec.despacho > 0 ? prec.despacho?.toFixed(2) : null,
-                                                       prec.pedagio > 0 ? prec.pedagio?.toFixed(2) : null,
-                                                       prec.outros > 0 ? prec.outros?.toFixed(2) : null
+                                                       prec.frete_peso > 0 ? `R$ ${Number(prec.frete_peso).toFixed(2)}` : null,
+                                                       prec.sec_cat > 0 ? `R$ ${Number(prec.sec_cat).toFixed(2)}` : null,
+                                                       prec.despacho > 0 ? `R$ ${Number(prec.despacho).toFixed(2)}` : null,
+                                                       prec.pedagio > 0 ? `R$ ${Number(prec.pedagio).toFixed(2)}` : null,
+                                                       prec.outros > 0 ? `R$ ${Number(prec.outros).toFixed(2)}` : null
                                                    ].filter(Boolean).join(' + ')} = 
                                                </p>
 
                                                {/* Linha 4: Valor Total e Porcentagem em Azul */}
                                                <p className="text-sm font-semibold text-blue-600">
-                                                   R$ {prec.valor_servico?.toFixed(2)} ({prec.porcentagem}%)
+                                                   R$ {Number(prec.valor_servico || 0).toFixed(2)} ({Number(prec.porcentagem || 0).toFixed(2)}%)
                                                </p>
 
                                                {/* Linha 5: Nº e Data de Emissão */}

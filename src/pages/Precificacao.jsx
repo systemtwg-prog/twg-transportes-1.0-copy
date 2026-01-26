@@ -27,6 +27,7 @@ export default function Precificacao() {
     const [formData, setFormData] = useState({
         remetente: "",
         destinatario: "",
+        transportadora: "",
         volume: "",
         peso: "",
         numero_documento: "",
@@ -159,6 +160,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
 **EMPRESAS:**
 - Remetente: Nome completo da empresa/pessoa que está enviando a mercadoria (EXPEDIDOR/REMETENTE)
 - Destinatário: Nome completo da empresa/pessoa que irá receber (DESTINATÁRIO/RECEBEDOR)
+- Transportadora: Nome da empresa transportadora responsável pelo frete
 
 **DOCUMENTO:**
 - Número do Documento: Número do CTe, NFe ou documento (campo "No.", "NÚMERO", "DOC")
@@ -195,6 +197,10 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                         destinatario: { 
                             type: "string",
                             description: "Nome completo do destinatário/recebedor"
+                        },
+                        transportadora: {
+                            type: "string",
+                            description: "Nome da transportadora"
                         },
                         numero_documento: {
                             type: "string",
@@ -327,6 +333,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
         setFormData({
             remetente: "",
             destinatario: "",
+            transportadora: "",
             volume: "",
             peso: "",
             numero_documento: "",
@@ -467,6 +474,13 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     <Input
                                         value={formData.destinatario}
                                         onChange={(e) => setFormData(prev => ({ ...prev, destinatario: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <Label>Transportadora</Label>
+                                    <Input
+                                        value={formData.transportadora}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, transportadora: e.target.value }))}
                                     />
                                 </div>
                                 <div>
@@ -665,6 +679,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     return (
                                         prec.remetente?.toLowerCase().includes(termo) ||
                                         prec.destinatario?.toLowerCase().includes(termo) ||
+                                        prec.transportadora?.toLowerCase().includes(termo) ||
                                         prec.numero_documento?.toLowerCase().includes(termo) ||
                                         prec.data_emissao?.includes(termo) ||
                                         prec.data?.includes(termo)
@@ -673,12 +688,19 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-100' : ''}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex-1">
-                                               {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
-                                               <p className="font-semibold text-lg">
-                                                   {prec.remetente?.split(' ').slice(0, 4).join(' ')} / {prec.destinatario?.split(' ').slice(0, 4).join(' ')}
-                                               </p>
+                                                {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
+                                                <p className="font-semibold text-lg">
+                                                    {prec.remetente?.split(' ').slice(0, 4).join(' ')} / {prec.destinatario?.split(' ').slice(0, 4).join(' ')}
+                                                </p>
 
-                                               {/* Linha 2: Volume, Peso e Valor da Nota */}
+                                                {/* Transportadora em cinza (4 primeiras palavras) */}
+                                                {prec.transportadora && (
+                                                    <p className="text-sm text-gray-500">
+                                                        {prec.transportadora?.split(' ').slice(0, 4).join(' ')}
+                                                    </p>
+                                                )}
+
+                                                {/* Linha 2: Volume, Peso e Valor da Nota */}
                                                <p className="text-sm text-gray-600">
                                                    {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
                                                </p>

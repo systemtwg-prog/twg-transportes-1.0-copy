@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText } from "lucide-react";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Precificacao() {
@@ -378,6 +378,29 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             id: prec.id,
             data: { ...prec, confirmado: true }
         });
+    };
+
+    const handleDownload = async (prec) => {
+        if (!prec.foto_url) {
+            toast({ title: "Sem imagem para baixar", variant: "destructive" });
+            return;
+        }
+        
+        try {
+            const response = await fetch(prec.foto_url);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `comprovante_${prec.numero_documento || prec.id}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast({ title: "Download concluído" });
+        } catch (error) {
+            toast({ title: "Erro ao baixar imagem", variant: "destructive" });
+        }
     };
 
     const processText = async (text) => {
@@ -938,36 +961,46 @@ ${text}`,
                                                    </span>
                                                )}
                                            </div>
-                                            <div className="flex gap-2">
-                                                {!prec.confirmado && (
-                                                    <Button
-                                                        size="icon"
-                                                        variant="outline"
-                                                        onClick={() => handleConfirm(prec)}
-                                                        className="text-green-600 hover:text-green-700"
-                                                    >
-                                                        <Check className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    size="icon"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setFormData(prec);
-                                                        setEditing(true);
-                                                        setCapturedImage(prec.foto_url);
-                                                    }}
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="outline"
-                                                    onClick={() => deleteMutation.mutate(prec.id)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
+                                           <div className="flex gap-2">
+                                               {!prec.confirmado && (
+                                                   <Button
+                                                       size="icon"
+                                                       variant="outline"
+                                                       onClick={() => handleConfirm(prec)}
+                                                       className="text-green-600 hover:text-green-700"
+                                                   >
+                                                       <Check className="w-4 h-4" />
+                                                   </Button>
+                                               )}
+                                               {prec.foto_url && (
+                                                   <Button
+                                                       size="icon"
+                                                       variant="outline"
+                                                       onClick={() => handleDownload(prec)}
+                                                       className="text-blue-600 hover:text-blue-700"
+                                                   >
+                                                       <Download className="w-4 h-4" />
+                                                   </Button>
+                                               )}
+                                               <Button
+                                                   size="icon"
+                                                   variant="outline"
+                                                   onClick={() => {
+                                                       setFormData(prec);
+                                                       setEditing(true);
+                                                       setCapturedImage(prec.foto_url);
+                                                   }}
+                                               >
+                                                   <Edit2 className="w-4 h-4" />
+                                               </Button>
+                                               <Button
+                                                   size="icon"
+                                                   variant="outline"
+                                                   onClick={() => deleteMutation.mutate(prec.id)}
+                                               >
+                                                   <Trash2 className="w-4 h-4" />
+                                               </Button>
+                                           </div>
                                         </div>
                                     </div>
                                 ))}

@@ -52,7 +52,6 @@ export default function Precificacao() {
         mutationFn: (data) => base44.entities.Precificacao.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries(['precificacoes']);
-            toast({ title: "Precificação salva com sucesso!" });
             resetForm();
         }
     });
@@ -61,7 +60,6 @@ export default function Precificacao() {
         mutationFn: ({ id, data }) => base44.entities.Precificacao.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['precificacoes']);
-            toast({ title: "Precificação atualizada!" });
         }
     });
 
@@ -69,7 +67,6 @@ export default function Precificacao() {
         mutationFn: (id) => base44.entities.Precificacao.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries(['precificacoes']);
-            toast({ title: "Precificação excluída!" });
         }
     });
 

@@ -265,26 +265,9 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                 porcentagem = ((totalPrestacao / valorNota) * 100).toFixed(2);
             }
 
-            // Calcular Sec/Cat se estiver em branco (0,5% do valor da nota) - apenas na importação inicial
-            let secCat = parseFloat(result.sec_cat) || 0;
-            if (secCat === 0 && valorNota > 0) {
-                secCat = parseFloat((valorNota * 0.005).toFixed(2));
-            }
-
-            // Calcular Pedágio se estiver em branco ((peso/100) * 1.40 / 100) - apenas na importação inicial
-            let pedagio = parseFloat(result.pedagio) || 0;
-            if (pedagio === 0) {
-                const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-                if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40 / 100).toFixed(2));
-                }
-            }
-
             setFormData(prev => ({
                 ...prev,
                 ...result,
-                sec_cat: secCat,
-                pedagio: pedagio,
                 foto_url: file_url,
                 valor_servico: totalPrestacao,
                 porcentagem: porcentagem
@@ -492,24 +475,9 @@ ${text}`,
                 porcentagem = ((totalPrestacao / valorNota) * 100).toFixed(2);
             }
 
-            let secCat = parseFloat(result.sec_cat) || 0;
-            if (secCat === 0 && valorNota > 0) {
-                secCat = parseFloat((valorNota * 0.005).toFixed(2));
-            }
-
-            let pedagio = parseFloat(result.pedagio) || 0;
-            if (pedagio === 0) {
-                const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-                if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40 / 100).toFixed(2));
-                }
-            }
-
             setFormData(prev => ({
                 ...prev,
                 ...result,
-                sec_cat: secCat,
-                pedagio: pedagio,
                 valor_servico: totalPrestacao,
                 porcentagem: porcentagem
             }));

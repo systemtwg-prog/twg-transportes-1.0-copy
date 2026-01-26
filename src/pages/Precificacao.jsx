@@ -264,13 +264,13 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                 porcentagem = ((totalPrestacao / valorNota) * 100).toFixed(2);
             }
 
-            // Calcular Sec/Cat se estiver em branco (0,5% do valor da nota)
+            // Calcular Sec/Cat se estiver em branco (0,5% do valor da nota) - apenas na importação inicial
             let secCat = parseFloat(result.sec_cat) || 0;
             if (secCat === 0 && valorNota > 0) {
                 secCat = parseFloat((valorNota * 0.005).toFixed(2));
             }
 
-            // Calcular Pedágio se estiver em branco ((peso/100) * 1.40 / 100)
+            // Calcular Pedágio se estiver em branco ((peso/100) * 1.40 / 100) - apenas na importação inicial
             let pedagio = parseFloat(result.pedagio) || 0;
             if (pedagio === 0) {
                 const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
@@ -322,11 +322,14 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
         const valorServicoCalculado = fretePeso + secCat + despacho + pedagio + outros;
         const porcentagemCalculada = valorNota > 0 ? ((valorServicoCalculado / valorNota) * 100).toFixed(2) : "0.00";
 
-        setFormData(prev => ({
-            ...prev,
-            valor_servico: valorServicoCalculado,
-            porcentagem: parseFloat(porcentagemCalculada)
-        }));
+        // Apenas atualiza se os valores calculados mudaram (evita loop infinito)
+        if (formData.valor_servico !== valorServicoCalculado || formData.porcentagem !== parseFloat(porcentagemCalculada)) {
+            setFormData(prev => ({
+                ...prev,
+                valor_servico: valorServicoCalculado,
+                porcentagem: parseFloat(porcentagemCalculada)
+            }));
+        }
     }, [formData.frete_peso, formData.sec_cat, formData.despacho, formData.pedagio, formData.outros, formData.valor_nota]);
 
     const handleSave = () => {
@@ -684,20 +687,7 @@ ${text}`,
                                     <Label>Peso (KG)</Label>
                                     <Input
                                         value={formData.peso}
-                                        onChange={(e) => {
-                                            const peso = e.target.value;
-                                            setFormData(prev => {
-                                                const newData = { ...prev, peso };
-                                                // Recalcular Pedágio se estiver em 0
-                                                if ((parseFloat(prev.pedagio) || 0) === 0) {
-                                                    const pesoNumerico = parseFloat(peso.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-                                                    if (pesoNumerico > 0) {
-                                                        newData.pedagio = ((pesoNumerico / 100) * 1.40 / 100).toFixed(2);
-                                                    }
-                                                }
-                                                return newData;
-                                            });
-                                        }}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, peso: e.target.value }))}
                                     />
                                 </div>
                                 <div className="col-span-2">
@@ -730,7 +720,7 @@ ${text}`,
                                             step="0.01"
                                             value={formData.sec_cat}
                                             onChange={(e) => setFormData(prev => ({ ...prev, sec_cat: e.target.value }))}
-                                            placeholder="Auto-calculado"
+                                            placeholder="Opcional"
                                         />
                                     </div>
                                     <div>
@@ -743,13 +733,13 @@ ${text}`,
                                         />
                                     </div>
                                     <div>
-                                        <Label>Pedágio (baseado no peso)</Label>
+                                        <Label>Pedágio</Label>
                                         <Input
                                             type="number"
                                             step="0.01"
                                             value={formData.pedagio}
                                             onChange={(e) => setFormData(prev => ({ ...prev, pedagio: e.target.value }))}
-                                            placeholder="Auto-calculado"
+                                            placeholder="Opcional"
                                         />
                                     </div>
                                     <div>

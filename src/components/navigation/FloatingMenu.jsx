@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail,
-    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2
+    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2, DollarSign
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -37,6 +37,7 @@ const menuItems = [
     { name: "Extrator Google", href: "ExtratorGoogle", icon: Search, category: "ferramentas" },
     { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: Upload, category: "ferramentas" },
     { name: "Emails", href: "EmailManager", icon: Mail, category: "ferramentas" },
+    { name: "Precificação", href: "Precificacao", icon: DollarSign, category: "ferramentas" },
     { name: "Relatórios", href: "Relatorios", icon: FileText, category: "relatorios" },
     { name: "Performance", href: "RelatorioMotoristas", icon: Award, category: "relatorios" },
     { name: "Avisos", href: "Avisos", icon: Bell, category: "admin" },

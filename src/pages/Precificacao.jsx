@@ -623,7 +623,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                         prec.data?.includes(termo)
                                     );
                                 }).map((prec) => (
-                                    <div key={prec.id} className="border rounded-lg p-4 space-y-2">
+                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-100' : ''}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex-1">
                                                <p className="font-semibold text-lg">

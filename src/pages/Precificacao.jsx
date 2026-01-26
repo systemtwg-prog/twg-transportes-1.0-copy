@@ -625,23 +625,45 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                 }).map((prec) => (
                                     <div key={prec.id} className="border rounded-lg p-4 space-y-2">
                                         <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <p className="font-semibold text-lg">
-                                                    {prec.remetente} / {prec.destinatario}
-                                                </p>
-                                                <p className="text-sm text-gray-600">
-                                                    {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
-                                                </p>
-                                                <p className="text-sm font-semibold text-blue-600 mt-1">
-                                                    R$ {prec.valor_servico?.toFixed(2)} ({prec.porcentagem}%)
-                                                </p>
-                                                {prec.confirmado && (
-                                                    <span className="inline-flex items-center gap-1 text-green-600 text-sm mt-1">
-                                                        <Check className="w-4 h-4" />
-                                                        Confirmado
-                                                    </span>
-                                                )}
-                                            </div>
+                                           <div className="flex-1">
+                                               <p className="font-semibold text-lg">
+                                                   {prec.remetente} / {prec.destinatario}
+                                               </p>
+                                               <p className="text-sm text-gray-600">
+                                                   {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
+                                               </p>
+
+                                               {/* Valores de Frete em Cinza */}
+                                               <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                                   {prec.frete_peso > 0 && (
+                                                       <p>Frete Peso/Vol: R$ {prec.frete_peso?.toFixed(2)}</p>
+                                                   )}
+                                                   {prec.sec_cat > 0 && (
+                                                       <p>Sec/Cat: R$ {prec.sec_cat?.toFixed(2)}</p>
+                                                   )}
+                                                   {prec.despacho > 0 && (
+                                                       <p>Despacho: R$ {prec.despacho?.toFixed(2)}</p>
+                                                   )}
+                                                   {prec.pedagio > 0 && (
+                                                       <p>Pedágio: R$ {prec.pedagio?.toFixed(2)}</p>
+                                                   )}
+                                                   {prec.outros > 0 && (
+                                                       <p>Outros: R$ {prec.outros?.toFixed(2)}</p>
+                                                   )}
+                                               </div>
+
+                                               {/* Valores Principais em Azul */}
+                                               <p className="text-sm font-semibold text-blue-600 mt-2">
+                                                   R$ {prec.valor_servico?.toFixed(2)} ({prec.porcentagem}%)
+                                               </p>
+
+                                               {prec.confirmado && (
+                                                   <span className="inline-flex items-center gap-1 text-green-600 text-sm mt-1">
+                                                       <Check className="w-4 h-4" />
+                                                       Confirmado
+                                                   </span>
+                                               )}
+                                           </div>
                                             <div className="flex gap-2">
                                                 <Button
                                                     size="icon"

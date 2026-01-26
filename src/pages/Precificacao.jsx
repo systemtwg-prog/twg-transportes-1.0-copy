@@ -29,6 +29,8 @@ export default function Precificacao() {
         destinatario: "",
         volume: "",
         peso: "",
+        numero_documento: "",
+        data_emissao: "",
         valor_nota: "",
         frete_peso: "",
         sec_cat: "",
@@ -159,6 +161,10 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
 - Remetente: Nome completo da empresa/pessoa que está enviando a mercadoria (EXPEDIDOR/REMETENTE)
 - Destinatário: Nome completo da empresa/pessoa que irá receber (DESTINATÁRIO/RECEBEDOR)
 
+**DOCUMENTO:**
+- Número do Documento: Número do CTe, NFe ou documento (campo "No.", "NÚMERO", "DOC")
+- Data de Emissão: Data de emissão do documento (campo "EMISSÃO", "DATA EMISSÃO", "DT. EMISSÃO")
+
 **CARGA:**
 - Volume: Quantidade de volumes/pacotes (ex: "1 VOL", "3 VOLUMES", "10 UN")
 - Peso: Peso total em quilogramas (ex: "500 KG", "1.250,00 KG")
@@ -190,6 +196,14 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                         destinatario: { 
                             type: "string",
                             description: "Nome completo do destinatário/recebedor"
+                        },
+                        numero_documento: {
+                            type: "string",
+                            description: "Número do documento (CTe, NFe, etc)"
+                        },
+                        data_emissao: {
+                            type: "string",
+                            description: "Data de emissão no formato DD/MM/YYYY"
                         },
                         volume: { 
                             type: "string",
@@ -301,6 +315,8 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             destinatario: "",
             volume: "",
             peso: "",
+            numero_documento: "",
+            data_emissao: "",
             valor_nota: "",
             frete_peso: "",
             sec_cat: "",
@@ -437,6 +453,21 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     <Input
                                         value={formData.destinatario}
                                         onChange={(e) => setFormData(prev => ({ ...prev, destinatario: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>No. Documento</Label>
+                                    <Input
+                                        value={formData.numero_documento}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, numero_documento: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Data Emissão</Label>
+                                    <Input
+                                        value={formData.data_emissao}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, data_emissao: e.target.value }))}
+                                        placeholder="DD/MM/YYYY"
                                     />
                                 </div>
                                 <div>
@@ -620,6 +651,8 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                     return (
                                         prec.remetente?.toLowerCase().includes(termo) ||
                                         prec.destinatario?.toLowerCase().includes(termo) ||
+                                        prec.numero_documento?.toLowerCase().includes(termo) ||
+                                        prec.data_emissao?.includes(termo) ||
                                         prec.data?.includes(termo)
                                     );
                                 }).map((prec) => (
@@ -630,6 +663,8 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                                                    {prec.remetente} / {prec.destinatario}
                                                </p>
                                                <p className="text-sm text-gray-600">
+                                                   {prec.numero_documento && `Doc: ${prec.numero_documento} | `}
+                                                   {prec.data_emissao && `Emissão: ${prec.data_emissao} | `}
                                                    {prec.volume} - {prec.peso} - R$ {prec.valor_nota?.toFixed(2)}
                                                </p>
 

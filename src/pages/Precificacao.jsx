@@ -1038,8 +1038,87 @@ ${text}`,
                                         </Button>
                                     )}
                                 </div>
-                            </div>
-                            <div className="space-y-4">
+                                </div>
+
+                                {/* Estatísticas dos Dados Filtrados */}
+                                {(() => {
+                                const filtrados = precificacoes.filter(prec => {
+                                   if (searchTerm) {
+                                       const termo = searchTerm.toLowerCase();
+                                       const matchText = 
+                                           prec.remetente?.toLowerCase().includes(termo) ||
+                                           prec.destinatario?.toLowerCase().includes(termo) ||
+                                           prec.transportadora?.toLowerCase().includes(termo) ||
+                                           prec.numero_documento?.toLowerCase().includes(termo);
+                                       if (!matchText) return false;
+                                   }
+
+                                   if (dateFilter.start || dateFilter.end) {
+                                       const precData = prec.data_emissao;
+                                       if (!precData) return true;
+                                       const [dia, mes, ano] = precData.split('/');
+                                       const dataFormatada = ano && mes && dia ? `${ano}-${mes}-${dia}` : precData;
+                                       if (dateFilter.start && dataFormatada < dateFilter.start) return false;
+                                       if (dateFilter.end && dataFormatada > dateFilter.end) return false;
+                                   }
+
+                                   return true;
+                                });
+
+                                const totalVolume = filtrados.reduce((acc, p) => {
+                                   const vol = parseInt(p.volume?.match(/\d+/)?.[0]) || 0;
+                                   return acc + vol;
+                                }, 0);
+
+                                const totalPeso = filtrados.reduce((acc, p) => {
+                                   const peso = parseFloat(p.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+                                   return acc + peso;
+                                }, 0);
+
+                                const totalValorNotas = filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_nota) || 0), 0);
+                                const totalValorServicos = filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_servico) || 0), 0);
+                                const mediaPorcentagem = filtrados.length > 0 
+                                   ? filtrados.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / filtrados.length 
+                                   : 0;
+
+                                if (filtrados.length === 0) return null;
+
+                                return (
+                                   <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                       <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                           📊 Estatísticas dos Registros Filtrados ({filtrados.length} registros)
+                                       </h3>
+                                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                           <div className="bg-white p-3 rounded-lg border border-blue-100">
+                                               <p className="text-xs text-gray-500 mb-1">Volume Total</p>
+                                               <p className="text-lg font-bold text-blue-600">{totalVolume}</p>
+                                           </div>
+                                           <div className="bg-white p-3 rounded-lg border border-blue-100">
+                                               <p className="text-xs text-gray-500 mb-1">Peso Total (KG)</p>
+                                               <p className="text-lg font-bold text-blue-600">{totalPeso.toFixed(2)}</p>
+                                           </div>
+                                           <div className="bg-white p-3 rounded-lg border border-green-100">
+                                               <p className="text-xs text-gray-500 mb-1">Valor Notas</p>
+                                               <p className="text-lg font-bold text-green-600">R$ {totalValorNotas.toFixed(2)}</p>
+                                           </div>
+                                           <div className="bg-white p-3 rounded-lg border border-purple-100">
+                                               <p className="text-xs text-gray-500 mb-1">Valor Serviços</p>
+                                               <p className="text-lg font-bold text-purple-600">R$ {totalValorServicos.toFixed(2)}</p>
+                                           </div>
+                                           <div className="bg-white p-3 rounded-lg border border-orange-100">
+                                               <p className="text-xs text-gray-500 mb-1">% Média</p>
+                                               <p className="text-lg font-bold text-orange-600">{mediaPorcentagem.toFixed(2)}%</p>
+                                           </div>
+                                           <div className="bg-white p-3 rounded-lg border border-indigo-100">
+                                               <p className="text-xs text-gray-500 mb-1">Média Serviço</p>
+                                               <p className="text-lg font-bold text-indigo-600">R$ {(totalValorServicos / filtrados.length).toFixed(2)}</p>
+                                           </div>
+                                       </div>
+                                   </div>
+                                );
+                                })()}
+
+                                <div className="space-y-4">
                                 {precificacoes.filter(prec => {
                                     // Filtro de texto
                                     if (searchTerm) {

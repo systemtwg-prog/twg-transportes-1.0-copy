@@ -284,6 +284,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             setFormData(prev => ({
                 ...prev,
                 ...result,
+                peso: pesoLimpo, // Peso já normalizado
                 sec_cat: secCat,
                 pedagio: pedagio,
                 foto_url: file_url,
@@ -521,17 +522,22 @@ ${text}`,
                 secCat = parseFloat((valorNota * 0.005).toFixed(2));
             }
 
+            // Normalizar peso do texto
+            let pesoLimpo = result.peso || "";
+            if (typeof pesoLimpo === 'string') {
+                pesoLimpo = pesoLimpo.replace(/[^\d.,]/g, '').replace(',', '.');
+            }
+            const pesoNumerico = parseFloat(pesoLimpo) || 0;
+
             let pedagio = parseFloat(result.pedagio) || 0;
-            if (pedagio === 0) {
-                const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-                if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
-                }
+            if (pedagio === 0 && pesoNumerico > 0) {
+                pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
             }
 
             setFormData(prev => ({
                 ...prev,
                 ...result,
+                peso: pesoLimpo,
                 sec_cat: secCat,
                 pedagio: pedagio,
                 valor_servico: totalPrestacao,

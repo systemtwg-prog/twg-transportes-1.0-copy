@@ -23,6 +23,9 @@ export default function Precificacao() {
     const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
     const [showTextDialog, setShowTextDialog] = useState(false);
     const [pastedText, setPastedText] = useState("");
+    const [showBulkDialog, setShowBulkDialog] = useState(false);
+    const [bulkText, setBulkText] = useState("");
+    const [processingBulk, setProcessingBulk] = useState(false);
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -117,11 +120,131 @@ export default function Precificacao() {
     };
 
     const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setCapturedImage(URL.createObjectURL(file));
-            await processImage(file);
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+
+        setExtracting(true);
+
+        for (const file of files) {
+            const fileType = file.type;
+            const fileName = file.name.toLowerCase();
+
+            // Se for imagem, processar como antes
+            if (fileType.startsWith('image/')) {
+                setCapturedImage(URL.createObjectURL(file));
+                await processImage(file);
+                break;
+            }
+
+            // Se for PDF ou Excel, extrair dados e criar múltiplos registros
+            if (fileType === 'application/pdf' || fileName.endsWith('.pdf') || 
+                fileType.includes('spreadsheet') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileName.endsWith('.csv')) {
+                
+                try {
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                    
+                    // Extrair dados do arquivo
+                    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+                        file_url,
+                        json_schema: {
+                            type: "object",
+                            properties: {
+                                registros: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            remetente: { type: "string" },
+                                            destinatario: { type: "string" },
+                                            transportadora: { type: "string" },
+                                            numero_documento: { type: "string" },
+                                            data_emissao: { type: "string" },
+                                            volume: { type: "string" },
+                                            peso: { type: "string" },
+                                            valor_nota: { type: "number" },
+                                            frete_peso: { type: "number" },
+                                            sec_cat: { type: "number" },
+                                            despacho: { type: "number" },
+                                            pedagio: { type: "number" },
+                                            outros: { type: "number" },
+                                            total_prestacao: { type: "number" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    if (result.status === "success" && result.output?.registros?.length > 0) {
+                        // Processar cada registro
+                        for (const registro of result.output.registros) {
+                            await processAndSaveRecord(registro, file_url);
+                        }
+                        toast({ title: `${result.output.registros.length} registros importados com sucesso!` });
+                    } else {
+                        toast({ title: "Nenhum dado encontrado no arquivo", variant: "destructive" });
+                    }
+                } catch (error) {
+                    toast({ title: "Erro ao processar arquivo", description: error.message, variant: "destructive" });
+                }
+                break;
+            }
         }
+
+        setExtracting(false);
+        event.target.value = '';
+    };
+
+    const processAndSaveRecord = async (registro, foto_url = "") => {
+        const valorNota = parseFloat(registro.valor_nota) || 0;
+        const totalPrestacao = parseFloat(registro.total_prestacao) || 0;
+        
+        // Normalizar peso
+        let pesoLimpo = registro.peso || "";
+        if (typeof pesoLimpo === 'string') {
+            pesoLimpo = pesoLimpo.replace(/[^\d.,]/g, '').replace(',', '.');
+        }
+        const pesoNumerico = parseFloat(pesoLimpo) || 0;
+
+        // Calcular Sec/Cat se estiver em branco
+        let secCat = parseFloat(registro.sec_cat) || 0;
+        if (secCat === 0 && valorNota > 0) {
+            secCat = parseFloat((valorNota * 0.005).toFixed(2));
+        }
+
+        // Calcular Pedágio se estiver em branco
+        let pedagio = parseFloat(registro.pedagio) || 0;
+        if (pedagio === 0 && pesoNumerico > 0) {
+            pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
+        }
+
+        // Calcular porcentagem
+        const valorServico = (parseFloat(registro.frete_peso) || 0) + secCat + (parseFloat(registro.despacho) || 0) + pedagio + (parseFloat(registro.outros) || 0);
+        const porcentagem = valorNota > 0 ? ((valorServico / valorNota) * 100).toFixed(2) : 0;
+
+        // Criar registro
+        await createMutation.mutateAsync({
+            remetente: registro.remetente || "",
+            destinatario: registro.destinatario || "",
+            transportadora: registro.transportadora || "",
+            numero_documento: registro.numero_documento || "",
+            data_emissao: registro.data_emissao || "",
+            volume: registro.volume || "",
+            peso: pesoLimpo,
+            valor_nota: valorNota,
+            frete_peso: parseFloat(registro.frete_peso) || 0,
+            sec_cat: secCat,
+            despacho: parseFloat(registro.despacho) || 0,
+            pedagio: pedagio,
+            outros: parseFloat(registro.outros) || 0,
+            total_prestacao: totalPrestacao,
+            valor_servico: valorServico,
+            porcentagem: parseFloat(porcentagem),
+            foto_url: foto_url,
+            confirmado: false,
+            data: new Date().toISOString().split('T')[0],
+            observacoes: ""
+        });
     };
 
     const handlePaste = async (event) => {
@@ -596,10 +719,23 @@ ${text}`,
                                 <FileText className="w-8 h-8" />
                                 <span>Colar Texto</span>
                             </Button>
+                        </div>
+
+                        <Button
+                            onClick={() => setShowBulkDialog(true)}
+                            className="w-full h-20 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-xl"
+                        >
+                            <FileText className="w-6 h-6 mr-3" />
+                            Colar Dados em Massa
+                        </Button>
+                        
+                        <div className="hidden">
+                            <div className="grid grid-cols-3 gap-4">
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,.pdf,.xlsx,.xls,.csv"
+                                multiple
                                 className="hidden"
                                 onChange={handleFileUpload}
                             />
@@ -1019,6 +1155,103 @@ ${text}`,
                     </Card>
                 )}
             </div>
+
+            {/* Dialog para Colar Dados em Massa */}
+            <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Colar Dados em Massa</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            Cole aqui múltiplos documentos separados por linhas em branco ou por "---". 
+                            O sistema irá processar automaticamente e criar vários registros.
+                        </p>
+                        <Textarea
+                            placeholder="Cole aqui vários CTes, NFes ou Romaneios separados..."
+                            value={bulkText}
+                            onChange={(e) => setBulkText(e.target.value)}
+                            rows={16}
+                            className="font-mono text-xs"
+                        />
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={async () => {
+                                    if (!bulkText.trim()) return;
+                                    
+                                    setProcessingBulk(true);
+                                    setShowBulkDialog(false);
+                                    
+                                    try {
+                                        // Separar os documentos por linhas em branco ou ---
+                                        const documentos = bulkText.split(/\n\s*\n|---/).filter(doc => doc.trim());
+                                        
+                                        for (const documento of documentos) {
+                                            // Processar cada documento
+                                            const result = await base44.integrations.Core.InvokeLLM({
+                                                prompt: `Extraia os dados deste documento de transporte. Se não encontrar algum campo, retorne 0 ou string vazia:
+
+${documento}`,
+                                                response_json_schema: {
+                                                    type: "object",
+                                                    properties: {
+                                                        remetente: { type: "string" },
+                                                        destinatario: { type: "string" },
+                                                        transportadora: { type: "string" },
+                                                        numero_documento: { type: "string" },
+                                                        data_emissao: { type: "string" },
+                                                        volume: { type: "string" },
+                                                        peso: { type: "string" },
+                                                        valor_nota: { type: "number" },
+                                                        frete_peso: { type: "number" },
+                                                        sec_cat: { type: "number" },
+                                                        despacho: { type: "number" },
+                                                        pedagio: { type: "number" },
+                                                        outros: { type: "number" },
+                                                        total_prestacao: { type: "number" }
+                                                    }
+                                                }
+                                            });
+
+                                            await processAndSaveRecord(result);
+                                        }
+
+                                        toast({ title: `${documentos.length} registros processados com sucesso!` });
+                                        setBulkText("");
+                                    } catch (error) {
+                                        toast({ title: "Erro ao processar dados", description: error.message, variant: "destructive" });
+                                    } finally {
+                                        setProcessingBulk(false);
+                                    }
+                                }}
+                                disabled={!bulkText.trim() || processingBulk}
+                                className="flex-1"
+                            >
+                                {processingBulk ? (
+                                    <>
+                                        <Loader2 className="mr-2 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileText className="mr-2" />
+                                        Processar Dados em Massa
+                                    </>
+                                )}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShowBulkDialog(false);
+                                    setBulkText("");
+                                }}
+                                variant="outline"
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog para Colar Texto */}
             <Dialog open={showTextDialog} onOpenChange={setShowTextDialog}>

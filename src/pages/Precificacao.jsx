@@ -1455,96 +1455,93 @@ ${documento}`,
                             });
 
                             return (
-                                <>
-                                    {/* Tabela Detalhada */}
-                                    <div className="overflow-x-auto bg-white rounded-lg border border-gray-200">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-                                                <tr>
-                                                    <th className="px-3 py-3 text-left whitespace-nowrap">Data Emissão</th>
-                                                    <th className="px-3 py-3 text-center whitespace-nowrap">Volumes</th>
-                                                    <th className="px-3 py-3 text-center whitespace-nowrap">Peso</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Valor Nota</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Valor Tabela</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Coleta</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Pedágio</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Seguro</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Valor Serviço</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">%</th>
-                                                    <th className="px-3 py-3 text-right whitespace-nowrap">Média %</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filtrados.map((prec, index) => (
-                                                    <tr key={prec.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                                        <td className="px-3 py-2 whitespace-nowrap">{prec.data_emissao || '-'}</td>
-                                                        <td className="px-3 py-2 text-center">{prec.volume || '-'}</td>
-                                                        <td className="px-3 py-2 text-center">{prec.peso || '-'}</td>
-                                                        <td className="px-3 py-2 text-right font-medium text-blue-600">
-                                                            R$ {Number(prec.valor_nota || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right">
-                                                            R$ {Number(prec.frete_peso || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right">
-                                                            R$ {Number(prec.despacho || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right">
-                                                            R$ {Number(prec.pedagio || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right">
-                                                            R$ {Number(prec.sec_cat || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right font-semibold text-green-600">
-                                                            R$ {Number(prec.valor_servico || 0).toFixed(2)}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right font-semibold text-orange-600">
-                                                            {Number(prec.porcentagem || 0).toFixed(2)}%
-                                                        </td>
-                                                        <td className="px-3 py-2 text-right font-semibold text-purple-600">
-                                                            {mediaPercentual.toFixed(2)}%
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                            <tfoot className="bg-gradient-to-r from-indigo-100 to-purple-100 font-bold">
-                                                <tr>
-                                                    <td className="px-3 py-3 text-left">TOTAIS</td>
-                                                    <td className="px-3 py-3 text-center">
-                                                        {filtrados.reduce((acc, p) => acc + (parseInt(p.volume?.match(/\d+/)?.[0]) || 0), 0)}
+                                <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-lg">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                                            <tr>
+                                                <th className="px-3 py-3 text-left whitespace-nowrap">Data</th>
+                                                <th className="px-3 py-3 text-center whitespace-nowrap">Vol</th>
+                                                <th className="px-3 py-3 text-center whitespace-nowrap">Peso</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Valor NFe</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Tabela Peso</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Seguro</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Pedágio</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Coleta</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Outros</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Valor Cobrado</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">%</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filtrados.map((prec, index) => (
+                                                <tr key={prec.id} className={index % 2 === 0 ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50'}>
+                                                    <td className="px-3 py-2 whitespace-nowrap text-sm">{prec.data_emissao || '-'}</td>
+                                                    <td className="px-3 py-2 text-center text-sm">{prec.volume || '-'}</td>
+                                                    <td className="px-3 py-2 text-center text-sm">{prec.peso || '-'}</td>
+                                                    <td className="px-3 py-2 text-right font-medium text-blue-600">
+                                                        {Number(prec.valor_nota || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-center">
-                                                        {filtrados.reduce((acc, p) => acc + (parseFloat(p.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right">
+                                                        {Number(prec.frete_peso || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right text-blue-700">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_nota) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right">
+                                                        {Number(prec.sec_cat || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.frete_peso) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right">
+                                                        {Number(prec.pedagio || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.despacho) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right">
+                                                        {Number(prec.despacho || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.pedagio) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right">
+                                                        {Number(prec.outros || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.sec_cat) || 0), 0).toFixed(2)}
+                                                    <td className="px-3 py-2 text-right font-semibold text-green-600">
+                                                        {Number(prec.valor_servico || 0).toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 py-3 text-right text-green-700">
-                                                        R$ {filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_servico) || 0), 0).toFixed(2)}
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right text-orange-700">-</td>
-                                                    <td className="px-3 py-3 text-right text-purple-700">
-                                                        {mediaPercentual.toFixed(2)}%
+                                                    <td className="px-3 py-2 text-right font-semibold text-orange-600">
+                                                        {Number(prec.porcentagem || 0).toFixed(2)}%
                                                     </td>
                                                 </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-
-                                    {/* Análise Geral */}
-                                    <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                                            ))}
+                                        </tbody>
+                                        <tfoot className="bg-gradient-to-r from-indigo-100 to-purple-100 font-bold">
+                                            <tr>
+                                                <td className="px-3 py-3 text-left">TOTAIS</td>
+                                                <td className="px-3 py-3 text-center">
+                                                    {filtrados.reduce((acc, p) => acc + (parseInt(p.volume?.match(/\d+/)?.[0]) || 0), 0)}
+                                                </td>
+                                                <td className="px-3 py-3 text-center">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-blue-700">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_nota) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.frete_peso) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.sec_cat) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.pedagio) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.despacho) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.outros) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-green-700">
+                                                    {filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_servico) || 0), 0).toFixed(2)}
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-purple-700">
+                                                    {mediaPercentual.toFixed(2)}%
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
                                         <h3 className="font-semibold text-purple-900 mb-3">📊 Visão Geral</h3>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             <div className="bg-white p-3 rounded-lg">

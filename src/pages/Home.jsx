@@ -11,7 +11,7 @@ import {
         Truck, Package, FileText, Users, Car, 
         ClipboardList, Settings, BarChart3,
         Navigation, Building2, Upload,
-        Camera, ChevronRight, Bell, Printer, Settings2
+        Camera, ChevronRight, Bell, Printer, Settings2, Eye, EyeOff
     } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import WeatherWidget from "@/components/shared/WeatherWidget";
@@ -23,17 +23,23 @@ export default function Home() {
     const [placaSelecionada, setPlacaSelecionada] = useState(null);
     const [showNotasDialog, setShowNotasDialog] = useState(false);
     const [showPrintConfig, setShowPrintConfig] = useState(false);
+    const [showPersonalizar, setShowPersonalizar] = useState(false);
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user"],
         queryFn: () => base44.auth.me()
     });
 
-    const { data: configs = [] } = useQuery({
+    const { data: configs = [], refetch: refetchConfigs } = useQuery({
         queryKey: ["configuracoes"],
         queryFn: () => base44.entities.Configuracoes.list()
     });
     const config = configs[0] || {};
+
+    // Botões visíveis (padrão: todos ativos)
+    const botoesMobileVisiveis = config.botoes_home_mobile || [];
+    const botoesPCVisiveis = config.botoes_home_pc || [];
+    const isMobile = window.innerWidth < 768;
 
     const { data: avisos = [] } = useQuery({
         queryKey: ["avisos-ativos"],
@@ -328,38 +334,51 @@ export default function Home() {
         setTimeout(() => winPrint.print(), 500);
     };
 
-    const mainButtons = [
-        { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 via-blue-700 to-indigo-700" },
-        { name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-cyan-500 via-sky-600 to-blue-600" },
-        { name: "CTEs", href: "CTEs", icon: FileText, color: "from-purple-600 via-indigo-600 to-blue-600" },
-        { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 via-purple-600 to-violet-600" },
-        { name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600" },
+    // Todos os botões disponíveis com IDs únicos
+    const todosOsBotoes = [
+        { id: "nota_deposito", name: "Nota Depósito", href: "NotaDeposito", icon: Camera, color: "from-blue-600 via-blue-700 to-indigo-700", secao: "principais" },
+        { id: "comprovantes", name: "Comprovantes", href: "ComprovantesInternos", icon: Upload, color: "from-cyan-500 via-sky-600 to-blue-600", secao: "principais" },
+        { id: "ctes", name: "CTEs", href: "CTEs", icon: FileText, color: "from-purple-600 via-indigo-600 to-blue-600", secao: "principais" },
+        { id: "coletas_diarias", name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, color: "from-indigo-600 via-purple-600 to-violet-600", secao: "principais" },
+        { id: "ordem_coleta", name: "Ordem de Coleta", href: "OrdensColeta", icon: ClipboardList, color: "from-violet-600 via-purple-600 to-indigo-600", secao: "principais" },
+        { id: "cracha", name: "Crachá de Identificação", href: "CrachaIdentificacao", icon: Users, color: "from-emerald-500 via-teal-500 to-cyan-500", secao: "grande" },
+        { id: "notas_fiscais", name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600", secao: "grande" },
+        { id: "rotas_gps", name: "Rotas GPS", href: "RotasGPS", icon: Navigation, secao: "rapidos" },
+        { id: "veiculos", name: "Veículos", href: "Veiculos", icon: Car, secao: "rapidos" },
+        { id: "mascara_romaneio", name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600", secao: "secundario" },
+        { id: "romaneios_gerados", name: "Romaneios Gerados", href: "RomaneiosGerados", icon: BarChart3, color: "from-pink-500 to-rose-600", secao: "secundario" },
+        { id: "relatorio", name: "Relatório", href: "ImpressaoRelatorio", icon: Printer, color: "from-indigo-500 to-purple-600", secao: "secundario" },
+        { id: "clientes", name: "Clientes", href: "Clientes", icon: Users, color: "from-purple-500 to-indigo-600", secao: "secundario" },
+        { id: "transportadoras", name: "Transportadoras", href: "Transportadoras", icon: Building2, color: "from-slate-500 to-gray-600", secao: "secundario" },
     ];
 
-    const bigButton = { name: "Crachá de Identificação", href: "CrachaIdentificacao", icon: Users, color: "from-emerald-500 via-teal-500 to-cyan-500" };
+    // Filtrar botões conforme visibilidade
+    const listaBotoesAtivos = isMobile ? botoesMobileVisiveis : botoesPCVisiveis;
+    const ehVisivel = (id) => listaBotoesAtivos.length === 0 || listaBotoesAtivos.includes(id);
 
-    const quickButtons = [
-        { name: "Rotas GPS", href: "RotasGPS", icon: Navigation },
-        { name: "Veículos", href: "Veiculos", icon: Car },
-    ];
-
-    const mainButtons2 = [
-        { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, color: "from-amber-500 to-orange-600" },
-    ];
-
-    const menuItems = [
-        { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, color: "from-violet-500 to-purple-600" },
-        { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: BarChart3, color: "from-pink-500 to-rose-600" },
-        { name: "Relatório", href: "ImpressaoRelatorio", icon: Printer, color: "from-indigo-500 to-purple-600" },
-        { name: "Clientes", href: "Clientes", icon: Users, color: "from-purple-500 to-indigo-600" },
-        { name: "Transportadoras", href: "Transportadoras", icon: Building2, color: "from-slate-500 to-gray-600" },
-    ];
+    const mainButtons = todosOsBotoes.filter(b => b.secao === "principais" && ehVisivel(b.id));
+    const bigButton = todosOsBotoes.find(b => b.id === "cracha" && ehVisivel(b.id));
+    const mainButtons2 = todosOsBotoes.filter(b => b.id === "notas_fiscais" && ehVisivel(b.id));
+    const quickButtons = todosOsBotoes.filter(b => b.secao === "rapidos" && ehVisivel(b.id));
+    const menuItems = todosOsBotoes.filter(b => b.secao === "secundario" && ehVisivel(b.id));
 
     const adminItems = [
         { name: "Motoristas", href: "Motoristas", icon: Users },
         { name: "Avisos", href: "Avisos", icon: Bell },
         { name: "Configurações", href: "Configuracoes", icon: Settings },
+        { name: "Personalizar", href: "#", icon: Settings2, onClick: () => setShowPersonalizar(true) },
     ];
+
+    const handleSalvarPersonalizacao = async (mobileIds, pcIds) => {
+        if (configs[0]?.id) {
+            await base44.entities.Configuracoes.update(configs[0].id, {
+                botoes_home_mobile: mobileIds,
+                botoes_home_pc: pcIds
+            });
+            await refetchConfigs();
+            setShowPersonalizar(false);
+        }
+    };
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${bgGradient} p-4 md:p-6 relative`}>
@@ -406,6 +425,7 @@ export default function Home() {
                   )}
 
                 {/* Botões Principais */}
+                {mainButtons.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                     {mainButtons.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
@@ -416,16 +436,20 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
 
                 {/* Botão Grande - Crachá de Identificação */}
+                {bigButton && (
                 <Link to={createPageUrl(bigButton.href)}>
                     <Button className={`w-full h-20 bg-gradient-to-br ${bigButton.color} hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl border-2 border-white/30 flex items-center justify-center gap-3 rounded-2xl`}>
                         <bigButton.icon className="w-8 h-8 text-white drop-shadow-md" />
                         <span className="text-lg font-bold text-white drop-shadow-md">{bigButton.name}</span>
                     </Button>
                 </Link>
+                )}
 
                 {/* Botão Notas Fiscais */}
+                {mainButtons2.length > 0 && (
                 <div className="grid grid-cols-1 gap-3">
                     {mainButtons2.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
@@ -436,8 +460,10 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
 
                 {/* Botões Rápidos */}
+                {quickButtons.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                     {quickButtons.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
@@ -448,6 +474,7 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
 
                 {/* Dashboard por Veículo */}
                 {Object.keys(dashboardPorVeiculo).length > 0 && (
@@ -539,6 +566,7 @@ export default function Home() {
                 )}
 
                 {/* Menu Secundário */}
+                {menuItems.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                     {menuItems.map((item) => (
                         <Link key={item.name} to={createPageUrl(item.href)}>
@@ -553,17 +581,31 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
+                )}
 
                 {/* Menu Admin */}
                 {isAdmin && (
                     <div className="flex gap-2 flex-wrap">
                         {adminItems.map((item) => (
-                            <Link key={item.name} to={createPageUrl(item.href)}>
-                                <Button variant="ghost" size="sm" className={`${temaEscuro ? 'text-blue-200 hover:text-white hover:bg-white/10' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100'} rounded-lg`}>
+                            item.onClick ? (
+                                <Button 
+                                    key={item.name}
+                                    onClick={item.onClick}
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={`${temaEscuro ? 'text-blue-200 hover:text-white hover:bg-white/10' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100'} rounded-lg`}
+                                >
                                     <item.icon className="w-4 h-4 mr-1" />
                                     {item.name}
                                 </Button>
-                            </Link>
+                            ) : (
+                                <Link key={item.name} to={createPageUrl(item.href)}>
+                                    <Button variant="ghost" size="sm" className={`${temaEscuro ? 'text-blue-200 hover:text-white hover:bg-white/10' : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100'} rounded-lg`}>
+                                        <item.icon className="w-4 h-4 mr-1" />
+                                        {item.name}
+                                    </Button>
+                                </Link>
+                            )
                         ))}
                     </div>
                 )}
@@ -576,6 +618,21 @@ export default function Home() {
                 onPrint={handlePrintTodosDashboard}
                 configKey="homeDashboardPrint"
             />
+
+            {/* Dialog Personalizar Botões */}
+            <Dialog open={showPersonalizar} onOpenChange={setShowPersonalizar}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Personalizar Botões da Home</DialogTitle>
+                    </DialogHeader>
+                    <PersonalizarBotoes 
+                        todosBotoes={todosOsBotoes}
+                        mobileAtivos={botoesMobileVisiveis}
+                        pcAtivos={botoesPCVisiveis}
+                        onSalvar={handleSalvarPersonalizacao}
+                    />
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Notas por Transportadora */}
             <Dialog open={showNotasDialog} onOpenChange={setShowNotasDialog}>

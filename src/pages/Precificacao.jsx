@@ -1422,6 +1422,9 @@ ${documento}`,
                                 return <p className="text-center text-slate-500 py-8">Nenhum registro para analisar</p>;
                             }
 
+                            // Calcular média de porcentagem
+                            const mediaPercentual = filtrados.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / filtrados.length;
+
                             // Análise por Peso
                             const porPeso = filtrados.map(p => {
                                 const peso = parseFloat(p.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;

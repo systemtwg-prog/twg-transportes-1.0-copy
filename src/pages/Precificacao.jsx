@@ -157,7 +157,8 @@ export default function Precificacao() {
                                             remetente: { type: "string" },
                                             destinatario: { type: "string" },
                                             transportadora: { type: "string" },
-                                            numero_documento: { type: "string" },
+                                            numero_cte: { type: "string", description: "Número do CTe se houver campo CTE" },
+                                            numero_documento: { type: "string", description: "Número do documento principal (Nº)" },
                                             data_emissao: { type: "string" },
                                             volume: { type: "string" },
                                             peso: { type: "string" },
@@ -199,6 +200,9 @@ export default function Precificacao() {
         const valorNota = parseFloat(registro.valor_nota) || 0;
         const totalPrestacao = parseFloat(registro.total_prestacao) || 0;
         
+        // Priorizar CTe, depois número do documento
+        const numeroDoc = registro.numero_cte || registro.numero_documento || "";
+        
         // Normalizar peso
         let pesoLimpo = registro.peso || "";
         if (typeof pesoLimpo === 'string') {
@@ -227,7 +231,7 @@ export default function Precificacao() {
             remetente: registro.remetente || "",
             destinatario: registro.destinatario || "",
             transportadora: registro.transportadora || "",
-            numero_documento: registro.numero_documento || "",
+            numero_documento: numeroDoc,
             data_emissao: registro.data_emissao || "",
             volume: registro.volume || "",
             peso: pesoLimpo,

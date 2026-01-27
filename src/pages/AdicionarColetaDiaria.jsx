@@ -874,14 +874,25 @@ export default function AdicionarColetaDiaria() {
                                                                     {coleta.nfe && <span className="block text-xs text-slate-500">NFe: {coleta.nfe}</span>}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Badge className={statusColors[coleta.status]}>
-                                                                        {statusLabels[coleta.status]}
-                                                                    </Badge>
+                                                                    <Select 
+                                                                        value={coleta.status} 
+                                                                        onValueChange={(v) => updateMutation.mutate({ id: coleta.id, data: { ...coleta, status: v } })}
+                                                                        disabled={reordenando}
+                                                                    >
+                                                                        <SelectTrigger className="w-32">
+                                                                            <SelectValue />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="pendente">Pendente</SelectItem>
+                                                                            <SelectItem value="realizado">Realizado</SelectItem>
+                                                                            <SelectItem value="cancelado">Cancelado</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Switch
                                                                         checked={coleta.prioridade || false}
-                                                                        onCheckedChange={(v) => updateMutation.mutate({ id: coleta.id, data: { prioridade: v } })}
+                                                                        onCheckedChange={(v) => updateMutation.mutate({ id: coleta.id, data: { ...coleta, prioridade: v } })}
                                                                         disabled={reordenando}
                                                                     />
                                                                 </TableCell>

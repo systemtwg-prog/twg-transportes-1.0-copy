@@ -17,6 +17,7 @@ const menuItems = [
     { name: "Comprovantes Entrega", href: "ComprovantesEntrega", icon: Upload, category: "operacional" },
     { name: "CTEs", href: "CTEs", icon: FileText, category: "operacional" },
     { name: "Conhecimento de Transportes", href: "ComprovantesCtes", icon: FileText, category: "documentos" },
+    { name: "Documentos", href: "Documentos", icon: FileText, category: "documentos" },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, category: "operacional" },
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package, category: "operacional" },
     { name: "Ordens de Coleta", href: "OrdensColeta", icon: ClipboardList, category: "operacional" },

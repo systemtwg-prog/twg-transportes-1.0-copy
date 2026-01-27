@@ -10,6 +10,7 @@ import Clientes from './pages/Clientes';
 import ClientesSNF from './pages/ClientesSNF';
 import ColetasDiarias from './pages/ColetasDiarias';
 import ComprovantesCtes from './pages/ComprovantesCtes';
+import ComprovantesEntrega from './pages/ComprovantesEntrega';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import Configuracoes from './pages/Configuracoes';
@@ -41,7 +42,7 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import ComprovantesEntrega from './pages/ComprovantesEntrega';
+import Documentos from './pages/Documentos';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "ClientesSNF": ClientesSNF,
     "ColetasDiarias": ColetasDiarias,
     "ComprovantesCtes": ComprovantesCtes,
+    "ComprovantesEntrega": ComprovantesEntrega,
     "ComprovantesInternos": ComprovantesInternos,
     "ConfiguracaoModulos": ConfiguracaoModulos,
     "Configuracoes": Configuracoes,
@@ -89,7 +91,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "ComprovantesEntrega": ComprovantesEntrega,
+    "Documentos": Documentos,
 }
 
 export const pagesConfig = {

@@ -94,7 +94,7 @@ export default function Precificacao() {
             }
             setShowCamera(true);
         } catch (error) {
-            toast({ title: "Erro ao acessar câmera", variant: "destructive" });
+            toast({ title: "Erro ao acessar câmera", variant: "destructive", duration: 3000 });
         }
     };
 
@@ -181,12 +181,12 @@ export default function Precificacao() {
                         for (const registro of result.output.registros) {
                             await processAndSaveRecord(registro, file_url);
                         }
-                        toast({ title: `${result.output.registros.length} registros importados com sucesso!` });
+                        toast({ title: `${result.output.registros.length} registros importados com sucesso!`, duration: 3000 });
                     } else {
-                        toast({ title: "Nenhum dado encontrado no arquivo", variant: "destructive" });
+                        toast({ title: "Nenhum dado encontrado no arquivo", variant: "destructive", duration: 3000 });
                     }
                 } catch (error) {
-                    toast({ title: "Erro ao processar arquivo", description: error.message, variant: "destructive" });
+                    toast({ title: "Erro ao processar arquivo", description: error.message, variant: "destructive", duration: 3000 });
                 }
                 break;
             }
@@ -428,7 +428,8 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             toast({ 
                 title: "Erro ao processar imagem", 
                 description: error.message,
-                variant: "destructive" 
+                variant: "destructive",
+                duration: 3000
             });
         } finally {
             setExtracting(false);
@@ -514,7 +515,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
 
     const handleDownload = async (prec) => {
         if (!prec.foto_url) {
-            toast({ title: "Sem imagem para baixar", variant: "destructive" });
+            toast({ title: "Sem imagem para baixar", variant: "destructive", duration: 3000 });
             return;
         }
         
@@ -529,9 +530,9 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            toast({ title: "Download concluído" });
+            toast({ title: "Download concluído", duration: 2000 });
         } catch (error) {
-            toast({ title: "Erro ao baixar imagem", variant: "destructive" });
+            toast({ title: "Erro ao baixar imagem", variant: "destructive", duration: 3000 });
         }
     };
 
@@ -681,7 +682,8 @@ ${text}`,
             toast({ 
                 title: "Erro ao processar texto", 
                 description: error.message,
-                variant: "destructive" 
+                variant: "destructive",
+                duration: 3000
             });
         } finally {
             setExtracting(false);
@@ -748,7 +750,8 @@ ${text}`,
                             onClick={() => {
                                 toast({ 
                                     title: "Cole uma imagem aqui", 
-                                    description: "Pressione Ctrl+V (ou Cmd+V no Mac) para colar uma imagem do print screen"
+                                    description: "Pressione Ctrl+V (ou Cmd+V no Mac) para colar uma imagem do print screen",
+                                    duration: 3000
                                 });
                             }}
                         >
@@ -1221,10 +1224,10 @@ ${documento}`,
                                             await processAndSaveRecord(result);
                                         }
 
-                                        toast({ title: `${documentos.length} registros processados com sucesso!` });
+                                        toast({ title: `${documentos.length} registros processados com sucesso!`, duration: 3000 });
                                         setBulkText("");
                                     } catch (error) {
-                                        toast({ title: "Erro ao processar dados", description: error.message, variant: "destructive" });
+                                        toast({ title: "Erro ao processar dados", description: error.message, variant: "destructive", duration: 3000 });
                                     } finally {
                                         setProcessingBulk(false);
                                     }

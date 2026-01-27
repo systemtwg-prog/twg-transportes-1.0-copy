@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 

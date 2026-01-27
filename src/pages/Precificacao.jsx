@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download } from "lucide-react";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Precificacao() {
@@ -26,6 +26,7 @@ export default function Precificacao() {
     const [showBulkDialog, setShowBulkDialog] = useState(false);
     const [bulkText, setBulkText] = useState("");
     const [processingBulk, setProcessingBulk] = useState(false);
+    const [showAnalises, setShowAnalises] = useState(false);
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -695,6 +696,13 @@ ${text}`,
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold text-gray-900">Precificação</h1>
+                    <Button
+                        onClick={() => setShowAnalises(true)}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                    >
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        Análises Inteligentes
+                    </Button>
                 </div>
 
                 {/* Botões de Captura */}
@@ -1373,6 +1381,233 @@ ${documento}`,
                                 Cancelar
                             </Button>
                         </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Análises Inteligentes */}
+            <Dialog open={showAnalises} onOpenChange={setShowAnalises}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <BarChart3 className="w-6 h-6 text-purple-600" />
+                            Análises Inteligentes de Precificação
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-6">
+                        {(() => {
+                            const filtrados = precificacoes.filter(prec => {
+                                if (searchTerm) {
+                                    const termo = searchTerm.toLowerCase();
+                                    const matchText = 
+                                        prec.remetente?.toLowerCase().includes(termo) ||
+                                        prec.destinatario?.toLowerCase().includes(termo) ||
+                                        prec.transportadora?.toLowerCase().includes(termo) ||
+                                        prec.numero_documento?.toLowerCase().includes(termo);
+                                    if (!matchText) return false;
+                                }
+                                if (dateFilter.start || dateFilter.end) {
+                                    const precData = prec.data_emissao;
+                                    if (!precData) return true;
+                                    const [dia, mes, ano] = precData.split('/');
+                                    const dataFormatada = ano && mes && dia ? `${ano}-${mes}-${dia}` : precData;
+                                    if (dateFilter.start && dataFormatada < dateFilter.start) return false;
+                                    if (dateFilter.end && dataFormatada > dateFilter.end) return false;
+                                }
+                                return true;
+                            });
+
+                            if (filtrados.length === 0) {
+                                return <p className="text-center text-slate-500 py-8">Nenhum registro para analisar</p>;
+                            }
+
+                            // Análise por Peso
+                            const porPeso = filtrados.map(p => {
+                                const peso = parseFloat(p.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+                                return { ...p, pesoNum: peso };
+                            }).filter(p => p.pesoNum > 0).sort((a, b) => a.pesoNum - b.pesoNum);
+
+                            const pesoMenor = porPeso[0];
+                            const pesoMaior = porPeso[porPeso.length - 1];
+                            const mediaPorPeso = porPeso.length > 0 
+                                ? porPeso.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / porPeso.length 
+                                : 0;
+
+                            // Análise por Valor da Nota
+                            const porValor = filtrados.filter(p => p.valor_nota > 0).sort((a, b) => a.valor_nota - b.valor_nota);
+                            const valorMenor = porValor[0];
+                            const valorMaior = porValor[porValor.length - 1];
+
+                            // Análise por Transportadora
+                            const porTransportadora = {};
+                            filtrados.forEach(p => {
+                                const t = p.transportadora || "Sem Transportadora";
+                                if (!porTransportadora[t]) {
+                                    porTransportadora[t] = { count: 0, totalPerc: 0, servicos: [] };
+                                }
+                                porTransportadora[t].count++;
+                                porTransportadora[t].totalPerc += parseFloat(p.porcentagem) || 0;
+                                porTransportadora[t].servicos.push(parseFloat(p.valor_servico) || 0);
+                            });
+
+                            return (
+                                <>
+                                    {/* Análise Geral */}
+                                    <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                                        <h3 className="font-semibold text-purple-900 mb-3">📊 Visão Geral</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            <div className="bg-white p-3 rounded-lg">
+                                                <p className="text-xs text-gray-500">Total Registros</p>
+                                                <p className="text-2xl font-bold text-purple-600">{filtrados.length}</p>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-lg">
+                                                <p className="text-xs text-gray-500">% Médio Geral</p>
+                                                <p className="text-2xl font-bold text-indigo-600">
+                                                    {(filtrados.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / filtrados.length).toFixed(2)}%
+                                                </p>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-lg">
+                                                <p className="text-xs text-gray-500">Serviço Médio</p>
+                                                <p className="text-lg font-bold text-green-600">
+                                                    R$ {(filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_servico) || 0), 0) / filtrados.length).toFixed(2)}
+                                                </p>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-lg">
+                                                <p className="text-xs text-gray-500">Valor Médio Nota</p>
+                                                <p className="text-lg font-bold text-blue-600">
+                                                    R$ {(filtrados.reduce((acc, p) => acc + (parseFloat(p.valor_nota) || 0), 0) / filtrados.length).toFixed(2)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Análise por Peso */}
+                                    {porPeso.length > 1 && (
+                                        <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
+                                            <h3 className="font-semibold text-blue-900 mb-3">⚖️ Análise por Peso</h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white p-4 rounded-lg border border-blue-100">
+                                                    <p className="text-sm text-blue-700 font-semibold mb-2">Carga mais LEVE</p>
+                                                    <p className="text-xs text-gray-500">Peso: <span className="font-bold">{pesoMenor.peso}</span></p>
+                                                    <p className="text-xs text-gray-500">Serviço: <span className="font-bold text-green-600">R$ {Number(pesoMenor.valor_servico).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">%: <span className="font-bold text-orange-600">{Number(pesoMenor.porcentagem).toFixed(2)}%</span></p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg border border-blue-100">
+                                                    <p className="text-sm text-blue-700 font-semibold mb-2">Carga mais PESADA</p>
+                                                    <p className="text-xs text-gray-500">Peso: <span className="font-bold">{pesoMaior.peso}</span></p>
+                                                    <p className="text-xs text-gray-500">Serviço: <span className="font-bold text-green-600">R$ {Number(pesoMaior.valor_servico).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">%: <span className="font-bold text-orange-600">{Number(pesoMaior.porcentagem).toFixed(2)}%</span></p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 p-3 bg-blue-100 rounded-lg">
+                                                <p className="text-sm text-blue-900">
+                                                    💡 <strong>Insight:</strong> O peso médio é <strong>{(porPeso.reduce((acc, p) => acc + p.pesoNum, 0) / porPeso.length).toFixed(2)} KG</strong> com percentual médio de <strong>{mediaPorPeso.toFixed(2)}%</strong>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Análise por Valor da Nota */}
+                                    {porValor.length > 1 && (
+                                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                                            <h3 className="font-semibold text-green-900 mb-3">💰 Análise por Valor da Nota</h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white p-4 rounded-lg border border-green-100">
+                                                    <p className="text-sm text-green-700 font-semibold mb-2">Nota de MENOR Valor</p>
+                                                    <p className="text-xs text-gray-500">Valor: <span className="font-bold text-blue-600">R$ {Number(valorMenor.valor_nota).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">Serviço: <span className="font-bold text-green-600">R$ {Number(valorMenor.valor_servico).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">%: <span className="font-bold text-orange-600">{Number(valorMenor.porcentagem).toFixed(2)}%</span></p>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg border border-green-100">
+                                                    <p className="text-sm text-green-700 font-semibold mb-2">Nota de MAIOR Valor</p>
+                                                    <p className="text-xs text-gray-500">Valor: <span className="font-bold text-blue-600">R$ {Number(valorMaior.valor_nota).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">Serviço: <span className="font-bold text-green-600">R$ {Number(valorMaior.valor_servico).toFixed(2)}</span></p>
+                                                    <p className="text-xs text-gray-500">%: <span className="font-bold text-orange-600">{Number(valorMaior.porcentagem).toFixed(2)}%</span></p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 p-3 bg-green-100 rounded-lg">
+                                                <p className="text-sm text-green-900">
+                                                    💡 <strong>Insight:</strong> Notas de maior valor tendem a ter percentual {valorMaior.porcentagem > valorMenor.porcentagem ? 'MAIOR' : 'MENOR'} ({Number(valorMaior.porcentagem).toFixed(2)}% vs {Number(valorMenor.porcentagem).toFixed(2)}%)
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Análise por Transportadora */}
+                                    {Object.keys(porTransportadora).length > 0 && (
+                                        <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+                                            <h3 className="font-semibold text-orange-900 mb-3">🚛 Análise por Transportadora</h3>
+                                            <div className="space-y-2">
+                                                {Object.entries(porTransportadora)
+                                                    .sort((a, b) => b[1].count - a[1].count)
+                                                    .map(([transp, dados]) => {
+                                                        const mediaPerc = dados.totalPerc / dados.count;
+                                                        const mediaServico = dados.servicos.reduce((a, b) => a + b, 0) / dados.servicos.length;
+                                                        return (
+                                                            <div key={transp} className="bg-white p-3 rounded-lg border border-orange-100">
+                                                                <div className="flex justify-between items-center">
+                                                                    <div>
+                                                                        <p className="font-semibold text-orange-800">{transp}</p>
+                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                            {dados.count} serviço{dados.count > 1 ? 's' : ''} • 
+                                                                            % Médio: <span className="font-bold text-orange-600">{mediaPerc.toFixed(2)}%</span> • 
+                                                                            Valor Médio: <span className="font-bold text-green-600">R$ {mediaServico.toFixed(2)}</span>
+                                                                        </p>
+                                                                    </div>
+                                                                    <Badge className="bg-orange-100 text-orange-700 text-lg px-3 py-1">
+                                                                        {dados.count}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Comparativo de Percentuais */}
+                                    <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                                        <h3 className="font-semibold text-pink-900 mb-3">📈 Distribuição de Percentuais</h3>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <p className="text-xs text-gray-500">% Mínimo</p>
+                                                <p className="text-xl font-bold text-green-600">
+                                                    {Math.min(...filtrados.map(p => parseFloat(p.porcentagem) || 0)).toFixed(2)}%
+                                                </p>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <p className="text-xs text-gray-500">% Médio</p>
+                                                <p className="text-xl font-bold text-blue-600">
+                                                    {(filtrados.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / filtrados.length).toFixed(2)}%
+                                                </p>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <p className="text-xs text-gray-500">% Máximo</p>
+                                                <p className="text-xl font-bold text-red-600">
+                                                    {Math.max(...filtrados.map(p => parseFloat(p.porcentagem) || 0)).toFixed(2)}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 p-3 bg-pink-100 rounded-lg">
+                                            <p className="text-sm text-pink-900">
+                                                💡 <strong>Conclusão:</strong> Os percentuais variam entre {Math.min(...filtrados.map(p => parseFloat(p.porcentagem) || 0)).toFixed(2)}% e {Math.max(...filtrados.map(p => parseFloat(p.porcentagem) || 0)).toFixed(2)}%, com média de {(filtrados.reduce((acc, p) => acc + (parseFloat(p.porcentagem) || 0), 0) / filtrados.length).toFixed(2)}%
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Razão das Variações */}
+                                    <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-lg border border-violet-200">
+                                        <h3 className="font-semibold text-violet-900 mb-3">🎯 Por que alguns serviços cobram mais?</h3>
+                                        <div className="space-y-2 text-sm text-violet-900">
+                                            <p>• <strong>Peso:</strong> Cargas mais pesadas podem ter percentual {pesoMaior && pesoMenor && pesoMaior.porcentagem > pesoMenor.porcentagem ? 'MAIOR' : 'MENOR'} devido ao custo de transporte</p>
+                                            <p>• <strong>Valor da Nota:</strong> Notas de alto valor ({valorMaior && `R$ ${Number(valorMaior.valor_nota).toFixed(2)}`}) têm % de {valorMaior && Number(valorMaior.porcentagem).toFixed(2)}% vs notas menores ({valorMenor && `R$ ${Number(valorMenor.valor_nota).toFixed(2)}`}) com {valorMenor && Number(valorMenor.porcentagem).toFixed(2)}%</p>
+                                            <p>• <strong>Transportadora:</strong> Cada transportadora tem sua própria tabela de preços e percentuais médios</p>
+                                            <p>• <strong>Componentes:</strong> Pedágio, Sec/Cat e Despacho variam conforme peso e valor, impactando o % final</p>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </DialogContent>
             </Dialog>

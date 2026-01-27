@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { 
     Printer, ClipboardPaste, FileText, Calendar, 
     Check, X, AlertTriangle, Plus, Search, Trash2,
-    Download, CheckCircle, XCircle, Building2, FileSpreadsheet
+    Download, CheckCircle, XCircle, Building2
 } from "lucide-react";
 
 import { toast } from "sonner";

@@ -729,17 +729,14 @@ ${text}`,
                             Colar Dados em Massa
                         </Button>
                         
-                        <div className="hidden">
-                            <div className="grid grid-cols-3 gap-4">
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*,.pdf,.xlsx,.xls,.csv"
-                                multiple
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*,.pdf,.xlsx,.xls,.csv"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileUpload}
+                        />
                         
                         <Card 
                             ref={pasteAreaRef}
@@ -1289,6 +1286,6 @@ ${documento}`,
                     </div>
                 </DialogContent>
             </Dialog>
-            </div>
-            );
-            }
+        </div>
+    );
+}

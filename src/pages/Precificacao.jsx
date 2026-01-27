@@ -272,13 +272,17 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
                 secCat = parseFloat((valorNota * 0.005).toFixed(2));
             }
 
-            // Calcular Pedágio se estiver em branco ((peso/100) * 1.40 / 100) - apenas na importação inicial
+            // Normalizar peso: remover texto e converter vírgula para ponto
+            let pesoLimpo = result.peso || "";
+            if (typeof pesoLimpo === 'string') {
+                pesoLimpo = pesoLimpo.replace(/[^\d.,]/g, '').replace(',', '.');
+            }
+            const pesoNumerico = parseFloat(pesoLimpo) || 0;
+
+            // Calcular Pedágio se estiver em branco ((peso/100) * 1.40)
             let pedagio = parseFloat(result.pedagio) || 0;
-            if (pedagio === 0) {
-                const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-                if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
-                }
+            if (pedagio === 0 && pesoNumerico > 0) {
+                pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
             }
 
             setFormData(prev => ({

@@ -277,7 +277,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             if (pedagio === 0) {
                 const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
                 if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40 / 100).toFixed(2));
+                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
                 }
             }
 
@@ -525,7 +525,7 @@ ${text}`,
             if (pedagio === 0) {
                 const pesoNumerico = parseFloat(result.peso?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
                 if (pesoNumerico > 0) {
-                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40 / 100).toFixed(2));
+                    pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
                 }
             }
 

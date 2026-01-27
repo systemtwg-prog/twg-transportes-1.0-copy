@@ -239,14 +239,67 @@ export default function Documentos() {
                     </div>
                 </div>
 
-                {/* Botão Adicionar */}
-                <Button 
-                    onClick={() => setShowCamera(true)}
-                    className="w-full h-20 text-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl"
-                >
-                    <Camera className="w-8 h-8 mr-3" />
-                    Fotografar Documento
-                </Button>
+                {/* Botões Adicionar */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button 
+                        onClick={() => setShowCamera(true)}
+                        className="h-20 text-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl"
+                    >
+                        <Camera className="w-8 h-8 mr-3" />
+                        Fotografar Documento
+                    </Button>
+                    <div>
+                        <input
+                            type="file"
+                            id="import-files"
+                            multiple
+                            accept=".xlsx,.xls,.pdf,.csv,image/*"
+                            onChange={async (e) => {
+                                const files = Array.from(e.target.files);
+                                if (files.length === 0) return;
+                                
+                                setUploading(true);
+                                const novosArquivos = [];
+                                
+                                for (const file of files) {
+                                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                                    novosArquivos.push({
+                                        nome: file.name,
+                                        url: file_url,
+                                        tipo: file.type
+                                    });
+                                }
+                                
+                                setForm(prev => ({
+                                    ...prev,
+                                    arquivos: novosArquivos
+                                }));
+                                setUploading(false);
+                                setShowForm(true);
+                                toast.success(`${files.length} arquivo(s) importado(s)!`);
+                                e.target.value = '';
+                            }}
+                            className="hidden"
+                        />
+                        <Button 
+                            onClick={() => document.getElementById('import-files').click()}
+                            className="w-full h-20 text-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-xl"
+                            disabled={uploading}
+                        >
+                            {uploading ? (
+                                <>
+                                    <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mr-3" />
+                                    Importando...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="w-8 h-8 mr-3" />
+                                    Importar do PC
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
 
                 {/* Filtros */}
                 <Card className="bg-white/60 border-0 shadow-md">
@@ -579,7 +632,7 @@ export default function Documentos() {
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/*,.pdf"
+                                        accept="image/*,.pdf,.xlsx,.xls,.csv"
                                         onChange={handleUploadFiles}
                                         className="hidden"
                                         id="file-upload"

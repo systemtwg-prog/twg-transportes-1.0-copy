@@ -17,6 +17,7 @@ import Configuracoes from './pages/Configuracoes';
 import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import Destinatarios from './pages/Destinatarios';
+import Documentos from './pages/Documentos';
 import EmailManager from './pages/EmailManager';
 import ExtratorGoogle from './pages/ExtratorGoogle';
 import Home from './pages/Home';
@@ -42,7 +43,6 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import Documentos from './pages/Documentos';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +66,7 @@ export const PAGES = {
     "ConsultaSEFAZ": ConsultaSEFAZ,
     "CrachaIdentificacao": CrachaIdentificacao,
     "Destinatarios": Destinatarios,
+    "Documentos": Documentos,
     "EmailManager": EmailManager,
     "ExtratorGoogle": ExtratorGoogle,
     "Home": Home,
@@ -91,7 +92,6 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "Documentos": Documentos,
 }
 
 export const pagesConfig = {

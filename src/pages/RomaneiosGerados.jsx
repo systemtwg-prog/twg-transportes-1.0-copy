@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter, Settings, Mic, MicOff, Navigation, MapPin, Loader2, MoreVertical
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter, Settings, Mic, MicOff, Navigation, MapPin, Loader2, MoreVertical, ChevronRight
 } from "lucide-react";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";

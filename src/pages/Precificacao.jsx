@@ -1045,11 +1045,15 @@ ${text}`,
                                         if (!matchText) return false;
                                     }
                                     
-                                    // Filtro de data
+                                    // Filtro de data (por data de emissão)
                                     if (dateFilter.start || dateFilter.end) {
-                                        const precData = prec.data || prec.created_date?.split('T')[0];
-                                        if (dateFilter.start && precData < dateFilter.start) return false;
-                                        if (dateFilter.end && precData > dateFilter.end) return false;
+                                        const precData = prec.data_emissao;
+                                        if (!precData) return true; // Se não tem data de emissão, não filtra
+                                        // Converter DD/MM/YYYY para YYYY-MM-DD para comparação
+                                        const [dia, mes, ano] = precData.split('/');
+                                        const dataFormatada = ano && mes && dia ? `${ano}-${mes}-${dia}` : precData;
+                                        if (dateFilter.start && dataFormatada < dateFilter.start) return false;
+                                        if (dateFilter.end && dataFormatada > dateFilter.end) return false;
                                     }
                                     
                                     return true;

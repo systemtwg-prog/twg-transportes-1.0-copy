@@ -18,6 +18,7 @@ import WeatherWidget from "@/components/shared/WeatherWidget";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
+import PersonalizarBotoes from "@/components/home/PersonalizarBotoes";
 
 export default function Home() {
     const [placaSelecionada, setPlacaSelecionada] = useState(null);

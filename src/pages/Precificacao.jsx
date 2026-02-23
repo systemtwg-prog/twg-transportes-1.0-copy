@@ -706,75 +706,15 @@ ${text}`,
                     </Button>
                 </div>
 
-                {/* Botões de Captura */}
+                {/* Botão para Adicionar Manualmente */}
                 {!editing && (
-                    <>
-                        <div className="grid grid-cols-3 gap-4">
-                            <Button
-                                onClick={startCamera}
-                                className="h-32 flex flex-col gap-2"
-                                variant="outline"
-                            >
-                                <Camera className="w-8 h-8" />
-                                <span>Tirar Foto</span>
-                            </Button>
-                            <Button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="h-32 flex flex-col gap-2"
-                                variant="outline"
-                            >
-                                <Upload className="w-8 h-8" />
-                                <span>Carregar Arquivo</span>
-                            </Button>
-                            <Button
-                                onClick={() => setShowTextDialog(true)}
-                                className="h-32 flex flex-col gap-2"
-                                variant="outline"
-                            >
-                                <FileText className="w-8 h-8" />
-                                <span>Colar Texto</span>
-                            </Button>
-                        </div>
-
-                        <Button
-                            onClick={() => setShowBulkDialog(true)}
-                            className="w-full h-20 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-xl"
-                        >
-                            <FileText className="w-6 h-6 mr-3" />
-                            Colar Dados em Massa
-                        </Button>
-                        
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*,.pdf,.xlsx,.xls,.csv"
-                            multiple
-                            className="hidden"
-                            onChange={handleFileUpload}
-                        />
-                        
-                        <Card 
-                            ref={pasteAreaRef}
-                            className="border-2 border-dashed border-blue-300 bg-blue-50/50 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
-                            onClick={() => {
-                                toast({ 
-                                    title: "Cole uma imagem aqui", 
-                                    description: "Pressione Ctrl+V (ou Cmd+V no Mac) para colar uma imagem do print screen",
-                                    duration: 3000
-                                });
-                            }}
-                        >
-                            <CardContent className="p-8 flex flex-col items-center gap-3">
-                                <Upload className="w-12 h-12 text-blue-500" />
-                                <div className="text-center">
-                                    <p className="font-semibold text-blue-700">Cole uma Imagem Aqui</p>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Pressione <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Ctrl+V</kbd> para colar do print screen
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </>
+                    <Button
+                        onClick={() => setEditing(true)}
+                        className="w-full h-24 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-xl font-semibold shadow-xl"
+                    >
+                        <FileText className="w-8 h-8 mr-3" />
+                        Adicionar Nova Precificação
+                    </Button>
                 )}
 
                 {/* Câmera */}

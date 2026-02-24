@@ -72,26 +72,8 @@ export default function FloatingMenu({ currentPage }) {
         }
     });
 
-    const isAdmin = currentUser?.role === "admin";
-    const modulosAtivos = config?.[0]?.modulos_ativos;
-    const paginasPermitidas = currentUser?.paginas_permitidas || [];
-
-    // Lógica simplificada de filtro
-    const menuFiltrado = menuItems.filter(item => {
-        // Home sempre visível
-        if (item.href === "Home") return true;
-        
-        // Admin
-        if (isAdmin) {
-            // Se não configurou módulos ainda, mostra tudo
-            if (!modulosAtivos || modulosAtivos.length === 0) return true;
-            // Se configurou, respeita a configuração
-            return modulosAtivos.includes(item.href);
-        }
-        
-        // Usuário comum - só vê o que tem permissão
-        return paginasPermitidas.includes(item.href);
-    });
+    // Mostrar TODOS os itens do menu - sem filtragem
+    const menuFiltrado = menuItems;
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

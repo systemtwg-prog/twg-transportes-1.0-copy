@@ -59,7 +59,9 @@ import Clientes from './pages/Clientes';
 import ClientesSNF from './pages/ClientesSNF';
 import ColetasDiarias from './pages/ColetasDiarias';
 import ComprovantesCtes from './pages/ComprovantesCtes';
+import ComprovantesEntrega from './pages/ComprovantesEntrega';
 import ComprovantesInternos from './pages/ComprovantesInternos';
+import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import Configuracoes from './pages/Configuracoes';
 import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
@@ -77,6 +79,7 @@ import NotaDeposito from './pages/NotaDeposito';
 import NotasFiscais from './pages/NotasFiscais';
 import OrdensColeta from './pages/OrdensColeta';
 import PersonalizarHome from './pages/PersonalizarHome';
+import Precificacao from './pages/Precificacao';
 import Rastreamento from './pages/Rastreamento';
 import RelatorioDestinatario from './pages/RelatorioDestinatario';
 import RelatorioMotoristas from './pages/RelatorioMotoristas';
@@ -89,9 +92,7 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import ComprovantesEntrega from './pages/ComprovantesEntrega';
-import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
-import Precificacao from './pages/Precificacao';
+import GerenciadorMenu from './pages/GerenciadorMenu';
 import __Layout from './Layout.jsx';
 
 
@@ -108,7 +109,9 @@ export const PAGES = {
     "ClientesSNF": ClientesSNF,
     "ColetasDiarias": ColetasDiarias,
     "ComprovantesCtes": ComprovantesCtes,
+    "ComprovantesEntrega": ComprovantesEntrega,
     "ComprovantesInternos": ComprovantesInternos,
+    "ConfiguracaoModulos": ConfiguracaoModulos,
     "Configuracoes": Configuracoes,
     "ConsultaSEFAZ": ConsultaSEFAZ,
     "CrachaIdentificacao": CrachaIdentificacao,
@@ -126,6 +129,7 @@ export const PAGES = {
     "NotasFiscais": NotasFiscais,
     "OrdensColeta": OrdensColeta,
     "PersonalizarHome": PersonalizarHome,
+    "Precificacao": Precificacao,
     "Rastreamento": Rastreamento,
     "RelatorioDestinatario": RelatorioDestinatario,
     "RelatorioMotoristas": RelatorioMotoristas,
@@ -138,9 +142,7 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "ComprovantesEntrega": ComprovantesEntrega,
-    "ConfiguracaoModulos": ConfiguracaoModulos,
-    "Precificacao": Precificacao,
+    "GerenciadorMenu": GerenciadorMenu,
 }
 
 export const pagesConfig = {

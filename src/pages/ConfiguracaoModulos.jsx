@@ -14,38 +14,52 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TODOS_MODULOS = [
-    { id: "Home", nome: "Home", icon: Home, descricao: "Página inicial do sistema" },
-    { id: "ComprovantesInternos", nome: "Comprovantes de Entrega", icon: FileText, descricao: "Gerenciar comprovantes de entrega" },
-    { id: "ComprovantesCtes", nome: "Comprovantes CTEs", icon: FileText, descricao: "Gerenciar CTEs" },
+    // Principal
+    { id: "Home", nome: "Home (Mobile)", icon: Home, descricao: "Página inicial mobile" },
+    { id: "HomeDesktop", nome: "Início (Desktop)", icon: Home, descricao: "Página inicial desktop" },
+    // Operacional
+    { id: "ComprovantesEntrega", nome: "Comprovantes de Entrega", icon: FileText, descricao: "Gerenciar comprovantes de entrega" },
+    { id: "CTEs", nome: "CTEs", icon: FileText, descricao: "Gerenciar CTEs" },
     { id: "NotaDeposito", nome: "Nota Depósito", icon: FileText, descricao: "Notas de depósito" },
     { id: "ColetasDiarias", nome: "Coletas Diárias", icon: FileText, descricao: "Gerenciar coletas diárias" },
     { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas", icon: Package, descricao: "Adicionar novas coletas" },
-    { id: "Clientes", nome: "Clientes", icon: Users, descricao: "Cadastro de clientes" },
-    { id: "Destinatarios", nome: "Destinatários", icon: Users, descricao: "Cadastro de destinatários" },
-    { id: "Transportadoras", nome: "Transportadoras", icon: Package, descricao: "Cadastro de transportadoras" },
-    { id: "ExtratorGoogle", nome: "Extrator Google", icon: Search, descricao: "Extrair dados do Google" },
-    { id: "Motoristas", nome: "Colaboradores", icon: Users, descricao: "Cadastro de colaboradores" },
-    { id: "Veiculos", nome: "Veículos", icon: Car, descricao: "Cadastro de veículos" },
-    { id: "BuscaMultas", nome: "Busca de Multas", icon: Car, descricao: "Consultar multas de veículos" },
-    { id: "Avisos", nome: "Avisos", icon: Bell, descricao: "Gerenciar avisos do sistema" },
+    { id: "OrdensColeta", nome: "Ordens de Coleta", icon: Package, descricao: "Gerenciar ordens de coleta" },
+    // Documentos
+    { id: "ComprovantesCtes", nome: "Conhecimento de Transportes", icon: FileText, descricao: "Gerenciar CTEs" },
+    { id: "Documentos", nome: "Documentos", icon: FileText, descricao: "Gerenciar documentos" },
     { id: "NotasFiscais", nome: "Notas Fiscais", icon: FileText, descricao: "Gerenciar notas fiscais" },
-    { id: "ServicosSNF", nome: "Serviços S/NF", icon: FileText, descricao: "Serviços sem nota fiscal" },
-    { id: "ClientesSNF", nome: "Clientes S/NF", icon: Users, descricao: "Clientes para serviços S/NF" },
+    { id: "ConsultaSEFAZ", nome: "Consulta SEFAZ", icon: Search, descricao: "Consultar SEFAZ" },
     { id: "MascaraRomaneio", nome: "Máscara Romaneio", icon: FileText, descricao: "Gerar romaneios" },
     { id: "RomaneiosGerados", nome: "Romaneios Gerados", icon: Package, descricao: "Visualizar romaneios" },
     { id: "ImpressaoRelatorio", nome: "Impressão Relatório", icon: Printer, descricao: "Imprimir relatórios" },
+    { id: "ServicosSNF", nome: "Serviços S/NF", icon: FileText, descricao: "Serviços sem nota fiscal" },
+    { id: "Precificacao", nome: "Precificação", icon: FileText, descricao: "Precificação de fretes" },
+    // Cadastros
+    { id: "Clientes", nome: "Clientes", icon: Users, descricao: "Cadastro de clientes" },
+    { id: "ClientesSNF", nome: "Clientes S/NF", icon: Users, descricao: "Clientes para serviços S/NF" },
+    { id: "Destinatarios", nome: "Destinatários", icon: Users, descricao: "Cadastro de destinatários" },
+    { id: "Transportadoras", nome: "Transportadoras", icon: Package, descricao: "Cadastro de transportadoras" },
+    { id: "Motoristas", nome: "Colaboradores", icon: Users, descricao: "Cadastro de colaboradores" },
+    { id: "Veiculos", nome: "Veículos", icon: Car, descricao: "Cadastro de veículos" },
+    // Monitoramento
     { id: "RotasGPS", nome: "Rotas GPS", icon: Navigation, descricao: "Gerenciar rotas" },
-    { id: "OrdensColeta", nome: "Ordens de Coleta", icon: Package, descricao: "Gerenciar ordens de coleta" },
     { id: "Rastreamento", nome: "Rastreamento", icon: Navigation, descricao: "Rastrear entregas" },
+    { id: "BuscaMultas", nome: "Busca de Multas", icon: Car, descricao: "Consultar multas de veículos" },
+    // Ferramentas
+    { id: "ExtratorGoogle", nome: "Extrator Google", icon: Search, descricao: "Extrair dados do Google" },
+    { id: "ImportacaoDocumentos", nome: "Importar Documentos", icon: FileText, descricao: "Importar documentos" },
+    { id: "EmailManager", nome: "Emails", icon: FileText, descricao: "Gerenciar emails" },
+    // Relatórios
     { id: "Relatorios", nome: "Relatórios", icon: FileText, descricao: "Relatórios gerais" },
     { id: "RelatorioMotoristas", nome: "Performance", icon: Award, descricao: "Performance de motoristas" },
+    // Admin
+    { id: "Avisos", nome: "Avisos", icon: Bell, descricao: "Gerenciar avisos do sistema" },
     { id: "Configuracoes", nome: "Configurações", icon: Settings, descricao: "Configurações do sistema" },
     { id: "AprovacaoUsuarios", nome: "Gerenciar Usuários", icon: UserCheck, descricao: "Aprovar e gerenciar usuários" },
     { id: "Backup", nome: "Backup", icon: Database, descricao: "Backup de dados" },
     { id: "PersonalizarHome", nome: "Personalizar Home", icon: LayoutGrid, descricao: "Personalizar página inicial" },
-    { id: "ImportacaoDocumentos", nome: "Importar Documentos", icon: FileText, descricao: "Importar documentos" },
-    { id: "EmailManager", nome: "Emails", icon: FileText, descricao: "Gerenciar emails" },
     { id: "ConfiguracaoModulos", nome: "Configuração Módulos", icon: Settings, descricao: "Configurar módulos ativos" },
+    { id: "GerenciadorMenu", nome: "Gerenciar Menu", icon: LayoutGrid, descricao: "Gerenciar visibilidade do menu" },
 ];
 
 export default function ConfiguracaoModulos() {

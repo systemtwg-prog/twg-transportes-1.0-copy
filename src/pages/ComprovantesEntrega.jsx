@@ -598,7 +598,7 @@ export default function ComprovantesEntrega() {
                 {/* Barra de Seleção */}
                 {selectedIds.length > 0 && (
                     <Card className="bg-gradient-to-r from-sky-500 to-cyan-600 border-0 shadow-lg">
-                        <CardContent className="p-3 md:p-4 flex items-center justify-between">
+                        <CardContent className="p-3 md:p-4 flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-2 md:gap-3">
                                 <Badge className="bg-white text-sky-700 text-sm md:text-lg px-2 md:px-3 py-1">
                                     {selectedIds.length} selecionado(s)
@@ -612,15 +612,31 @@ export default function ComprovantesEntrega() {
                                     <X className="w-3 h-3 md:w-4 md:h-4 mr-1" /> Limpar
                                 </Button>
                             </div>
-                            <Button 
-                                onClick={() => setShowBulkEdit(true)}
-                                size="sm"
-                                className="bg-white text-sky-700 hover:bg-sky-50 text-xs md:text-sm h-8 md:h-10"
-                            >
-                                <Pencil className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                                <span className="hidden sm:inline">Editar em Massa</span>
-                                <span className="sm:hidden">Editar</span>
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={handleDownloadZip}
+                                    disabled={downloadingZip}
+                                    size="sm"
+                                    className="bg-green-500 hover:bg-green-600 text-white text-xs md:text-sm h-8 md:h-10"
+                                >
+                                    {downloadingZip ? (
+                                        <Loader2 className="w-3 h-3 md:w-4 md:h-4 mr-1 animate-spin" />
+                                    ) : (
+                                        <FolderDown className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                                    )}
+                                    <span className="hidden sm:inline">Baixar ZIP</span>
+                                    <span className="sm:hidden">ZIP</span>
+                                </Button>
+                                <Button 
+                                    onClick={() => setShowBulkEdit(true)}
+                                    size="sm"
+                                    className="bg-white text-sky-700 hover:bg-sky-50 text-xs md:text-sm h-8 md:h-10"
+                                >
+                                    <Pencil className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                                    <span className="hidden sm:inline">Editar em Massa</span>
+                                    <span className="sm:hidden">Editar</span>
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 )}

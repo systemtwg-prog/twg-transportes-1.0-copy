@@ -392,6 +392,8 @@ export default function ComprovantesEntrega() {
         }
     };
 
+    const [downloadingZip, setDownloadingZip] = useState(false);
+
     // Função de download de imagem
     const handleDownloadImage = async (comprovante) => {
         if (!comprovante.arquivos || comprovante.arquivos.length === 0) {
@@ -406,7 +408,7 @@ export default function ComprovantesEntrega() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `comprovante_${comprovante.nota_fiscal || 'sem_nf'}.jpg`;
+            a.download = `NF_${comprovante.nota_fiscal || 'sem_nf'}.jpg`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -415,6 +417,58 @@ export default function ComprovantesEntrega() {
         } catch (error) {
             toast.error("Erro ao baixar imagem");
         }
+    };
+
+    // Download em ZIP dos selecionados
+    const handleDownloadZip = async () => {
+        const selecionados = comprovantes.filter(c => selectedIds.includes(c.id));
+        const comArquivos = selecionados.filter(c => c.arquivos && c.arquivos.length > 0);
+        
+        if (comArquivos.length === 0) {
+            toast.error("Nenhum comprovante selecionado com arquivos");
+            return;
+        }
+
+        setDownloadingZip(true);
+        try {
+            const zip = new JSZip();
+            let adicionados = 0;
+
+            for (const comprovante of comArquivos) {
+                for (let i = 0; i < comprovante.arquivos.length; i++) {
+                    const arq = comprovante.arquivos[i];
+                    try {
+                        const response = await fetch(arq.url);
+                        const blob = await response.blob();
+                        const ext = arq.tipo?.includes("pdf") ? "pdf" : "jpg";
+                        const nf = comprovante.nota_fiscal || "sem_nf";
+                        const suffix = comprovante.arquivos.length > 1 ? `_${i + 1}` : "";
+                        const filename = `NF_${nf}${suffix}.${ext}`;
+                        zip.file(filename, blob);
+                        adicionados++;
+                    } catch {}
+                }
+            }
+
+            if (adicionados === 0) {
+                toast.error("Não foi possível baixar nenhum arquivo");
+                return;
+            }
+
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            const url = window.URL.createObjectURL(zipBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `comprovantes_${new Date().toISOString().split("T")[0]}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success(`ZIP com ${adicionados} arquivo(s) baixado!`);
+        } catch (error) {
+            toast.error("Erro ao gerar ZIP");
+        }
+        setDownloadingZip(false);
     };
 
     // Variável para controlar filtro de "sem empresa"

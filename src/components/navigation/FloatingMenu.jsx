@@ -13,27 +13,40 @@ import { useQuery } from "@tanstack/react-query";
 
 const menuItems = [
     { name: "Home", href: "Home", icon: Home, category: "principal" },
+    { name: "Nota Depósito", href: "NotaDeposito", icon: Camera, category: "operacional" },
     { name: "Comprovantes Entrega", href: "ComprovantesEntrega", icon: Upload, category: "operacional" },
     { name: "CTEs", href: "CTEs", icon: FileText, category: "operacional" },
+    { name: "Conhecimento de Transportes", href: "ComprovantesCtes", icon: FileText, category: "documentos" },
+    { name: "Documentos", href: "Documentos", icon: FileText, category: "documentos" },
     { name: "Coletas Diárias", href: "ColetasDiarias", icon: Package, category: "operacional" },
     { name: "Adicionar Coletas", href: "AdicionarColetaDiaria", icon: Package, category: "operacional" },
     { name: "Ordens de Coleta", href: "OrdensColeta", icon: ClipboardList, category: "operacional" },
     { name: "Notas Fiscais", href: "NotasFiscais", icon: FileText, category: "documentos" },
     { name: "Máscara Romaneio", href: "MascaraRomaneio", icon: Truck, category: "documentos" },
     { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package, category: "documentos" },
+    { name: "Impressão Relatório", href: "ImpressaoRelatorio", icon: Printer, category: "documentos" },
     { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText, category: "documentos" },
-    { name: "Precificação", href: "Precificacao", icon: DollarSign, category: "documentos" },
     { name: "Clientes", href: "Clientes", icon: Users, category: "cadastros" },
+    { name: "Clientes S/NF", href: "ClientesSNF", icon: Users, category: "cadastros" },
     { name: "Destinatários", href: "Destinatarios", icon: Users, category: "cadastros" },
     { name: "Transportadoras", href: "Transportadoras", icon: Building2, category: "cadastros" },
     { name: "Colaboradores", href: "Motoristas", icon: User, category: "cadastros" },
     { name: "Veículos", href: "Veiculos", icon: Car, category: "cadastros" },
+    { name: "Rotas GPS", href: "RotasGPS", icon: Navigation, category: "monitoramento" },
+    { name: "Rastreamento", href: "Rastreamento", icon: Navigation, category: "monitoramento" },
+    { name: "Busca Multas", href: "BuscaMultas", icon: AlertTriangle, category: "monitoramento" },
+    { name: "Extrator Google", href: "ExtratorGoogle", icon: Search, category: "ferramentas" },
+    { name: "Importar Documentos", href: "ImportacaoDocumentos", icon: Upload, category: "ferramentas" },
+    { name: "Emails", href: "EmailManager", icon: Mail, category: "ferramentas" },
+    { name: "Precificação", href: "Precificacao", icon: DollarSign, category: "ferramentas" },
+    { name: "Relatórios", href: "Relatorios", icon: FileText, category: "relatorios" },
+    { name: "Performance", href: "RelatorioMotoristas", icon: Award, category: "relatorios" },
     { name: "Avisos", href: "Avisos", icon: Bell, category: "admin" },
     { name: "Configurações", href: "Configuracoes", icon: Settings, category: "admin" },
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck, category: "admin" },
     { name: "Backup", href: "Backup", icon: Database, category: "admin" },
+    { name: "Personalizar Home", href: "PersonalizarHome", icon: LayoutGrid, category: "admin" },
     { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
-    { name: "Gerenciar Menu", href: "GerenciadorMenu", icon: LayoutGrid, category: "admin" },
 ];
 
 const categories = [
@@ -72,8 +85,26 @@ export default function FloatingMenu({ currentPage }) {
         }
     });
 
-    // Mostrar TODOS os itens do menu - sem filtragem
-    const menuFiltrado = menuItems;
+    const isAdmin = currentUser?.role === "admin";
+    const modulosAtivos = config?.[0]?.modulos_ativos;
+    const paginasPermitidas = currentUser?.paginas_permitidas || [];
+
+    // Lógica simplificada de filtro
+    const menuFiltrado = menuItems.filter(item => {
+        // Home sempre visível
+        if (item.href === "Home") return true;
+        
+        // Admin
+        if (isAdmin) {
+            // Se não configurou módulos ainda, mostra tudo
+            if (!modulosAtivos || modulosAtivos.length === 0) return true;
+            // Se configurou, respeita a configuração
+            return modulosAtivos.includes(item.href);
+        }
+        
+        // Usuário comum - só vê o que tem permissão
+        return paginasPermitidas.includes(item.href);
+    });
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

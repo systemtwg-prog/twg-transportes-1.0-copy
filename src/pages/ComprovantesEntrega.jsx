@@ -10,9 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     Plus, FileText, Upload, Trash2, Pencil, Eye, 
-    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2, Check, AlertTriangle, User, FolderDown
+    Camera, File, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Download, Search, Save, Share2, Building2, Calendar, RotateCw, RefreshCw, Loader2, Check, AlertTriangle, User
 } from "lucide-react";
-import JSZip from "jszip";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -392,8 +391,6 @@ export default function ComprovantesEntrega() {
         }
     };
 
-    const [downloadingZip, setDownloadingZip] = useState(false);
-
     // Função de download de imagem
     const handleDownloadImage = async (comprovante) => {
         if (!comprovante.arquivos || comprovante.arquivos.length === 0) {
@@ -408,7 +405,7 @@ export default function ComprovantesEntrega() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `NF_${comprovante.nota_fiscal || 'sem_nf'}.jpg`;
+            a.download = `comprovante_${comprovante.nota_fiscal || 'sem_nf'}.jpg`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -417,58 +414,6 @@ export default function ComprovantesEntrega() {
         } catch (error) {
             toast.error("Erro ao baixar imagem");
         }
-    };
-
-    // Download em ZIP dos selecionados
-    const handleDownloadZip = async () => {
-        const selecionados = comprovantes.filter(c => selectedIds.includes(c.id));
-        const comArquivos = selecionados.filter(c => c.arquivos && c.arquivos.length > 0);
-        
-        if (comArquivos.length === 0) {
-            toast.error("Nenhum comprovante selecionado com arquivos");
-            return;
-        }
-
-        setDownloadingZip(true);
-        try {
-            const zip = new JSZip();
-            let adicionados = 0;
-
-            for (const comprovante of comArquivos) {
-                for (let i = 0; i < comprovante.arquivos.length; i++) {
-                    const arq = comprovante.arquivos[i];
-                    try {
-                        const response = await fetch(arq.url);
-                        const blob = await response.blob();
-                        const ext = arq.tipo?.includes("pdf") ? "pdf" : "jpg";
-                        const nf = comprovante.nota_fiscal || "sem_nf";
-                        const suffix = comprovante.arquivos.length > 1 ? `_${i + 1}` : "";
-                        const filename = `NF_${nf}${suffix}.${ext}`;
-                        zip.file(filename, blob);
-                        adicionados++;
-                    } catch {}
-                }
-            }
-
-            if (adicionados === 0) {
-                toast.error("Não foi possível baixar nenhum arquivo");
-                return;
-            }
-
-            const zipBlob = await zip.generateAsync({ type: "blob" });
-            const url = window.URL.createObjectURL(zipBlob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `comprovantes_${new Date().toISOString().split("T")[0]}.zip`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            toast.success(`ZIP com ${adicionados} arquivo(s) baixado!`);
-        } catch (error) {
-            toast.error("Erro ao gerar ZIP");
-        }
-        setDownloadingZip(false);
     };
 
     // Variável para controlar filtro de "sem empresa"
@@ -598,7 +543,7 @@ export default function ComprovantesEntrega() {
                 {/* Barra de Seleção */}
                 {selectedIds.length > 0 && (
                     <Card className="bg-gradient-to-r from-sky-500 to-cyan-600 border-0 shadow-lg">
-                        <CardContent className="p-3 md:p-4 flex items-center justify-between flex-wrap gap-2">
+                        <CardContent className="p-3 md:p-4 flex items-center justify-between">
                             <div className="flex items-center gap-2 md:gap-3">
                                 <Badge className="bg-white text-sky-700 text-sm md:text-lg px-2 md:px-3 py-1">
                                     {selectedIds.length} selecionado(s)
@@ -612,31 +557,15 @@ export default function ComprovantesEntrega() {
                                     <X className="w-3 h-3 md:w-4 md:h-4 mr-1" /> Limpar
                                 </Button>
                             </div>
-                            <div className="flex gap-2">
-                                <Button 
-                                    onClick={handleDownloadZip}
-                                    disabled={downloadingZip}
-                                    size="sm"
-                                    className="bg-green-500 hover:bg-green-600 text-white text-xs md:text-sm h-8 md:h-10"
-                                >
-                                    {downloadingZip ? (
-                                        <Loader2 className="w-3 h-3 md:w-4 md:h-4 mr-1 animate-spin" />
-                                    ) : (
-                                        <FolderDown className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                                    )}
-                                    <span className="hidden sm:inline">Baixar ZIP</span>
-                                    <span className="sm:hidden">ZIP</span>
-                                </Button>
-                                <Button 
-                                    onClick={() => setShowBulkEdit(true)}
-                                    size="sm"
-                                    className="bg-white text-sky-700 hover:bg-sky-50 text-xs md:text-sm h-8 md:h-10"
-                                >
-                                    <Pencil className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                                    <span className="hidden sm:inline">Editar em Massa</span>
-                                    <span className="sm:hidden">Editar</span>
-                                </Button>
-                            </div>
+                            <Button 
+                                onClick={() => setShowBulkEdit(true)}
+                                size="sm"
+                                className="bg-white text-sky-700 hover:bg-sky-50 text-xs md:text-sm h-8 md:h-10"
+                            >
+                                <Pencil className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                                <span className="hidden sm:inline">Editar em Massa</span>
+                                <span className="sm:hidden">Editar</span>
+                            </Button>
                         </CardContent>
                     </Card>
                 )}

@@ -543,41 +543,13 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
         setShowTextDialog(false);
         try {
             const result = await base44.integrations.Core.InvokeLLM({
-                prompt: `Você é um especialista em extrair dados de documentos de transporte (CTe, Romaneios, Notas Fiscais).
+                prompt: `Analise este texto e identifique APENAS:
+1. Remetente: Nome da empresa/pessoa que está enviando (EXPEDIDOR/REMETENTE)
+2. Destinatário: Nome da empresa/pessoa que irá receber (DESTINATÁRIO/RECEBEDOR)
 
-Analise cuidadosamente este texto e extraia TODAS as seguintes informações:
+Se não encontrar algum campo, retorne string vazia.
 
-**EMPRESAS:**
-- Remetente: Nome completo da empresa/pessoa que está enviando a mercadoria (EXPEDIDOR/REMETENTE)
-- Destinatário: Nome completo da empresa/pessoa que irá receber (DESTINATÁRIO/RECEBEDOR)
-- Transportadora: Nome da empresa transportadora responsável pelo frete
-
-**DOCUMENTO:**
-- Número do Documento: Número do CTe, NFe ou documento (campo "No.", "NÚMERO", "DOC")
-- Data de Emissão: Data de emissão do documento (campo "EMISSÃO", "DATA EMISSÃO", "DT. EMISSÃO")
-
-**CARGA:**
-- Volume: Quantidade de volumes/pacotes (ex: "1 VOL", "3 VOLUMES", "10 UN")
-- Peso: Peso total em quilogramas (ex: "500 KG", "1.250,00 KG")
-
-**VALORES FINANCEIROS (extrair todos os valores numéricos):**
-- Valor da Nota Fiscal: Valor total da nota/mercadoria (campo "VALOR DA NOTA" ou "VALOR MERC")
-- Frete Peso/Vol: Valor do frete baseado em peso ou volume (campo "FRETE PESO" ou "FRETE PESO/VOL" ou "VL. FRETE PESO")
-- Sec/Cat: Valor de seguro ou CAT (campo "SEC/CAT" ou "SEGURO" ou "ADVALOREM")
-- Despacho: Taxa de despacho (campo "DESPACHO" ou "TX DESPACHO")
-- Pedágio: Valor do pedágio (campo "PEDÁGIO" ou "PEDAGIO")
-- Outros: Outras taxas/valores (campo "OUTROS" ou "OUTRAS TAXAS")
-- Total Prestação: Valor total do serviço de transporte (campo "TOTAL PRESTAÇÃO" ou "VL. TOTAL SERVIÇO" ou "TOTAL A PAGAR")
-
-**INSTRUÇÕES IMPORTANTES:**
-1. Extraia APENAS valores numéricos, removendo símbolos de moeda (R$), pontos de milhar e vírgulas decimais (converta vírgula em ponto)
-2. Se um campo não existir no documento, retorne 0 (zero)
-3. Para Volume e Peso, extraia o texto completo com a unidade (ex: "10 VOL", "850 KG")
-4. Seja preciso: procure por rótulos como "REMETENTE:", "DESTINATÁRIO:", "VALOR MERC:", etc.
-5. O Total Prestação geralmente é a SOMA de todos os valores de frete
-6. Extraia números mesmo que estejam formatados (ex: "1.250,00" deve virar 1250.00)
-
-TEXTO DO DOCUMENTO:
+TEXTO:
 ${text}`,
                 response_json_schema: {
                     type: "object",
@@ -589,97 +561,21 @@ ${text}`,
                         destinatario: { 
                             type: "string",
                             description: "Nome completo do destinatário/recebedor"
-                        },
-                        transportadora: {
-                            type: "string",
-                            description: "Nome da transportadora"
-                        },
-                        numero_documento: {
-                            type: "string",
-                            description: "Número do documento (CTe, NFe, etc)"
-                        },
-                        data_emissao: {
-                            type: "string",
-                            description: "Data de emissão no formato DD/MM/YYYY"
-                        },
-                        volume: { 
-                            type: "string",
-                            description: "Quantidade de volumes com unidade (ex: 10 VOL)"
-                        },
-                        peso: { 
-                            type: "string",
-                            description: "Peso com unidade (ex: 850 KG)"
-                        },
-                        valor_nota: { 
-                            type: "number",
-                            description: "Valor da nota fiscal em número decimal"
-                        },
-                        frete_peso: { 
-                            type: "number",
-                            description: "Valor do frete peso/volume"
-                        },
-                        sec_cat: { 
-                            type: "number",
-                            description: "Valor seguro/CAT/advalorem"
-                        },
-                        despacho: { 
-                            type: "number",
-                            description: "Valor da taxa de despacho"
-                        },
-                        pedagio: { 
-                            type: "number",
-                            description: "Valor do pedágio"
-                        },
-                        outros: { 
-                            type: "number",
-                            description: "Outros valores/taxas"
-                        },
-                        total_prestacao: { 
-                            type: "number",
-                            description: "Valor total do serviço de transporte"
                         }
                     },
-                    required: ["remetente", "destinatario", "volume", "peso", "valor_nota", "total_prestacao"]
+                    required: ["remetente", "destinatario"]
                 }
             });
 
-            const valorNota = parseFloat(result.valor_nota) || 0;
-            const totalPrestacao = parseFloat(result.total_prestacao) || 0;
-            let porcentagem = 0;
-            
-            if (valorNota > 0 && totalPrestacao > 0) {
-                porcentagem = ((totalPrestacao / valorNota) * 100).toFixed(2);
-            }
-
-            let secCat = parseFloat(result.sec_cat) || 0;
-            if (secCat === 0 && valorNota > 0) {
-                secCat = parseFloat((valorNota * 0.005).toFixed(2));
-            }
-
-            // Normalizar peso do texto
-            let pesoLimpo = result.peso || "";
-            if (typeof pesoLimpo === 'string') {
-                pesoLimpo = pesoLimpo.replace(/[^\d.,]/g, '').replace(',', '.');
-            }
-            const pesoNumerico = parseFloat(pesoLimpo) || 0;
-
-            let pedagio = parseFloat(result.pedagio) || 0;
-            if (pedagio === 0 && pesoNumerico > 0) {
-                pedagio = parseFloat(((pesoNumerico / 100) * 1.40).toFixed(2));
-            }
-
             setFormData(prev => ({
                 ...prev,
-                ...result,
-                peso: pesoLimpo,
-                sec_cat: secCat,
-                pedagio: pedagio,
-                valor_servico: totalPrestacao,
-                porcentagem: porcentagem
+                remetente: result.remetente || "",
+                destinatario: result.destinatario || ""
             }));
 
             setEditing(true);
             setPastedText("");
+            toast({ title: "Remetente e Destinatário identificados! Complete os demais campos manualmente.", duration: 3000 });
         } catch (error) {
             toast({ 
                 title: "Erro ao processar texto", 
@@ -706,15 +602,24 @@ ${text}`,
                     </Button>
                 </div>
 
-                {/* Botão para Adicionar Manualmente */}
+                {/* Botões de Ação */}
                 {!editing && (
-                    <Button
-                        onClick={() => setEditing(true)}
-                        className="w-full h-24 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-xl font-semibold shadow-xl"
-                    >
-                        <FileText className="w-8 h-8 mr-3" />
-                        Adicionar Nova Precificação
-                    </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button
+                            onClick={() => setEditing(true)}
+                            className="h-24 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-xl font-semibold shadow-xl"
+                        >
+                            <FileText className="w-8 h-8 mr-3" />
+                            Adicionar Nova Precificação
+                        </Button>
+                        <Button
+                            onClick={() => setShowTextDialog(true)}
+                            className="h-24 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-xl font-semibold shadow-xl"
+                        >
+                            <FileText className="w-8 h-8 mr-3" />
+                            Colar Texto (Identificar Remetente/Destinatário)
+                        </Button>
+                    </div>
                 )}
 
                 {/* Câmera */}
@@ -1296,6 +1201,10 @@ ${documento}`,
                         <DialogTitle>Colar Texto do Documento</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            Cole o texto do documento e a IA identificará automaticamente o <strong>Remetente</strong> e o <strong>Destinatário</strong>. 
+                            Os demais campos deverão ser preenchidos manualmente.
+                        </p>
                         <Textarea
                             placeholder="Cole aqui o texto do CTe, NFe ou Romaneio..."
                             value={pastedText}
@@ -1306,11 +1215,20 @@ ${documento}`,
                         <div className="flex gap-2">
                             <Button
                                 onClick={() => processText(pastedText)}
-                                disabled={!pastedText.trim()}
+                                disabled={!pastedText.trim() || extracting}
                                 className="flex-1"
                             >
-                                <FileText className="mr-2" />
-                                Processar Texto
+                                {extracting ? (
+                                    <>
+                                        <Loader2 className="mr-2 animate-spin" />
+                                        Identificando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileText className="mr-2" />
+                                        Identificar Remetente e Destinatário
+                                    </>
+                                )}
                             </Button>
                             <Button
                                 onClick={() => {

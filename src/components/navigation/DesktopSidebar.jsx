@@ -34,7 +34,7 @@ const menuItems = [
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck, category: "admin" },
     { name: "Backup", href: "Backup", icon: Database, category: "admin" },
     { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
-    { name: "Gerenciar Menu", href: "GerenciadorMenu", icon: LayoutGrid, category: "admin" },
+
 ];
 
 const categories = [

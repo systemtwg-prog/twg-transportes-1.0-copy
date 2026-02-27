@@ -190,7 +190,37 @@ export default function Home() {
             </div>
         `).join('');
 
-        gerarImpressaoNotas(winPrint, placaSelecionada, veiculo, todasNotas.length, Object.keys(notasAgrupadas).length, notasHtml);
+        winPrint.document.write(`
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Notas do Veículo ${placaSelecionada}</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1e293b; }
+                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px; }
+                    .logo img { max-width: 80px; max-height: 50px; object-fit: contain; margin-right: 15px; }
+                    .title { font-size: 18px; font-weight: bold; color: #1e40af; }
+                    .subtitle { font-size: 14px; color: #64748b; }
+                    @media print { body { padding: 10mm; } @page { margin: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="logo">
+                        ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}
+                    </div>
+                    <div>
+                        <p class="title">Notas do Veículo ${placaSelecionada} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</p>
+                        <p class="subtitle">${todasNotas.length} notas | ${Object.keys(notasAgrupadas).length} transportadoras | ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+                    </div>
+                </div>
+                ${notasHtml}
+            </body>
+            </html>
+        `);
+        winPrint.document.close();
+        setTimeout(() => winPrint.print(), 500);
     };
 
     const handlePrintTodosDashboard = (printConfig = {}) => {

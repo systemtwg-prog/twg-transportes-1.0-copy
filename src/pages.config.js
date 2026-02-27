@@ -69,6 +69,7 @@ import Destinatarios from './pages/Destinatarios';
 import Documentos from './pages/Documentos';
 import EmailManager from './pages/EmailManager';
 import ExtratorGoogle from './pages/ExtratorGoogle';
+import GerenciadorMenu from './pages/GerenciadorMenu';
 import Home from './pages/Home';
 import HomeDesktop from './pages/HomeDesktop';
 import ImportacaoDocumentos from './pages/ImportacaoDocumentos';
@@ -92,7 +93,6 @@ import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
-import GerenciadorMenu from './pages/GerenciadorMenu';
 import __Layout from './Layout.jsx';
 
 
@@ -119,6 +119,7 @@ export const PAGES = {
     "Documentos": Documentos,
     "EmailManager": EmailManager,
     "ExtratorGoogle": ExtratorGoogle,
+    "GerenciadorMenu": GerenciadorMenu,
     "Home": Home,
     "HomeDesktop": HomeDesktop,
     "ImportacaoDocumentos": ImportacaoDocumentos,
@@ -142,7 +143,6 @@ export const PAGES = {
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,
-    "GerenciadorMenu": GerenciadorMenu,
 }
 
 export const pagesConfig = {

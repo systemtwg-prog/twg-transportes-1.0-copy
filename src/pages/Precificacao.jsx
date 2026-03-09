@@ -607,15 +607,31 @@ ${text}`,
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
             <div className="max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                     <h1 className="text-3xl font-bold text-gray-900">Precificação</h1>
-                    <Button
-                        onClick={() => setShowAnalises(true)}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                    >
-                        <BarChart3 className="w-5 h-5 mr-2" />
-                        Análises Inteligentes
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            onClick={() => setShowPagadores(true)}
+                            className="bg-green-600 hover:bg-green-700"
+                        >
+                            <Users className="w-5 h-5 mr-2" />
+                            Pagadores
+                        </Button>
+                        <Button
+                            onClick={() => setShowRelatorio(true)}
+                            className="bg-orange-600 hover:bg-orange-700"
+                        >
+                            <FileBarChart2 className="w-5 h-5 mr-2" />
+                            Relatório
+                        </Button>
+                        <Button
+                            onClick={() => setShowAnalises(true)}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                        >
+                            <BarChart3 className="w-5 h-5 mr-2" />
+                            Análises
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Botões de Ação */}

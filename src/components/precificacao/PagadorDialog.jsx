@@ -26,7 +26,6 @@ export default function PagadorDialog({ open, onOpenChange }) {
             queryClient.invalidateQueries(['pagadores']);
             setFormData({ nome: "", cnpj_cpf: "", email: "", telefone: "" });
             setShowForm(false);
-            toast({ title: "Pagador criado!", duration: 2000 });
         }
     });
 
@@ -35,7 +34,6 @@ export default function PagadorDialog({ open, onOpenChange }) {
         onSuccess: () => {
             queryClient.invalidateQueries(['pagadores']);
             setEditing(null);
-            toast({ title: "Pagador atualizado!", duration: 2000 });
         }
     });
 

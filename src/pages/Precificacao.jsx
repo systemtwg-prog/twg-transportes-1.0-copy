@@ -15,6 +15,30 @@ import { useToast } from "@/components/ui/use-toast";
 import PagadorDialog from "@/components/precificacao/PagadorDialog";
 import RelatorioPrecificacao from "@/components/precificacao/RelatorioPrecificacao";
 
+// Helper para normalizar data de emissão para DD/MM/YYYY
+const formatDataEmissao = (value) => {
+    if (!value) return "";
+    const str = String(value).trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [ano, mes, dia] = str.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+    if (!isNaN(str) && str.length > 5) {
+        const date = new Date(Number(str));
+        if (!isNaN(date.getTime())) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            return `${d}/${m}/${date.getFullYear()}`;
+        }
+    }
+    if (/^\d{2}\/\d{2}\/\d{2}$/.test(str)) {
+        const [d, m, y] = str.split('/');
+        return `${d}/${m}/20${y}`;
+    }
+    return str;
+};
+
 export default function Precificacao() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -35,6 +59,7 @@ export default function Precificacao() {
     const [showRelatorio, setShowRelatorio] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [pagadorBulk, setPagadorBulk] = useState("");
+    const [filterSemPagador, setFilterSemPagador] = useState(false);
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -248,7 +273,7 @@ export default function Precificacao() {
             destinatario: registro.destinatario || "",
             transportadora: registro.transportadora || "",
             numero_documento: numeroDoc,
-            data_emissao: registro.data_emissao || "",
+            data_emissao: formatDataEmissao(registro.data_emissao),
             volume: registro.volume || "",
             peso: pesoLimpo,
             valor_nota: valorNota,
@@ -431,6 +456,7 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             setFormData(prev => ({
                 ...prev,
                 ...result,
+                data_emissao: formatDataEmissao(result.data_emissao),
                 peso: pesoLimpo, // Peso já normalizado
                 sec_cat: secCat,
                 pedagio: pedagio,
@@ -948,6 +974,14 @@ ${text}`,
                                         </Button>
                                     )}
                                 </div>
+                                <Button
+                                    size="sm"
+                                    variant={filterSemPagador ? "default" : "outline"}
+                                    onClick={() => setFilterSemPagador(p => !p)}
+                                    className={filterSemPagador ? "bg-orange-500 hover:bg-orange-600 text-white" : "border-orange-400 text-orange-600 hover:bg-orange-50"}
+                                >
+                                    {filterSemPagador ? "✓ Sem Pagador" : "Sem Pagador"}
+                                </Button>
                                 </div>
 
                                 {/* Estatísticas dos Dados Filtrados */}
@@ -972,6 +1006,7 @@ ${text}`,
                                        if (dateFilter.end && dataFormatada > dateFilter.end) return false;
                                    }
 
+                                   if (filterSemPagador && prec.pagador_id) return false;
                                    return true;
                                 });
 
@@ -1125,10 +1160,11 @@ ${text}`,
                                         const dataFormatada = ano && mes && dia ? `${ano}-${mes}-${dia}` : precData;
                                         if (dateFilter.start && dataFormatada < dateFilter.start) return false;
                                         if (dateFilter.end && dataFormatada > dateFilter.end) return false;
-                                    }
-                                    
-                                    return true;
-                                }).map((prec) => (
+                                        }
+
+                                        if (filterSemPagador && prec.pagador_id) return false;
+                                        return true;
+                                        }).map((prec) => (
                                     <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-200 border-gray-300' : 'bg-white'}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex items-start gap-2 flex-1">
@@ -1178,7 +1214,7 @@ ${text}`,
                                                <p className="text-xs text-gray-500 mt-1">
                                                    {prec.numero_documento && `Nº ${prec.numero_documento}`}
                                                    {prec.numero_documento && prec.data_emissao && ' - '}
-                                                   {prec.data_emissao && `Emissão: ${prec.data_emissao}`}
+                                                   {prec.data_emissao && `Emissão: ${formatDataEmissao(prec.data_emissao)}`}
                                                </p>
 
                                                {prec.confirmado && (

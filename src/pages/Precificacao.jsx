@@ -722,6 +722,30 @@ ${text}`,
                                         onChange={(e) => setFormData(prev => ({ ...prev, transportadora: e.target.value }))}
                                     />
                                 </div>
+                                <div className="col-span-2">
+                                    <Label>Pagador</Label>
+                                    <Select
+                                        value={formData.pagador_id || "sem_pagador"}
+                                        onValueChange={(val) => {
+                                            if (val === "sem_pagador") {
+                                                setFormData(prev => ({ ...prev, pagador_id: "", pagador_nome: "" }));
+                                            } else {
+                                                const pag = pagadores.find(p => p.id === val);
+                                                setFormData(prev => ({ ...prev, pagador_id: val, pagador_nome: pag?.nome || "" }));
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecionar pagador (opcional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sem_pagador">Sem pagador</SelectItem>
+                                            {pagadores.map(p => (
+                                                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div>
                                     <Label>No. Documento</Label>
                                     <Input

@@ -1028,10 +1028,85 @@ ${text}`,
                                 );
                                 })()}
 
+                                {/* Seleção em Massa */}
+                                {selectedIds.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <span className="text-sm font-semibold text-blue-800">{selectedIds.length} selecionado(s)</span>
+                                        <div className="flex-1 min-w-[180px]">
+                                            <Select value={pagadorBulk} onValueChange={setPagadorBulk}>
+                                                <SelectTrigger className="h-8 text-sm">
+                                                    <SelectValue placeholder="Atribuir pagador..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="remover">Remover pagador</SelectItem>
+                                                    {pagadores.map(p => (
+                                                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                            disabled={!pagadorBulk}
+                                            onClick={async () => {
+                                                const pag = pagadores.find(p => p.id === pagadorBulk);
+                                                for (const id of selectedIds) {
+                                                    const prec = precificacoes.find(p => p.id === id);
+                                                    if (prec) {
+                                                        await base44.entities.Precificacao.update(id, {
+                                                            ...prec,
+                                                            pagador_id: pagadorBulk === "remover" ? "" : pagadorBulk,
+                                                            pagador_nome: pagadorBulk === "remover" ? "" : (pag?.nome || "")
+                                                        });
+                                                    }
+                                                }
+                                                queryClient.invalidateQueries(['precificacoes']);
+                                                setSelectedIds([]);
+                                                setPagadorBulk("");
+                                                toast({ title: "Pagador atualizado nos registros selecionados!", duration: 2000 });
+                                            }}
+                                        >
+                                            <Check className="w-4 h-4 mr-1" /> Aplicar
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => setSelectedIds([])}>
+                                            Limpar
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* Selecionar Todos */}
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Checkbox
+                                        checked={selectedIds.length > 0 && selectedIds.length === precificacoes.filter(prec => {
+                                            if (searchTerm) {
+                                                const termo = searchTerm.toLowerCase();
+                                                return prec.remetente?.toLowerCase().includes(termo) || prec.destinatario?.toLowerCase().includes(termo) || prec.transportadora?.toLowerCase().includes(termo) || prec.numero_documento?.toLowerCase().includes(termo);
+                                            }
+                                            return true;
+                                        }).length}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                const filtrados = precificacoes.filter(prec => {
+                                                    if (searchTerm) {
+                                                        const termo = searchTerm.toLowerCase();
+                                                        return prec.remetente?.toLowerCase().includes(termo) || prec.destinatario?.toLowerCase().includes(termo) || prec.transportadora?.toLowerCase().includes(termo) || prec.numero_documento?.toLowerCase().includes(termo);
+                                                    }
+                                                    return true;
+                                                });
+                                                setSelectedIds(filtrados.map(p => p.id));
+                                            } else {
+                                                setSelectedIds([]);
+                                            }
+                                        }}
+                                    />
+                                    <span>Selecionar todos</span>
+                                </div>
+
                                 <div className="space-y-4">
                                 {precificacoes.filter(prec => {
-                                    // Filtro de texto
-                                    if (searchTerm) {
+                                     // Filtro de texto
+                                     if (searchTerm) {
                                         const termo = searchTerm.toLowerCase();
                                         const matchText = 
                                             prec.remetente?.toLowerCase().includes(termo) ||

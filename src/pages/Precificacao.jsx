@@ -1390,6 +1390,12 @@ ${documento}`,
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog Pagadores */}
+            <PagadorDialog open={showPagadores} onOpenChange={setShowPagadores} />
+
+            {/* Dialog Relatório */}
+            <RelatorioPrecificacao open={showRelatorio} onOpenChange={setShowRelatorio} precificacoes={precificacoes} />
+
             {/* Dialog Análises Inteligentes */}
             <Dialog open={showAnalises} onOpenChange={setShowAnalises}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

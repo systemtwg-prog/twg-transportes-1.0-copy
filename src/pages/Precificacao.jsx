@@ -9,8 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3, Users, FileBarChart2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import PagadorDialog from "@/components/precificacao/PagadorDialog";
+import RelatorioPrecificacao from "@/components/precificacao/RelatorioPrecificacao";
 
 export default function Precificacao() {
     const { toast } = useToast();

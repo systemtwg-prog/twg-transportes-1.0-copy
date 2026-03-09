@@ -61,7 +61,9 @@ export default function Precificacao() {
         foto_url: "",
         confirmado: false,
         data: new Date().toISOString().split('T')[0],
-        observacoes: ""
+        observacoes: "",
+        pagador_id: "",
+        pagador_nome: ""
     });
 
     const { data: precificacoes = [] } = useQuery({

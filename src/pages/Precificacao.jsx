@@ -1309,7 +1309,9 @@ ${text}`,
                                         // Separar os documentos por linhas em branco ou ---
                                         const documentos = bulkText.split(/\n\s*\n|---/).filter(doc => doc.trim());
                                         
-                                        for (const documento of documentos) {
+                                        for (let i = 0; i < documentos.length; i++) {
+                                            const documento = documentos[i];
+                                            if (i > 0) await new Promise(res => setTimeout(res, 1500));
                                             // Processar cada documento
                                             const result = await base44.integrations.Core.InvokeLLM({
                                                 prompt: `Extraia os dados deste documento de transporte. Se não encontrar algum campo, retorne 0 ou string vazia:

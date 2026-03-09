@@ -31,6 +31,10 @@ export default function Precificacao() {
     const [bulkText, setBulkText] = useState("");
     const [processingBulk, setProcessingBulk] = useState(false);
     const [showAnalises, setShowAnalises] = useState(false);
+    const [showPagadores, setShowPagadores] = useState(false);
+    const [showRelatorio, setShowRelatorio] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [pagadorBulk, setPagadorBulk] = useState("");
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const fileInputRef = useRef(null);

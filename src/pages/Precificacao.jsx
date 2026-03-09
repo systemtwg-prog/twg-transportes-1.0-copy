@@ -516,10 +516,12 @@ Analise cuidadosamente este documento e extraia TODAS as seguintes informações
             foto_url: "",
             confirmado: false,
             data: new Date().toISOString().split('T')[0],
-            observacoes: ""
-        });
-        setCapturedImage(null);
-        setEditing(false);
+            observacoes: "",
+            pagador_id: "",
+            pagador_nome: ""
+            });
+            setCapturedImage(null);
+            setEditing(false);
     };
 
     const handleConfirm = (prec) => {

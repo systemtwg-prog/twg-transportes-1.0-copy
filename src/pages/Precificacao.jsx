@@ -69,6 +69,11 @@ export default function Precificacao() {
         queryFn: () => base44.entities.Precificacao.list('-created_date')
     });
 
+    const { data: pagadores = [] } = useQuery({
+        queryKey: ['pagadores'],
+        queryFn: () => base44.entities.Pagador.list('nome')
+    });
+
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Precificacao.create(data),
         onSuccess: () => {

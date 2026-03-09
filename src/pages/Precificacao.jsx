@@ -1182,13 +1182,19 @@ ${text}`,
                                                </p>
 
                                                {prec.confirmado && (
-                                                   <span className="inline-flex items-center gap-1 text-green-600 text-sm mt-1">
-                                                       <Check className="w-4 h-4" />
-                                                       Confirmado
-                                                   </span>
-                                               )}
-                                           </div>
-                                           <div className="flex gap-2">
+                                                    <span className="inline-flex items-center gap-1 text-green-600 text-sm mt-1">
+                                                        <Check className="w-4 h-4" />
+                                                        Confirmado
+                                                    </span>
+                                                )}
+                                                {prec.pagador_nome && (
+                                                    <Badge variant="outline" className="mt-1 text-xs text-green-700 border-green-300">
+                                                        Pagador: {prec.pagador_nome}
+                                                    </Badge>
+                                                )}
+                                               </div>
+                                               </div>
+                                               <div className="flex gap-2">
                                                {!prec.confirmado && (
                                                    <Button
                                                        size="icon"

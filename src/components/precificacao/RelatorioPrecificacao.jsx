@@ -97,7 +97,7 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                     th.right { text-align: right; }
                     th.center { text-align: center; }
                     tfoot tr { background: #dbeafe; font-weight: bold; }
-                    tfoot td { padding: 5px 6px; font-size: 8px; }
+                    tfoot td { padding: 8px 6px; font-size: 12px; font-weight: bold; }
                     @media print { body { padding: 5mm; } @page { margin: 0; size: landscape; } }
                 </style>
             </head>
@@ -137,14 +137,14 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6"><strong>TOTAIS (${dadosFiltrados.length} registros)</strong></td>
+                            <td colspan="6" style="font-size:13px;">TOTAIS (${dadosFiltrados.length} registros)</td>
                             <td style="text-align:right">${totais.valor_nota.toFixed(2)}</td>
                             <td style="text-align:right">${totais.frete_peso.toFixed(2)}</td>
                             <td style="text-align:right">${totais.sec_cat.toFixed(2)}</td>
                             <td style="text-align:right">${totais.despacho.toFixed(2)}</td>
                             <td style="text-align:right">${totais.pedagio.toFixed(2)}</td>
                             <td style="text-align:right">${totais.outros.toFixed(2)}</td>
-                            <td style="text-align:right; color: #16a34a;"><strong>R$ ${totais.valor_servico.toFixed(2)}</strong></td>
+                            <td style="text-align:right; color: #16a34a; font-size:14px;">R$ ${totais.valor_servico.toFixed(2)}</td>
                             <td></td>
                         </tr>
                     </tfoot>

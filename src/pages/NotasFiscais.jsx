@@ -724,36 +724,6 @@ IMPORTANTE:
     }
   };
 
-  const handleProcessPaste = async () => {
-    try {
-      const texto = await navigator.clipboard.readText();
-      const linhas = texto.split('\n').filter(l => l.trim());
-      let atualizados = 0, naoEncontrados = 0;
-      for (let linha of linhas) {
-        const colunas = linha.split('\t');
-        if (colunas.length >= 2 && colunas[0]?.trim()) {
-          const notasExistentes = await base44.entities.NotaFiscal.filter({ numero_nf: colunas[0].trim() });
-          if (notasExistentes.length > 0) {
-            const n = notasExistentes[0];
-            await base44.entities.NotaFiscal.update(n.id, {
-              destinatario: n.destinatario || colunas[1]?.trim() || "",
-              remetente: n.remetente || colunas[2]?.trim() || "",
-              peso: n.peso || colunas[3]?.trim() || "",
-              volume: n.volume || colunas[4]?.trim() || "",
-              transportadora: n.transportadora || colunas[5]?.trim() || "",
-              filial: n.filial || colunas[6]?.trim() || ""
-            });
-            atualizados++;
-          } else { naoEncontrados++; }
-        }
-      }
-      if (atualizados > 0) {
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        toast.success(naoEncontrados > 0 ? `${atualizados} atualizada(s). ${naoEncontrados} não encontrada(s).` : `${atualizados} atualizada(s)!`);
-      } else { toast.warning('Nenhuma nota encontrada'); }
-    } catch (error) { toast.error('Erro ao atualizar'); }
-  };
-
   const handleSubstituirWashington = async () => {
     const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
     const notasWashington = todasNotas.filter((n) => n.transportadora?.toUpperCase().includes("WASHINGTON"));

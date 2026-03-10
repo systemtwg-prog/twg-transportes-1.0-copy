@@ -87,7 +87,7 @@ export default function NotasFiscais() {
     localStorage.setItem('mascaraRomaneioConfig', JSON.stringify(layoutConfig));
   }, [layoutConfig]);
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
-
+  const [layoutExpanded, setLayoutExpanded] = useState(false);
   // Estados para gravação de áudio
   const [showAudioDialog, setShowAudioDialog] = useState(false);
   const [isRecording, setIsRecording] = useState(false);

@@ -691,8 +691,7 @@ IMPORTANTE:
     }
   };
 
-  // Funções de gravação de áudio
-  const startRecording = async () => {
+  const handleProcessPaste = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);

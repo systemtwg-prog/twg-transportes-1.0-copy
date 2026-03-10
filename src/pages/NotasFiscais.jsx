@@ -100,9 +100,7 @@ export default function NotasFiscais() {
   const [dadosExtraidos, setDadosExtraidos] = useState(null);
   const [destinoSelecionado, setDestinoSelecionado] = useState("");
   const [showImportador, setShowImportador] = useState(false);
-  const [showChaveAcesso, setShowChaveAcesso] = useState(false);
-  const [chaveAcesso, setChaveAcesso] = useState("");
-  const [consultandoChave, setConsultandoChave] = useState(false);
+
   const mediaRecorderRef = React.useRef(null);
   const audioChunksRef = React.useRef([]);
   const audioRef = React.useRef(null);
@@ -363,46 +361,7 @@ Se não encontrar algum dado, deixe em branco.`,
     setEditing(null);
   };
 
-  // Consultar chave de acesso
-  const handleConsultarChave = async () => {
-    if (!chaveAcesso || chaveAcesso.length !== 44) {
-      toast.error("Chave de acesso deve ter 44 dígitos");
-      return;
-    }
 
-    setConsultandoChave(true);
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `A partir da chave de acesso de NFe: ${chaveAcesso}
-                
-Extraia as seguintes informações:
-- Número da nota fiscal (posições 25-33 da chave)
-- UF emissor (posições 1-2)
-- Data de emissão (posições 3-8 no formato AAMM)
-
-Retorne apenas o número da nota fiscal extraído.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            numero_nf: { type: "string" }
-          }
-        }
-      });
-
-      if (result?.numero_nf) {
-        setForm({ ...form, numero_nf: result.numero_nf });
-        setShowChaveAcesso(false);
-        setChaveAcesso("");
-        toast.success("Número da NF extraído da chave!");
-      } else {
-        toast.error("Não foi possível extrair dados da chave");
-      }
-    } catch (error) {
-      console.error("Erro ao consultar chave:", error);
-      toast.error("Erro ao processar chave de acesso");
-    }
-    setConsultandoChave(false);
-  };
 
   const handleEdit = (nota) => {
     setForm(nota);
@@ -964,33 +923,46 @@ IMPORTANTE: Busque TODAS as informações possíveis, mesmo que parciais. Quanto
     setAudioFileUrl("");
   };
 
-  // Substituir Washington Gonzales pela transportadora = destinatário (TODAS as notas do banco)
+  const handleAtualizar = async () => {
+    try {
+      const texto = await navigator.clipboard.readText();
+      const linhas = texto.split('\n').filter(l => l.trim());
+      let atualizados = 0, naoEncontrados = 0;
+      for (let linha of linhas) {
+        const colunas = linha.split('\t');
+        if (colunas.length >= 2 && colunas[0]?.trim()) {
+          const notasExistentes = await base44.entities.NotaFiscal.filter({ numero_nf: colunas[0].trim() });
+          if (notasExistentes.length > 0) {
+            const n = notasExistentes[0];
+            await base44.entities.NotaFiscal.update(n.id, {
+              destinatario: n.destinatario || colunas[1]?.trim() || "",
+              remetente: n.remetente || colunas[2]?.trim() || "",
+              peso: n.peso || colunas[3]?.trim() || "",
+              volume: n.volume || colunas[4]?.trim() || "",
+              transportadora: n.transportadora || colunas[5]?.trim() || "",
+              filial: n.filial || colunas[6]?.trim() || ""
+            });
+            atualizados++;
+          } else { naoEncontrados++; }
+        }
+      }
+      if (atualizados > 0) {
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+        toast.success(naoEncontrados > 0 ? `${atualizados} atualizada(s). ${naoEncontrados} não encontrada(s).` : `${atualizados} atualizada(s)!`);
+      } else { toast.warning('Nenhuma nota encontrada'); }
+    } catch (error) { toast.error('Erro ao atualizar'); }
+  };
+
   const handleSubstituirWashington = async () => {
-    // Buscar TODAS as notas do banco, não apenas as filtradas
     const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
-    const notasWashington = todasNotas.filter((n) =>
-      n.transportadora?.toUpperCase().includes("WASHINGTON")
-    );
-
-    if (notasWashington.length === 0) {
-      toast.info("Nenhuma nota com transportadora WASHINGTON encontrada em todo o banco");
-      return;
-    }
-
-    if (!confirm(`Substituir transportadora pelo destinatário em ${notasWashington.length} nota(s) encontrada(s) em todo o banco de dados?`)) {
-      return;
-    }
-
-    let atualizadas = 0;
+    const notasWashington = todasNotas.filter((n) => n.transportadora?.toUpperCase().includes("WASHINGTON"));
+    if (notasWashington.length === 0) { toast.info("Nenhuma nota WASHINGTON encontrada"); return; }
+    if (!confirm(`Substituir em ${notasWashington.length} nota(s)?`)) return;
     for (const nota of notasWashington) {
-      await base44.entities.NotaFiscal.update(nota.id, {
-        transportadora: nota.destinatario || "SEM TRANSPORTADORA"
-      });
-      atualizadas++;
+      await base44.entities.NotaFiscal.update(nota.id, { transportadora: nota.destinatario || "SEM TRANSPORTADORA" });
     }
-
     queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-    toast.success(`${atualizadas} nota(s) atualizada(s) em todo o banco!`);
+    toast.success(`${notasWashington.length} atualizada(s)!`);
   };
 
   // Buscar notas digitadas manualmente - busca no banco de dados
@@ -1618,20 +1590,15 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             <Plus className="w-4 h-4 mr-2" />
                             Nova Nota
                         </Button>
-                        <Button
-              onClick={() => setShowPasteForm(true)}
-              variant="outline"
-              className="border-purple-500 text-purple-700 hover:bg-purple-50">
-
+                        <Button onClick={() => setShowPasteForm(true)} variant="outline" className="border-purple-500 text-purple-700 hover:bg-purple-50">
                             <ClipboardPaste className="w-4 h-4 mr-2" />
-                            Colar Texto
+                            Colar
                         </Button>
-                        <Button
-              onClick={handleSubstituirWashington}
-              variant="outline"
-              className="border-orange-500 text-orange-700 hover:bg-orange-50"
-              title="Substituir WASHINGTON em todas as notas do banco">
-
+                        <Button onClick={handleAtualizar} variant="outline" className="border-green-500 text-green-700 hover:bg-green-50" title="Atualizar notas existentes com dados copiados">
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Atualizar
+                        </Button>
+                        <Button onClick={handleSubstituirWashington} variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
                             <Replace className="w-4 h-4 mr-2" />
                             Subst. Washington
                         </Button>
@@ -1642,29 +1609,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             </Button>
                         </Link>
                         
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon">
-                                    <MoreVertical className="w-4 h-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setShowImportador(true)}>
-                                    <Upload className="w-4 h-4 mr-2" />
-                                    Importar Arquivo
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setShowChaveAcesso(true)}>
-                                    <Key className="w-4 h-4 mr-2" />
-                                    Chave de Acesso
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link to={createPageUrl("MascaraRomaneio")} className="cursor-pointer flex items-center">
-                                        <Truck className="w-4 h-4 mr-2" />
-                                        Máscara Romaneio
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button onClick={() => setShowImportador(true)} variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Importar
+                        </Button>
                     </div>
                 </div>
 
@@ -2752,53 +2700,7 @@ NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
             />
 
 
-                {/* Dialog Chave de Acesso */}
-                <Dialog open={showChaveAcesso} onOpenChange={setShowChaveAcesso}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Key className="w-5 h-5 text-green-600" />
-                            Cadastrar por Chave de Acesso
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
-                            Digite a chave de acesso da NFe (44 dígitos):
-                        </p>
-                        <Input
-              value={chaveAcesso}
-              onChange={(e) => setChaveAcesso(e.target.value.replace(/\D/g, ""))}
-              placeholder="00000000000000000000000000000000000000000000"
-              maxLength={44}
-              className="font-mono" />
 
-                        <p className="text-xs text-slate-500">
-                            {chaveAcesso.length}/44 dígitos
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => {setShowChaveAcesso(false);setChaveAcesso("");}}>
-                                <X className="w-4 h-4 mr-1" /> Cancelar
-                            </Button>
-                            <Button
-                onClick={handleConsultarChave}
-                disabled={consultandoChave || chaveAcesso.length !== 44}
-                className="bg-green-600 hover:bg-green-700">
-
-                                {consultandoChave ?
-                <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Consultando...
-                                    </> :
-
-                <>
-                                        <Search className="w-4 h-4 mr-1" /> Consultar
-                                    </>
-                }
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-                </Dialog>
 
                 {/* Dialog Cadastrar Destinatário */}
             <Dialog open={showCadastroDestinatario} onOpenChange={setShowCadastroDestinatario}>

@@ -448,9 +448,7 @@ ${pasteText}
 """
 
 IMPORTANTE: 
-- Extraia TODAS as notas fiscais encontradas
-- NÃO preencha o campo remetente, deixe em branco
-- Extraia o nome da transportadora de cada nota`,
+- Extraia filial (01, 02), transportadora e NÃO preencha remetente`,
         response_json_schema: {
           type: "object",
           properties: {
@@ -463,7 +461,8 @@ IMPORTANTE:
                   destinatario: { type: "string", description: "Destinatário" },
                   peso: { type: "string", description: "Peso" },
                   volume: { type: "string", description: "Volumes" },
-                  transportadora: { type: "string", description: "Transportadora" }
+                  transportadora: { type: "string", description: "Transportadora" },
+                  filial: { type: "string", description: "Filial" }
                 }
               }
             }
@@ -498,14 +497,12 @@ IMPORTANTE:
               continue;
             }
 
+            let fil = nota.filial === "01" ? "SP" : nota.filial === "02" ? "SC" : nota.filial || "";
             const novaNota = await base44.entities.NotaFiscal.create({
-              numero_nf: nota.numero_nf || "",
-              destinatario: nota.destinatario || "",
-              peso: nota.peso || "",
-              volume: nota.volume || "",
-              transportadora: nota.transportadora || "",
-              remetente: "",
-              data: format(new Date(), "yyyy-MM-dd")
+              numero_nf: nota.numero_nf || "", destinatario: nota.destinatario || "",
+              peso: nota.peso || "", volume: nota.volume || "",
+              transportadora: nota.transportadora || "", filial: fil,
+              remetente: "", data: format(new Date(), "yyyy-MM-dd")
             });
             importados++;
             notasIdsImportadas.push(novaNota.id);
@@ -1256,7 +1253,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
             <p>Tel: ${config.telefone || ""}</p>
           </div>
           <div class="romaneio-info">
-            <p class="date">${format(new Date(dataRomaneio), "dd/MM/yyyy")}</p>
+            <p class="date">${dataRomaneio.split('-').reverse().join('/')}</p>
             <p class="romaneio-title">ROMANEIO DE CARGAS</p>
             <p>Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
           </div>

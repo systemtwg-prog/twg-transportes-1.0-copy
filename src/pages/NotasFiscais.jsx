@@ -88,22 +88,8 @@ export default function NotasFiscais() {
   }, [layoutConfig]);
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
   const [layoutExpanded, setLayoutExpanded] = useState(false);
-  // Estados para gravação de áudio
-  const [showAudioDialog, setShowAudioDialog] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [transcription, setTranscription] = useState("");
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioFileUrl, setAudioFileUrl] = useState("");
-  const [buscandoOnline, setBuscandoOnline] = useState(false);
-  const [dadosExtraidos, setDadosExtraidos] = useState(null);
-  const [destinoSelecionado, setDestinoSelecionado] = useState("");
   const [showImportador, setShowImportador] = useState(false);
-
-  const mediaRecorderRef = React.useRef(null);
-  const audioChunksRef = React.useRef([]);
-  const audioRef = React.useRef(null);
+  const [modoAtualizar, setModoAtualizar] = useState(false);
 
   const queryClient = useQueryClient();
 

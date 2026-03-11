@@ -461,14 +461,9 @@ ${pasteText}`,
         for (const nota of notasEncontradas) {
           if (nota.numero_nf || nota.destinatario) {
             const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
+            const notaExistente = numeroNf ? notasExistentesMap.get(numeroNf) : null;
 
-            // Verificar duplicidade
-            if (numeroNf && numerosExistentes.has(numeroNf)) {
-              duplicados++;
-              continue;
-            }
-
-            const novaNota = await base44.entities.NotaFiscal.create({
+            const dadosNota = {
               numero_nf: nota.numero_nf || "",
               destinatario: nota.destinatario || "",
               peso: nota.peso || "",
@@ -476,14 +471,18 @@ ${pasteText}`,
               transportadora: nota.transportadora || "",
               remetente: "",
               data: format(new Date(), "yyyy-MM-dd")
-            });
-            importados++;
-            notasIdsImportadas.push(novaNota.id);
+            };
 
-            // Adicionar ao set para evitar duplicados no mesmo lote
-            if (numeroNf) numerosExistentes.add(numeroNf);
+            if (notaExistente) {
+              await base44.entities.NotaFiscal.update(notaExistente.id, dadosNota);
+              atualizados++;
+              notasIdsImportadas.push(notaExistente.id);
+            } else {
+              const novaNota = await base44.entities.NotaFiscal.create(dadosNota);
+              importados++;
+              notasIdsImportadas.push(novaNota.id);
+            }
 
-            // Coletar transportadoras únicas
             if (nota.transportadora) {
               transportadorasUnicas.add(nota.transportadora.trim());
             }

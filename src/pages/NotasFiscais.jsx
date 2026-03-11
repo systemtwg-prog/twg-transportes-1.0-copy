@@ -418,7 +418,7 @@ Se não encontrar algum dado, deixe em branco.`,
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extraia todas notas fiscais. DESTINATARIO = cliente/empresa que recebe (OBRIGATÓRIO). TRANSPORTADORA = empresa de transporte. Exemplos: "123 WASHINGTON COMERCIAL ABC" → dest="COMERCIAL ABC", transp="WASHINGTON". NÃO preencha remetente.
+        prompt: `Extraia notas. DESTINATARIO = nome COMPLETO do cliente (OBRIGATÓRIO, não corte). TRANSPORTADORA = quem transporta. Ex: "123 WASHINGTON ABC LTDA" → dest="ABC LTDA", transp="WASHINGTON". Não preencha remetente.
 
 ${pasteText}`,
         response_json_schema: {

@@ -502,11 +502,9 @@ ${pasteText}`,
 
         queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
 
-        if (duplicados > 0) {
-          toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
-        } else {
-          toast.success(`✅ ${importados} nota(s) fiscal(is) criada(s)!`);
-        }
+        if (atualizados > 0 && importados > 0) toast.success(`✅ ${importados} nova(s) + ${atualizados} atualizada(s)!`);
+        else if (atualizados > 0) toast.success(`✅ ${atualizados} atualizada(s)!`);
+        else toast.success(`✅ ${importados} criada(s)!`);
 
         // Extrair transportadoras para cadastro
         if (transportadorasUnicas.size > 0) {

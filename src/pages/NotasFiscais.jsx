@@ -446,15 +446,15 @@ ${pasteText}`,
 
       const notasEncontradas = result?.notas || [];
 
-      // Buscar notas existentes para verificar duplicados
+      // Buscar notas existentes
       const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
-      const numerosExistentes = new Set(
-        todasNotasExistentes.map((n) => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
+      const notasExistentesMap = new Map(
+        todasNotasExistentes.map((n) => [n.numero_nf?.toLowerCase().trim(), n])
       );
 
       if (notasEncontradas.length > 0) {
         let importados = 0;
-        let duplicados = 0;
+        let atualizados = 0;
         const transportadorasUnicas = new Set();
         const notasIdsImportadas = [];
 

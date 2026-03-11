@@ -418,17 +418,10 @@ Se não encontrar algum dado, deixe em branco.`,
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um extrator de dados. Analise o texto abaixo e extraia as informações de notas fiscais.
+        prompt: `Extraia TODAS as notas fiscais do texto. OBRIGATÓRIO: preencher destinatario (cliente que recebe). Diferencie destinatário (quem recebe) de transportadora (quem transporta). Exemplos: "NF 123 - ABC Transp - Cliente XYZ" → dest="Cliente XYZ", transp="ABC Transp". NÃO preencha remetente.
 
-TEXTO PARA ANALISAR:
-"""
-${pasteText}
-"""
-
-IMPORTANTE: 
-- Extraia TODAS as notas fiscais encontradas
-- NÃO preencha o campo remetente, deixe em branco
-- Extraia o nome da transportadora de cada nota`,
+TEXTO:
+${pasteText}`,
         response_json_schema: {
           type: "object",
           properties: {

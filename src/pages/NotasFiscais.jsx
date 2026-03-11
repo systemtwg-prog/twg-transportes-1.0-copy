@@ -2068,10 +2068,6 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
 
 
-
-
-
-
               rows={10}
               className="font-mono text-sm" />
 

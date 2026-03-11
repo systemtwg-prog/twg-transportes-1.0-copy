@@ -936,7 +936,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
             }
           } catch (error) {
             console.error("Erro ao otimizar rota:", error);
-            toast.error("Erro ao otimizar rota. Usando ordem de digitação.");
+            toast.error(error.message?.includes("Rate limit") ? "⏱️ Limite atingido. Aguarde." : "Erro ao otimizar rota.");
           }
           setOtimizandoRota(false);
         }

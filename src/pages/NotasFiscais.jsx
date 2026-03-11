@@ -2048,11 +2048,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <Textarea
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Cole aqui as informações das notas fiscais...
-
-Exemplo:
-NF 123456 - Destinatário ABC LTDA - 5 volumes - Transportadora XYZ
-NF 789012 - Cliente DEF - Peso 100kg - 3 vol"
+              placeholder="Cole as informações das notas fiscais..."
 
 
 

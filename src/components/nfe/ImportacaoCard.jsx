@@ -130,18 +130,65 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // Filtrar apenas notas que estão selecionadas na página principal E que têm placa
-            const notasImportacao = notasDaImportacao.filter(n => 
-                notasSelecionadas.includes(n.id) && n.placa
-            );
+            // 1. Buscar romaneios gerados HOJE com status "gerado"
+            const dataHoje = format(new Date(), "yyyy-MM-dd");
+            const romaneiosHoje = await base44.entities.RomaneioGerado.filter({ 
+                data: dataHoje,
+                status: "gerado"
+            });
 
-            if (notasImportacao.length === 0) {
-                toast.error("Nenhuma nota selecionada com placa nesta importação");
+            if (romaneiosHoje.length === 0) {
+                toast.error("Nenhum romaneio gerado hoje encontrado");
                 setLoading(false);
                 return;
             }
 
-            setNotasParaImprimir(notasImportacao);
+            // 2. Coletar todos os IDs das notas dos romaneios
+            const idsNotasRomaneios = new Set();
+            romaneiosHoje.forEach(rom => {
+                (rom.notas_ids || []).forEach(id => idsNotasRomaneios.add(id));
+            });
+
+            if (idsNotasRomaneios.size === 0) {
+                toast.error("Nenhuma nota encontrada nos romaneios de hoje");
+                setLoading(false);
+                return;
+            }
+
+            // 3. Buscar TODAS as notas do banco de dados
+            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+            
+            // 4. Filtrar apenas as notas que estão nos romaneios
+            const notasParaRelatorio = todasNotas.filter(n => 
+                idsNotasRomaneios.has(n.id) && n.placa
+            );
+
+            if (notasParaRelatorio.length === 0) {
+                toast.error("Nenhuma nota com placa encontrada nos romaneios");
+                setLoading(false);
+                return;
+            }
+
+            // 5. Atualizar a importação com todos os IDs (se necessário)
+            const idsAtuaisImportacao = new Set(importacao.notas_ids || []);
+            const novosIds = Array.from(idsNotasRomaneios).filter(id => !idsAtuaisImportacao.has(id));
+            
+            if (novosIds.length > 0) {
+                // Adicionar os novos IDs à importação
+                const todosIds = [...idsAtuaisImportacao, ...novosIds];
+                await base44.entities.RegistroImportacao.update(importacao.id, {
+                    notas_ids: todosIds,
+                    quantidade_notas: todosIds.length
+                });
+                toast.success(`${novosIds.length} nota(s) adicionada(s) à importação!`);
+                
+                // Recarregar a página para atualizar os dados
+                setTimeout(() => window.location.reload(), 1000);
+                setLoading(false);
+                return;
+            }
+
+            setNotasParaImprimir(notasParaRelatorio);
             setNotasDaMascara([]);
             setShowPrintDialog(true);
         } catch (error) {

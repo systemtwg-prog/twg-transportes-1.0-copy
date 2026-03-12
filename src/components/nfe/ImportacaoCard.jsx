@@ -133,8 +133,8 @@ export default function ImportacaoCard({
             // Notas da importação atual
             const notasImportacao = [...notasDaImportacao];
 
-            if (romaneiosHoje.length === 0) {
-                toast.error("Nenhum romaneio gerado hoje encontrado");
+            if (notasImportacao.length === 0) {
+                toast.error("Nenhuma nota encontrada nesta importação");
                 setLoading(false);
                 return;
             }

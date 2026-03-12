@@ -1235,12 +1235,12 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
     toast.success("Romaneio impresso e registrado!");
   };
 
-  // Dashboard resumo da última importação
+  // Dashboard resumo das notas SELECIONADAS
   const dashboardImportacao = React.useMemo(() => {
-    if (!importacoes[0]) return null;
+    if (selecionados.length === 0) return null;
 
-    const ultimaImportacao = importacoes[0];
-    const notasDaImportacao = notas.filter((n) => ultimaImportacao.notas_ids?.includes(n.id));
+    // Filtrar apenas as notas selecionadas que têm placa
+    const notasSelecionadasComPlaca = notas.filter((n) => selecionados.includes(n.id) && n.placa);
 
     // Agrupar por placa
     const porPlaca = {};
@@ -1248,9 +1248,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
     let totalNotas = 0;
     let totalEntregas = 0;
 
-    notasDaImportacao.forEach((nota) => {
-      if (!nota.placa) return; // Ignorar notas sem placa
-
+    notasSelecionadasComPlaca.forEach((nota) => {
       const placa = nota.placa;
       if (!porPlaca[placa]) {
         porPlaca[placa] = {
@@ -1279,7 +1277,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
     });
 
     return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
-  }, [importacoes, notas]);
+  }, [selecionados, notas]);
 
   // Verificar se há alguma busca/filtro ativo
   const hasBuscaAtiva = search ||
@@ -1698,13 +1696,13 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     </div>
         }
 
-                {/* Resumo da Última Importação */}
+                {/* Resumo das Notas Selecionadas */}
                 {dashboardImportacao && Object.keys(dashboardImportacao.porPlaca).length > 0 &&
         <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-lg">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-emerald-600" />
-                                Resumo da Última Importação
+                                Resumo das Notas Selecionadas
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">

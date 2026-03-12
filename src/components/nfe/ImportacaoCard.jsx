@@ -341,10 +341,10 @@ export default function ImportacaoCard({
             resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Placa:</h4><div class="resumo-grid">';
 
             Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
-                // Calcular totais por filial para esta placa
+                // Calcular totais por filial para esta placa - USAR APENAS notasOrdenadas
                 const filiaisPlaca = {};
                 const pesosPorFilial = {};
-                notasParaImprimir.forEach(nota => {
+                notasOrdenadas.forEach(nota => {
                     if (nota.placa === placa && nota.filial) {
                         if (!filiaisPlaca[nota.filial]) {
                             filiaisPlaca[nota.filial] = 0;
@@ -388,9 +388,9 @@ export default function ImportacaoCard({
 
 
 
-                // Agrupar por transportadora (apenas notas com placa)
+                // Agrupar por transportadora (apenas notas com placa) - USAR APENAS notasOrdenadas
                 const resumoPorTransp = {};
-                notasParaImprimir.forEach(nota => {
+                notasOrdenadas.forEach(nota => {
                 if (!nota.placa) return;
                 const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
                 if (!resumoPorTransp[transp]) {
@@ -410,9 +410,9 @@ export default function ImportacaoCard({
                 if (Object.keys(resumoPorTransp).length > 0) {
                 resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid-transportadora">';
 
-                // Agrupar notas por placa para cada transportadora
+                // Agrupar notas por placa para cada transportadora - USAR APENAS notasOrdenadas
                 const notasPorTranspEPlaca = {};
-                notasParaImprimir.forEach(nota => {
+                notasOrdenadas.forEach(nota => {
                     if (!nota.placa) return;
                     const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
                     if (!notasPorTranspEPlaca[transp]) {

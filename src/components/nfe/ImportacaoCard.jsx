@@ -130,16 +130,38 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // Notas da importação atual
-            const notasImportacao = [...notasDaImportacao];
+            // 1. Buscar romaneios com status "gerado"
+            const romaneiosGerados = await base44.entities.RomaneioGerado.filter({ 
+                status: "gerado"
+            });
 
-            if (notasImportacao.length === 0) {
-                toast.error("Nenhuma nota encontrada nesta importação");
+            if (romaneiosGerados.length === 0) {
+                toast.error("Nenhum romaneio com status 'gerado' encontrado");
                 setLoading(false);
                 return;
             }
 
-            setNotasParaImprimir(notasImportacao);
+            // 2. Coletar todos os IDs das notas dos romaneios gerados
+            const idsNotasRomaneios = new Set();
+            romaneiosGerados.forEach(rom => {
+                (rom.notas_ids || []).forEach(id => idsNotasRomaneios.add(id));
+            });
+
+            // 3. Buscar TODAS as notas do banco de dados
+            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+
+            // 4. Filtrar apenas as notas que estão nos romaneios gerados
+            const notasParaRelatorio = todasNotas.filter(n => 
+                idsNotasRomaneios.has(n.id)
+            );
+
+            if (notasParaRelatorio.length === 0) {
+                toast.error("Nenhuma nota encontrada nos romaneios gerados");
+                setLoading(false);
+                return;
+            }
+
+            setNotasParaImprimir(notasParaRelatorio);
             setNotasDaMascara([]);
             setShowPrintDialog(true);
         } catch (error) {

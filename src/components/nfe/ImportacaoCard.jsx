@@ -180,12 +180,7 @@ export default function ImportacaoCard({
                     notas_ids: todosIds,
                     quantidade_notas: todosIds.length
                 });
-                toast.success(`${novosIds.length} nota(s) adicionada(s) à importação!`);
-                
-                // Recarregar a página para atualizar os dados
-                setTimeout(() => window.location.reload(), 1000);
-                setLoading(false);
-                return;
+                toast.success(`${novosIds.length} nota(s) de romaneios adicionada(s)!`);
             }
 
             setNotasParaImprimir(notasParaRelatorio);

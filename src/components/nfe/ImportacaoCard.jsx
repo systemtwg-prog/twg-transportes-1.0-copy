@@ -130,12 +130,8 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // 1. Buscar romaneios gerados HOJE com status "gerado"
-            const dataHoje = format(new Date(), "yyyy-MM-dd");
-            const romaneiosHoje = await base44.entities.RomaneioGerado.filter({ 
-                data: dataHoje,
-                status: "gerado"
-            });
+            // Notas da importação atual
+            const notasImportacao = [...notasDaImportacao];
 
             if (romaneiosHoje.length === 0) {
                 toast.error("Nenhum romaneio gerado hoje encontrado");
@@ -143,47 +139,7 @@ export default function ImportacaoCard({
                 return;
             }
 
-            // 2. Coletar todos os IDs das notas dos romaneios
-            const idsNotasRomaneios = new Set();
-            romaneiosHoje.forEach(rom => {
-                (rom.notas_ids || []).forEach(id => idsNotasRomaneios.add(id));
-            });
-
-            if (idsNotasRomaneios.size === 0) {
-                toast.error("Nenhuma nota encontrada nos romaneios de hoje");
-                setLoading(false);
-                return;
-            }
-
-            // 3. Buscar TODAS as notas do banco de dados
-            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
-            
-            // 4. Filtrar apenas as notas que estão nos romaneios
-            const notasParaRelatorio = todasNotas.filter(n => 
-                idsNotasRomaneios.has(n.id) && n.placa
-            );
-
-            if (notasParaRelatorio.length === 0) {
-                toast.error("Nenhuma nota com placa encontrada nos romaneios");
-                setLoading(false);
-                return;
-            }
-
-            // 5. Atualizar a importação com todos os IDs (se necessário)
-            const idsAtuaisImportacao = new Set(importacao.notas_ids || []);
-            const novosIds = Array.from(idsNotasRomaneios).filter(id => !idsAtuaisImportacao.has(id));
-            
-            if (novosIds.length > 0) {
-                // Adicionar os novos IDs à importação
-                const todosIds = [...idsAtuaisImportacao, ...novosIds];
-                await base44.entities.RegistroImportacao.update(importacao.id, {
-                    notas_ids: todosIds,
-                    quantidade_notas: todosIds.length
-                });
-                toast.success(`${novosIds.length} nota(s) de romaneios adicionada(s)!`);
-            }
-
-            setNotasParaImprimir(notasParaRelatorio);
+            setNotasParaImprimir(notasImportacao);
             setNotasDaMascara([]);
             setShowPrintDialog(true);
         } catch (error) {

@@ -130,8 +130,16 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // Notas da importação atual
-            const notasImportacao = [...notasDaImportacao];
+            // Filtrar apenas notas que estão selecionadas na página principal E que têm placa
+            const notasImportacao = notasDaImportacao.filter(n => 
+                notasSelecionadas.includes(n.id) && n.placa
+            );
+
+            if (notasImportacao.length === 0) {
+                toast.error("Nenhuma nota selecionada com placa nesta importação");
+                setLoading(false);
+                return;
+            }
 
             setNotasParaImprimir(notasImportacao);
             setNotasDaMascara([]);

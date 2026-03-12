@@ -812,11 +812,10 @@ ${pasteText}`,
     await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
     await queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
 
-    // 3. Imprimir
+    // Recarregar e pegar notas selecionadas
+    await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
     const notasAtualizadas = await base44.entities.NotaFiscal.list("-created_date", 5000);
-    const notasParaImprimir = selecionados.
-    map((id) => notasAtualizadas.find((n) => n.id === id)).
-    filter(Boolean);
+    const notasParaImprimir = selecionados.map((id) => notasAtualizadas.find((n) => n.id === id)).filter(Boolean);
 
     const motoristaObj = motoristas.find((m) => m.id === motorista);
     const winPrint = window.open('', '_blank', 'width=900,height=650');
@@ -1237,7 +1236,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
   // Dashboard resumo das notas SELECIONADAS
   const dashboardImportacao = React.useMemo(() => {
-    if (selecionados.length === 0) return null;
+    if (!importacoes[0] || selecionados.length === 0) return null;
 
     // Filtrar apenas as notas selecionadas que têm placa
     const notasSelecionadasComPlaca = notas.filter((n) => selecionados.includes(n.id) && n.placa);

@@ -1236,7 +1236,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
   // Dashboard resumo das notas SELECIONADAS
   const dashboardImportacao = React.useMemo(() => {
-    if (!importacoes[0] || selecionados.length === 0) return null;
+    if (selecionados.length === 0) return null;
 
     // Filtrar apenas as notas selecionadas que têm placa
     const notasSelecionadasComPlaca = notas.filter((n) => selecionados.includes(n.id) && n.placa);

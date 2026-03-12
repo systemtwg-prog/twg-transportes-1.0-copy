@@ -135,33 +135,28 @@ export default function ImportacaoCard({
                 status: "gerado"
             });
 
-            if (romaneiosGerados.length === 0) {
-                toast.error("Nenhum romaneio com status 'gerado' encontrado");
-                setLoading(false);
-                return;
-            }
-
-            // 2. Coletar todos os IDs das notas dos romaneios gerados
-            const idsNotasRomaneios = new Set();
+            // 2. Coletar IDs das notas de romaneios gerados
+            const idsNotasComPlacaPermitida = new Set();
             romaneiosGerados.forEach(rom => {
-                (rom.notas_ids || []).forEach(id => idsNotasRomaneios.add(id));
+                (rom.notas_ids || []).forEach(id => idsNotasComPlacaPermitida.add(id));
             });
 
-            // 3. Buscar TODAS as notas do banco de dados
-            const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+            // 3. Todas as notas da importação
+            const notasImportacao = [...notasDaImportacao];
 
-            // 4. Filtrar apenas as notas que estão nos romaneios gerados
-            const notasParaRelatorio = todasNotas.filter(n => 
-                idsNotasRomaneios.has(n.id)
-            );
-
-            if (notasParaRelatorio.length === 0) {
-                toast.error("Nenhuma nota encontrada nos romaneios gerados");
+            if (notasImportacao.length === 0) {
+                toast.error("Nenhuma nota encontrada nesta importação");
                 setLoading(false);
                 return;
             }
 
-            setNotasParaImprimir(notasParaRelatorio);
+            // 4. Marcar quais notas podem ter placa visível (apenas as de romaneios gerados)
+            const notasComMarcacao = notasImportacao.map(nota => ({
+                ...nota,
+                _mostrarPlaca: idsNotasComPlacaPermitida.has(nota.id)
+            }));
+
+            setNotasParaImprimir(notasComMarcacao);
             setNotasDaMascara([]);
             setShowPrintDialog(true);
         } catch (error) {
@@ -264,10 +259,10 @@ export default function ImportacaoCard({
             return;
         }
 
-        // Calcular resumo por placa (ignorar notas sem placa)
+        // Calcular resumo por placa (APENAS notas com _mostrarPlaca = true)
         const resumoPorPlaca = {};
         notasOrdenadas.forEach(nota => {
-            if (!nota.placa) return; // Ignorar notas sem placa
+            if (!nota._mostrarPlaca || !nota.placa) return; // Ignorar notas sem permissão ou sem placa
 
             const placa = nota.placa;
 
@@ -293,10 +288,10 @@ export default function ImportacaoCard({
             resumoPorPlaca[placa].volumeTotal += volNum;
         });
 
-        // Calcular resumo por filial e placa (apenas notas com placa)
+        // Calcular resumo por filial e placa (apenas notas com _mostrarPlaca = true)
         const resumoPorFilial = {};
         notasOrdenadas.forEach(nota => {
-            if (!nota.placa || !nota.filial) return;
+            if (!nota._mostrarPlaca || !nota.placa || !nota.filial) return;
             const filial = nota.filial;
             const placa = nota.placa;
 
@@ -320,7 +315,8 @@ export default function ImportacaoCard({
         // Gerar linhas da tabela
         let rowsHtml = "";
         notasOrdenadas.forEach(nota => {
-            const placaDisplay = nota.placa || "";
+            // Mostrar placa APENAS se _mostrarPlaca = true
+            const placaDisplay = nota._mostrarPlaca ? (nota.placa || "") : "";
             const simbolo = printConfig.simbolosPlaca && placaDisplay ? `${mapPlacaParaSimbolo[placaDisplay]} ` : '';
             
             // Pegar apenas 3 primeiras palavras do nome do cliente
@@ -363,11 +359,11 @@ export default function ImportacaoCard({
             resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Placa:</h4><div class="resumo-grid">';
 
             Object.entries(resumoPorPlaca).forEach(([placa, dados]) => {
-                // Calcular totais por filial para esta placa - USAR APENAS notasOrdenadas
+                // Calcular totais por filial para esta placa - APENAS notas com _mostrarPlaca
                 const filiaisPlaca = {};
                 const pesosPorFilial = {};
                 notasOrdenadas.forEach(nota => {
-                    if (nota.placa === placa && nota.filial) {
+                    if (nota._mostrarPlaca && nota.placa === placa && nota.filial) {
                         if (!filiaisPlaca[nota.filial]) {
                             filiaisPlaca[nota.filial] = 0;
                             pesosPorFilial[nota.filial] = 0;
@@ -410,10 +406,10 @@ export default function ImportacaoCard({
 
 
 
-                // Agrupar por transportadora (apenas notas com placa) - USAR APENAS notasOrdenadas
+                // Agrupar por transportadora (apenas notas com _mostrarPlaca = true)
                 const resumoPorTransp = {};
                 notasOrdenadas.forEach(nota => {
-                if (!nota.placa) return;
+                if (!nota._mostrarPlaca || !nota.placa) return;
                 const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
                 if (!resumoPorTransp[transp]) {
                     resumoPorTransp[transp] = {
@@ -432,10 +428,10 @@ export default function ImportacaoCard({
                 if (Object.keys(resumoPorTransp).length > 0) {
                 resumoHtml += '<div class="resumo-section"><h4 class="resumo-section-title">Por Transportadora:</h4><div class="resumo-grid-transportadora">';
 
-                // Agrupar notas por placa para cada transportadora - USAR APENAS notasOrdenadas
+                // Agrupar notas por placa para cada transportadora (apenas com _mostrarPlaca)
                 const notasPorTranspEPlaca = {};
                 notasOrdenadas.forEach(nota => {
-                    if (!nota.placa) return;
+                    if (!nota._mostrarPlaca || !nota.placa) return;
                     const transp = nota.transportadora?.trim().toUpperCase() || "SEM TRANSPORTADORA";
                     if (!notasPorTranspEPlaca[transp]) {
                         notasPorTranspEPlaca[transp] = new Set();

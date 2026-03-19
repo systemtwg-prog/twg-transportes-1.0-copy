@@ -98,8 +98,13 @@ export default function HomeDesktop() {
 
     const isAdmin = currentUser?.role === "admin";
 
-    // Módulos ativos do usuário
+    // Módulos ativos do usuário (personalização individual)
     const modulosAtivos = currentUser?.modulos_desktop || ["nota_deposito", "comprovantes", "coletas", "ordens", "rotas", "veiculos"];
+
+    // Módulos permitidos pela ConfiguracaoModulos (usa href como chave de página)
+    const modulosPermitidosGlobal = isAdmin
+        ? (config.modulos_admin || null)
+        : (config.modulos_usuario_comum || null);
 
     const updateUserMutation = useMutation({
         mutationFn: (data) => base44.auth.updateMe(data),
@@ -388,7 +393,12 @@ export default function HomeDesktop() {
         veiculosAtivos: veiculos.filter(v => v.status === "disponivel" || v.status === "em_uso").length
     };
 
-    const modulosVisiveis = allModules.filter(m => modulosAtivos.includes(m.id));
+    const modulosVisiveis = allModules.filter(m => {
+        if (!modulosAtivos.includes(m.id)) return false;
+        // Verificar configuração global de módulos
+        if (modulosPermitidosGlobal && !modulosPermitidosGlobal.includes(m.href)) return false;
+        return true;
+    });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100">

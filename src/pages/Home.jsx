@@ -42,6 +42,11 @@ export default function Home() {
     const botoesPCVisiveis = config.botoes_home_pc || [];
     const isMobile = window.innerWidth < 768;
 
+    // Módulos permitidos pela ConfiguracaoModulos (usa href como chave de página)
+    const modulosPermitidos = isAdmin
+        ? (config.modulos_admin || null)
+        : (config.modulos_usuario_comum || null);
+
     const { data: avisos = [] } = useQuery({
         queryKey: ["avisos-ativos"],
         queryFn: async () => {
@@ -385,7 +390,12 @@ export default function Home() {
 
     // Filtrar botões conforme visibilidade
     const listaBotoesAtivos = isMobile ? botoesMobileVisiveis : botoesPCVisiveis;
-    const ehVisivel = (id) => listaBotoesAtivos.length === 0 || listaBotoesAtivos.includes(id);
+    const ehVisivel = (id) => {
+        const botao = todosOsBotoes.find(b => b.id === id);
+        // Verificar configuração global de módulos
+        if (modulosPermitidos && botao && !modulosPermitidos.includes(botao.href)) return false;
+        return listaBotoesAtivos.length === 0 || listaBotoesAtivos.includes(id);
+    };
 
     const mainButtons = todosOsBotoes.filter(b => b.secao === "principais" && ehVisivel(b.id));
     const bigButton = todosOsBotoes.find(b => b.id === "cracha" && ehVisivel(b.id));

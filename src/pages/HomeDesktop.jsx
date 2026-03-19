@@ -417,6 +417,7 @@ export default function HomeDesktop() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        {isAdmin && (
                         <Button 
                             variant="outline" 
                             size="sm"
@@ -426,6 +427,7 @@ export default function HomeDesktop() {
                             <Grip className="w-4 h-4 mr-2" />
                             Personalizar
                         </Button>
+                        )}
                         <NotificationBell />
                         {isAdmin && (
                             <Link to={createPageUrl("Configuracoes")}>

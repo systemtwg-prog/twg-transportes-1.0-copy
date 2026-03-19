@@ -73,8 +73,10 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
         }
     });
 
-    // Mostrar TODOS os menus - sem restrição
-    const menuFiltrado = menuItems;
+    const isAdmin = currentUser?.role === "admin";
+    const menuFiltrado = menuItems.filter(item => 
+        item.href !== "AprovacaoUsuarios" || isAdmin
+    );
 
     const handleLogout = () => {
         if (confirm("Deseja realmente sair do sistema?")) {

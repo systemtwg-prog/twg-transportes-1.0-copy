@@ -72,8 +72,10 @@ export default function FloatingMenu({ currentPage }) {
         }
     });
 
-    // Mostrar TODOS os itens do menu - sem filtragem
-    const menuFiltrado = menuItems;
+    const isAdmin = currentUser?.role === "admin";
+    const menuFiltrado = menuItems.filter(item =>
+        item.href !== "AprovacaoUsuarios" || isAdmin
+    );
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

@@ -42,11 +42,6 @@ export default function Home() {
     const botoesPCVisiveis = config.botoes_home_pc || [];
     const isMobile = window.innerWidth < 768;
 
-    // Módulos permitidos pela ConfiguracaoModulos (usa href como chave de página)
-    const modulosPermitidos = isAdmin
-        ? (config.modulos_admin || null)
-        : (config.modulos_usuario_comum || null);
-
     const { data: avisos = [] } = useQuery({
         queryKey: ["avisos-ativos"],
         queryFn: async () => {
@@ -81,6 +76,11 @@ export default function Home() {
     });
 
     const isAdmin = currentUser?.role === "admin";
+
+    // Módulos permitidos pela ConfiguracaoModulos (usa href como chave de página)
+    const modulosPermitidos = isAdmin
+        ? (config.modulos_admin || null)
+        : (config.modulos_usuario_comum || null);
 
     // Cores do tema - tons claros azulados
     const corPrimaria = config.cor_primaria || "sky";

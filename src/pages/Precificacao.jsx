@@ -942,7 +942,7 @@ ${text}`,
                         <CardContent>
                             <div className="mb-4 space-y-3">
                                 <Input
-                                    placeholder="Buscar por remetente, destinatário ou transportadora..."
+                                    placeholder="Buscar por remetente, destinatário, transportadora ou nº documento..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full"

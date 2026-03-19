@@ -19,11 +19,13 @@ const TODOS_MODULOS = [
     { id: "HomeDesktop", nome: "Início (Desktop)", icon: Home, descricao: "Página inicial desktop" },
     // Operacional
     { id: "ComprovantesEntrega", nome: "Comprovantes de Entrega", icon: FileText, descricao: "Gerenciar comprovantes de entrega" },
+    { id: "ComprovantesInternos", nome: "Comprovantes Internos", icon: FileText, descricao: "Comprovantes internos" },
     { id: "CTEs", nome: "CTEs", icon: FileText, descricao: "Gerenciar CTEs" },
     { id: "NotaDeposito", nome: "Nota Depósito", icon: FileText, descricao: "Notas de depósito" },
     { id: "ColetasDiarias", nome: "Coletas Diárias", icon: FileText, descricao: "Gerenciar coletas diárias" },
     { id: "AdicionarColetaDiaria", nome: "Adicionar Coletas", icon: Package, descricao: "Adicionar novas coletas" },
     { id: "OrdensColeta", nome: "Ordens de Coleta", icon: Package, descricao: "Gerenciar ordens de coleta" },
+    { id: "Canhoto", nome: "Canhoto", icon: FileText, descricao: "Gerenciar canhotos" },
     // Documentos
     { id: "ComprovantesCtes", nome: "Conhecimento de Transportes", icon: FileText, descricao: "Gerenciar CTEs" },
     { id: "Documentos", nome: "Documentos", icon: FileText, descricao: "Gerenciar documentos" },
@@ -49,9 +51,14 @@ const TODOS_MODULOS = [
     { id: "ExtratorGoogle", nome: "Extrator Google", icon: Search, descricao: "Extrair dados do Google" },
     { id: "ImportacaoDocumentos", nome: "Importar Documentos", icon: FileText, descricao: "Importar documentos" },
     { id: "EmailManager", nome: "Emails", icon: FileText, descricao: "Gerenciar emails" },
+    { id: "WhatsAppWeb", nome: "WhatsApp Web", icon: FileText, descricao: "Integração WhatsApp" },
+    { id: "SincronizacaoFirebase", nome: "Sincronização Firebase", icon: Database, descricao: "Sincronizar com Firebase" },
+    { id: "CrachaIdentificacao", nome: "Crachá Identificação", icon: User, descricao: "Crachás de identificação" },
     // Relatórios
     { id: "Relatorios", nome: "Relatórios", icon: FileText, descricao: "Relatórios gerais" },
     { id: "RelatorioMotoristas", nome: "Performance", icon: Award, descricao: "Performance de motoristas" },
+    { id: "RelatorioDestinatario", nome: "Relatório Destinatário", icon: FileText, descricao: "Relatório por destinatário" },
+    { id: "RelatorioNotaFiscal", nome: "Relatório Nota Fiscal", icon: FileText, descricao: "Relatório de notas fiscais" },
     // Admin
     { id: "Avisos", nome: "Avisos", icon: Bell, descricao: "Gerenciar avisos do sistema" },
     { id: "Configuracoes", nome: "Configurações", icon: Settings, descricao: "Configurações do sistema" },
@@ -68,6 +75,15 @@ export default function ConfiguracaoModulos() {
     const [modulosAdmin, setModulosAdmin] = useState([]);
     const [saving, setSaving] = useState(false);
     const queryClient = useQueryClient();
+
+    const { data: currentUser, isLoading: loadingUser } = useQuery({
+        queryKey: ["current-user-modulos"],
+        queryFn: async () => {
+            try { return await base44.auth.me(); } catch { return null; }
+        }
+    });
+
+    const isAdmin = currentUser?.role === "admin";
 
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
@@ -128,29 +144,12 @@ export default function ConfiguracaoModulos() {
         );
     };
 
-    const selecionarTodos = () => {
-        setModulosAtivos(TODOS_MODULOS.map(m => m.id));
-    };
-
-    const desmarcarTodos = () => {
-        setModulosAtivos(["Home", "Configuracoes", "ConfiguracaoModulos"]);
-    };
-
-    const selecionarTodosUsuarioComum = () => {
-        setModulosUsuarioComum(TODOS_MODULOS.map(m => m.id));
-    };
-
-    const desmarcarTodosUsuarioComum = () => {
-        setModulosUsuarioComum(["Home"]);
-    };
-
-    const selecionarTodosAdmin = () => {
-        setModulosAdmin(TODOS_MODULOS.map(m => m.id));
-    };
-
-    const desmarcarTodosAdmin = () => {
-        setModulosAdmin(["Home", "Configuracoes", "ConfiguracaoModulos"]);
-    };
+    const selecionarTodos = () => setModulosAtivos(TODOS_MODULOS.map(m => m.id));
+    const desmarcarTodos = () => setModulosAtivos(["Home", "Configuracoes", "ConfiguracaoModulos"]);
+    const selecionarTodosUsuarioComum = () => setModulosUsuarioComum(TODOS_MODULOS.map(m => m.id));
+    const desmarcarTodosUsuarioComum = () => setModulosUsuarioComum(["Home"]);
+    const selecionarTodosAdmin = () => setModulosAdmin(TODOS_MODULOS.map(m => m.id));
+    const desmarcarTodosAdmin = () => setModulosAdmin(["Home", "Configuracoes", "ConfiguracaoModulos"]);
 
     const handleSalvar = async () => {
         setSaving(true);
@@ -176,6 +175,28 @@ export default function ConfiguracaoModulos() {
         }
         setSaving(false);
     };
+
+    if (loadingUser) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 md:p-8 flex items-center justify-center">
+                <Card className="max-w-md bg-white/90 border-0 shadow-xl">
+                    <CardContent className="p-8 text-center">
+                        <Shield className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
+                        <p className="text-slate-500">Apenas administradores podem acessar a configuração de módulos.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 md:p-8">

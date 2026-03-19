@@ -75,7 +75,7 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
 
     const isAdmin = currentUser?.role === "admin";
     const menuFiltrado = menuItems.filter(item => 
-        item.href !== "AprovacaoUsuarios" || isAdmin
+        (item.href !== "AprovacaoUsuarios" && item.href !== "ConfiguracaoModulos") || isAdmin
     );
 
     const handleLogout = () => {

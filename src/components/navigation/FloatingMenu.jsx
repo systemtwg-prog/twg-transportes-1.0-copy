@@ -97,9 +97,16 @@ export default function FloatingMenu({ currentPage }) {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80 bg-gradient-to-b from-slate-900 to-slate-800 border-0 p-0">
-                    <div className="p-6 border-b border-white/10">
-                        <h2 className="font-bold text-xl text-white">Menu</h2>
-                        <p className="text-sm text-slate-400">Sistema de Transportes</p>
+                    <div className="p-4 border-b border-white/10 flex items-center gap-3">
+                        <img 
+                            src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/1858ed22e_WhatsAppImage2026-03-20at125657.jpg" 
+                            alt="Loggxy" 
+                            className="h-10 object-contain flex-shrink-0" 
+                        />
+                        <div>
+                            <h2 className="font-bold text-lg text-white leading-tight">Loggxy</h2>
+                            <p className="text-xs text-slate-400">Gestão de Transportes</p>
+                        </div>
                     </div>
                     <nav className="p-4 overflow-y-auto max-h-[calc(100vh-140px)]">
                         {categories.map((cat) => {

@@ -136,12 +136,15 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
         <div className="w-56 bg-slate-900 flex flex-col h-full border-r border-slate-700">
             <div className="p-3 border-b border-slate-700 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                    {config?.[0]?.logo_url && (
-                        <img src={config[0].logo_url} alt="Logo" className="h-7 object-contain flex-shrink-0" />
-                    )}
-                    <span className="text-white font-semibold text-xs truncate">
-                        {config?.[0]?.nome_empresa || "Sistema"}
-                    </span>
+                    <img 
+                        src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/1858ed22e_WhatsAppImage2026-03-20at125657.jpg" 
+                        alt="Loggxy" 
+                        className="h-7 object-contain flex-shrink-0" 
+                    />
+                    <div className="min-w-0">
+                        <span className="text-white font-bold text-xs block truncate">Loggxy</span>
+                        <span className="text-slate-400 text-[9px] block truncate">Gestão de Transportes</span>
+                    </div>
                 </div>
                 <Button
                     variant="ghost"

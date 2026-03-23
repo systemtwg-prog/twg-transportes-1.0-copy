@@ -1165,7 +1165,7 @@ ${text}`,
                                         if (filterSemPagador && prec.pagador_id) return false;
                                         return true;
                                         }).map((prec) => (
-                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-gray-200 border-gray-300' : 'bg-white'}`}>
+                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-slate-400 border-slate-500' : 'bg-white'}`}>
                                         <div className="flex justify-between items-start">
                                            <div className="flex items-start gap-2 flex-1">
                                                <Checkbox

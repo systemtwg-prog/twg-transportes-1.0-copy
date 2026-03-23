@@ -1224,7 +1224,7 @@ ${text}`,
                                                     </span>
                                                 )}
                                                 {prec.pagador_nome && (
-                                                    <Badge variant="outline" className="mt-1 text-xs text-green-700 border-green-300">
+                                                                                                     <Badge variant="outline" className={`mt-1 text-xs ${prec.confirmado ? 'text-green-200 border-green-400' : 'text-green-700 border-green-300'}`}>
                                                         Pagador: {prec.pagador_nome}
                                                     </Badge>
                                                 )}

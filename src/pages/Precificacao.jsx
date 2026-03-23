@@ -1165,60 +1165,60 @@ ${text}`,
                                         if (filterSemPagador && prec.pagador_id) return false;
                                         return true;
                                         }).map((prec) => (
-                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-slate-600 border-slate-700 text-white' : 'bg-white'}`}>
-                                        <div className="flex justify-between items-start">
-                                           <div className="flex items-start gap-2 flex-1">
-                                               <Checkbox
-                                                   checked={selectedIds.includes(prec.id)}
-                                                   onCheckedChange={(checked) => {
-                                                       if (checked) setSelectedIds(p => [...p, prec.id]);
-                                                       else setSelectedIds(p => p.filter(x => x !== prec.id));
-                                                   }}
-                                                   className="mt-1"
-                                               />
-                                           <div className="flex-1">
-                                                {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
-                                                <p className="font-semibold text-lg">
-                                                    {prec.remetente?.split(' ').slice(0, 4).join(' ')} / {prec.destinatario?.split(' ').slice(0, 4).join(' ')}
-                                                </p>
+                                    <div key={prec.id} className={`border rounded-lg p-4 space-y-2 ${prec.confirmado ? 'bg-slate-600 border-slate-700' : 'bg-white'}`}>
+                                                                            <div className="flex justify-between items-start">
+                                                                               <div className="flex items-start gap-2 flex-1">
+                                                                                   <Checkbox
+                                                                                       checked={selectedIds.includes(prec.id)}
+                                                                                       onCheckedChange={(checked) => {
+                                                                                           if (checked) setSelectedIds(p => [...p, prec.id]);
+                                                                                           else setSelectedIds(p => p.filter(x => x !== prec.id));
+                                                                                       }}
+                                                                                       className="mt-1"
+                                                                                   />
+                                                                               <div className="flex-1">
+                                                                                    {/* Linha 1: Remetente / Destinatário (4 primeiras palavras) */}
+                                                                                    <p className={`font-semibold text-lg ${prec.confirmado ? 'text-white' : 'text-gray-900'}`}>
+                                                                                        {prec.remetente?.split(' ').slice(0, 4).join(' ')} / {prec.destinatario?.split(' ').slice(0, 4).join(' ')}
+                                                                                    </p>
 
-                                                {/* Transportadora em cinza (4 primeiras palavras) */}
-                                                {prec.transportadora && (
-                                                    <p className="text-sm text-gray-500">
-                                                        {prec.transportadora?.split(' ').slice(0, 4).join(' ')}
-                                                    </p>
-                                                )}
+                                                                                    {/* Transportadora em cinza (4 primeiras palavras) */}
+                                                                                    {prec.transportadora && (
+                                                                                        <p className={`text-sm ${prec.confirmado ? 'text-slate-200' : 'text-gray-500'}`}>
+                                                                                            {prec.transportadora?.split(' ').slice(0, 4).join(' ')}
+                                                                                        </p>
+                                                                                    )}
 
-                                                {/* Linha 2: Volume, Peso e Valor da Nota */}
-                                               <p className="text-sm text-gray-600">
-                                                   {prec.volume} - {prec.peso} - R$ {Number(prec.valor_nota || 0).toFixed(2)}
-                                               </p>
+                                                                                    {/* Linha 2: Volume, Peso e Valor da Nota */}
+                                                                                   <p className={`text-sm ${prec.confirmado ? 'text-slate-200' : 'text-gray-600'}`}>
+                                                                                       {prec.volume} - {prec.peso} - R$ {Number(prec.valor_nota || 0).toFixed(2)}
+                                                                                   </p>
 
-                                               {/* Linha 3: Valores separados por + e = no final */}
-                                               <p className="text-sm text-gray-600 mt-1">
-                                                   {[
-                                                       prec.frete_peso > 0 ? `R$ ${Number(prec.frete_peso).toFixed(2)}` : null,
-                                                       prec.sec_cat > 0 ? `R$ ${Number(prec.sec_cat).toFixed(2)}` : null,
-                                                       prec.despacho > 0 ? `R$ ${Number(prec.despacho).toFixed(2)}` : null,
-                                                       prec.pedagio > 0 ? `R$ ${Number(prec.pedagio).toFixed(2)}` : null,
-                                                       prec.outros > 0 ? `R$ ${Number(prec.outros).toFixed(2)}` : null
-                                                   ].filter(Boolean).join(' + ')} = 
-                                               </p>
+                                                                                   {/* Linha 3: Valores separados por + e = no final */}
+                                                                                   <p className={`text-sm mt-1 ${prec.confirmado ? 'text-slate-200' : 'text-gray-600'}`}>
+                                                                                       {[
+                                                                                           prec.frete_peso > 0 ? `R$ ${Number(prec.frete_peso).toFixed(2)}` : null,
+                                                                                           prec.sec_cat > 0 ? `R$ ${Number(prec.sec_cat).toFixed(2)}` : null,
+                                                                                           prec.despacho > 0 ? `R$ ${Number(prec.despacho).toFixed(2)}` : null,
+                                                                                           prec.pedagio > 0 ? `R$ ${Number(prec.pedagio).toFixed(2)}` : null,
+                                                                                           prec.outros > 0 ? `R$ ${Number(prec.outros).toFixed(2)}` : null
+                                                                                       ].filter(Boolean).join(' + ')} = 
+                                                                                   </p>
 
-                                               {/* Linha 4: Valor Total e Porcentagem em Azul */}
-                                               <p className="text-sm font-semibold text-blue-600">
-                                                   R$ {Number(prec.valor_servico || 0).toFixed(2)} ({Number(prec.porcentagem || 0).toFixed(2)}%)
-                                               </p>
+                                                                                   {/* Linha 4: Valor Total e Porcentagem */}
+                                                                                   <p className={`text-sm font-semibold ${prec.confirmado ? 'text-blue-200' : 'text-blue-600'}`}>
+                                                                                       R$ {Number(prec.valor_servico || 0).toFixed(2)} ({Number(prec.porcentagem || 0).toFixed(2)}%)
+                                                                                   </p>
 
-                                               {/* Linha 5: Nº e Data de Emissão */}
-                                               <p className="text-xs text-gray-500 mt-1">
-                                                   {prec.numero_documento && `Nº ${prec.numero_documento}`}
-                                                   {prec.numero_documento && prec.data_emissao && ' - '}
-                                                   {prec.data_emissao && `Emissão: ${formatDataEmissao(prec.data_emissao)}`}
-                                               </p>
+                                                                                   {/* Linha 5: Nº e Data de Emissão */}
+                                                                                   <p className={`text-xs mt-1 ${prec.confirmado ? 'text-slate-300' : 'text-gray-500'}`}>
+                                                                                       {prec.numero_documento && `Nº ${prec.numero_documento}`}
+                                                                                       {prec.numero_documento && prec.data_emissao && ' - '}
+                                                                                       {prec.data_emissao && `Emissão: ${formatDataEmissao(prec.data_emissao)}`}
+                                                                                   </p>
 
-                                               {prec.confirmado && (
-                                                    <span className="inline-flex items-center gap-1 text-green-600 text-sm mt-1">
+                                                                                   {prec.confirmado && (
+                                                                                        <span className="inline-flex items-center gap-1 text-green-300 text-sm mt-1">
                                                         <Check className="w-4 h-4" />
                                                         Confirmado
                                                     </span>

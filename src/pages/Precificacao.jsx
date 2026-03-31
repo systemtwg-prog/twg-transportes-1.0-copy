@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3, Users, FileBarChart2 } from "lucide-react";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3, Users, FileBarChart2, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import PagadorDialog from "@/components/precificacao/PagadorDialog";
 import RelatorioPrecificacao from "@/components/precificacao/RelatorioPrecificacao";
@@ -1231,6 +1231,32 @@ ${text}`,
                                                </div>
                                                </div>
                                                <div className="flex gap-2">
+                                               <Button
+                                                   size="icon"
+                                                   variant="outline"
+                                                   title="Compartilhar no WhatsApp"
+                                                   className="text-green-500 hover:text-green-600 border-green-300"
+                                                   onClick={() => {
+                                                       const rem = prec.remetente?.split(' ').slice(0, 4).join(' ') || '';
+                                                       const dest = prec.destinatario?.split(' ').slice(0, 4).join(' ') || '';
+                                                       const vol = prec.volume || '';
+                                                       const peso = prec.peso || '';
+                                                       const valorNota = Number(prec.valor_nota || 0).toFixed(2);
+                                                       const partes = [
+                                                           prec.frete_peso > 0 ? `R$ ${Number(prec.frete_peso).toFixed(2)}` : null,
+                                                           prec.sec_cat > 0 ? `R$ ${Number(prec.sec_cat).toFixed(2)}` : null,
+                                                           prec.despacho > 0 ? `R$ ${Number(prec.despacho).toFixed(2)}` : null,
+                                                           prec.pedagio > 0 ? `R$ ${Number(prec.pedagio).toFixed(2)}` : null,
+                                                           prec.outros > 0 ? `R$ ${Number(prec.outros).toFixed(2)}` : null,
+                                                       ].filter(Boolean).join(' + ');
+                                                       const valorServico = Number(prec.valor_servico || 0).toFixed(2);
+                                                       const porcentagem = Number(prec.porcentagem || 0).toFixed(2);
+                                                       const msg = `*${rem} / ${dest}*\n${vol} - ${peso} - R$ ${valorNota}\n${partes} =\nR$ ${valorServico} (${porcentagem}%)`;
+                                                       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                                                   }}
+                                               >
+                                                   <Share2 className="w-4 h-4" />
+                                               </Button>
                                                {!prec.confirmado && (
                                                    <Button
                                                        size="icon"

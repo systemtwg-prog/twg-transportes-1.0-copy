@@ -24,6 +24,7 @@ const menuItems = [
     { name: "Romaneios Gerados", href: "RomaneiosGerados", icon: Package, category: "documentos" },
     { name: "Serviços S/NF", href: "ServicosSNF", icon: FileText, category: "documentos" },
     { name: "Precificação", href: "Precificacao", icon: DollarSign, category: "documentos" },
+    { name: "Bono", href: "Bono", icon: Award, category: "documentos" },
     { name: "Clientes", href: "Clientes", icon: Users, category: "cadastros" },
     { name: "Destinatários", href: "Destinatarios", icon: Users, category: "cadastros" },
     { name: "Transportadoras", href: "Transportadoras", icon: Building2, category: "cadastros" },

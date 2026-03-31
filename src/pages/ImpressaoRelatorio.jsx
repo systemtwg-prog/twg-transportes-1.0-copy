@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -339,7 +340,7 @@ export default function ImpressaoRelatorio() {
                                 <Calendar className="w-4 h-4 mr-2" />
                                 Histórico
                             </Button>
-                            <Link to={createPageUrl("RelatorioDestinatario")}>
+                            <Link to="/RelatorioDestinatario">
                                 <Button 
                                     variant="outline"
                                     className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
@@ -348,7 +349,7 @@ export default function ImpressaoRelatorio() {
                                     Por Destinatário
                                 </Button>
                             </Link>
-                            <Link to={createPageUrl("RelatorioNotaFiscal")}>
+                            <Link to="/RelatorioNotaFiscal">
                                 <Button 
                                     variant="outline"
                                     className="border-blue-500 text-blue-600 hover:bg-blue-50"

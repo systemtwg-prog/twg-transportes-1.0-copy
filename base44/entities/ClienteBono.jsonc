@@ -1,0 +1,53 @@
+{
+  "name": "ClienteBono",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "cnpj_cpf": {
+      "type": "string",
+      "description": "CNPJ ou CPF"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "frete_peso": {
+      "type": "number",
+      "description": "Tabela frete peso (R$/kg)"
+    },
+    "percentual_ad_valorem": {
+      "type": "number",
+      "description": "Ad Valorem (%)"
+    },
+    "pedagio": {
+      "type": "number",
+      "description": "Ped\u00e1gio (R$)"
+    },
+    "despacho": {
+      "type": "number",
+      "description": "Despacho (R$)"
+    },
+    "frete_minimo": {
+      "type": "number",
+      "description": "Frete m\u00ednimo (R$)"
+    },
+    "outros": {
+      "type": "number",
+      "description": "Outros (R$)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

@@ -60,7 +60,16 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
             return;
         }
 
-        const rowsHtml = dadosFiltrados.map((p, i) => `
+        const dadosOrdenados = [...dadosFiltrados].sort((a, b) => {
+            const toISO = (d) => {
+                if (!d) return '';
+                const [dia, mes, ano] = d.split('/');
+                return ano && mes && dia ? `${ano}-${mes}-${dia}` : d;
+            };
+            return toISO(a.data_emissao).localeCompare(toISO(b.data_emissao));
+        });
+
+        const rowsHtml = dadosOrdenados.map((p, i) => `
             <tr style="background: ${i % 2 === 0 ? '#f8fafc' : '#ffffff'}">
                 <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0;">${p.data_emissao || '-'}</td>
                 <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0;">${p.numero_documento || '-'}</td>

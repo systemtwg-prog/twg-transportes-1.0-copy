@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3, Users, FileBarChart2, Share2 } from "lucide-react";
+import { Camera, Upload, Loader2, Edit2, Check, Trash2, Search, FileText, Download, BarChart3, Users, FileBarChart2, Share2, Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import PagadorDialog from "@/components/precificacao/PagadorDialog";
 import RelatorioPrecificacao from "@/components/precificacao/RelatorioPrecificacao";
@@ -1231,6 +1231,45 @@ ${text}`,
                                                </div>
                                                </div>
                                                <div className="flex gap-2">
+                                               <Button
+                                                   size="icon"
+                                                   variant="outline"
+                                                   title="Copiar dados"
+                                                   className="text-gray-500 hover:text-gray-700"
+                                                   onClick={() => {
+                                                       const rem = prec.remetente || '';
+                                                       const dest = prec.destinatario || '';
+                                                       const vol = prec.volume || '';
+                                                       const peso = prec.peso || '';
+                                                       const valorNota = Number(prec.valor_nota || 0).toFixed(2);
+                                                       const partes = [
+                                                           prec.frete_peso > 0 ? `R$ ${Number(prec.frete_peso).toFixed(2)}` : null,
+                                                           prec.sec_cat > 0 ? `R$ ${Number(prec.sec_cat).toFixed(2)}` : null,
+                                                           prec.despacho > 0 ? `R$ ${Number(prec.despacho).toFixed(2)}` : null,
+                                                           prec.pedagio > 0 ? `R$ ${Number(prec.pedagio).toFixed(2)}` : null,
+                                                           prec.outros > 0 ? `R$ ${Number(prec.outros).toFixed(2)}` : null,
+                                                       ].filter(Boolean).join(' + ');
+                                                       const valorServico = Number(prec.valor_servico || 0).toFixed(2);
+                                                       const porcentagem = Number(prec.porcentagem || 0).toFixed(2);
+                                                       let linhas = [];
+                                                       linhas.push(`${rem} / ${dest}`);
+                                                       linhas.push(`${vol} - ${peso} - R$ ${valorNota}`);
+                                                       linhas.push(`${partes} =`);
+                                                       linhas.push(`R$ ${valorServico} (${porcentagem}%)`);
+                                                       if (prec.numero_documento || prec.data_emissao) {
+                                                           let docLine = '';
+                                                           if (prec.numero_documento) docLine += `Nº ${prec.numero_documento}`;
+                                                           if (prec.numero_documento && prec.data_emissao) docLine += ' - ';
+                                                           if (prec.data_emissao) docLine += `Emissão: ${prec.data_emissao}`;
+                                                           linhas.push(docLine);
+                                                       }
+                                                       if (prec.pagador_nome) linhas.push(`Pagador: ${prec.pagador_nome}`);
+                                                       navigator.clipboard.writeText(linhas.join('\n'));
+                                                       toast({ title: "Copiado!", duration: 1500 });
+                                                   }}
+                                               >
+                                                   <Copy className="w-4 h-4" />
+                                               </Button>
                                                <Button
                                                    size="icon"
                                                    variant="outline"

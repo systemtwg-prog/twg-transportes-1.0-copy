@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, FileText } from "lucide-react";
+import { Printer, FileText, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -52,6 +52,64 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
     };
 
     const pagadorNome = pagadorId === "todos" ? "Todos" : (pagadores.find(p => p.id === pagadorId)?.nome || "Todos");
+
+    const handleExportExcel = () => {
+        const dadosOrdenados = [...dadosFiltrados].sort((a, b) => {
+            const toISO = (d) => {
+                if (!d) return '';
+                const [dia, mes, ano] = d.split('/');
+                return ano && mes && dia ? `${ano}-${mes}-${dia}` : d;
+            };
+            return toISO(a.data_emissao).localeCompare(toISO(b.data_emissao));
+        });
+
+        const headers = ['Data', 'No. Doc', 'Remetente', 'Destinatário', 'Volume', 'Peso', 'Valor NF', 'Frete Peso/Vol', 'Sec/Cat', 'Despacho', 'Pedágio', 'Outros', 'Vl. Serviço', '%', 'Pagador'];
+
+        const rows = dadosOrdenados.map(p => [
+            p.data_emissao || '',
+            p.numero_documento || '',
+            p.remetente || '',
+            p.destinatario || '',
+            p.volume || '',
+            p.peso || '',
+            Number(p.valor_nota || 0).toFixed(2),
+            Number(p.frete_peso || 0).toFixed(2),
+            Number(p.sec_cat || 0).toFixed(2),
+            Number(p.despacho || 0).toFixed(2),
+            Number(p.pedagio || 0).toFixed(2),
+            Number(p.outros || 0).toFixed(2),
+            Number(p.valor_servico || 0).toFixed(2),
+            Number(p.porcentagem || 0).toFixed(2),
+            p.pagador_nome || ''
+        ]);
+
+        const totaisRow = [
+            'TOTAIS', '', '', '', '', '',
+            totais.valor_nota.toFixed(2),
+            totais.frete_peso.toFixed(2),
+            totais.sec_cat.toFixed(2),
+            totais.despacho.toFixed(2),
+            totais.pedagio.toFixed(2),
+            totais.outros.toFixed(2),
+            totais.valor_servico.toFixed(2),
+            '', ''
+        ];
+
+        const csvContent = [headers, ...rows, totaisRow]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+            .join('\n');
+
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `relatorio_precificacao_${pagadorNome.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    };
 
     const handlePrint = () => {
         const winPrint = window.open('', '_blank', 'width=1200,height=700');
@@ -226,14 +284,24 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                         </div>
                     </div>
 
-                    <Button
-                        onClick={handlePrint}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        disabled={dadosFiltrados.length === 0}
-                    >
-                        <Printer className="w-4 h-4 mr-2" />
-                        Gerar e Imprimir Relatório
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handlePrint}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            disabled={dadosFiltrados.length === 0}
+                        >
+                            <Printer className="w-4 h-4 mr-2" />
+                            Imprimir
+                        </Button>
+                        <Button
+                            onClick={handleExportExcel}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            disabled={dadosFiltrados.length === 0}
+                        >
+                            <FileSpreadsheet className="w-4 h-4 mr-2" />
+                            Exportar Excel
+                        </Button>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

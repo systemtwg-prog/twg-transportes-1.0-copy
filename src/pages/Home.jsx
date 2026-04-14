@@ -62,7 +62,11 @@ export default function Home() {
 
     const { data: notasFiscais = [] } = useQuery({
         queryKey: ["notas-fiscais-home"],
-        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
+        queryFn: async () => {
+            const todas = await base44.entities.NotaFiscal.list("-created_date");
+            // Apenas notas sem status (pendente implícito) ou com status explicitamente pendente
+            return todas.filter(n => !n.status || n.status === "pendente");
+        }
     });
 
     const { data: coletasDiarias = [] } = useQuery({
@@ -164,9 +168,9 @@ export default function Home() {
             const subPeso = notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
             return `
                 <div style="margin-bottom:8px; border:1px solid #bfdbfe; border-radius:5px; overflow:hidden; page-break-inside:avoid;">
-                    <div style="background:#1e40af; color:white; padding:4px 8px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; font-size:9px;">${transportadora}</span>
-                        <span style="font-size:8px; background:rgba(255,255,255,0.2); padding:1px 6px; border-radius:8px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
+                    <div style="background:#1e40af; color:white; padding:5px 10px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; font-size:12px;">${transportadora}</span>
+                        <span style="font-size:9px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:8px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
                     </div>
                     <table style="width:100%; border-collapse:collapse; font-size:9px;">
                         <thead>

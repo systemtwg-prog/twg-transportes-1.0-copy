@@ -154,6 +154,70 @@ export default function Home() {
         }
     };
 
+    const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas) => {
+        const totalEntregas = todasNotas.length;
+        const totalVolumes = todasNotas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
+        const totalPeso = todasNotas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
+
+        const transpHtml = Object.entries(agrupadas).map(([transportadora, notas]) => {
+            const subVol = notas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
+            const subPeso = notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
+            return `
+                <div style="margin-bottom:8px; border:1px solid #bfdbfe; border-radius:5px; overflow:hidden; page-break-inside:avoid;">
+                    <div style="background:#1e40af; color:white; padding:4px 8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; font-size:9px;">${transportadora}</span>
+                        <span style="font-size:8px; background:rgba(255,255,255,0.2); padding:1px 6px; border-radius:8px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:9px;">
+                        <thead>
+                            <tr style="background:#eff6ff;">
+                                <th style="padding:3px 6px; text-align:left; border-bottom:1px solid #dbeafe; width:18%;">NF</th>
+                                <th style="padding:3px 6px; text-align:left; border-bottom:1px solid #dbeafe;">Cliente</th>
+                                <th style="padding:3px 6px; text-align:center; border-bottom:1px solid #dbeafe; width:12%;">Vol</th>
+                                <th style="padding:3px 6px; text-align:center; border-bottom:1px solid #dbeafe; width:14%;">Peso (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${notas.map((nota, i) => `
+                                <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; font-weight:800; color:#1d4ed8; font-size:12px;">${nota.numero_nf || '-'}</td>
+                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; font-size:9px;">${nota.destinatario || '-'}</td>
+                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; text-align:center;">${nota.volume || '-'}</td>
+                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; text-align:center;">${nota.peso || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:#dbeafe; font-weight:bold;">
+                                <td colspan="2" style="padding:3px 6px; font-size:8px; color:#1e40af;">Subtotal ${transportadora.substring(0,20)}</td>
+                                <td style="padding:3px 6px; text-align:center; color:#1e40af;">${subVol || '-'}</td>
+                                <td style="padding:3px 6px; text-align:center; color:#1e40af;">${subPeso > 0 ? subPeso.toFixed(2) : '-'}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div style="margin-bottom:12px; border:2px solid #2563eb; border-radius:6px; overflow:hidden; page-break-inside:avoid;">
+                <div style="background:#1e3a8a; color:white; padding:5px 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; font-size:11px;">🚗 ${placa}${veiculo?.modelo ? ' - ' + veiculo.modelo : ''}</span>
+                    <span style="font-size:9px;">${todasNotas.length} NFs | ${Object.keys(agrupadas).length} Transp.</span>
+                </div>
+                <div style="padding:6px;">
+                    ${transpHtml}
+                    <div style="background:#1e3a8a; color:white; padding:5px 10px; border-radius:4px; display:flex; justify-content:space-between; font-size:9px; font-weight:bold; margin-top:4px;">
+                        <span>TOTAL GERAL: ${totalEntregas} entrega${totalEntregas !== 1 ? 's' : ''}</span>
+                        <span>Volumes: ${totalVolumes || '-'}</span>
+                        <span>Peso: ${totalPeso > 0 ? totalPeso.toFixed(2) + ' kg' : '-'}</span>
+                        <span>Notas: ${totalEntregas}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
     const handlePrintNotas = () => {
         const veiculo = veiculos.find(v => v.placa === placaSelecionada);
         const todasNotas = dashboardPorVeiculo[placaSelecionada]?.notas || [];
@@ -164,36 +228,7 @@ export default function Home() {
             return;
         }
 
-        const notasHtml = Object.entries(notasAgrupadas).map(([transportadora, notas]) => `
-            <div style="margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                <div style="background: #eff6ff; padding: 10px 15px; border-bottom: 1px solid #dbeafe;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold; color: #1e40af; font-size: 14px;">${transportadora}</span>
-                        <span style="background: #dbeafe; color: #1e40af; padding: 2px 10px; border-radius: 10px; font-size: 12px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                    <thead>
-                        <tr style="background: #f8fafc;">
-                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">NF</th>
-                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Destinatário</th>
-                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Volume</th>
-                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #e2e8f0;">Peso</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${notas.map(nota => `
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #2563eb;">${nota.numero_nf || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">${nota.destinatario || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.volume || '-'}</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center;">${nota.peso || '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `).join('');
+        const conteudo = buildVeiculoPrintHtml(placaSelecionada, notasAgrupadas, veiculo, todasNotas);
 
         winPrint.document.write(`
             <html>
@@ -202,25 +237,21 @@ export default function Home() {
                 <title>Notas do Veículo ${placaSelecionada}</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1e293b; }
-                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px; }
-                    .logo img { max-width: 80px; max-height: 50px; object-fit: contain; margin-right: 15px; }
-                    .title { font-size: 18px; font-weight: bold; color: #1e40af; }
-                    .subtitle { font-size: 14px; color: #64748b; }
-                    @media print { body { padding: 10mm; } @page { margin: 0; } }
+                    body { font-family: Arial, sans-serif; padding: 8mm; color: #1e293b; font-size: 9px; }
+                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 6px; margin-bottom: 8px; }
+                    .logo img { max-width: 60px; max-height: 40px; object-fit: contain; margin-right: 10px; }
+                    @media print { body { padding: 5mm; } @page { margin: 0; size: A4; } }
                 </style>
             </head>
             <body>
                 <div class="header">
-                    <div class="logo">
-                        ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}
-                    </div>
+                    <div>${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}</div>
                     <div>
-                        <p class="title">Notas do Veículo ${placaSelecionada} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''}</p>
-                        <p class="subtitle">${todasNotas.length} notas | ${Object.keys(notasAgrupadas).length} transportadoras | ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+                        <p style="font-size:13px; font-weight:bold; color:#1e40af;">Notas - ${placaSelecionada}${veiculo?.modelo ? ' (' + veiculo.modelo + ')' : ''}</p>
+                        <p style="font-size:9px; color:#64748b;">${todasNotas.length} notas | ${Object.keys(notasAgrupadas).length} transportadoras | ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
                     </div>
                 </div>
-                ${notasHtml}
+                ${conteudo}
             </body>
             </html>
         `);
@@ -229,33 +260,16 @@ export default function Home() {
     };
 
     const handlePrintTodosDashboard = (printConfig = {}) => {
-        const winPrint = window.open('', '_blank', 'width=800,height=600');
+        const winPrint = window.open('', '_blank', 'width=900,height=700');
         if (!winPrint) {
             alert("Permita pop-ups para imprimir.");
             return;
         }
 
-        const cfg = {
-            marginTop: printConfig.marginTop ?? 5,
-            marginBottom: printConfig.marginBottom ?? 5,
-            marginLeft: printConfig.marginLeft ?? 5,
-            marginRight: printConfig.marginRight ?? 5,
-            showHeader: printConfig.showHeader ?? true,
-            showFooter: printConfig.showFooter ?? true,
-            showLogo: printConfig.showLogo ?? true,
-            showDate: printConfig.showDate ?? true,
-            showCompanyInfo: printConfig.showCompanyInfo ?? true,
-            fontSize: printConfig.fontSize ?? 9,
-            columns: printConfig.columns ?? 2,
-            headerHeight: printConfig.headerHeight ?? 50,
-            footerHeight: printConfig.footerHeight ?? 20,
-            cardPadding: printConfig.cardPadding ?? 4,
-            cardGap: printConfig.cardGap ?? 4
-        };
-
-        // Gerar HTML para todos os veículos
         let todosVeiculosHtml = '';
-        let totalNotas = 0;
+        let totalNotasGeral = 0;
+        let totalVolumesGeral = 0;
+        let totalPesoGeral = 0;
         let totalTransportadoras = new Set();
 
         Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
@@ -263,13 +277,12 @@ export default function Home() {
             
             const veiculo = veiculos.find(v => v.placa === placa);
             const notas = dados.notas || [];
-            totalNotas += notas.length;
+            if (notas.length === 0) return;
 
             // Agrupar por transportadora
             const agrupadas = {};
             notas.forEach(nota => {
                 let transp = nota.transportadora || "SEM TRANSPORTADORA";
-                // Substituir transportadora pelo destinatário quando for WASHINGTON GONZALES
                 if (transp.toUpperCase().includes("WASHINGTON GONZALES")) {
                     transp = nota.destinatario || "SEM TRANSPORTADORA";
                 }
@@ -280,22 +293,13 @@ export default function Home() {
 
             if (Object.keys(agrupadas).length === 0) return;
 
-            const qtdTranspVeiculo = Object.keys(agrupadas).length;
-            todosVeiculosHtml += `
-                <div class="veiculo-card">
-                    <div class="veiculo-header">
-                        🚗 ${placa} ${veiculo?.modelo ? '- ' + veiculo.modelo : ''} | ${notas.length} NFs | ${qtdTranspVeiculo} Transp.
-                    </div>
-                    ${Object.entries(agrupadas).map(([transp, notasT]) => `
-                        <div>
-                            <div class="transp-header">${transp} (${notasT.length})</div>
-                            <div class="notas-list">
-                                ${notasT.map(n => `<span class="nota-item">${n.numero_nf || '-'} → ${(n.destinatario || '-').substring(0, 20)}</span>`).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            totalNotasGeral += notas.length;
+            const volVeiculo = notas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
+            const pesoVeiculo = notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
+            totalVolumesGeral += volVeiculo;
+            totalPesoGeral += pesoVeiculo;
+
+            todosVeiculosHtml += buildVeiculoPrintHtml(placa, agrupadas, veiculo, notas);
         });
 
         winPrint.document.write(`
@@ -305,62 +309,41 @@ export default function Home() {
                 <title>Dashboard Pendências</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: ${cfg.marginTop}mm ${cfg.marginRight}mm ${cfg.marginBottom}mm ${cfg.marginLeft}mm; color: #1e293b; font-size: ${cfg.fontSize}px; }
-                    .header { display: ${cfg.showHeader ? 'flex' : 'none'}; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-bottom: 6px; min-height: ${cfg.headerHeight}px; }
-                    .logo { display: ${cfg.showLogo ? 'block' : 'none'}; width: 50px; margin-right: 8px; }
-                    .logo img { max-width: 100%; max-height: 35px; object-fit: contain; }
-                    .company-name { font-size: ${cfg.fontSize + 2}px; font-weight: bold; color: #1e293b; display: ${cfg.showCompanyInfo ? 'block' : 'none'}; }
-                    .company-details { font-size: ${cfg.fontSize - 1}px; color: #64748b; display: ${cfg.showCompanyInfo ? 'block' : 'none'}; }
-                    .title { text-align: center; font-size: ${cfg.fontSize + 1}px; font-weight: bold; color: #1e40af; margin: 4px 0; padding: 3px; background: #eff6ff; border-radius: 3px; }
-                    .title-date { display: ${cfg.showDate ? 'inline' : 'none'}; }
-                    .summary { display: flex; justify-content: center; gap: 15px; background: #f8fafc; padding: 4px; border-radius: 3px; margin-bottom: 6px; }
+                    body { font-family: Arial, sans-serif; padding: 5mm; color: #1e293b; font-size: 9px; }
+                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 5px; margin-bottom: 6px; }
+                    .logo img { max-width: 55px; max-height: 38px; object-fit: contain; margin-right: 10px; }
+                    .summary { display: flex; gap: 10px; background: #eff6ff; padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 9px; }
                     .summary-item { text-align: center; }
-                    .summary-label { color: #64748b; text-transform: uppercase; font-size: ${cfg.fontSize - 2}px; }
-                    .summary-value { font-size: ${cfg.fontSize + 2}px; font-weight: bold; color: #1e40af; }
-                    .grid-container { display: grid; grid-template-columns: repeat(${cfg.columns}, 1fr); gap: ${cfg.cardGap}px; }
-                    .veiculo-card { border: 1px solid #2563eb; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
-                    .veiculo-header { background: #2563eb; color: white; padding: ${cfg.cardPadding}px 6px; font-weight: bold; font-size: ${cfg.fontSize}px; }
-                    .transp-header { background: #eff6ff; padding: 2px 6px; font-size: ${cfg.fontSize - 1}px; font-weight: 600; color: #1e40af; border-bottom: 1px solid #e2e8f0; }
-                    .notas-list { padding: 2px 6px ${cfg.cardPadding}px; font-size: ${cfg.fontSize - 2}px; }
-                    .nota-item { display: inline-block; background: #f1f5f9; padding: 1px 4px; border-radius: 2px; margin: 1px; }
-                    .footer { display: ${cfg.showFooter ? 'block' : 'none'}; margin-top: 6px; padding-top: 3px; border-top: 1px solid #e2e8f0; text-align: center; font-size: ${cfg.fontSize - 2}px; color: #94a3b8; min-height: ${cfg.footerHeight}px; }
-                    @media print { body { padding: ${cfg.marginTop}mm ${cfg.marginRight}mm ${cfg.marginBottom}mm ${cfg.marginLeft}mm; } @page { margin: 0; } }
+                    .summary-label { color: #64748b; font-size: 7px; text-transform: uppercase; }
+                    .summary-value { font-weight: bold; color: #1e40af; font-size: 11px; }
+                    .total-geral { background: #0f172a; color: white; padding: 6px 10px; border-radius: 5px; margin-top: 10px; display: flex; justify-content: space-around; font-size: 10px; font-weight: bold; }
+                    @media print { body { padding: 4mm; } @page { margin: 0; size: A4; } }
                 </style>
             </head>
             <body>
                 <div class="header">
-                    <div class="logo">
-                        ${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}
-                    </div>
+                    <div>${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}</div>
                     <div>
-                        <p class="company-name">${config.nome_empresa || 'TWG TRANSPORTES'}</p>
-                        <p class="company-details">${config.cnpj ? config.cnpj : ''} ${config.telefone ? ' | ' + config.telefone : ''}</p>
+                        <p style="font-size:13px; font-weight:bold; color:#1e40af;">${config.nome_empresa || ''} — PENDÊNCIAS POR VEÍCULO</p>
+                        <p style="font-size:9px; color:#64748b;">${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
                     </div>
                 </div>
-
-                <div class="title">PENDÊNCIAS POR VEÍCULO<span class="title-date"> - ${format(new Date(), "dd/MM/yyyy")}</span></div>
 
                 <div class="summary">
-                    <div class="summary-item">
-                        <div class="summary-label">Veículos</div>
-                        <div class="summary-value">${Object.keys(dashboardPorVeiculo).filter(p => p !== "COLETAS").length}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Total Notas</div>
-                        <div class="summary-value">${totalNotas}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Transportadoras</div>
-                        <div class="summary-value">${totalTransportadoras.size}</div>
-                    </div>
+                    <div class="summary-item"><div class="summary-label">Veículos</div><div class="summary-value">${Object.keys(dashboardPorVeiculo).filter(p => p !== "COLETAS").length}</div></div>
+                    <div class="summary-item"><div class="summary-label">Notas</div><div class="summary-value">${totalNotasGeral}</div></div>
+                    <div class="summary-item"><div class="summary-label">Transportadoras</div><div class="summary-value">${totalTransportadoras.size}</div></div>
+                    <div class="summary-item"><div class="summary-label">Volumes</div><div class="summary-value">${totalVolumesGeral || '-'}</div></div>
+                    <div class="summary-item"><div class="summary-label">Peso Total</div><div class="summary-value">${totalPesoGeral > 0 ? totalPesoGeral.toFixed(2) + ' kg' : '-'}</div></div>
                 </div>
 
-                <div class="grid-container">
-                    ${todosVeiculosHtml}
-                </div>
+                ${todosVeiculosHtml}
 
-                <div class="footer">
-                    ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                <div class="total-geral">
+                    <span>Total Entregas: ${totalNotasGeral}</span>
+                    <span>Volumes: ${totalVolumesGeral || '-'}</span>
+                    <span>Peso: ${totalPesoGeral > 0 ? totalPesoGeral.toFixed(2) + ' kg' : '-'}</span>
+                    <span>Notas: ${totalNotasGeral}</span>
                 </div>
             </body>
             </html>

@@ -62,11 +62,7 @@ export default function Home() {
 
     const { data: notasFiscais = [] } = useQuery({
         queryKey: ["notas-fiscais-home"],
-        queryFn: async () => {
-            const todas = await base44.entities.NotaFiscal.list("-created_date");
-            // Apenas notas sem status (pendente implícito) ou com status explicitamente pendente
-            return todas.filter(n => !n.status || n.status === "pendente");
-        }
+        queryFn: () => base44.entities.NotaFiscal.list("-created_date")
     });
 
     const { data: coletasDiarias = [] } = useQuery({
@@ -112,10 +108,10 @@ export default function Home() {
             }
         });
 
-        // Adicionar notas fiscais reais aos veículos
+        // Adicionar notas fiscais reais aos veículos - APENAS as que estão nos romaneios
         Object.keys(porVeiculo).forEach(placa => {
             const notasDoVeiculo = notasFiscais.filter(n => 
-                porVeiculo[placa].notasIds.includes(n.id) || n.placa === placa
+                porVeiculo[placa].notasIds.includes(n.id)
             );
             porVeiculo[placa].notas = notasDoVeiculo;
         });

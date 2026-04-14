@@ -705,8 +705,8 @@ export default function Home() {
                                                         <p className="text-sm text-blue-600 font-semibold">NF: {nota.numero_nf}</p>
                                                     </div>
                                                     <div className="text-right text-sm">
-                                                        <p className="text-slate-500">{nota.volume || "-"} vol</p>
-                                                        <p className="text-slate-500">{nota.peso || "-"}</p>
+                                                        <p className="text-slate-800 font-semibold">{nota.volume || "-"} vol</p>
+                                                        <p className="text-slate-800 font-semibold">{nota.peso || "-"}</p>
                                                     </div>
                                                 </div>
                                                 {nota.filial && (
@@ -716,10 +716,33 @@ export default function Home() {
                                                 )}
                                             </div>
                                         ))}
+                                        {/* Subtotal por transportadora */}
+                                        <div className="p-2 bg-blue-900 flex justify-between items-center">
+                                            <span className="text-xs font-bold text-white">Subtotal</span>
+                                            <div className="flex gap-4 text-sm font-bold text-white">
+                                                <span>{notas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0)} vol</span>
+                                                <span>{notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0).toFixed(2)} kg</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))
                         )}
+                        {/* Total Geral do veículo */}
+                        {Object.keys(notasAgrupadas).length > 0 && (() => {
+                            const todasNotas = dashboardPorVeiculo[placaSelecionada]?.notas || [];
+                            const totalVol = todasNotas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
+                            const totalPeso = todasNotas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
+                            return (
+                                <div className="p-3 bg-slate-900 rounded-xl flex justify-between items-center mt-2">
+                                    <span className="text-sm font-bold text-white">TOTAL GERAL — {todasNotas.length} nota{todasNotas.length !== 1 ? 's' : ''}</span>
+                                    <div className="flex gap-4 text-sm font-bold text-white">
+                                        <span>{totalVol} vol</span>
+                                        <span>{totalPeso.toFixed(2)} kg</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </DialogContent>
             </Dialog>

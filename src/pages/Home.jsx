@@ -25,6 +25,9 @@ export default function Home() {
     const [showNotasDialog, setShowNotasDialog] = useState(false);
     const [showPrintConfig, setShowPrintConfig] = useState(false);
     const [showPersonalizar, setShowPersonalizar] = useState(false);
+    const [showFontConfig, setShowFontConfig] = useState(false);
+    const [printFontSize, setPrintFontSize] = useState(() => parseInt(localStorage.getItem('dashPrintFontSize') || '11'));
+    const [printTarget, setPrintTarget] = useState(null); // 'veiculo' | 'todos'
 
     const { data: currentUser } = useQuery({
         queryKey: ["current-user"],
@@ -154,31 +157,33 @@ export default function Home() {
         }
     };
 
-    const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas) => {
-        const totalEntregas = Object.keys(agrupadas).length; // entregas = nº de transportadoras (destinos)
+    const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas, fontSize = 11) => {
+        const totalEntregas = Object.keys(agrupadas).length;
         const totalNotas = todasNotas.length;
         const dataHoje = format(new Date(), "dd/MM/yyyy");
+        const headerFs = Math.round(fontSize * 0.8);
+        const titleFs = Math.round(fontSize * 1.1);
 
-        // Gera bloco de uma transportadora
+        // Gera bloco de uma transportadora — sem break-inside para que o CSS columns decida onde quebrar
         const buildTranspBlock = (transportadora, notas) => `
-            <div style="border:1px solid #999; margin-bottom:4px; page-break-inside:avoid;">
-                <div style="text-align:center; font-weight:bold; font-size:9px; padding:3px 4px; border-bottom:1px solid #999; text-transform:uppercase;">
+            <div style="break-inside:avoid; border:1px solid #999; margin-bottom:5px;">
+                <div style="text-align:center; font-weight:bold; font-size:${headerFs}px; padding:3px 5px; border-bottom:1px solid #999; text-transform:uppercase; background:#f5f5f5;">
                     ${transportadora}
                 </div>
-                <table style="width:100%; border-collapse:collapse; font-size:8px;">
+                <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr style="border-bottom:1px solid #999;">
-                            <th style="padding:2px 4px; text-align:left; font-weight:bold; width:40%;">NF</th>
-                            <th style="padding:2px 4px; text-align:center; font-weight:bold; width:30%;">VOLUME</th>
-                            <th style="padding:2px 4px; text-align:center; font-weight:bold; width:30%;">PESO</th>
+                        <tr style="border-bottom:1px solid #bbb; background:#efefef;">
+                            <th style="padding:2px 5px; text-align:left; font-weight:bold; font-size:${headerFs}px; width:38%;">NF</th>
+                            <th style="padding:2px 5px; text-align:center; font-weight:bold; font-size:${headerFs}px; width:31%;">VOLUME</th>
+                            <th style="padding:2px 5px; text-align:center; font-weight:bold; font-size:${headerFs}px; width:31%;">PESO</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${notas.map(nota => `
                             <tr>
-                                <td style="padding:2px 4px; font-weight:bold; font-size:11px;">${nota.numero_nf || '-'}</td>
-                                <td style="padding:2px 4px; text-align:center; font-weight:bold; font-size:11px;">${nota.volume || '-'}</td>
-                                <td style="padding:2px 4px; text-align:center; font-weight:bold; font-size:11px;">${nota.peso || '-'}</td>
+                                <td style="padding:3px 5px; font-weight:bold; font-size:${fontSize}px;">${nota.numero_nf || '-'}</td>
+                                <td style="padding:3px 5px; text-align:center; font-weight:bold; font-size:${fontSize}px;">${nota.volume || '-'}</td>
+                                <td style="padding:3px 5px; text-align:center; font-weight:bold; font-size:${fontSize}px;">${nota.peso || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -186,140 +191,79 @@ export default function Home() {
             </div>
         `;
 
-        // Divide os blocos em duas colunas
-        const transpEntries = Object.entries(agrupadas);
-        const col1 = transpEntries.slice(0, Math.ceil(transpEntries.length / 2));
-        const col2 = transpEntries.slice(Math.ceil(transpEntries.length / 2));
-
-        // Garante que col2 tenha o mesmo número de blocos (preenchendo com vazio)
-        while (col2.length < col1.length) col2.push(null);
-
-        const col1Html = col1.map(([t, n]) => buildTranspBlock(t, n)).join('');
-        const col2Html = col2.map(entry => entry ? buildTranspBlock(entry[0], entry[1]) : '<div style="border:1px solid transparent; margin-bottom:4px; height:60px;"></div>').join('');
+        const blocosHtml = Object.entries(agrupadas).map(([t, n]) => buildTranspBlock(t, n)).join('');
 
         return `
-            <div style="margin-bottom:16px; border:1px solid #333; font-family:Arial,sans-serif; page-break-inside:avoid;">
-                <div style="text-align:center; font-weight:bold; font-size:12px; padding:6px; border-bottom:1px solid #333;">
+            <div style="font-family:Arial,sans-serif; page-break-after:always;">
+                <div style="text-align:center; font-weight:bold; font-size:${titleFs}px; padding:6px; border:1px solid #333; border-bottom:2px solid #333; margin-bottom:6px;">
                     NOTAS ${placa} - ${dataHoje}
                 </div>
-                <div style="display:table; width:100%; border-collapse:collapse;">
-                    <div style="display:table-row;">
-                        <div style="display:table-cell; width:50%; vertical-align:top; padding:4px; border-right:1px solid #333;">
-                            ${col1Html}
-                        </div>
-                        <div style="display:table-cell; width:50%; vertical-align:top; padding:4px;">
-                            ${col2Html}
-                        </div>
-                    </div>
+                <div style="columns:2; column-gap:8px; column-fill:auto; height:245mm;">
+                    ${blocosHtml}
                 </div>
-                <table style="width:100%; border-collapse:collapse; border-top:1px solid #333;">
+                <table style="width:100%; border-collapse:collapse; border:1px solid #333; margin-top:6px;">
                     <tr>
-                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; border-right:1px solid #333; width:20%;">TOTAL</td>
-                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; text-align:right;">${totalEntregas} ENTREGAS</td>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; border-right:1px solid #333; width:20%;">TOTAL</td>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:right;">${totalEntregas} ENTREGAS</td>
                     </tr>
                     <tr style="border-top:1px solid #ccc;">
-                        <td style="padding:4px 8px; border-right:1px solid #333;"></td>
-                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; text-align:right;">${totalNotas} NOTAS</td>
+                        <td style="padding:5px 8px; border-right:1px solid #333;"></td>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:right;">${totalNotas} NOTAS</td>
                     </tr>
                 </table>
             </div>
         `;
     };
 
-    const handlePrintNotas = () => {
-        const veiculo = veiculos.find(v => v.placa === placaSelecionada);
-        const todasNotas = dashboardPorVeiculo[placaSelecionada]?.notas || [];
-        
-        const winPrint = window.open('', '_blank', 'width=800,height=600');
-        if (!winPrint) {
-            alert("Permita pop-ups para imprimir.");
-            return;
+    const executarImpressao = (target, fontSize) => {
+        if (target === 'veiculo') {
+            const veiculo = veiculos.find(v => v.placa === placaSelecionada);
+            const todasNotas = dashboardPorVeiculo[placaSelecionada]?.notas || [];
+            const winPrint = window.open('', '_blank', 'width=800,height=600');
+            if (!winPrint) { alert("Permita pop-ups para imprimir."); return; }
+            const conteudo = buildVeiculoPrintHtml(placaSelecionada, notasAgrupadas, veiculo, todasNotas, fontSize);
+            winPrint.document.write(`<html><head><meta charset="UTF-8"><title>Notas ${placaSelecionada}</title>
+                <style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family:Arial,sans-serif; padding:8mm; color:#000; }
+                @media print { body { padding:5mm; } @page { margin:5mm; size:A4; } }</style>
+                </head><body>${conteudo}</body></html>`);
+            winPrint.document.close();
+            setTimeout(() => winPrint.print(), 500);
+        } else {
+            const winPrint = window.open('', '_blank', 'width=900,height=700');
+            if (!winPrint) { alert("Permita pop-ups para imprimir."); return; }
+            let todosVeiculosHtml = '';
+            Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
+                if (placa === "COLETAS") return;
+                const veiculo = veiculos.find(v => v.placa === placa);
+                const notas = dados.notas || [];
+                if (notas.length === 0) return;
+                const agrupadas = {};
+                notas.forEach(nota => {
+                    let transp = nota.transportadora || "SEM TRANSPORTADORA";
+                    if (transp.toUpperCase().includes("WASHINGTON GONZALES")) transp = nota.destinatario || "SEM TRANSPORTADORA";
+                    if (!agrupadas[transp]) agrupadas[transp] = [];
+                    agrupadas[transp].push(nota);
+                });
+                if (Object.keys(agrupadas).length === 0) return;
+                todosVeiculosHtml += buildVeiculoPrintHtml(placa, agrupadas, veiculo, notas, fontSize);
+            });
+            winPrint.document.write(`<html><head><meta charset="UTF-8"><title>Dashboard Pendências</title>
+                <style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family:Arial,sans-serif; padding:8mm; color:#000; }
+                @media print { body { padding:5mm; } @page { margin:5mm; size:A4; } }</style>
+                </head><body>${todosVeiculosHtml}</body></html>`);
+            winPrint.document.close();
+            setTimeout(() => winPrint.print(), 500);
         }
-
-        const conteudo = buildVeiculoPrintHtml(placaSelecionada, notasAgrupadas, veiculo, todasNotas);
-
-        winPrint.document.write(`
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Notas do Veículo ${placaSelecionada}</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 8mm; color: #000; font-size: 9px; }
-                    @media print { body { padding: 5mm; } @page { margin: 5mm; size: A4; } }
-                </style>
-            </head>
-            <body>
-                ${conteudo}
-            </body>
-            </html>
-        `);
-        winPrint.document.close();
-        setTimeout(() => winPrint.print(), 500);
     };
 
-    const handlePrintTodosDashboard = (printConfig = {}) => {
-        const winPrint = window.open('', '_blank', 'width=900,height=700');
-        if (!winPrint) {
-            alert("Permita pop-ups para imprimir.");
-            return;
-        }
+    const handlePrintNotas = () => {
+        setPrintTarget('veiculo');
+        setShowFontConfig(true);
+    };
 
-        let todosVeiculosHtml = '';
-        let totalNotasGeral = 0;
-        let totalVolumesGeral = 0;
-        let totalPesoGeral = 0;
-        let totalTransportadoras = new Set();
-
-        Object.entries(dashboardPorVeiculo).forEach(([placa, dados]) => {
-            if (placa === "COLETAS") return;
-            
-            const veiculo = veiculos.find(v => v.placa === placa);
-            const notas = dados.notas || [];
-            if (notas.length === 0) return;
-
-            // Agrupar por transportadora
-            const agrupadas = {};
-            notas.forEach(nota => {
-                let transp = nota.transportadora || "SEM TRANSPORTADORA";
-                if (transp.toUpperCase().includes("WASHINGTON GONZALES")) {
-                    transp = nota.destinatario || "SEM TRANSPORTADORA";
-                }
-                totalTransportadoras.add(transp);
-                if (!agrupadas[transp]) agrupadas[transp] = [];
-                agrupadas[transp].push(nota);
-            });
-
-            if (Object.keys(agrupadas).length === 0) return;
-
-            totalNotasGeral += notas.length;
-            const volVeiculo = notas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
-            const pesoVeiculo = notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
-            totalVolumesGeral += volVeiculo;
-            totalPesoGeral += pesoVeiculo;
-
-            todosVeiculosHtml += buildVeiculoPrintHtml(placa, agrupadas, veiculo, notas);
-        });
-
-        winPrint.document.write(`
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Dashboard Pendências</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 8mm; color: #000; font-size: 9px; }
-                    @media print { body { padding: 5mm; } @page { margin: 5mm; size: A4; } }
-                </style>
-            </head>
-            <body>
-                ${todosVeiculosHtml}
-            </body>
-            </html>
-        `);
-
-        winPrint.document.close();
-        setTimeout(() => winPrint.print(), 500);
+    const handlePrintTodosDashboard = () => {
+        setPrintTarget('todos');
+        setShowFontConfig(true);
     };
 
     // Todos os botões disponíveis com IDs únicos
@@ -480,24 +424,14 @@ export default function Home() {
                                     </div>
                                     Pendências por Veículo
                                 </CardTitle>
-                                <div className="flex gap-2">
-                                    <Button 
-                                        onClick={() => setShowPrintConfig(true)}
-                                        size="sm"
-                                        variant="outline"
-                                        className="border-blue-500 text-blue-600"
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                    </Button>
-                                    <Button 
-                                        onClick={() => handlePrintTodosDashboard()}
-                                        size="sm"
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        <Printer className="w-4 h-4 mr-1" />
-                                        Imprimir Todos
-                                    </Button>
-                                </div>
+                                <Button 
+                                    onClick={() => handlePrintTodosDashboard()}
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Printer className="w-4 h-4 mr-1" />
+                                    Imprimir Todos
+                                </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-3">
@@ -604,13 +538,56 @@ export default function Home() {
                 )}
             </div>
 
-            {/* Dialog Configuração de Impressão */}
-            <PrintConfigDialog
-                open={showPrintConfig}
-                onOpenChange={setShowPrintConfig}
-                onPrint={handlePrintTodosDashboard}
-                configKey="homeDashboardPrint"
-            />
+            {/* Dialog Tamanho de Fonte para Impressão */}
+            <Dialog open={showFontConfig} onOpenChange={setShowFontConfig}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Printer className="w-4 h-4 text-blue-600" />
+                            Configurar Impressão
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div>
+                            <label className="text-sm font-medium text-slate-700 block mb-2">
+                                Tamanho da fonte: <span className="font-bold text-blue-600">{printFontSize}px</span>
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400">8px</span>
+                                <input
+                                    type="range"
+                                    min="8"
+                                    max="18"
+                                    value={printFontSize}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value);
+                                        setPrintFontSize(v);
+                                        localStorage.setItem('dashPrintFontSize', String(v));
+                                    }}
+                                    className="flex-1 h-2 accent-blue-600 cursor-pointer"
+                                />
+                                <span className="text-xs text-slate-400">18px</span>
+                            </div>
+                            <div className="mt-3 p-3 border rounded-lg bg-slate-50 text-center">
+                                <span style={{ fontSize: `${printFontSize}px`, fontWeight: 'bold' }}>119903</span>
+                                <span style={{ fontSize: `${Math.round(printFontSize * 0.8)}px` }} className="ml-3 text-slate-500">Prévia da fonte</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                            <Button variant="outline" className="flex-1" onClick={() => setShowFontConfig(false)}>
+                                Cancelar
+                            </Button>
+                            <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
+                                setShowFontConfig(false);
+                                executarImpressao(printTarget, printFontSize);
+                            }}>
+                                <Printer className="w-4 h-4 mr-1" />
+                                Imprimir
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Dialog Personalizar Botões */}
             <Dialog open={showPersonalizar} onOpenChange={setShowPersonalizar}>

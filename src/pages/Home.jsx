@@ -155,65 +155,73 @@ export default function Home() {
     };
 
     const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas) => {
-        const totalEntregas = todasNotas.length;
-        const totalVolumes = todasNotas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
-        const totalPeso = todasNotas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
+        const totalEntregas = Object.keys(agrupadas).length; // entregas = nº de transportadoras (destinos)
+        const totalNotas = todasNotas.length;
+        const dataHoje = format(new Date(), "dd/MM/yyyy");
 
-        const transpHtml = Object.entries(agrupadas).map(([transportadora, notas]) => {
-            const subVol = notas.reduce((acc, n) => acc + (parseInt(String(n.volume || '0').replace(/\D/g, '')) || 0), 0);
-            const subPeso = notas.reduce((acc, n) => acc + (parseFloat(String(n.peso || '0').replace(',', '.').replace(/[^\d.]/g, '')) || 0), 0);
-            return `
-                <div style="margin-bottom:8px; border:1px solid #bfdbfe; border-radius:5px; overflow:hidden; page-break-inside:avoid;">
-                    <div style="background:#1e40af; color:white; padding:5px 10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-weight:bold; font-size:12px;">${transportadora}</span>
-                        <span style="font-size:9px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:8px;">${notas.length} nota${notas.length > 1 ? 's' : ''}</span>
-                    </div>
-                    <table style="width:100%; border-collapse:collapse; font-size:9px;">
-                        <thead>
-                            <tr style="background:#eff6ff;">
-                                <th style="padding:3px 6px; text-align:left; border-bottom:1px solid #dbeafe; width:18%;">NF</th>
-                                <th style="padding:3px 6px; text-align:left; border-bottom:1px solid #dbeafe;">Cliente</th>
-                                <th style="padding:3px 6px; text-align:center; border-bottom:1px solid #dbeafe; width:12%;">Vol</th>
-                                <th style="padding:3px 6px; text-align:center; border-bottom:1px solid #dbeafe; width:14%;">Peso (kg)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${notas.map((nota, i) => `
-                                <tr style="background:${i % 2 === 0 ? '#f8fafc' : '#ffffff'};">
-                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; font-weight:800; color:#1d4ed8; font-size:12px;">${nota.numero_nf || '-'}</td>
-                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; font-size:9px;">${nota.destinatario || '-'}</td>
-                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; text-align:center;">${nota.volume || '-'}</td>
-                                    <td style="padding:3px 6px; border-bottom:1px solid #f1f5f9; text-align:center;">${nota.peso || '-'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                        <tfoot>
-                            <tr style="background:#dbeafe; font-weight:bold;">
-                                <td colspan="2" style="padding:3px 6px; font-size:8px; color:#1e40af;">Subtotal ${transportadora.substring(0,20)}</td>
-                                <td style="padding:3px 6px; text-align:center; color:#1e40af;">${subVol || '-'}</td>
-                                <td style="padding:3px 6px; text-align:center; color:#1e40af;">${subPeso > 0 ? subPeso.toFixed(2) : '-'}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+        // Gera bloco de uma transportadora
+        const buildTranspBlock = (transportadora, notas) => `
+            <div style="border:1px solid #999; margin-bottom:4px; page-break-inside:avoid;">
+                <div style="text-align:center; font-weight:bold; font-size:9px; padding:3px 4px; border-bottom:1px solid #999; text-transform:uppercase;">
+                    ${transportadora}
                 </div>
-            `;
-        }).join('');
+                <table style="width:100%; border-collapse:collapse; font-size:8px;">
+                    <thead>
+                        <tr style="border-bottom:1px solid #999;">
+                            <th style="padding:2px 4px; text-align:left; font-weight:bold; width:40%;">NF</th>
+                            <th style="padding:2px 4px; text-align:center; font-weight:bold; width:30%;">VOLUME</th>
+                            <th style="padding:2px 4px; text-align:center; font-weight:bold; width:30%;">PESO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${notas.map(nota => `
+                            <tr>
+                                <td style="padding:2px 4px; font-weight:bold; font-size:11px;">${nota.numero_nf || '-'}</td>
+                                <td style="padding:2px 4px; text-align:center; font-weight:bold; font-size:11px;">${nota.volume || '-'}</td>
+                                <td style="padding:2px 4px; text-align:center; font-weight:bold; font-size:11px;">${nota.peso || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // Divide os blocos em duas colunas
+        const transpEntries = Object.entries(agrupadas);
+        const col1 = transpEntries.slice(0, Math.ceil(transpEntries.length / 2));
+        const col2 = transpEntries.slice(Math.ceil(transpEntries.length / 2));
+
+        // Garante que col2 tenha o mesmo número de blocos (preenchendo com vazio)
+        while (col2.length < col1.length) col2.push(null);
+
+        const col1Html = col1.map(([t, n]) => buildTranspBlock(t, n)).join('');
+        const col2Html = col2.map(entry => entry ? buildTranspBlock(entry[0], entry[1]) : '<div style="border:1px solid transparent; margin-bottom:4px; height:60px;"></div>').join('');
 
         return `
-            <div style="margin-bottom:12px; border:2px solid #2563eb; border-radius:6px; overflow:hidden; page-break-inside:avoid;">
-                <div style="background:#1e3a8a; color:white; padding:5px 10px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold; font-size:11px;">🚗 ${placa}${veiculo?.modelo ? ' - ' + veiculo.modelo : ''}</span>
-                    <span style="font-size:9px;">${todasNotas.length} NFs | ${Object.keys(agrupadas).length} Transp.</span>
+            <div style="margin-bottom:16px; border:1px solid #333; font-family:Arial,sans-serif; page-break-inside:avoid;">
+                <div style="text-align:center; font-weight:bold; font-size:12px; padding:6px; border-bottom:1px solid #333;">
+                    NOTAS ${placa} - ${dataHoje}
                 </div>
-                <div style="padding:6px;">
-                    ${transpHtml}
-                    <div style="background:#1e3a8a; color:white; padding:5px 10px; border-radius:4px; display:flex; justify-content:space-between; font-size:9px; font-weight:bold; margin-top:4px;">
-                        <span>TOTAL GERAL: ${totalEntregas} entrega${totalEntregas !== 1 ? 's' : ''}</span>
-                        <span>Volumes: ${totalVolumes || '-'}</span>
-                        <span>Peso: ${totalPeso > 0 ? totalPeso.toFixed(2) + ' kg' : '-'}</span>
-                        <span>Notas: ${totalEntregas}</span>
+                <div style="display:table; width:100%; border-collapse:collapse;">
+                    <div style="display:table-row;">
+                        <div style="display:table-cell; width:50%; vertical-align:top; padding:4px; border-right:1px solid #333;">
+                            ${col1Html}
+                        </div>
+                        <div style="display:table-cell; width:50%; vertical-align:top; padding:4px;">
+                            ${col2Html}
+                        </div>
                     </div>
                 </div>
+                <table style="width:100%; border-collapse:collapse; border-top:1px solid #333;">
+                    <tr>
+                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; border-right:1px solid #333; width:20%;">TOTAL</td>
+                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; text-align:right;">${totalEntregas} ENTREGAS</td>
+                    </tr>
+                    <tr style="border-top:1px solid #ccc;">
+                        <td style="padding:4px 8px; border-right:1px solid #333;"></td>
+                        <td style="padding:4px 8px; font-weight:bold; font-size:12px; text-align:right;">${totalNotas} NOTAS</td>
+                    </tr>
+                </table>
             </div>
         `;
     };
@@ -237,20 +245,11 @@ export default function Home() {
                 <title>Notas do Veículo ${placaSelecionada}</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 8mm; color: #1e293b; font-size: 9px; }
-                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 6px; margin-bottom: 8px; }
-                    .logo img { max-width: 60px; max-height: 40px; object-fit: contain; margin-right: 10px; }
-                    @media print { body { padding: 5mm; } @page { margin: 0; size: A4; } }
+                    body { font-family: Arial, sans-serif; padding: 8mm; color: #000; font-size: 9px; }
+                    @media print { body { padding: 5mm; } @page { margin: 5mm; size: A4; } }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <div>${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}</div>
-                    <div>
-                        <p style="font-size:13px; font-weight:bold; color:#1e40af;">Notas - ${placaSelecionada}${veiculo?.modelo ? ' (' + veiculo.modelo + ')' : ''}</p>
-                        <p style="font-size:9px; color:#64748b;">${todasNotas.length} notas | ${Object.keys(notasAgrupadas).length} transportadoras | ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
-                    </div>
-                </div>
                 ${conteudo}
             </body>
             </html>
@@ -309,42 +308,12 @@ export default function Home() {
                 <title>Dashboard Pendências</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: Arial, sans-serif; padding: 5mm; color: #1e293b; font-size: 9px; }
-                    .header { display: flex; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 5px; margin-bottom: 6px; }
-                    .logo img { max-width: 55px; max-height: 38px; object-fit: contain; margin-right: 10px; }
-                    .summary { display: flex; gap: 10px; background: #eff6ff; padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; font-size: 9px; }
-                    .summary-item { text-align: center; }
-                    .summary-label { color: #64748b; font-size: 7px; text-transform: uppercase; }
-                    .summary-value { font-weight: bold; color: #1e40af; font-size: 11px; }
-                    .total-geral { background: #0f172a; color: white; padding: 6px 10px; border-radius: 5px; margin-top: 10px; display: flex; justify-content: space-around; font-size: 10px; font-weight: bold; }
-                    @media print { body { padding: 4mm; } @page { margin: 0; size: A4; } }
+                    body { font-family: Arial, sans-serif; padding: 8mm; color: #000; font-size: 9px; }
+                    @media print { body { padding: 5mm; } @page { margin: 5mm; size: A4; } }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <div>${config.logo_url ? '<img src="' + config.logo_url + '" alt="Logo" />' : ''}</div>
-                    <div>
-                        <p style="font-size:13px; font-weight:bold; color:#1e40af;">${config.nome_empresa || ''} — PENDÊNCIAS POR VEÍCULO</p>
-                        <p style="font-size:9px; color:#64748b;">${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
-                    </div>
-                </div>
-
-                <div class="summary">
-                    <div class="summary-item"><div class="summary-label">Veículos</div><div class="summary-value">${Object.keys(dashboardPorVeiculo).filter(p => p !== "COLETAS").length}</div></div>
-                    <div class="summary-item"><div class="summary-label">Notas</div><div class="summary-value">${totalNotasGeral}</div></div>
-                    <div class="summary-item"><div class="summary-label">Transportadoras</div><div class="summary-value">${totalTransportadoras.size}</div></div>
-                    <div class="summary-item"><div class="summary-label">Volumes</div><div class="summary-value">${totalVolumesGeral || '-'}</div></div>
-                    <div class="summary-item"><div class="summary-label">Peso Total</div><div class="summary-value">${totalPesoGeral > 0 ? totalPesoGeral.toFixed(2) + ' kg' : '-'}</div></div>
-                </div>
-
                 ${todosVeiculosHtml}
-
-                <div class="total-geral">
-                    <span>Total Entregas: ${totalNotasGeral}</span>
-                    <span>Volumes: ${totalVolumesGeral || '-'}</span>
-                    <span>Peso: ${totalPesoGeral > 0 ? totalPesoGeral.toFixed(2) + ' kg' : '-'}</span>
-                    <span>Notas: ${totalNotasGeral}</span>
-                </div>
             </body>
             </html>
         `);

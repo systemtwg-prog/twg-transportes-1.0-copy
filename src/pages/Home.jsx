@@ -27,6 +27,7 @@ export default function Home() {
     const [showPersonalizar, setShowPersonalizar] = useState(false);
     const [showFontConfig, setShowFontConfig] = useState(false);
     const [printFontSize, setPrintFontSize] = useState(() => parseInt(localStorage.getItem('dashPrintFontSize') || '11'));
+    const [printNfFontSize, setPrintNfFontSize] = useState(() => parseInt(localStorage.getItem('dashPrintNfFontSize') || '16'));
     const [printTarget, setPrintTarget] = useState(null); // 'veiculo' | 'todos'
 
     const { data: currentUser } = useQuery({
@@ -157,14 +158,14 @@ export default function Home() {
         }
     };
 
-    const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas, fontSize = 11) => {
+    const buildVeiculoPrintHtml = (placa, agrupadas, veiculo, todasNotas, fontSize = 11, nfFontSize = 16) => {
         const totalEntregas = Object.keys(agrupadas).length;
         const totalNotas = todasNotas.length;
         const dataHoje = format(new Date(), "dd/MM/yyyy");
         const headerFs = Math.round(fontSize * 0.8);
         const titleFs = Math.round(fontSize * 1.1);
 
-        // Gera bloco de uma transportadora — sem break-inside para que o CSS columns decida onde quebrar
+        // Gera bloco de uma transportadora
         const buildTranspBlock = (transportadora, notas) => `
             <div style="break-inside:avoid; border:1px solid #999; margin-bottom:5px;">
                 <div style="text-align:center; font-weight:bold; font-size:${headerFs}px; padding:3px 5px; border-bottom:1px solid #999; text-transform:uppercase; background:#f5f5f5;">
@@ -180,8 +181,8 @@ export default function Home() {
                     </thead>
                     <tbody>
                         ${notas.map(nota => `
-                            <tr>
-                                <td style="padding:3px 5px; font-weight:bold; font-size:${fontSize}px;">${nota.numero_nf || '-'}</td>
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td style="padding:3px 5px; font-weight:bold; font-size:${nfFontSize}px;">${nota.numero_nf || '-'}</td>
                                 <td style="padding:3px 5px; text-align:center; font-weight:bold; font-size:${fontSize}px;">${nota.volume || '-'}</td>
                                 <td style="padding:3px 5px; text-align:center; font-weight:bold; font-size:${fontSize}px;">${nota.peso || '-'}</td>
                             </tr>
@@ -191,15 +192,47 @@ export default function Home() {
             </div>
         `;
 
+        // Gera linhas em branco para preenchimento manual do motorista
+        const buildLinhasEmBranco = (quantidade) => {
+            const linhas = Array.from({length: quantidade}, (_, i) => `
+                <tr>
+                    <td style="padding:0; border-bottom:1px solid #bbb; height:22px; font-size:${nfFontSize}px;"></td>
+                    <td style="padding:0; border-bottom:1px solid #bbb; height:22px; text-align:center;"></td>
+                    <td style="padding:0; border-bottom:1px solid #bbb; height:22px; text-align:center;"></td>
+                </tr>
+            `).join('');
+            return `
+                <div style="break-inside:avoid; border:1px solid #999; margin-bottom:5px;">
+                    <div style="text-align:center; font-weight:bold; font-size:${headerFs}px; padding:3px 5px; border-bottom:1px solid #999; text-transform:uppercase; background:#fff3cd; color:#856404;">
+                        ANOTAÇÕES MANUAIS
+                    </div>
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:1px solid #bbb; background:#efefef;">
+                                <th style="padding:2px 5px; text-align:left; font-weight:bold; font-size:${headerFs}px; width:38%;">NF</th>
+                                <th style="padding:2px 5px; text-align:center; font-weight:bold; font-size:${headerFs}px; width:31%;">VOLUME</th>
+                                <th style="padding:2px 5px; text-align:center; font-weight:bold; font-size:${headerFs}px; width:31%;">PESO</th>
+                            </tr>
+                        </thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
+                </div>
+            `;
+        };
+
         const blocosHtml = Object.entries(agrupadas).map(([t, n]) => buildTranspBlock(t, n)).join('');
+
+        // Estimar linhas em branco: ~8 linhas por bloco vazio para preencher o restante
+        const linhasEmBranco = buildLinhasEmBranco(10);
 
         return `
             <div style="font-family:Arial,sans-serif; page-break-after:always;">
                 <div style="text-align:center; font-weight:bold; font-size:${titleFs}px; padding:6px; border:1px solid #333; border-bottom:2px solid #333; margin-bottom:6px;">
                     NOTAS ${placa} - ${dataHoje}
                 </div>
-                <div style="columns:2; column-gap:8px; column-fill:auto; height:245mm;">
+                <div style="columns:2; column-gap:8px; column-fill:auto; height:220mm;">
                     ${blocosHtml}
+                    ${linhasEmBranco}
                 </div>
                 <table style="width:100%; border-collapse:collapse; border:1px solid #333; margin-top:6px;">
                     <tr>
@@ -215,13 +248,13 @@ export default function Home() {
         `;
     };
 
-    const executarImpressao = (target, fontSize) => {
+    const executarImpressao = (target, fontSize, nfFontSize) => {
         if (target === 'veiculo') {
             const veiculo = veiculos.find(v => v.placa === placaSelecionada);
             const todasNotas = dashboardPorVeiculo[placaSelecionada]?.notas || [];
             const winPrint = window.open('', '_blank', 'width=800,height=600');
             if (!winPrint) { alert("Permita pop-ups para imprimir."); return; }
-            const conteudo = buildVeiculoPrintHtml(placaSelecionada, notasAgrupadas, veiculo, todasNotas, fontSize);
+            const conteudo = buildVeiculoPrintHtml(placaSelecionada, notasAgrupadas, veiculo, todasNotas, fontSize, nfFontSize);
             winPrint.document.write(`<html><head><meta charset="UTF-8"><title>Notas ${placaSelecionada}</title>
                 <style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family:Arial,sans-serif; padding:8mm; color:#000; }
                 @media print { body { padding:5mm; } @page { margin:5mm; size:A4; } }</style>
@@ -245,7 +278,7 @@ export default function Home() {
                     agrupadas[transp].push(nota);
                 });
                 if (Object.keys(agrupadas).length === 0) return;
-                todosVeiculosHtml += buildVeiculoPrintHtml(placa, agrupadas, veiculo, notas, fontSize);
+                todosVeiculosHtml += buildVeiculoPrintHtml(placa, agrupadas, veiculo, notas, fontSize, nfFontSize);
             });
             winPrint.document.write(`<html><head><meta charset="UTF-8"><title>Dashboard Pendências</title>
                 <style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family:Arial,sans-serif; padding:8mm; color:#000; }
@@ -547,39 +580,58 @@ export default function Home() {
                             Configurar Impressão
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
+                    <div className="space-y-5 py-2">
+                        {/* Fonte geral */}
                         <div>
                             <label className="text-sm font-medium text-slate-700 block mb-2">
-                                Tamanho da fonte: <span className="font-bold text-blue-600">{printFontSize}px</span>
+                                Fonte geral (vol/peso/cabeçalho): <span className="font-bold text-blue-600">{printFontSize}px</span>
                             </label>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs text-slate-400">8px</span>
+                                <span className="text-xs text-slate-400">8</span>
                                 <input
-                                    type="range"
-                                    min="8"
-                                    max="18"
-                                    value={printFontSize}
-                                    onChange={e => {
-                                        const v = parseInt(e.target.value);
-                                        setPrintFontSize(v);
-                                        localStorage.setItem('dashPrintFontSize', String(v));
-                                    }}
+                                    type="range" min="8" max="18" value={printFontSize}
+                                    onChange={e => { const v = parseInt(e.target.value); setPrintFontSize(v); localStorage.setItem('dashPrintFontSize', String(v)); }}
                                     className="flex-1 h-2 accent-blue-600 cursor-pointer"
                                 />
-                                <span className="text-xs text-slate-400">18px</span>
-                            </div>
-                            <div className="mt-3 p-3 border rounded-lg bg-slate-50 text-center">
-                                <span style={{ fontSize: `${printFontSize}px`, fontWeight: 'bold' }}>119903</span>
-                                <span style={{ fontSize: `${Math.round(printFontSize * 0.8)}px` }} className="ml-3 text-slate-500">Prévia da fonte</span>
+                                <span className="text-xs text-slate-400">18</span>
                             </div>
                         </div>
-                        <div className="flex gap-2 pt-2">
+                        {/* Fonte número NF */}
+                        <div>
+                            <label className="text-sm font-medium text-slate-700 block mb-2">
+                                Fonte do número da NF: <span className="font-bold text-orange-600">{printNfFontSize}px</span>
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400">10</span>
+                                <input
+                                    type="range" min="10" max="28" value={printNfFontSize}
+                                    onChange={e => { const v = parseInt(e.target.value); setPrintNfFontSize(v); localStorage.setItem('dashPrintNfFontSize', String(v)); }}
+                                    className="flex-1 h-2 accent-orange-500 cursor-pointer"
+                                />
+                                <span className="text-xs text-slate-400">28</span>
+                            </div>
+                        </div>
+                        {/* Prévia */}
+                        <div className="p-3 border rounded-lg bg-slate-50">
+                            <div className="text-center">
+                                <div style={{ fontSize: `${Math.round(printFontSize * 0.8)}px`, color: '#666', marginBottom: '2px' }}>TRANSPORTADORA XYZ</div>
+                                <div className="flex justify-between items-center border-b border-slate-200 pb-1 mb-1" style={{ fontSize: `${Math.round(printFontSize * 0.8)}px`, color: '#888' }}>
+                                    <span>NF</span><span>VOL</span><span>PESO</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span style={{ fontSize: `${printNfFontSize}px`, fontWeight: 'bold' }}>119903</span>
+                                    <span style={{ fontSize: `${printFontSize}px`, fontWeight: 'bold' }}>5</span>
+                                    <span style={{ fontSize: `${printFontSize}px`, fontWeight: 'bold' }}>12,5</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 pt-1">
                             <Button variant="outline" className="flex-1" onClick={() => setShowFontConfig(false)}>
                                 Cancelar
                             </Button>
                             <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
                                 setShowFontConfig(false);
-                                executarImpressao(printTarget, printFontSize);
+                                executarImpressao(printTarget, printFontSize, printNfFontSize);
                             }}>
                                 <Printer className="w-4 h-4 mr-1" />
                                 Imprimir

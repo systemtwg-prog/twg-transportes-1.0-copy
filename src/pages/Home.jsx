@@ -227,23 +227,23 @@ export default function Home() {
 
         return `
             <div style="font-family:Arial,sans-serif; page-break-after:always;">
-                <div style="text-align:center; font-weight:bold; font-size:${titleFs}px; padding:6px; border:1px solid #333; border-bottom:2px solid #333; margin-bottom:6px;">
-                    NOTAS ${placa} - ${dataHoje}
-                </div>
-                <div style="columns:2; column-gap:8px; column-fill:auto; height:220mm;">
+                <table style="width:100%; border-collapse:collapse; border:1px solid #333; border-bottom:2px solid #333; margin-bottom:6px;">
+                    <tr>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:center; border-right:1px solid #333; width:50%;">
+                            NOTAS ${placa} — ${dataHoje}
+                        </td>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:center; border-right:1px solid #333; width:25%;">
+                            ${totalEntregas} ENTREGAS
+                        </td>
+                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:center; width:25%;">
+                            ${totalNotas} NOTAS
+                        </td>
+                    </tr>
+                </table>
+                <div style="columns:2; column-gap:8px; column-fill:auto; height:230mm;">
                     ${blocosHtml}
                     ${linhasEmBranco}
                 </div>
-                <table style="width:100%; border-collapse:collapse; border:1px solid #333; margin-top:6px;">
-                    <tr>
-                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; border-right:1px solid #333; width:20%;">TOTAL</td>
-                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:right;">${totalEntregas} ENTREGAS</td>
-                    </tr>
-                    <tr style="border-top:1px solid #ccc;">
-                        <td style="padding:5px 8px; border-right:1px solid #333;"></td>
-                        <td style="padding:5px 8px; font-weight:bold; font-size:${titleFs}px; text-align:right;">${totalNotas} NOTAS</td>
-                    </tr>
-                </table>
             </div>
         `;
     };

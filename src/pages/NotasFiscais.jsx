@@ -9,9 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Mic, Square, Play, Pause, Loader2, Users, MapPin, Replace, Filter, History, Calendar, Printer, BarChart3, Key, MoreVertical, Settings } from
-"lucide-react";
+import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace } from "lucide-react";
+import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
@@ -2023,68 +2022,22 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                 </DialogContent>
             </Dialog>
 
-            {/* Paste Dialog */}
-            <Dialog open={showPasteForm} onOpenChange={setShowPasteForm}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            {modoAtualizar ? <RefreshCw className="w-5 h-5 text-green-600" /> : <ClipboardPaste className="w-5 h-5 text-purple-600" />}
-                            {modoAtualizar ? "Atualizar Notas Fiscais" : "Colar Informações"}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <p className="text-sm text-slate-600">
-                            {modoAtualizar ? "Cole as informações. O sistema buscará as notas existentes e preencherá apenas os campos vazios." :
-                            <>Cole abaixo as informações de notas fiscais. O sistema irá identificar e organizar automaticamente os dados.
-                            <strong className="block mt-1 text-orange-600">Obs: O campo remetente será deixado em branco para você preencher depois.</strong></>}
-                        </p>
-                        <Textarea
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Cole as informações das notas fiscais..."
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              rows={10}
-              className="font-mono text-sm" />
-
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => {setShowPasteForm(false);setPasteText("");}}>
-                                <X className="w-4 h-4 mr-1" /> Cancelar
-                            </Button>
-                            <Button
-                onClick={handleProcessPaste}
-                disabled={processingPaste || !pasteText.trim()}
-                className={modoAtualizar ? "bg-green-600 hover:bg-green-700" : "bg-purple-600 hover:bg-purple-700"}>
-
-                                {processingPaste ? <>
-                                        <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                                        {modoAtualizar ? "Atualizando..." : "Processando..."}
-                                    </> : <>
-                                        {modoAtualizar ? <><RefreshCw className="w-4 h-4 mr-1" /> Atualizar</> : <><Sparkles className="w-4 h-4 mr-1" /> Processar</>}
-                                    </>}
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <PasteNotasDialog
+              open={showPasteForm}
+              onOpenChange={(v) => { if (!v) { setShowPasteForm(false); setModoAtualizar(false); } }}
+              modoAtualizar={modoAtualizar}
+              onSuccess={async ({ importados, notasIds, transportadoras: transpNomes }) => {
+                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+                if (!modoAtualizar && importados > 0 && notasIds?.length > 0) {
+                  await createImportacaoMutation.mutateAsync({ data_importacao: new Date().toISOString(), quantidade_notas: importados, origem: "colagem", notas_ids: notasIds, status: "processado" });
+                  queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+                }
+                if (transpNomes?.length > 0) {
+                  const transpList = transpNomes.map(n => ({ nome: n, razao_social: n }));
+                  setTranspExtraidas(transpList); setTranspSelecionadas(transpList.map((_, i) => i)); setShowCadastroTransp(true);
+                }
+              }}
+            />
 
             {/* Dialog Cadastrar Transportadoras */}
             <Dialog open={showCadastroTransp} onOpenChange={setShowCadastroTransp}>

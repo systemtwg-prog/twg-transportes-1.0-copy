@@ -56,28 +56,23 @@ export default function PasteNotasDialog({ open, onOpenChange, modoAtualizar, on
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um especialista em extrair dados de notas fiscais / CTe de texto bruto copiado de sistemas de transporte.
+        prompt: `Extraia dados de notas fiscais do texto abaixo. O texto pode estar em formato corrido de sistemas de transporte (CTe/NF).
 
-O texto abaixo pode estar em formato corrido (sem tabulações claras), com múltiplas notas misturadas. Cada nota geralmente tem:
-- Um número sequencial (ex: 01, 02...)
-- Número da NF (ex: 120240, 120241...)
-- Destinatário: nome da empresa cliente que recebe a mercadoria
-- Volumes: número de caixas/volumes (ex: CAIXAS 29,00 ou 9,00)
-- Peso: em kg (ex: 545,2 ou 158,711)
-- Transportadora: empresa que faz o transporte (ex: ST SOLUCAO TRANSPORTES, RODONAVES, WASHINGTON...)
+PADRÃO DO TEXTO: sequência com número sequencial, número NF, destinatário (empresa que RECEBE), endereço, chave de acesso, volumes (CAIXAS X,00), peso (ex: 545,2), transportadora (empresa que FAZ a entrega, aparece APÓS o peso).
 
-REGRAS CRÍTICAS:
-1. Extraia TODAS as notas fiscais presentes no texto
-2. O campo "destinatario" deve ser o nome COMPLETO do cliente destinatário (não a transportadora)
-3. O campo "transportadora" é quem entrega (última empresa mencionada antes do endereço de entrega, geralmente após o peso)
-4. Volume: número antes de "CAIXAS" ou similar (só o número inteiro, ex: "29")
-5. Peso: número decimal (ex: "545,2" ou "158,711") - converta para string
-6. NÃO preencha remetente
-7. Se a transportadora for "WASHINGTON GONZALES" ou similar, use assim mesmo
+EXEMPLO: "01 120240 1 006047 01 AGUILERA AUTOPECAS DE GOIAS LTDA AV PERIMETRAL... 121454... CAIXAS 29,00 545,2 ST SOLUCAO TRANSPORTES LOGISTICA LTDA..."
+→ numero_nf: "120240", destinatario: "AGUILERA AUTOPECAS DE GOIAS LTDA", volume: "29", peso: "545,2", transportadora: "ST SOLUCAO TRANSPORTES LOGISTICA LTDA"
 
-TEXTO A PROCESSAR:
+REGRAS:
+1. Extraia TODAS as notas presentes
+2. destinatario = empresa que RECEBE (aparece logo após o número NF)
+3. transportadora = empresa que FAZ a entrega (aparece APÓS o peso/CAIXAS)
+4. volume = número inteiro antes de "CAIXAS" (ex: "29")
+5. peso = número decimal após as CAIXAS (ex: "545,2")
+6. NÃO preencha remetente (deixe vazio)
+
+TEXTO:
 ${pasteText}`,
-        model: "claude_sonnet_4_6",
         response_json_schema: {
           type: "object",
           properties: {

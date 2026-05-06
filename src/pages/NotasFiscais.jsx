@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace } from "lucide-react";
 import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
+import NotaFiscalForm from "@/components/nfe/NotaFiscalForm";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
@@ -27,8 +28,6 @@ import { createPageUrl } from "@/utils";
 export default function NotasFiscais() {
   const [showForm, setShowForm] = useState(false);
   const [showPasteForm, setShowPasteForm] = useState(false);
-  const [pasteText, setPasteText] = useState("");
-  const [processingPaste, setProcessingPaste] = useState(false);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState("");
   const [columnFilters, setColumnFilters] = useState({
@@ -39,7 +38,6 @@ export default function NotasFiscais() {
   });
   const [filterFilial, setFilterFilial] = useState("");
   const [filterDataImportacao, setFilterDataImportacao] = useState("");
-  const [importing, setImporting] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [ordemDigitacao, setOrdemDigitacao] = useState([]);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -211,65 +209,8 @@ export default function NotasFiscais() {
     }
   });
 
-  // Buscar dados online da transportadora
   const buscarDadosOnline = async (index, nome) => {
-    setBuscandoDados((prev) => ({ ...prev, [index]: true }));
-
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Busque informações sobre a transportadora "${nome}" no Brasil.
-
-Retorne os dados encontrados sobre esta empresa de transporte/logística:
-- razao_social: nome completo da empresa
-- nome_fantasia: nome fantasia
-- cnpj: CNPJ se encontrar
-- telefone: telefone de contato
-- email: email de contato
-- endereco: endereço completo
-- bairro: bairro
-- cidade: cidade
-- uf: estado (sigla)
-- cep: CEP
-- horario_funcionamento: horário de funcionamento (ex: 08:00 às 18:00)
-
-Se não encontrar algum dado, deixe em branco.`,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            razao_social: { type: "string" },
-            nome_fantasia: { type: "string" },
-            cnpj: { type: "string" },
-            telefone: { type: "string" },
-            email: { type: "string" },
-            endereco: { type: "string" },
-            bairro: { type: "string" },
-            cidade: { type: "string" },
-            uf: { type: "string" },
-            cep: { type: "string" },
-            horario_funcionamento: { type: "string" }
-          }
-        }
-      });
-
-      if (result) {
-        setTranspExtraidas((prev) => {
-          const newList = [...prev];
-          newList[index] = {
-            ...newList[index],
-            ...result,
-            razao_social: result.razao_social || newList[index].nome
-          };
-          return newList;
-        });
-        toast.success(`Dados atualizados para ${nome}!`);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar dados:", error);
-      toast.error("Não foi possível buscar dados online.");
-    }
-
-    setBuscandoDados((prev) => ({ ...prev, [index]: false }));
+    toast.info("Busca online indisponível no momento (créditos esgotados).");
   };
 
   const createMutation = useMutation({
@@ -377,158 +318,7 @@ Se não encontrar algum dado, deixe em branco.`,
     }
   };
 
-  const handleProcessPaste = async () => {
-    if (!pasteText.trim()) return;
-    setProcessingPaste(true);
 
-    if (modoAtualizar) {
-      try {
-        const linhas = pasteText.split('\n').filter(l => l.trim());
-        let atualizados = 0, naoEncontrados = 0;
-        for (let linha of linhas) {
-          const colunas = linha.split('\t');
-          if (colunas.length >= 2 && colunas[0]?.trim()) {
-            const notasExistentes = await base44.entities.NotaFiscal.filter({ numero_nf: colunas[0].trim() });
-            if (notasExistentes.length > 0) {
-              const n = notasExistentes[0];
-              await base44.entities.NotaFiscal.update(n.id, {
-                destinatario: n.destinatario || colunas[1]?.trim() || "",
-                remetente: n.remetente || colunas[2]?.trim() || "",
-                peso: n.peso || colunas[3]?.trim() || "",
-                volume: n.volume || colunas[4]?.trim() || "",
-                transportadora: n.transportadora || colunas[5]?.trim() || "",
-                filial: n.filial || colunas[6]?.trim() || ""
-              });
-              atualizados++;
-            } else { naoEncontrados++; }
-          }
-        }
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-        toast.success(atualizados > 0 ? (naoEncontrados > 0 ? `${atualizados} atualizada(s). ${naoEncontrados} não encontrada(s).` : `${atualizados} atualizada(s)!`) : 'Nenhuma nota encontrada');
-        setShowPasteForm(false);
-        setPasteText("");
-        setModoAtualizar(false);
-      } catch (error) {
-        toast.error('Erro ao atualizar');
-      }
-      setProcessingPaste(false);
-      return;
-    }
-
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Extraia notas. DESTINATARIO = nome COMPLETO do cliente (OBRIGATÓRIO, não corte). TRANSPORTADORA = quem transporta. Ex: "123 WASHINGTON ABC LTDA" → dest="ABC LTDA", transp="WASHINGTON". Não preencha remetente.
-
-${pasteText}`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            notas: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  numero_nf: { type: "string", description: "Número da NF" },
-                  destinatario: { type: "string", description: "Destinatário" },
-                  peso: { type: "string", description: "Peso" },
-                  volume: { type: "string", description: "Volumes" },
-                  transportadora: { type: "string", description: "Transportadora" }
-                }
-              }
-            }
-          },
-          required: ["notas"]
-        }
-      });
-
-      console.log("Resultado LLM:", result);
-
-      const notasEncontradas = result?.notas || [];
-
-      // Buscar notas existentes
-      const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
-      const notasExistentesMap = new Map(
-        todasNotasExistentes.map((n) => [n.numero_nf?.toLowerCase().trim(), n])
-      );
-
-      if (notasEncontradas.length > 0) {
-        let importados = 0;
-        let atualizados = 0;
-        const transportadorasUnicas = new Set();
-        const notasIdsImportadas = [];
-
-        for (const nota of notasEncontradas) {
-          if (nota.numero_nf || nota.destinatario) {
-            const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
-            const notaExistente = numeroNf ? notasExistentesMap.get(numeroNf) : null;
-
-            const dadosNota = {
-              numero_nf: nota.numero_nf || "",
-              destinatario: nota.destinatario || "",
-              peso: nota.peso || "",
-              volume: nota.volume || "",
-              transportadora: nota.transportadora || "",
-              remetente: "",
-              data: format(new Date(), "yyyy-MM-dd")
-            };
-
-            if (notaExistente) {
-              await base44.entities.NotaFiscal.update(notaExistente.id, dadosNota);
-              atualizados++;
-              notasIdsImportadas.push(notaExistente.id);
-            } else {
-              const novaNota = await base44.entities.NotaFiscal.create(dadosNota);
-              importados++;
-              notasIdsImportadas.push(novaNota.id);
-            }
-
-            if (nota.transportadora) {
-              transportadorasUnicas.add(nota.transportadora.trim());
-            }
-          }
-        }
-
-        // Criar registro de importação
-        if (importados > 0) {
-          await createImportacaoMutation.mutateAsync({
-            data_importacao: new Date().toISOString(),
-            quantidade_notas: importados,
-            origem: "colagem",
-            notas_ids: notasIdsImportadas,
-            status: "processado"
-          });
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-
-        if (atualizados > 0 && importados > 0) toast.success(`✅ ${importados} nova(s) + ${atualizados} atualizada(s)!`);
-        else if (atualizados > 0) toast.success(`✅ ${atualizados} atualizada(s)!`);
-        else toast.success(`✅ ${importados} criada(s)!`);
-
-        // Extrair transportadoras para cadastro
-        if (transportadorasUnicas.size > 0) {
-          const transpList = Array.from(transportadorasUnicas).map((nome) => ({
-            nome,
-            razao_social: nome,
-            selecionada: true
-          }));
-          setTranspExtraidas(transpList);
-          setTranspSelecionadas(transpList.map((_, i) => i));
-          setShowCadastroTransp(true);
-        }
-
-        setShowPasteForm(false);
-        setPasteText("");
-      } else {
-        toast.error("Não foi possível identificar notas fiscais no texto.");
-      }
-    } catch (error) {
-      console.error("Erro ao processar texto:", error);
-      toast.error("Erro ao processar texto. Tente novamente.");
-    }
-
-    setProcessingPaste(false);
-  };
 
   // Cadastrar transportadoras selecionadas
   const handleCadastrarTransportadoras = async () => {
@@ -586,108 +376,7 @@ ${pasteText}`,
     setTranspSelecionadas([]);
   };
 
-  const handleImportFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    setImporting(true);
-
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: {
-          type: "object",
-          properties: {
-            notas: {
-              type: "array",
-              description: "Lista de notas fiscais extraídas do documento. NÃO extraia o campo remetente.",
-              items: {
-                type: "object",
-                properties: {
-                  numero_nf: { type: "string", description: "Número da nota fiscal (NFE)" },
-                  destinatario: { type: "string", description: "Nome do destinatário" },
-                  peso: { type: "string", description: "Peso da carga" },
-                  volume: { type: "string", description: "Quantidade de volumes" },
-                  transportadora: { type: "string", description: "Nome da transportadora" }
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (result.status === "success" && result.output) {
-        const notasImport = result.output.notas || (Array.isArray(result.output) ? result.output : [result.output]);
-
-        // Buscar notas existentes
-        const todasNotasExistentes = await base44.entities.NotaFiscal.list("-created_date", 2000);
-        const numerosExistentes = new Set(
-          todasNotasExistentes.map((n) => n.numero_nf?.toLowerCase().trim()).filter(Boolean)
-        );
-
-        let importados = 0;
-        let duplicados = 0;
-        const notasIdsImportadas = [];
-
-        for (const nota of notasImport) {
-          if (nota.numero_nf || nota.destinatario) {
-            const numeroNf = (nota.numero_nf || "").toLowerCase().trim();
-
-            // Verificar duplicidade
-            if (numeroNf && numerosExistentes.has(numeroNf)) {
-              duplicados++;
-              continue;
-            }
-
-            const novaNota = await base44.entities.NotaFiscal.create({
-              numero_nf: nota.numero_nf || "",
-              destinatario: nota.destinatario || "",
-              peso: nota.peso || "",
-              volume: nota.volume || "",
-              transportadora: nota.transportadora || "",
-              remetente: "", // Sempre em branco
-              data: format(new Date(), "yyyy-MM-dd")
-            });
-            importados++;
-            notasIdsImportadas.push(novaNota.id);
-
-            // Adicionar ao set para evitar duplicados no mesmo lote
-            if (numeroNf) numerosExistentes.add(numeroNf);
-          }
-        }
-
-        // Criar registro de importação
-        if (importados > 0) {
-          await createImportacaoMutation.mutateAsync({
-            data_importacao: new Date().toISOString(),
-            quantidade_notas: importados,
-            origem: "arquivo",
-            nome_arquivo: file.name,
-            notas_ids: notasIdsImportadas,
-            status: "processado"
-          });
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
-
-        if (duplicados > 0) {
-          toast.warning(`${importados} nota(s) importada(s). ${duplicados} ignorada(s) (já existentes).`);
-        } else {
-          toast.success(`✅ Importado com sucesso! ${importados} nota(s) fiscal(is) adicionada(s).`);
-        }
-      } else {
-        toast.error("Erro ao processar arquivo. Verifique o formato.");
-      }
-    } catch (error) {
-      console.error("Erro na importação:", error);
-      toast.error("Erro ao importar arquivo. Tente novamente.");
-    }
-
-    setImporting(false);
-    e.target.value = "";
-  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
@@ -2282,170 +1971,20 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                 </DialogContent>
             </Dialog>
 
-            {/* Form Dialog */}
-            <Dialog open={showForm} onOpenChange={setShowForm}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                            {editing ? "Editar Nota Fiscal" : "Nova Nota Fiscal"}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Número NF *</Label>
-                                <Input
-                  value={form.numero_nf}
-                  onChange={(e) => setForm({ ...form, numero_nf: e.target.value })}
-                  required
-                  placeholder="Ex: 123456" />
-
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Data</Label>
-                                <Input
-                  type="date"
-                  value={form.data}
-                  onChange={(e) => setForm({ ...form, data: e.target.value })} />
-
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="flex items-center justify-between">
-                                <span>Destinatário *</span>
-                                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCadastroDestinatario(true)}
-                  className="text-blue-600 hover:text-blue-700 h-auto p-0">
-
-                                    <Plus className="w-4 h-4 mr-1" />
-                                    Cadastrar Novo
-                                </Button>
-                            </Label>
-                            <div className="space-y-2">
-                                <Input
-                  value={form.destinatario}
-                  onChange={(e) => setForm({ ...form, destinatario: e.target.value })}
-                  required
-                  placeholder="Digite o nome do destinatário..."
-                  className="bg-white"
-                  list="destinatarios-list" />
-
-                                <datalist id="destinatarios-list">
-                                    {destinatarios.
-                  sort((a, b) => a.nome.localeCompare(b.nome)).
-                  filter((d) => d.nome.toLowerCase().includes(form.destinatario.toLowerCase())).
-                  map((d) =>
-                  <option key={d.id} value={d.nome}>
-                                                {d.cidade && `${d.nome} (${d.cidade})`}
-                                            </option>
-                  )}
-                                </datalist>
-                                {form.destinatario &&
-                <div className="text-xs text-slate-500">
-                                        {destinatarios.filter((d) =>
-                  d.nome.toLowerCase().includes(form.destinatario.toLowerCase())
-                  ).length} destinatário(s) encontrado(s)
-                                    </div>
-                }
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Peso</Label>
-                                <Input
-                  value={form.peso}
-                  onChange={(e) => setForm({ ...form, peso: e.target.value })}
-                  placeholder="Ex: 100kg" />
-
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Volume</Label>
-                                <Input
-                  value={form.volume}
-                  onChange={(e) => setForm({ ...form, volume: e.target.value })}
-                  placeholder="Ex: 5" />
-
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Transportadora</Label>
-                                <Input
-                  value={form.transportadora}
-                  onChange={(e) => setForm({ ...form, transportadora: e.target.value })}
-                  placeholder="Nome da transportadora"
-                  className="bg-white"
-                  list="transportadoras-list" />
-
-                                <datalist id="transportadoras-list">
-                                    {transportadoras.
-                  sort((a, b) => (a.razao_social || a.nome_fantasia || "").localeCompare(b.razao_social || b.nome_fantasia || "")).
-                  filter((t) => {
-                    const nome = (t.razao_social || t.nome_fantasia || "").toLowerCase();
-                    return nome.includes((form.transportadora || "").toLowerCase());
-                  }).
-                  map((t) =>
-                  <option key={t.id} value={t.razao_social || t.nome_fantasia}>
-                                                {t.cidade && `${t.razao_social || t.nome_fantasia} (${t.cidade})`}
-                                            </option>
-                  )}
-                                </datalist>
-                                {form.transportadora &&
-                <div className="text-xs text-slate-500">
-                                        {transportadoras.filter((t) =>
-                  (t.razao_social || t.nome_fantasia || "").toLowerCase().includes(form.transportadora.toLowerCase())
-                  ).length} transportadora(s) encontrada(s)
-                                    </div>
-                }
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4" /> Filial
-                                </Label>
-                                <Input
-                  value={form.filial}
-                  onChange={(e) => setForm({ ...form, filial: e.target.value })}
-                  placeholder="Ex: SP, RJ, MG..." />
-
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
-                                <Car className="w-4 h-4" /> Placa do Veículo
-                            </Label>
-                            <Select value={form.placa} onValueChange={(v) => setForm({ ...form, placa: v })}>
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Selecione a placa..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {veiculos.map((v) =>
-                  <SelectItem key={v.id} value={v.placa}>
-                                            {v.placa} - {v.modelo}
-                                        </SelectItem>
-                  )}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button type="button" variant="outline" onClick={() => {setShowForm(false);resetForm();}}>
-                                <X className="w-4 h-4 mr-1" /> Cancelar
-                            </Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                                <Save className="w-4 h-4 mr-1" /> Salvar
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            {/* Form Dialog - Nova/Editar Nota */}
+            <NotaFiscalForm
+              open={showForm}
+              onOpenChange={setShowForm}
+              form={form}
+              setForm={setForm}
+              editing={editing}
+              onSubmit={handleSubmit}
+              onCancel={() => { setShowForm(false); resetForm(); }}
+              veiculos={veiculos}
+              transportadoras={transportadoras}
+              destinatarios={destinatarios}
+              onCadastrarDestinatario={() => setShowCadastroDestinatario(true)}
+            />
         </div>);
 
 }

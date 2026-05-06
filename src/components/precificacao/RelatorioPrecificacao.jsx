@@ -142,7 +142,6 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                 <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0; text-align: right;">${Number(p.pedagio || 0).toFixed(2)}</td>
                 <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0; text-align: right;">${Number(p.outros || 0).toFixed(2)}</td>
                 <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #16a34a;">${Number(p.valor_servico || 0).toFixed(2)}</td>
-                <td style="padding: 5px 6px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #d97706;">${Number(p.porcentagem || 0).toFixed(2)}%</td>
             </tr>
         `).join('');
 
@@ -196,7 +195,6 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                             <th class="right">Pedágio</th>
                             <th class="right">Outros</th>
                             <th class="right">Vl. Serviço</th>
-                            <th class="right">%</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -212,7 +210,6 @@ export default function RelatorioPrecificacao({ open, onOpenChange, precificacoe
                             <td style="text-align:right">${totais.pedagio.toFixed(2)}</td>
                             <td style="text-align:right">${totais.outros.toFixed(2)}</td>
                             <td style="text-align:right; color: #16a34a; font-size:14px;">R$ ${totais.valor_servico.toFixed(2)}</td>
-                            <td></td>
                         </tr>
                     </tfoot>
                 </table>

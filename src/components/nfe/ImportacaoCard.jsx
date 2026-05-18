@@ -130,18 +130,7 @@ export default function ImportacaoCard({
     const handleAbrirConfigImpressao = async () => {
         setLoading(true);
         try {
-            // 1. Buscar romaneios com status "gerado"
-            const romaneiosGerados = await base44.entities.RomaneioGerado.filter({ 
-                status: "gerado"
-            });
-
-            // 2. Coletar IDs das notas de romaneios gerados
-            const idsNotasComPlacaPermitida = new Set();
-            romaneiosGerados.forEach(rom => {
-                (rom.notas_ids || []).forEach(id => idsNotasComPlacaPermitida.add(id));
-            });
-
-            // 3. Todas as notas da importação
+            // 1. Todas as notas da importação
             const notasImportacao = [...notasDaImportacao];
 
             if (notasImportacao.length === 0) {
@@ -150,10 +139,22 @@ export default function ImportacaoCard({
                 return;
             }
 
-            // 4. Marcar quais notas podem ter placa visível (apenas as de romaneios gerados)
+            // 2. Buscar romaneios com status "gerado" para marcar placas
+            const romaneiosGerados = await base44.entities.RomaneioGerado.filter({ status: "gerado" });
+
+            // 3. Coletar IDs das notas de romaneios gerados
+            const idsNotasEmRomaneio = new Set();
+            romaneiosGerados.forEach(rom => {
+                (rom.notas_ids || []).forEach(id => idsNotasEmRomaneio.add(id));
+            });
+
+            // 4. Marcar quais notas mostram placa:
+            //    - Se está em romaneio gerado → mostra placa do romaneio
+            //    - Se não está em romaneio mas tem placa própria → mostra a placa da nota
+            //    - Se não tem placa → não mostra
             const notasComMarcacao = notasImportacao.map(nota => ({
                 ...nota,
-                _mostrarPlaca: idsNotasComPlacaPermitida.has(nota.id)
+                _mostrarPlaca: idsNotasEmRomaneio.has(nota.id) || (!idsNotasEmRomaneio.has(nota.id) && !!nota.placa)
             }));
 
             setNotasParaImprimir(notasComMarcacao);

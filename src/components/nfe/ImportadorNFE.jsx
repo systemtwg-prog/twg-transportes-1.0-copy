@@ -189,10 +189,12 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess, onImport
         const notasParaInserir = [];
         const novosDestinatariosSet = new Set();
         let duplicadas = 0;
+        const numerosNoLote = new Set(); // evitar duplicatas dentro do próprio lote
 
         for (const row of rowsToSave) {
             const numeroNf = (row.numero_nf || "").toLowerCase().trim();
-            if (numeroNf && numerosExistentes.has(numeroNf)) { duplicadas++; continue; }
+            if (numeroNf && (numerosExistentes.has(numeroNf) || numerosNoLote.has(numeroNf))) { duplicadas++; continue; }
+            if (numeroNf) numerosNoLote.add(numeroNf);
 
             const nomeDestinatario = (row.destinatario || "").trim();
             if (nomeDestinatario && !destinatariosSet.has(nomeDestinatario.toLowerCase())) {

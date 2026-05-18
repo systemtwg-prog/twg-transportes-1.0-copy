@@ -296,7 +296,7 @@ export default function NotasFiscais() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: form });
     } else {
@@ -968,18 +968,21 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
   // Verificar se há alguma busca/filtro ativo
   const hasBuscaAtiva = search ||
-  filterFilial && filterFilial !== "todas" ||
+  (filterFilial && filterFilial !== "todas") ||
   columnFilters.destinatario.length > 0 ||
   columnFilters.transportadora.length > 0 ||
   columnFilters.filial.length > 0 ||
-  columnFilters.placa.length > 0;
+  columnFilters.placa.length > 0 ||
+  selecionados.length > 0;
 
   const filtered = hasBuscaAtiva ? notas.filter((n) => {
     // Busca geral
-    const matchSearch = !search ||
-    n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
-    n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
-    n.transportadora?.toLowerCase().includes(search.toLowerCase());
+    // Se há notas selecionadas mas sem texto de busca, mostrar as selecionadas
+    const matchSearch = !search
+      ? selecionados.length > 0 ? selecionados.includes(n.id) : true
+      : n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
+        n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
+        n.transportadora?.toLowerCase().includes(search.toLowerCase());
 
     // Filtro de filial (select)
     const matchFilialSelect = !filterFilial || filterFilial === "todas" || n.filial === filterFilial;

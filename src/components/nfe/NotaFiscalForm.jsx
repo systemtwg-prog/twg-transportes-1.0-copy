@@ -27,7 +27,7 @@ export default function NotaFiscalForm({
                         {editing ? "Editar Nota Fiscal" : "Nova Nota Fiscal"}
                     </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={onSubmit} className="space-y-4">
+                <form onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); onSubmit(e); }} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Número NF *</Label>
@@ -176,7 +176,11 @@ export default function NotaFiscalForm({
                         <Button type="button" variant="outline" onClick={onCancel}>
                             <X className="w-4 h-4 mr-1" /> Cancelar
                         </Button>
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                        <Button
+                            type="button"
+                            onClick={onSubmit}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
                             <Save className="w-4 h-4 mr-1" /> Salvar
                         </Button>
                     </div>

@@ -175,14 +175,20 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess, onImport
         if (rowsToSave.length === 0) { toast.error("Selecione ao menos uma linha"); return; }
 
         setSaving(true);
-        const notasExistentes = await base44.entities.NotaFiscal.list("-created_date", 1000);
-        const numerosExistentes = new Set(notasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean));
-        const destinatariosExistentes = await base44.entities.Destinatario.list();
-        const destinatariosSet = new Set(destinatariosExistentes.map(d => d.nome?.toLowerCase().trim()).filter(Boolean));
-        const novosDestinatarios = new Set();
 
-        let importadas = 0, duplicadas = 0;
-        const notasIdsImportadas = [];
+        // Buscar dados existentes em paralelo
+        const [notasExistentes, destinatariosExistentes] = await Promise.all([
+            base44.entities.NotaFiscal.list("-created_date", 2000),
+            base44.entities.Destinatario.list()
+        ]);
+
+        const numerosExistentes = new Set(notasExistentes.map(n => n.numero_nf?.toLowerCase().trim()).filter(Boolean));
+        const destinatariosSet = new Set(destinatariosExistentes.map(d => d.nome?.toLowerCase().trim()).filter(Boolean));
+
+        // Filtrar duplicadas e preparar lote
+        const notasParaInserir = [];
+        const novosDestinatariosSet = new Set();
+        let duplicadas = 0;
 
         for (const row of rowsToSave) {
             const numeroNf = (row.numero_nf || "").toLowerCase().trim();
@@ -190,11 +196,11 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess, onImport
 
             const nomeDestinatario = (row.destinatario || "").trim();
             if (nomeDestinatario && !destinatariosSet.has(nomeDestinatario.toLowerCase())) {
-                novosDestinatarios.add(nomeDestinatario);
+                novosDestinatariosSet.add(nomeDestinatario);
                 destinatariosSet.add(nomeDestinatario.toLowerCase());
             }
 
-            const novaNota = await base44.entities.NotaFiscal.create({
+            notasParaInserir.push({
                 numero_nf: row.numero_nf || "",
                 destinatario: row.destinatario || "",
                 remetente: row.remetente || "",
@@ -206,24 +212,32 @@ export default function ImportadorNFE({ open, onClose, onImportSuccess, onImport
                 data: row.data || format(new Date(), "yyyy-MM-dd"),
                 observacoes: row.observacoes || ""
             });
-            importadas++;
-            notasIdsImportadas.push(novaNota.id);
-            if (numeroNf) numerosExistentes.add(numeroNf);
         }
 
-        for (const nome of novosDestinatarios) {
-            await base44.entities.Destinatario.create({ nome });
+        if (notasParaInserir.length === 0) {
+            toast.warning(`Todas as ${duplicadas} nota(s) já existem no sistema.`);
+            setSaving(false);
+            return;
         }
 
-        if (importadas > 0) {
-            await base44.entities.RegistroImportacao.create({
-                data_importacao: new Date().toISOString(),
-                quantidade_notas: importadas,
-                origem: "arquivo",
-                notas_ids: notasIdsImportadas,
-                status: "processado"
-            });
-        }
+        // Salvar tudo em paralelo (bulk)
+        const [notasCriadas] = await Promise.all([
+            base44.entities.NotaFiscal.bulkCreate(notasParaInserir),
+            novosDestinatariosSet.size > 0
+                ? base44.entities.Destinatario.bulkCreate([...novosDestinatariosSet].map(nome => ({ nome })))
+                : Promise.resolve([])
+        ]);
+
+        const notasIdsImportadas = notasCriadas.map(n => n.id);
+        const importadas = notasCriadas.length;
+
+        await base44.entities.RegistroImportacao.create({
+            data_importacao: new Date().toISOString(),
+            quantidade_notas: importadas,
+            origem: "arquivo",
+            notas_ids: notasIdsImportadas,
+            status: "processado"
+        });
 
         if (duplicadas > 0) {
             toast.warning(`${importadas} nota(s) importada(s). ${duplicadas} ignorada(s) (duplicadas).`);

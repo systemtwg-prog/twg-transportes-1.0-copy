@@ -400,33 +400,34 @@ export default function NotasFiscais() {
     toast.success(`${notasWashington.length} atualizada(s)!`);
   };
 
+  // Normaliza número removendo zeros à esquerda e caracteres não numéricos
+  const normalizarNF = (num) => {
+    if (!num) return "";
+    const apenasDigitos = num.toString().replace(/\D/g, "");
+    if (!apenasDigitos) return num.toString().toLowerCase().trim();
+    return String(parseInt(apenasDigitos, 10));
+  };
+
   // Buscar notas digitadas manualmente - busca no banco de dados
   const buscarNotasDigitadas = async () => {
     if (!notasDigitadas.trim()) return;
 
-    const numerosDigitados = notasDigitadas.
-    split(/[,;\s\n]+/).
-    map((n) => n.trim()).
-    filter(Boolean);
+    const numerosDigitados = notasDigitadas
+      .split(/[,;\s\n]+/)
+      .map((n) => n.trim())
+      .filter(Boolean);
 
     try {
-      // Buscar TODAS as notas do banco de dados
-      const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+      // Buscar TODAS as notas do banco de dados (incluindo recém-criadas)
+      const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 10000);
 
       const notasEncontradas = [];
       const naoEncontradas = [];
 
-      // Função para normalizar número (remove zeros à esquerda e converte para minúsculas)
-      const normalizar = (num) => {
-        if (!num) return "";
-        return parseInt(num.replace(/\D/g, ""), 10).toString().toLowerCase();
-      };
-
       numerosDigitados.forEach((num) => {
-        const numNormalizado = normalizar(num);
+        const numNorm = normalizarNF(num);
         const notaEncontrada = todasNotas.find((n) => {
-          const nfNormalizada = normalizar(n.numero_nf);
-          return nfNormalizada === numNormalizado || n.numero_nf?.toLowerCase() === num.toLowerCase();
+          return normalizarNF(n.numero_nf) === numNorm;
         });
         if (notaEncontrada && !notasEncontradas.find((n) => n.id === notaEncontrada.id)) {
           notasEncontradas.push(notaEncontrada);
@@ -435,13 +436,12 @@ export default function NotasFiscais() {
         }
       });
 
-      // Atualizar lista de não encontradas
       setNotasNaoEncontradas(naoEncontradas);
 
       if (notasEncontradas.length > 0) {
         const idsOrdenados = notasEncontradas.map((n) => n.id);
         setSelecionados(idsOrdenados);
-        setOrdemDigitacao(idsOrdenados); // Guardar ordem de digitação
+        setOrdemDigitacao(idsOrdenados);
         if (naoEncontradas.length > 0) {
           toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
         } else {

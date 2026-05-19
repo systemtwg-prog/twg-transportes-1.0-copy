@@ -63,27 +63,14 @@ export default function NotasFiscais() {
   const [notasDigitadas, setNotasDigitadas] = useState("");
   const [ordenacaoNotas, setOrdenacaoNotas] = useState("digitacao");
   const [otimizandoRota, setOtimizandoRota] = useState(false);
-  const [layoutConfig, setLayoutConfig] = useState(() => {
+  const [layoutConfig] = useState(() => {
     const saved = localStorage.getItem('mascaraRomaneioConfig');
     return saved ? JSON.parse(saved) : {
-      colRemetente: 18,
-      colDestinatario: 42,
-      colNfe: 15,
-      colCarimbo: 25,
-      alturaLinha: 45,
-      margemTopo: 10,
-      margemLateral: 10,
-      espacamentoEntreLinhas: 0,
-      fonteSizeCampos: 13,
-      fonteSizeDados: 15,
-      alinhamentoDados: 'center'
+      colRemetente: 18, colDestinatario: 42, colNfe: 15, colCarimbo: 25,
+      alturaLinha: 45, margemTopo: 10, margemLateral: 10,
+      espacamentoEntreLinhas: 0, fonteSizeCampos: 13, fonteSizeDados: 15, alinhamentoDados: 'center'
     };
   });
-
-  // Salvar configurações quando mudar
-  React.useEffect(() => {
-    localStorage.setItem('mascaraRomaneioConfig', JSON.stringify(layoutConfig));
-  }, [layoutConfig]);
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
   const [layoutExpanded, setLayoutExpanded] = useState(false);
   const [showImportador, setShowImportador] = useState(false);
@@ -145,7 +132,6 @@ export default function NotasFiscais() {
 
   const config = configs[0] || {};
 
-  // Mutation para criar registro de importação
   const createImportacaoMutation = useMutation({
     mutationFn: (data) => base44.entities.RegistroImportacao.create(data),
     onSuccess: () => {
@@ -978,6 +964,19 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
   columnFilters.placa.length > 0 ||
   selecionados.length > 0;
 
+  const handleLimparAntigas = async () => {
+    const corte = new Date();
+    corte.setMonth(corte.getMonth() - 3);
+    const dataCorte = corte.toISOString().split('T')[0];
+    const todas = await base44.entities.NotaFiscal.list("-created_date", 10000);
+    const antigas = todas.filter((n) => { const d = n.data || n.created_date?.split('T')[0]; return d && d < dataCorte; });
+    if (antigas.length === 0) { toast.info("Nenhuma nota com mais de 3 meses encontrada."); return; }
+    if (!confirm(`Excluir ${antigas.length} nota(s) anteriores a ${dataCorte}?\n\nEsta ação não pode ser desfeita.`)) return;
+    for (const nota of antigas) await base44.entities.NotaFiscal.delete(nota.id);
+    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+    toast.success(`${antigas.length} nota(s) antigas excluídas!`);
+  };
+
   const notasPool = notasDaBusca.length > 0
     ? [...notasDaBusca.filter(b => !notas.find(n => n.id === b.id)), ...notas]
     : notas;
@@ -1047,6 +1046,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <Button onClick={() => setShowImportador(true)} variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
                             <Upload className="w-4 h-4 mr-2" />
                             Importar
+                        </Button>
+                        <Button onClick={handleLimparAntigas} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Limpar Antigas
                         </Button>
                     </div>
                 </div>

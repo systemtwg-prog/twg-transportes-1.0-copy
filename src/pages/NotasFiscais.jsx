@@ -297,6 +297,7 @@ export default function NotasFiscais() {
 
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    if (!form.numero_nf || !form.destinatario) return;
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: form });
     } else {

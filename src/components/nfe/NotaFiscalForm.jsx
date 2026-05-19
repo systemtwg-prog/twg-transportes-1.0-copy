@@ -177,8 +177,7 @@ export default function NotaFiscalForm({
                             <X className="w-4 h-4 mr-1" /> Cancelar
                         </Button>
                         <Button
-                            type="button"
-                            onClick={onSubmit}
+                            type="submit"
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             <Save className="w-4 h-4 mr-1" /> Salvar

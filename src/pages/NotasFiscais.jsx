@@ -53,6 +53,7 @@ export default function NotasFiscais() {
   const [novoRemetente, setNovoRemetente] = useState({ nome: "" });
   const [showArquivados, setShowArquivados] = useState(false);
   const [notasNaoEncontradas, setNotasNaoEncontradas] = useState([]);
+  const [notasDaBusca, setNotasDaBusca] = useState([]); // notas encontradas pela busca manual
 
   // Estados para funcionalidades do romaneio
   const [motorista, setMotorista] = useState("");
@@ -442,6 +443,8 @@ export default function NotasFiscais() {
         const idsOrdenados = notasEncontradas.map((n) => n.id);
         setSelecionados(idsOrdenados);
         setOrdemDigitacao(idsOrdenados);
+        // Guardar notas encontradas para exibição na tabela (independente do cache)
+        setNotasDaBusca(notasEncontradas);
         if (naoEncontradas.length > 0) {
           toast.warning(`${notasEncontradas.length} nota(s) encontrada(s). ${naoEncontradas.length} não encontrada(s).`);
         } else {
@@ -967,7 +970,6 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
     return { porPlaca, pesoConsolidado, totalNotas, totalEntregas };
   }, [selecionados, notas]);
 
-  // Verificar se há alguma busca/filtro ativo
   const hasBuscaAtiva = search ||
   (filterFilial && filterFilial !== "todas") ||
   columnFilters.destinatario.length > 0 ||
@@ -976,19 +978,17 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
   columnFilters.placa.length > 0 ||
   selecionados.length > 0;
 
-  const filtered = hasBuscaAtiva ? notas.filter((n) => {
-    // Busca geral
-    // Se há notas selecionadas mas sem texto de busca, mostrar as selecionadas
+  const notasPool = notasDaBusca.length > 0
+    ? [...notasDaBusca.filter(b => !notas.find(n => n.id === b.id)), ...notas]
+    : notas;
+
+  const filtered = hasBuscaAtiva ? notasPool.filter((n) => {
     const matchSearch = !search
       ? selecionados.length > 0 ? selecionados.includes(n.id) : true
       : n.numero_nf?.toLowerCase().includes(search.toLowerCase()) ||
         n.destinatario?.toLowerCase().includes(search.toLowerCase()) ||
         n.transportadora?.toLowerCase().includes(search.toLowerCase());
-
-    // Filtro de filial (select)
     const matchFilialSelect = !filterFilial || filterFilial === "todas" || n.filial === filterFilial;
-
-    // Filtros de coluna
     const matchDestinatario = columnFilters.destinatario.length === 0 ||
     columnFilters.destinatario.includes(n.destinatario || "");
     const matchTransportadora = columnFilters.transportadora.length === 0 ||
@@ -1164,7 +1164,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         value={notasDigitadas}
                         onChange={(e) => {
                           setNotasDigitadas(e.target.value);
-                          if (!e.target.value.trim()) setNotasNaoEncontradas([]);
+                          if (!e.target.value.trim()) { setNotasNaoEncontradas([]); setNotasDaBusca([]); }
                         }}
                         className="bg-white flex-1"
                         onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />

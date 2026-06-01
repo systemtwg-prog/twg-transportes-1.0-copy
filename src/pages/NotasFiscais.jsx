@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink } from "lucide-react";
+import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink, Copy } from "lucide-react";
 import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
 import NotaFiscalForm from "@/components/nfe/NotaFiscalForm";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1174,6 +1174,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         className="bg-white flex-1"
                         onKeyDown={(e) => {if (e.key === "Enter") buscarNotasDigitadas();}} />
 
+                                    <Button variant="outline" onClick={() => { navigator.clipboard.writeText(notasDigitadas); toast.success("Copiado!"); }} title="Copiar dados digitados" disabled={!notasDigitadas}><Copy className="w-4 h-4" /></Button>
                                     <Button onClick={buscarNotasDigitadas} className="bg-blue-600 hover:bg-blue-700">
                                         <Search className="w-4 h-4 mr-2" />
                                         Buscar e Selecionar

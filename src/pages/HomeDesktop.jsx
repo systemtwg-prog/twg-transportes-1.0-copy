@@ -12,7 +12,7 @@ import {
     ClipboardList, Settings, BarChart3,
     Navigation, Building2, Upload,
     Camera, ChevronRight, Bell, Grip, Check, X,
-    AlertTriangle, Clock, TrendingUp, Calendar, Printer, Search
+    AlertTriangle, Clock, TrendingUp, Calendar, Printer, Search, ExternalLink
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
@@ -668,6 +668,34 @@ export default function HomeDesktop() {
                                         <p className="text-center text-slate-500 py-4">Nenhuma ordem recente</p>
                                     )}
                                 </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Apps Externos */}
+                        <Card className="border-0 shadow-lg">
+                            <CardHeader className="border-b pb-3">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <ExternalLink className="w-4 h-4 text-teal-600" />
+                                    Apps Externos
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3 space-y-2">
+                                <a href="https://gestor-cte-copy-29b2bb80.base44.app/" target="_blank" rel="noopener noreferrer">
+                                    <div className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 hover:from-teal-100 hover:to-cyan-100 transition-colors cursor-pointer">
+                                        <div className="p-2 rounded-lg bg-teal-500">
+                                            <ExternalLink className="w-4 h-4 text-white" />
+                                        </div>
+                                        <span className="font-medium text-sm text-teal-800">Gestor CTE</span>
+                                    </div>
+                                </a>
+                                <a href="https://gestortwg.base44.app/" target="_blank" rel="noopener noreferrer">
+                                    <div className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer">
+                                        <div className="p-2 rounded-lg bg-indigo-500">
+                                            <ExternalLink className="w-4 h-4 text-white" />
+                                        </div>
+                                        <span className="font-medium text-sm text-indigo-800">Gestor TWG</span>
+                                    </div>
+                                </a>
                             </CardContent>
                         </Card>
 

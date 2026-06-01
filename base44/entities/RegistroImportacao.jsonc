@@ -1,0 +1,55 @@
+{
+  "name": "RegistroImportacao",
+  "type": "object",
+  "properties": {
+    "data_importacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora da importa\u00e7\u00e3o"
+    },
+    "quantidade_notas": {
+      "type": "number",
+      "description": "Quantidade de notas importadas"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "arquivo",
+        "colagem",
+        "xml",
+        "pdf",
+        "manual"
+      ],
+      "description": "Origem da importa\u00e7\u00e3o"
+    },
+    "nome_arquivo": {
+      "type": "string",
+      "description": "Nome do arquivo importado"
+    },
+    "notas_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das notas fiscais importadas"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processando",
+        "processado",
+        "erro"
+      ],
+      "default": "processado",
+      "description": "Status da importa\u00e7\u00e3o"
+    },
+    "excluido": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a importa\u00e7\u00e3o foi exclu\u00edda (movida para lixeira)"
+    }
+  },
+  "required": [
+    "data_importacao"
+  ]
+}

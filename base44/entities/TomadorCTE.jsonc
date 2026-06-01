@@ -1,0 +1,37 @@
+{
+  "name": "TomadorCTE",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do tomador"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ do tomador"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o"
+    },
+    "cidade": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "uf": {
+      "type": "string",
+      "description": "UF"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Comprovante",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do comprovante"
+    },
+    "ordem_id": {
+      "type": "string",
+      "description": "N\u00famero da ordem relacionada"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "comprovante_entrega",
+        "nota_fiscal",
+        "canhoto",
+        "outro"
+      ],
+      "default": "comprovante_entrega",
+      "description": "Tipo do comprovante"
+    },
+    "arquivos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de arquivos do comprovante"
+    },
+    "data_upload": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data do upload"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "titulo"
+  ]
+}

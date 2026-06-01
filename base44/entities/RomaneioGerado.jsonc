@@ -1,0 +1,91 @@
+{
+  "name": "RomaneioGerado",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "string",
+      "description": "N\u00famero sequencial do romaneio"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome do romaneio"
+    },
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do romaneio"
+    },
+    "motorista_id": {
+      "type": "string",
+      "description": "ID do motorista"
+    },
+    "motorista_nome": {
+      "type": "string",
+      "description": "Nome do motorista"
+    },
+    "total_notas": {
+      "type": "number",
+      "description": "Total de notas fiscais"
+    },
+    "total_entregas": {
+      "type": "number",
+      "description": "Total de entregas"
+    },
+    "peso_total": {
+      "type": "number",
+      "description": "Peso total em kg"
+    },
+    "notas_por_transportadora": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transportadora": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Quantidade de notas por transportadora"
+    },
+    "notas_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das notas fiscais inclu\u00eddas"
+    },
+    "destinatarios": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de destinat\u00e1rios"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "gerado",
+        "em_transito",
+        "entregue",
+        "cancelado"
+      ],
+      "default": "gerado",
+      "description": "Status do romaneio"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "data",
+    "placa"
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "name": "Configuracoes",
+  "type": "object",
+  "properties": {
+    "nome_empresa": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logotipo"
+    },
+    "logo_tamanho": {
+      "type": "number",
+      "default": 100,
+      "description": "Tamanho do logotipo em porcentagem (50-200)"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o da empresa"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone da empresa"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email da empresa"
+    },
+    "ultimo_numero_ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "\u00daltimo n\u00famero de ordem gerado"
+    },
+    "ultimo_numero_romaneio": {
+      "type": "number",
+      "default": 0,
+      "description": "\u00daltimo n\u00famero de romaneio gerado"
+    },
+    "cor_primaria": {
+      "type": "string",
+      "default": "sky",
+      "description": "Cor prim\u00e1ria do tema (sky, blue, indigo, violet, purple, etc)"
+    },
+    "cor_botoes": {
+      "type": "string",
+      "default": "blue",
+      "description": "Cor dos bot\u00f5es principais"
+    },
+    "tema_escuro": {
+      "type": "boolean",
+      "default": false,
+      "description": "Usar tema escuro na Home"
+    },
+    "modulos_ativos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs dos m\u00f3dulos ativos no sistema"
+    },
+    "modulos_usuario_comum": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs dos m\u00f3dulos permitidos para usu\u00e1rio comum"
+    },
+    "modulos_admin": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de IDs dos m\u00f3dulos permitidos para admin"
+    },
+    "botoes_home_mobile": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos bot\u00f5es vis\u00edveis na Home (vers\u00e3o mobile)"
+    },
+    "botoes_home_pc": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos bot\u00f5es vis\u00edveis na Home (vers\u00e3o PC/Desktop)"
+    }
+  },
+  "required": []
+}

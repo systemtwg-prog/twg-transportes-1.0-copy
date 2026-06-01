@@ -11,7 +11,7 @@ import {
         Truck, Package, FileText, Users, Car, 
         ClipboardList, Settings, BarChart3,
         Navigation, Building2, Upload,
-        Camera, ChevronRight, Bell, Printer, Settings2, Eye, EyeOff
+        Camera, ChevronRight, Bell, Printer, Settings2, Eye, EyeOff, ExternalLink
     } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import WeatherWidget from "@/components/shared/WeatherWidget";
@@ -524,6 +524,34 @@ export default function Home() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Apps Externos */}
+                <div className="grid grid-cols-2 gap-3">
+                    <a
+                        href="https://gestor-cte-copy-29b2bb80.base44.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <div className={`p-3 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 hover:scale-105 hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col items-center text-center`}>
+                            <div className="p-2 rounded-lg bg-white/20 mb-2">
+                                <ExternalLink className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-xs font-medium text-white">Gestor CTE</span>
+                        </div>
+                    </a>
+                    <a
+                        href="https://gestortwg.base44.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <div className={`p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:scale-105 hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col items-center text-center`}>
+                            <div className="p-2 rounded-lg bg-white/20 mb-2">
+                                <ExternalLink className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-xs font-medium text-white">Gestor TWG</span>
+                        </div>
+                    </a>
+                </div>
 
                 {/* Menu Secundário */}
                 {menuItems.length > 0 && (

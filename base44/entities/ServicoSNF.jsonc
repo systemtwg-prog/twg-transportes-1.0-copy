@@ -1,0 +1,109 @@
+{
+  "name": "ServicoSNF",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "string",
+      "description": "N\u00famero do servi\u00e7o"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do servi\u00e7o"
+    },
+    "remetente_id": {
+      "type": "string",
+      "description": "ID do remetente (ClienteSNF)"
+    },
+    "remetente_cnpj": {
+      "type": "string",
+      "description": "CNPJ do remetente"
+    },
+    "remetente_nome": {
+      "type": "string",
+      "description": "Nome do remetente"
+    },
+    "destinatario_id": {
+      "type": "string",
+      "description": "ID do destinat\u00e1rio (ClienteSNF)"
+    },
+    "destinatario_cnpj": {
+      "type": "string",
+      "description": "CNPJ do destinat\u00e1rio"
+    },
+    "destinatario_nome": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "pagador_frete_id": {
+      "type": "string",
+      "description": "ID do pagador do frete (ClienteSNF)"
+    },
+    "pagador_frete_cnpj": {
+      "type": "string",
+      "description": "CNPJ do pagador do frete"
+    },
+    "pagador_frete_nome": {
+      "type": "string",
+      "description": "Nome do pagador do frete"
+    },
+    "nfe": {
+      "type": "string",
+      "description": "N\u00famero da NFE"
+    },
+    "peso": {
+      "type": "number",
+      "description": "Peso em kg"
+    },
+    "volume": {
+      "type": "number",
+      "description": "Quantidade de volumes"
+    },
+    "valor_nfe": {
+      "type": "number",
+      "description": "Valor da NFE"
+    },
+    "tabela_peso": {
+      "type": "number",
+      "description": "Valor tabela peso"
+    },
+    "seguro": {
+      "type": "number",
+      "description": "Valor do seguro"
+    },
+    "pedagio": {
+      "type": "number",
+      "description": "Valor do ped\u00e1gio"
+    },
+    "coleta": {
+      "type": "number",
+      "description": "Valor da coleta"
+    },
+    "total": {
+      "type": "number",
+      "description": "Valor total"
+    },
+    "porcentagem": {
+      "type": "number",
+      "description": "Porcentagem"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "em_andamento",
+        "finalizado",
+        "cancelado"
+      ],
+      "default": "pendente",
+      "description": "Status do servi\u00e7o"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "data"
+  ]
+}

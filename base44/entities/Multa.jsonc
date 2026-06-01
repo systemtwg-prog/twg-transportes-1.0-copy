@@ -1,0 +1,76 @@
+{
+  "name": "Multa",
+  "type": "object",
+  "properties": {
+    "veiculo_id": {
+      "type": "string",
+      "description": "ID do ve\u00edculo"
+    },
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "renavam": {
+      "type": "string",
+      "description": "RENAVAM do ve\u00edculo"
+    },
+    "numero_auto": {
+      "type": "string",
+      "description": "N\u00famero do auto de infra\u00e7\u00e3o"
+    },
+    "data_infracao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da infra\u00e7\u00e3o"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da infra\u00e7\u00e3o"
+    },
+    "local": {
+      "type": "string",
+      "description": "Local da infra\u00e7\u00e3o"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor da multa"
+    },
+    "pontos": {
+      "type": "number",
+      "description": "Pontos na carteira"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "reconhecida",
+        "paga",
+        "recorrida",
+        "finalizada"
+      ],
+      "default": "pendente",
+      "description": "Status da multa"
+    },
+    "motorista_id": {
+      "type": "string",
+      "description": "ID do motorista respons\u00e1vel"
+    },
+    "motorista_responsavel": {
+      "type": "string",
+      "description": "Nome do motorista respons\u00e1vel"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "placa",
+    "data_infracao"
+  ]
+}

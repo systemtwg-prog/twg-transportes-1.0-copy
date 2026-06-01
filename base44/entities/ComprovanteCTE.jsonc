@@ -1,0 +1,113 @@
+{
+  "name": "ComprovanteCTE",
+  "type": "object",
+  "properties": {
+    "numero_cte": {
+      "type": "string",
+      "description": "N\u00famero do CTE"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data"
+    },
+    "remetente": {
+      "type": "string",
+      "description": "Nome do fornecedor/remetente"
+    },
+    "destinatario": {
+      "type": "string",
+      "description": "Nome do cliente/destinat\u00e1rio"
+    },
+    "tomador": {
+      "type": "string",
+      "description": "Nome do tomador do servi\u00e7o"
+    },
+    "tomador_id": {
+      "type": "string",
+      "description": "ID do tomador cadastrado"
+    },
+    "nfe": {
+      "type": "string",
+      "description": "N\u00famero da NFe"
+    },
+    "valor_nf": {
+      "type": "string",
+      "description": "Valor da Nota Fiscal"
+    },
+    "volume": {
+      "type": "string",
+      "description": "Quantidade de volumes"
+    },
+    "peso": {
+      "type": "string",
+      "description": "Peso em KG"
+    },
+    "frete_peso": {
+      "type": "string",
+      "description": "Valor do frete peso"
+    },
+    "coleta": {
+      "type": "string",
+      "description": "Valor da coleta"
+    },
+    "seguro": {
+      "type": "string",
+      "description": "Valor do seguro"
+    },
+    "pedagio": {
+      "type": "string",
+      "description": "Valor do ped\u00e1gio"
+    },
+    "outros": {
+      "type": "string",
+      "description": "Outros valores"
+    },
+    "valor_cobrado": {
+      "type": "string",
+      "description": "Valor cobrado pelo frete"
+    },
+    "porcentagem": {
+      "type": "string",
+      "description": "Porcentagem"
+    },
+    "mdfe": {
+      "type": "string",
+      "description": "N\u00famero do MDFE"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "finalizado"
+      ],
+      "default": "pendente",
+      "description": "Status do comprovante"
+    },
+    "arquivos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Arquivos anexados"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "data"
+  ]
+}

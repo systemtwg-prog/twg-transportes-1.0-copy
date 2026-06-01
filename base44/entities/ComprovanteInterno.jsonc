@@ -1,0 +1,94 @@
+{
+  "name": "ComprovanteInterno",
+  "type": "object",
+  "properties": {
+    "nota_fiscal": {
+      "type": "string",
+      "description": "N\u00famero da nota fiscal"
+    },
+    "tipo_documento": {
+      "type": "string",
+      "enum": [
+        "NF",
+        "CTE",
+        "NFe",
+        "CTe",
+        "Comprovante",
+        "Recibo",
+        "Outro"
+      ],
+      "default": "Comprovante",
+      "description": "Tipo do documento"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor do documento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "aprovado",
+        "rejeitado",
+        "em_analise"
+      ],
+      "default": "pendente",
+      "description": "Status do comprovante"
+    },
+    "empresa": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "remetente": {
+      "type": "string",
+      "description": "Nome do remetente"
+    },
+    "destinatario": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do comprovante"
+    },
+    "arquivos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de arquivos anexados"
+    },
+    "texto_extraido": {
+      "type": "string",
+      "description": "Texto extra\u00eddo do PDF"
+    },
+    "romaneio_id": {
+      "type": "string",
+      "description": "ID do romaneio relacionado"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "usuario_foto": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que tirou a foto"
+    }
+  },
+  "required": [
+    "nota_fiscal",
+    "data"
+  ]
+}

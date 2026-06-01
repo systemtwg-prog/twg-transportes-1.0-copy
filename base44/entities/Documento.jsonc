@@ -1,0 +1,64 @@
+{
+  "name": "Documento",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "CNH",
+        "RG",
+        "CPF",
+        "RENAVAN",
+        "CRLV",
+        "Contrato",
+        "Comprovante",
+        "Outro"
+      ],
+      "description": "Tipo do documento"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do documento"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais"
+    },
+    "data_documento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do documento"
+    },
+    "pessoa_relacionada": {
+      "type": "string",
+      "description": "Nome da pessoa/empresa relacionada"
+    },
+    "validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade do documento"
+    },
+    "arquivos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Arquivos/fotos do documento"
+    }
+  },
+  "required": [
+    "tipo",
+    "descricao"
+  ]
+}

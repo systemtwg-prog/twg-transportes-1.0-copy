@@ -1,0 +1,98 @@
+{
+  "name": "Romaneio",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "string",
+      "description": "N\u00famero do romaneio"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do romaneio"
+    },
+    "motorista_id": {
+      "type": "string",
+      "description": "ID do motorista"
+    },
+    "motorista_nome": {
+      "type": "string",
+      "description": "Nome do motorista"
+    },
+    "veiculo_id": {
+      "type": "string",
+      "description": "ID do ve\u00edculo"
+    },
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "notas_fiscais": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "numero_nf": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          },
+          "destinatario": {
+            "type": "string"
+          },
+          "volume": {
+            "type": "string"
+          },
+          "endereco": {
+            "type": "string"
+          },
+          "cidade": {
+            "type": "string"
+          },
+          "transportadora": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Lista de notas fiscais"
+    },
+    "comprovante_url": {
+      "type": "string",
+      "description": "URL do comprovante/foto"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "coletado",
+        "entregue",
+        "cancelado"
+      ],
+      "default": "pendente",
+      "description": "Status do romaneio"
+    },
+    "origem_importacao": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "xml",
+        "pdf"
+      ],
+      "default": "manual",
+      "description": "Origem do romaneio"
+    },
+    "rota_otimizada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a rota foi otimizada"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "data"
+  ]
+}

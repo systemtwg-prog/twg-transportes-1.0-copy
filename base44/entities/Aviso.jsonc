@@ -1,0 +1,43 @@
+{
+  "name": "Aviso",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do aviso"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Conte\u00fado do aviso"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "info",
+        "alerta",
+        "urgente"
+      ],
+      "default": "info",
+      "description": "Tipo do aviso"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o aviso est\u00e1 ativo"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do aviso"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de fim do aviso"
+    }
+  },
+  "required": [
+    "titulo",
+    "mensagem"
+  ]
+}

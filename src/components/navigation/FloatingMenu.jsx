@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail,
-    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2, DollarSign
+    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2, DollarSign, ExternalLink
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -138,6 +138,32 @@ export default function FloatingMenu({ currentPage }) {
                                 </div>
                             );
                         })}
+                        {/* Apps Externos */}
+                        <div className="mb-4 border-t border-white/10 pt-4">
+                            <p className="px-2 py-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Apps Externos</p>
+                            <div className="space-y-1 mt-1">
+                                <a
+                                    href="https://gestor-cte-copy-29b2bb80.base44.app/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/10 hover:text-white"
+                                >
+                                    <ExternalLink className="w-5 h-5" />
+                                    <span className="font-medium text-sm">Gestor CTE</span>
+                                </a>
+                                <a
+                                    href="https://gestortwg.base44.app/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/10 hover:text-white"
+                                >
+                                    <ExternalLink className="w-5 h-5" />
+                                    <span className="font-medium text-sm">Gestor TWG</span>
+                                </a>
+                            </div>
+                        </div>
                         <button
                             onClick={handleLogout}
                             className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full mt-4 border-t border-white/10 pt-4"

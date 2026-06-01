@@ -1,0 +1,124 @@
+{
+  "name": "Motorista",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome completo do colaborador"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do colaborador"
+    },
+    "rg": {
+      "type": "string",
+      "description": "RG do colaborador"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de nascimento"
+    },
+    "cnh": {
+      "type": "string",
+      "description": "N\u00famero da CNH"
+    },
+    "categoria_cnh": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "AB",
+        "AC",
+        "AD",
+        "AE"
+      ],
+      "description": "Categoria da CNH"
+    },
+    "validade_cnh": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade da CNH"
+    },
+    "documentos_cnh": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Documentos da CNH (PDF ou imagens)"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone do colaborador"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do colaborador"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o"
+    },
+    "funcao": {
+      "type": "string",
+      "default": "Motorista",
+      "description": "Fun\u00e7\u00e3o/Cargo do colaborador"
+    },
+    "data_admissao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de admiss\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "ferias",
+        "afastado"
+      ],
+      "default": "ativo",
+      "description": "Status do colaborador"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do colaborador"
+    },
+    "tipo_vinculo": {
+      "type": "string",
+      "enum": [
+        "funcionario",
+        "agregado"
+      ],
+      "default": "funcionario",
+      "description": "Tipo de v\u00ednculo: Funcion\u00e1rio ou Agregado"
+    },
+    "usuario_vinculado": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio de acesso vinculado"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome",
+    "cpf",
+    "cnh"
+  ]
+}

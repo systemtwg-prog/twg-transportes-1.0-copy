@@ -1,0 +1,117 @@
+{
+  "name": "Veiculo",
+  "type": "object",
+  "properties": {
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "modelo": {
+      "type": "string",
+      "description": "Modelo do ve\u00edculo"
+    },
+    "marca": {
+      "type": "string",
+      "description": "Marca do ve\u00edculo"
+    },
+    "ano": {
+      "type": "string",
+      "description": "Ano do ve\u00edculo"
+    },
+    "cor": {
+      "type": "string",
+      "description": "Cor do ve\u00edculo"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "van",
+        "caminhao_leve",
+        "caminhao_medio",
+        "caminhao_pesado",
+        "carreta",
+        "utilitario"
+      ],
+      "description": "Tipo do ve\u00edculo"
+    },
+    "capacidade_kg": {
+      "type": "number",
+      "description": "Capacidade em KG"
+    },
+    "capacidade_m3": {
+      "type": "number",
+      "description": "Capacidade em M\u00b3"
+    },
+    "renavam": {
+      "type": "string",
+      "description": "RENAVAM"
+    },
+    "chassi": {
+      "type": "string",
+      "description": "Chassi"
+    },
+    "km_atual": {
+      "type": "number",
+      "description": "Quilometragem atual"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "disponivel",
+        "em_uso",
+        "manutencao",
+        "inativo"
+      ],
+      "default": "disponivel",
+      "description": "Status do ve\u00edculo"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do ve\u00edculo"
+    },
+    "documentos_veiculo": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Documentos do ve\u00edculo (PDF ou imagens)"
+    },
+    "documentos_carroceria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Documentos da carroceria (PDF ou imagens)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "placa",
+    "modelo"
+  ]
+}

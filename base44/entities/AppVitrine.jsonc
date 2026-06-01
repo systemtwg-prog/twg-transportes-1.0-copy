@@ -1,0 +1,64 @@
+{
+  "name": "AppVitrine",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "description": "Identificador na URL (ex: logistica, academia, cosmeticos)"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome do app/produto"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o curta do app"
+    },
+    "descricao_longa": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada / funcionalidades"
+    },
+    "link_app": {
+      "type": "string",
+      "description": "URL do app (link de acesso)"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logo do app"
+    },
+    "cor_primaria": {
+      "type": "string",
+      "description": "Cor principal em hex (ex: #2563eb)"
+    },
+    "cor_secundaria": {
+      "type": "string",
+      "description": "Cor secund\u00e1ria em hex"
+    },
+    "icone": {
+      "type": "string",
+      "description": "Emoji ou \u00edcone representativo"
+    },
+    "recursos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de funcionalidades/recursos"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o app est\u00e1 ativo na vitrine"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "slug",
+    "nome",
+    "link_app"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Destinatario",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "cnpj_cpf": {
+      "type": "string",
+      "description": "CNPJ ou CPF"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o completo"
+    },
+    "cidade": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "uf": {
+      "type": "string",
+      "description": "Estado"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

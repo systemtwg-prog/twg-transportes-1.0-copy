@@ -502,21 +502,21 @@ export default function NotasFiscais() {
       return;
     }
 
-    // Usar configurações do layout configurado na página
+    // Usar configurações do PrintConfigNFE (se disponível) ou do layout padrão
     const cfg = {
       fontSize: 10,
       fontWeight: "normal",
-      colRemetente: layoutConfig.colRemetente,
-      colDestinatario: layoutConfig.colDestinatario,
-      colNfe: layoutConfig.colNfe,
-      colCarimbo: layoutConfig.colCarimbo,
-      alturaLinha: layoutConfig.alturaLinha,
-      margemTopo: layoutConfig.margemTopo,
-      margemLateral: layoutConfig.margemLateral,
-      espacamentoEntreLinhas: layoutConfig.espacamentoEntreLinhas,
-      fonteSizeCampos: layoutConfig.fonteSizeCampos,
-      fonteSizeDados: layoutConfig.fonteSizeDados,
-      alinhamentoDados: layoutConfig.alinhamentoDados
+      colRemetente: printConfig?.colRemetente ?? layoutConfig.colRemetente,
+      colDestinatario: printConfig?.colDestinatario ?? layoutConfig.colDestinatario,
+      colNfe: printConfig?.colNfe ?? layoutConfig.colNfe,
+      colCarimbo: printConfig?.colCarimbo ?? layoutConfig.colCarimbo,
+      alturaLinha: printConfig?.alturaLinha ?? layoutConfig.alturaLinha,
+      margemTopo: printConfig?.margemTopo ?? layoutConfig.margemTopo,
+      margemLateral: printConfig?.margemLateral ?? layoutConfig.margemLateral,
+      espacamentoEntreLinhas: printConfig?.espacamentoEntreLinhas ?? layoutConfig.espacamentoEntreLinhas,
+      fonteSizeCampos: printConfig?.fonteSizeCampos ?? layoutConfig.fonteSizeCampos,
+      fonteSizeDados: printConfig?.fonteSizeDados ?? layoutConfig.fonteSizeDados,
+      alinhamentoDados: printConfig?.alinhamentoDados ?? layoutConfig.alinhamentoDados
     };
 
     // Símbolos para placas

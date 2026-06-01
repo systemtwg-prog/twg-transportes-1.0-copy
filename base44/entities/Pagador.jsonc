@@ -1,0 +1,29 @@
+{
+  "name": "Pagador",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do pagador"
+    },
+    "cnpj_cpf": {
+      "type": "string",
+      "description": "CNPJ ou CPF"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

@@ -9,7 +9,7 @@ import {
     Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, 
     Search, Database, Printer, ChevronLeft, ChevronRight, Truck, Building2,
-    Camera, ClipboardList, AlertTriangle, Upload, Mail, FileText as FileTextIcon, DollarSign
+    Camera, ClipboardList, AlertTriangle, Upload, Mail, FileText as FileTextIcon, DollarSign, ExternalLink
 } from "lucide-react";
 
 const menuItems = [
@@ -188,6 +188,27 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                 </div>
             </ScrollArea>
             
+            <div className="px-2 border-t border-slate-700 pt-2 pb-1">
+                <p className="px-1 py-1 text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Apps Externos</p>
+                <a
+                    href="https://gestor-cte-copy-29b2bb80.base44.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full px-3 py-1.5 flex items-center gap-2 transition-all text-xs text-slate-300 hover:bg-slate-800 hover:text-white rounded"
+                >
+                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">Gestor CTE</span>
+                </a>
+                <a
+                    href="https://gestortwg.base44.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full px-3 py-1.5 flex items-center gap-2 transition-all text-xs text-slate-300 hover:bg-slate-800 hover:text-white rounded"
+                >
+                    <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">Gestor TWG</span>
+                </a>
+            </div>
             <div className="p-2 border-t border-slate-700">
                 <button
                     onClick={handleLogout}

@@ -1,0 +1,99 @@
+{
+  "name": "Precificacao",
+  "type": "object",
+  "properties": {
+    "remetente": {
+      "type": "string",
+      "description": "Nome do remetente"
+    },
+    "destinatario": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "transportadora": {
+      "type": "string",
+      "description": "Nome da transportadora"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "N\u00famero do documento (CTe, NFe, etc)"
+    },
+    "data_emissao": {
+      "type": "string",
+      "description": "Data de emiss\u00e3o do documento"
+    },
+    "volume": {
+      "type": "string",
+      "description": "Quantidade de volumes"
+    },
+    "peso": {
+      "type": "string",
+      "description": "Peso em KG"
+    },
+    "valor_nota": {
+      "type": "number",
+      "description": "Valor da nota fiscal"
+    },
+    "frete_peso": {
+      "type": "number",
+      "description": "Valor do frete peso"
+    },
+    "sec_cat": {
+      "type": "number",
+      "description": "Valor Sec/Cat"
+    },
+    "despacho": {
+      "type": "number",
+      "description": "Valor do despacho"
+    },
+    "pedagio": {
+      "type": "number",
+      "description": "Valor do ped\u00e1gio"
+    },
+    "outros": {
+      "type": "number",
+      "description": "Outros valores"
+    },
+    "total_prestacao": {
+      "type": "number",
+      "description": "Total da presta\u00e7\u00e3o"
+    },
+    "valor_servico": {
+      "type": "number",
+      "description": "Valor do servi\u00e7o cobrado"
+    },
+    "porcentagem": {
+      "type": "number",
+      "description": "Porcentagem do servi\u00e7o sobre o valor da nota"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do documento"
+    },
+    "confirmado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se foi confirmado"
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da precifica\u00e7\u00e3o"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "pagador_id": {
+      "type": "string",
+      "description": "ID do pagador"
+    },
+    "pagador_nome": {
+      "type": "string",
+      "description": "Nome do pagador"
+    }
+  },
+  "required": [
+    "data"
+  ]
+}

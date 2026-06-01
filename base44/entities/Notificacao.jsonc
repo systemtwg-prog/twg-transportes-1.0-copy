@@ -1,0 +1,73 @@
+{
+  "name": "Notificacao",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Mensagem da notifica\u00e7\u00e3o"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "coleta",
+        "entrega",
+        "alerta",
+        "ordem",
+        "sistema"
+      ],
+      "default": "sistema",
+      "description": "Tipo da notifica\u00e7\u00e3o"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "baixa",
+        "normal",
+        "alta",
+        "urgente"
+      ],
+      "default": "normal",
+      "description": "Prioridade da notifica\u00e7\u00e3o"
+    },
+    "destinatario_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio destinat\u00e1rio (vazio = todos)"
+    },
+    "destinatario_tipo": {
+      "type": "string",
+      "enum": [
+        "todos",
+        "motoristas",
+        "gestores",
+        "usuario"
+      ],
+      "default": "todos",
+      "description": "Tipo de destinat\u00e1rio"
+    },
+    "lida": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a notifica\u00e7\u00e3o foi lida"
+    },
+    "link": {
+      "type": "string",
+      "description": "Link para a p\u00e1gina relacionada"
+    },
+    "referencia_id": {
+      "type": "string",
+      "description": "ID do objeto relacionado (coleta, ordem, etc)"
+    },
+    "referencia_tipo": {
+      "type": "string",
+      "description": "Tipo do objeto relacionado"
+    }
+  },
+  "required": [
+    "titulo",
+    "mensagem"
+  ]
+}

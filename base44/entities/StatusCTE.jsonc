@@ -1,0 +1,22 @@
+{
+  "name": "StatusCTE",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do status"
+    },
+    "cor": {
+      "type": "string",
+      "description": "Cor do status (hex ou classe tailwind)"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

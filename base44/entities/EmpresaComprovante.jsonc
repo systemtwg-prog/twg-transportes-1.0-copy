@@ -1,0 +1,17 @@
+{
+  "name": "EmpresaComprovante",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da empresa"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logotipo"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

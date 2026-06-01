@@ -206,7 +206,7 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                     className="w-full px-3 py-1.5 flex items-center gap-2 transition-all text-xs text-slate-300 hover:bg-slate-800 hover:text-white rounded"
                 >
                     <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">Gestor TWG</span>
+                    <span className="truncate">TX Separação</span>
                 </a>
             </div>
             <div className="p-2 border-t border-slate-700">

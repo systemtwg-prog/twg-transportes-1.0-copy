@@ -548,7 +548,7 @@ export default function Home() {
                             <div className="p-2 rounded-lg bg-white/20 mb-2">
                                 <ExternalLink className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-xs font-medium text-white">Gestor TWG</span>
+                            <span className="text-xs font-medium text-white">TX Separação</span>
                         </div>
                     </a>
                 </div>

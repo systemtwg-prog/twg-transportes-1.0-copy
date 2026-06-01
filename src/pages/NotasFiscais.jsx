@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace } from "lucide-react";
+import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink } from "lucide-react";
 import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
 import NotaFiscalForm from "@/components/nfe/NotaFiscalForm";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1047,6 +1047,8 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             <Upload className="w-4 h-4 mr-2" />
                             Importar
                         </Button>
+                        <a href="https://gestor-cte-copy-29b2bb80.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-teal-500 text-teal-700 hover:bg-teal-50"><ExternalLink className="w-4 h-4 mr-2" />Gestor CTE</Button></a>
+                        <a href="https://gestortwg.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-indigo-500 text-indigo-700 hover:bg-indigo-50"><ExternalLink className="w-4 h-4 mr-2" />TX Separação</Button></a>
                         <Button onClick={handleLimparAntigas} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
                             <Trash2 className="w-4 h-4 mr-2" />
                             Limpar Antigas

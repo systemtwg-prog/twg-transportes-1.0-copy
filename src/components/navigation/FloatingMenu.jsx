@@ -160,7 +160,7 @@ export default function FloatingMenu({ currentPage }) {
                                     className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-300 hover:bg-white/10 hover:text-white"
                                 >
                                     <ExternalLink className="w-5 h-5" />
-                                    <span className="font-medium text-sm">Gestor TWG</span>
+                                    <span className="font-medium text-sm">TX Separação</span>
                                 </a>
                             </div>
                         </div>

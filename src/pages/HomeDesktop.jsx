@@ -693,7 +693,7 @@ export default function HomeDesktop() {
                                         <div className="p-2 rounded-lg bg-indigo-500">
                                             <ExternalLink className="w-4 h-4 text-white" />
                                         </div>
-                                        <span className="font-medium text-sm text-indigo-800">Gestor TWG</span>
+                                        <span className="font-medium text-sm text-indigo-800">TX Separação</span>
                                     </div>
                                 </a>
                             </CardContent>

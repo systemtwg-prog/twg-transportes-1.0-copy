@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
     Menu, Home, Package, FileText, Users, User, Car, 
     Navigation, Award, Settings, LayoutGrid, UserCheck, LogOut, Bell, HomeIcon, Search, Database, Printer, Mail,
-    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2, DollarSign, ExternalLink
+    Camera, ClipboardList, AlertTriangle, Upload, Truck, Building2, DollarSign, ExternalLink, Info, Key
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -33,6 +33,8 @@ const menuItems = [
     { name: "Gerenciar Usuários", href: "AprovacaoUsuarios", icon: UserCheck, category: "admin" },
     { name: "Backup", href: "Backup", icon: Database, category: "admin" },
     { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
+    { name: "Config. Proprietário", href: "ConfiguracoesProprietario", icon: Key, category: "admin" },
+    { name: "Sobre", href: "Sobre", icon: Info, category: "admin" },
 
 ];
 
@@ -73,9 +75,12 @@ export default function FloatingMenu({ currentPage }) {
     });
 
     const isAdmin = currentUser?.role === "admin";
-    const menuFiltrado = menuItems.filter(item =>
-        (item.href !== "AprovacaoUsuarios" && item.href !== "ConfiguracaoModulos") || isAdmin
-    );
+    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario";
+    const isAdminOrProp = isAdmin || isProprietario;
+    const menuFiltrado = menuItems.filter(item => {
+        if (item.href === "ConfiguracoesProprietario" && !isProprietario) return false;
+        return (item.href !== "AprovacaoUsuarios" && item.href !== "ConfiguracaoModulos") || isAdminOrProp;
+    });
 
     const handleLogout = () => {
         sessionStorage.removeItem("appUnlocked");

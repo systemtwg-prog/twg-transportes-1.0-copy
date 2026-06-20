@@ -16,10 +16,21 @@
       "type": "string",
       "enum": [
         "admin",
-        "usuario"
+        "usuario",
+        "proprietario"
       ],
       "default": "usuario",
       "description": "Tipo de usu\u00e1rio"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user",
+        "proprietario"
+      ],
+      "default": "user",
+      "description": "Role do usu\u00e1rio (built-in + estendido)"
     },
     "paginas_permitidas": {
       "type": "array",

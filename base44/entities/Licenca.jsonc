@@ -1,0 +1,55 @@
+{
+  "name": "Licenca",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "ativa",
+        "suspensa",
+        "bloqueada",
+        "cancelada"
+      ],
+      "default": "trial",
+      "description": "Status atual da licen\u00e7a"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento da licen\u00e7a"
+    },
+    "modo_trial": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se est\u00e1 em modo trial"
+    },
+    "prazo_trial_dias": {
+      "type": "number",
+      "default": 15,
+      "description": "Prazo do trial em dias"
+    },
+    "data_inicio_trial": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio do trial"
+    },
+    "data_ultimo_pagamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do \u00faltimo pagamento"
+    },
+    "bloqueada_em": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que foi bloqueada"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre a licen\u00e7a"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

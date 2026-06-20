@@ -8,6 +8,8 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import Bono from './pages/Bono';
+import Sobre from './pages/Sobre';
+import ConfiguracoesProprietario from './pages/ConfiguracoesProprietario';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -62,6 +64,8 @@ const AuthenticatedApp = () => {
         />
       ))}
       <Route path="/Bono" element={<LayoutWrapper currentPageName="Bono"><Bono /></LayoutWrapper>} />
+      <Route path="/Sobre" element={<LayoutWrapper currentPageName="Sobre"><Sobre /></LayoutWrapper>} />
+      <Route path="/ConfiguracoesProprietario" element={<LayoutWrapper currentPageName="ConfiguracoesProprietario"><ConfiguracoesProprietario /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

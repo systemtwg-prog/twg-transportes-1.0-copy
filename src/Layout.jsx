@@ -71,6 +71,10 @@ export default function Layout({ children, currentPageName }) {
                     <main className="flex-1 overflow-auto bg-slate-100">
                         {children}
                     </main>
+                    {/* Rodapé Global */}
+                    <footer className="bg-slate-900 text-slate-400 text-center py-2 px-4 text-[10px] leading-relaxed border-t border-slate-700 flex-shrink-0">
+                        <p>© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados. | Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77. | Licenciado para uso, não vendido.</p>
+                    </footer>
                 </div>
             </div>
         );
@@ -78,15 +82,21 @@ export default function Layout({ children, currentPageName }) {
 
     // Layout Mobile com menu flutuante e abas inferiores
     return (
-        <div className="min-h-screen pb-20">
+        <div className="min-h-screen pb-20 flex flex-col">
             <FloatingMenu currentPage={currentPageName} />
-            <main className="p-4 pb-20">
+            <main className="p-4 pb-20 flex-1">
                 {children}
             </main>
             <BottomTabBar 
                 currentPage={currentPageName} 
                 onMenuClick={() => setMenuOpen(!menuOpen)}
             />
+            {/* Rodapé Global */}
+            <footer className="bg-slate-900 text-slate-400 text-center py-3 px-4 text-[10px] leading-relaxed border-t border-slate-700">
+                <p>© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados.</p>
+                <p>Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77.</p>
+                <p className="text-slate-500 mt-1">Licenciado para uso, não vendido.</p>
+            </footer>
         </div>
     );
 }

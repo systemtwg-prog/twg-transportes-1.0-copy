@@ -83,6 +83,7 @@ export default function AprovacaoUsuarios() {
     });
 
     const isAdmin = currentUser?.role === "admin";
+    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario";
 
     const { data: usuarios = [], isLoading } = useQuery({
         queryKey: ["usuarios"],
@@ -151,8 +152,8 @@ export default function AprovacaoUsuarios() {
         );
     }
 
-    // Verificar se é admin
-    if (!isAdmin) {
+    // Verificar se é admin ou proprietario
+    if (!isAdmin && !isProprietario) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 p-4 md:p-8 flex items-center justify-center">
                 <Card className="max-w-md bg-white/90 border-0 shadow-xl">
@@ -243,9 +244,11 @@ export default function AprovacaoUsuarios() {
         });
     };
 
-    const pendentes = usuarios.filter(u => u.status === "pendente" || !u.status);
-    const aprovados = usuarios.filter(u => u.status === "aprovado");
-    const rejeitados = usuarios.filter(u => u.status === "rejeitado");
+    // Filtrar proprietarios: só proprietario vê outros proprietarios
+    const usuariosVisiveis = isProprietario ? usuarios : usuarios.filter(u => u.tipo_usuario !== "proprietario" && u.role !== "proprietario");
+    const pendentes = usuariosVisiveis.filter(u => u.status === "pendente" || !u.status);
+    const aprovados = usuariosVisiveis.filter(u => u.status === "aprovado");
+    const rejeitados = usuariosVisiveis.filter(u => u.status === "rejeitado");
 
     const filteredUsers = (list) => list.filter(u =>
         u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -286,6 +289,12 @@ export default function AprovacaoUsuarios() {
                                         <Badge className="bg-purple-100 text-purple-800 border border-purple-200">
                                             <Shield className="w-3 h-3 mr-1" />
                                             Admin
+                                        </Badge>
+                                    )}
+                                    {(user.tipo_usuario === "proprietario" || user.role === "proprietario") && (
+                                        <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
+                                            <Shield className="w-3 h-3 mr-1" />
+                                            Proprietário
                                         </Badge>
                                     )}
                                 </div>

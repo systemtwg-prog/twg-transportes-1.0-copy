@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import ImportacaoCard from "@/components/nfe/ImportacaoCard";
 import PrintConfigNFE from "@/components/nfe/PrintConfigNFE";
+import PostImportWizard from "@/components/nfe/PostImportWizard";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -74,6 +75,7 @@ export default function NotasFiscais() {
   const [showPrintConfigNFE, setShowPrintConfigNFE] = useState(false);
   const [layoutExpanded, setLayoutExpanded] = useState(false);
   const [showImportador, setShowImportador] = useState(false);
+  const [showPostImportWizard, setShowPostImportWizard] = useState(false);
   const [modoAtualizar, setModoAtualizar] = useState(false);
 
   const queryClient = useQueryClient();
@@ -385,6 +387,48 @@ export default function NotasFiscais() {
     }
     queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
     toast.success(`${notasWashington.length} atualizada(s)!`);
+  };
+
+  // Wizard: Marcar todos Romaneios Gerados como "realizado"
+  const handleMarcarRomaneiosRealizados = async () => {
+    const romaneios = await base44.entities.RomaneioGerado.list("-created_date", 500);
+    const pendentes = romaneios.filter(r => r.status !== "realizado");
+    if (pendentes.length === 0) { toast.info("Todos os romaneios já estão como realizado."); return; }
+    for (const r of pendentes) {
+      await base44.entities.RomaneioGerado.update(r.id, { status: "realizado" });
+    }
+    queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+    toast.success(`${pendentes.length} romaneio(s) marcado(s) como realizado!`);
+  };
+
+  // Wizard: Scroll para importações
+  const scrollToImportacoes = () => {
+    document.getElementById("importacoes-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Wizard: Atribuir filial automaticamente (NF começando com 0 → SC, 1 → SP)
+  const handleAtribuirFilialAuto = async () => {
+    const todasNotas = await base44.entities.NotaFiscal.list("-created_date", 5000);
+    let atualizadas = 0;
+    for (const nota of todasNotas) {
+      const primeiroDigito = nota.numero_nf?.trim()?.charAt(0);
+      let novaFilial = null;
+      if (primeiroDigito === "0") novaFilial = "SC";
+      else if (primeiroDigito === "1") novaFilial = "SP";
+      if (novaFilial && nota.filial !== novaFilial) {
+        await base44.entities.NotaFiscal.update(nota.id, { filial: novaFilial });
+        atualizadas++;
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+    toast.success(`${atualizadas} nota(s) atualizada(s) com filial!`);
+  };
+
+  // Wizard: Imprimir importação do dia
+  const handleImprimirImportacao = (importacao) => {
+    if (!importacao) { toast.error("Nenhuma importação encontrada."); return; }
+    const notasIds = importacao.notas_ids?.join(",") || "";
+    window.location.href = createPageUrl("MascaraRomaneio") + `?notas=${notasIds}`;
   };
 
   // Normaliza número removendo zeros à esquerda e caracteres não numéricos
@@ -913,7 +957,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
   };
 
   // Dashboard resumo das notas SELECIONADAS
-  const dashboardImportacao = React.useMemo(() => {
+  const dashboardImportacao = useMemo(() => {
     if (selecionados.length === 0) return null;
 
     // Filtrar apenas as notas selecionadas que têm placa
@@ -1298,7 +1342,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
 
                 {/* Registros de Importação */}
                 {importacoes.length > 0 &&
-        <div className="space-y-3">
+        <div id="importacoes-section" className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-700">
                                 <History className="w-5 h-5 text-indigo-600" />
@@ -1876,6 +1920,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         onImportSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
           queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+          setShowPostImportWizard(true);
         }} />
 
             {/* Dialog de Configuração de Impressão */}
@@ -1994,6 +2039,18 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
               transportadoras={transportadoras}
               destinatarios={destinatarios}
               onCadastrarDestinatario={() => setShowCadastroDestinatario(true)}
+            />
+
+            {/* Wizard Pós-Importação */}
+            <PostImportWizard
+              open={showPostImportWizard}
+              onOpenChange={setShowPostImportWizard}
+              onSubstituirWashington={handleSubstituirWashington}
+              onMarcarRomaneiosRealizados={handleMarcarRomaneiosRealizados}
+              importacaoHoje={importacoes[0]}
+              onScrollToImportacoes={scrollToImportacoes}
+              onAtribuirFilialAuto={handleAtribuirFilialAuto}
+              onImprimirImportacao={handleImprimirImportacao}
             />
         </div>);
 

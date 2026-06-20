@@ -3,6 +3,7 @@ import FloatingMenu from "@/components/navigation/FloatingMenu";
 import BottomTabBar from "@/components/navigation/BottomTabBar";
 import DesktopSidebar from "@/components/navigation/DesktopSidebar";
 import DesktopTabs from "@/components/navigation/DesktopTabs";
+import LicenseStatusBadge from "@/components/shared/LicenseStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -72,8 +73,11 @@ export default function Layout({ children, currentPageName }) {
                         {children}
                     </main>
                     {/* Rodapé Global */}
-                    <footer className="bg-slate-900 text-slate-400 text-center py-2 px-4 text-[10px] leading-relaxed border-t border-slate-700 flex-shrink-0">
-                        <p>© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados. | Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77. | Licenciado para uso, não vendido.</p>
+                    <footer className="bg-slate-900 text-slate-400 py-2 px-4 border-t border-slate-700 flex-shrink-0">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <p className="text-[10px] leading-relaxed">© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados. | Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77.</p>
+                            <LicenseStatusBadge />
+                        </div>
                     </footer>
                 </div>
             </div>
@@ -92,10 +96,11 @@ export default function Layout({ children, currentPageName }) {
                 onMenuClick={() => setMenuOpen(!menuOpen)}
             />
             {/* Rodapé Global */}
-            <footer className="bg-slate-900 text-slate-400 text-center py-3 px-4 text-[10px] leading-relaxed border-t border-slate-700">
-                <p>© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados.</p>
-                <p>Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77.</p>
-                <p className="text-slate-500 mt-1">Licenciado para uso, não vendido.</p>
+            <footer className="bg-slate-900 text-slate-400 py-3 px-4 border-t border-slate-700">
+                <div className="flex flex-col items-center gap-2">
+                    <p className="text-[10px] leading-relaxed text-center">© 2026 Loggxy Sistema de Gestão – Todos os direitos reservados. | Este software é de propriedade exclusiva da LOGGXY SISTEMA DE GESTÃO, CNPJ 63.700.987/0001-77.</p>
+                    <LicenseStatusBadge />
+                </div>
             </footer>
         </div>
     );

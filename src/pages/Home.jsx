@@ -80,6 +80,7 @@ export default function Home() {
     });
 
     const isAdmin = currentUser?.role === "admin";
+    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario";
 
     // Módulos permitidos pela ConfiguracaoModulos (usa href como chave de página)
     const modulosPermitidos = isAdmin
@@ -595,6 +596,18 @@ export default function Home() {
                                 </Link>
                             )
                         ))}
+                    </div>
+                )}
+
+                {/* Menu Proprietário */}
+                {isProprietario && (
+                    <div className="flex gap-2 flex-wrap">
+                        <Link to={createPageUrl("ConfiguracoesProprietario")}>
+                            <Button variant="ghost" size="sm" className={`${temaEscuro ? 'text-amber-200 hover:text-white hover:bg-white/10' : 'text-amber-600 hover:text-amber-800 hover:bg-amber-100'} rounded-lg`}>
+                                <Settings className="w-4 h-4 mr-1" />
+                                Gerenciar Proprietário
+                            </Button>
+                        </Link>
                     </div>
                 )}
             </div>

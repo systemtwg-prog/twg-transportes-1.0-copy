@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Key, Lock, Unlock, Calendar, Clock, AlertTriangle, CheckCircle, XCircle, Ban, Save, RefreshCw } from "lucide-react";
+import { Shield, Key, Lock, Unlock, Calendar, Clock, AlertTriangle, CheckCircle, XCircle, Ban, Save, RefreshCw, UserCheck, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -42,6 +43,12 @@ export default function ConfiguracoesProprietario() {
   const { data: licencas = [], isLoading } = useQuery({
     queryKey: ["licencas"],
     queryFn: () => base44.entities.Licenca.list("-created_date", 1),
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ["usuarios-proprietario"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !loadingUser,
   });
 
   const licenca = licencas[0] || {};
@@ -79,6 +86,23 @@ export default function ConfiguracoesProprietario() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["licencas"] });
       toast.success("Licença atualizada com sucesso!");
+    }
+  });
+
+  const transferirProprietarioMutation = useMutation({
+    mutationFn: async (novoUsuarioId) => {
+      // Remove proprietário do atual
+      if (currentUser?.id) {
+        await base44.entities.User.update(currentUser.id, { role: "user" });
+      }
+      // Define novo proprietário
+      return base44.entities.User.update(novoUsuarioId, { role: "proprietario" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user-proprietario"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios-proprietario"] });
+      toast.success("Proprietário transferido com sucesso! Você será redirecionado...");
+      setTimeout(() => window.location.reload(), 2000);
     }
   });
 
@@ -263,6 +287,60 @@ export default function ConfiguracoesProprietario() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Gerenciar Proprietário */}
+        {isProprietario && (
+        <Card className="bg-white/90 backdrop-blur border-0 shadow-lg">
+          <CardHeader className="border-b bg-gradient-to-r from-amber-50 to-orange-50">
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-amber-600" />
+              Gerenciar Proprietário
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <p className="text-sm text-slate-500">
+              Transfira a titularidade do sistema para outro usuário. Após a transferência, você perderá o acesso a estas configurações.
+            </p>
+
+            <div className="space-y-2">
+              <Label>Selecionar novo Proprietário</Label>
+              <Select
+                disabled={transferirProprietarioMutation.isPending}
+                onValueChange={(userId) => {
+                  if (userId === currentUser?.id) return;
+                  if (confirm(`Tem certeza que deseja transferir a titularidade para este usuário? Você perderá o acesso de proprietário.`)) {
+                    transferirProprietarioMutation.mutate(userId);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Escolha um usuário..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios
+                    .filter(u => u.id !== currentUser?.id)
+                    .map(u => (
+                      <SelectItem key={u.id} value={u.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-slate-400" />
+                          <span>{u.full_name || u.email}</span>
+                          <span className="text-xs text-slate-400">({u.role})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {transferirProprietarioMutation.isPending && (
+              <div className="flex items-center gap-2 text-amber-600">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Transferindo titularidade...</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        )}
       </div>
     </div>
   );

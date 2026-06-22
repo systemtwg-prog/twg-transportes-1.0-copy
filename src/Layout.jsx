@@ -7,7 +7,7 @@ import BlingTopBar from "@/components/navigation/BlingTopBar";
 import LicenseStatusBadge from "@/components/shared/LicenseStatusBadge";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import ThemeToggle from "@/components/shared/ThemeToggle";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 export default function Layout({ children, currentPageName }) {
@@ -22,6 +22,7 @@ export default function Layout({ children, currentPageName }) {
         return window.matchMedia("(prefers-color-scheme: dark)").matches;
     });
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Aplicar tema ao elemento html
     useEffect(() => {
@@ -30,6 +31,10 @@ export default function Layout({ children, currentPageName }) {
     }, [isDark]);
 
     const toggleTheme = () => setIsDark(prev => !prev);
+
+    // Rodapé apenas na Home: usa a URL real para máxima confiabilidade
+    const isHomePage = location.pathname === "/" || location.pathname === "/Home";
+    const showFooter = isHomePage;
 
     // Redirecionar para HomeDesktop no desktop se necessário
     useEffect(() => {
@@ -98,8 +103,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
         </footer>
     );
-
-    const showFooter = currentPageName === "Home";
 
     // Layout Desktop
     if (isDesktop) {

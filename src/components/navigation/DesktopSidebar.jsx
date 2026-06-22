@@ -51,7 +51,7 @@ const categories = [
     { id: "admin", name: "Administração" },
 ];
 
-export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
+export default function DesktopSidebar({ currentPage, collapsed, onToggle, onSwitchToBling }) {
     const navigate = useNavigate();
 
     const { data: currentUser } = useQuery({
@@ -126,7 +126,16 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                         </button>
                     ))}
                 </ScrollArea>
-                <div className="p-2 border-t border-slate-700">
+                <div className="p-2 border-t border-slate-700 space-y-1">
+                    {onSwitchToBling && (
+                        <button
+                            onClick={onSwitchToBling}
+                            className="w-full p-2 flex justify-center text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg"
+                            title="Menu Superior (Bling)"
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
+                    )}
                     <button
                         onClick={handleLogout}
                         className="w-full p-2 flex justify-center text-red-400 hover:bg-red-500/20 rounded-lg"
@@ -215,7 +224,17 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
                     <span className="truncate">TX Separação</span>
                 </a>
             </div>
-            <div className="p-2 border-t border-slate-700">
+            <div className="p-2 border-t border-slate-700 space-y-1">
+                {onSwitchToBling && (
+                    <button
+                        onClick={onSwitchToBling}
+                        className="w-full px-3 py-1.5 flex items-center gap-2 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-all"
+                        title="Alternar para menu superior (estilo Bling)"
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                        <span className="text-xs">Menu Superior</span>
+                    </button>
+                )}
                 <button
                     onClick={handleLogout}
                     className="w-full px-3 py-1.5 flex items-center gap-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"

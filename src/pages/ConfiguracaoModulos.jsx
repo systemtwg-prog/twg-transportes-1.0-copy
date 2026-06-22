@@ -83,7 +83,7 @@ export default function ConfiguracaoModulos() {
         }
     });
 
-    const isAdmin = currentUser?.role === "admin";
+    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario";
 
     const { data: config } = useQuery({
         queryKey: ["configuracoes"],
@@ -114,9 +114,9 @@ export default function ConfiguracaoModulos() {
                 setModulosAdmin(TODOS_MODULOS.map(m => m.id));
             }
         } else {
-            setModulosAtivos(TODOS_MODULOS.map(m => m.id));
+            setModulosAtivos(TODOS_MODULOS.map(m => m.id).filter(id => id !== "HomeDesktop"));
             setModulosUsuarioComum(["Home", "ComprovantesInternos", "NotaDeposito"]);
-            setModulosAdmin(TODOS_MODULOS.map(m => m.id));
+            setModulosAdmin(TODOS_MODULOS.map(m => m.id).filter(id => id !== "HomeDesktop"));
         }
     }, [config]);
 
@@ -184,14 +184,14 @@ export default function ConfiguracaoModulos() {
         );
     }
 
-    if (!isAdmin) {
+    if (!isProprietario) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 md:p-8 flex items-center justify-center">
                 <Card className="max-w-md bg-white/90 border-0 shadow-xl">
                     <CardContent className="p-8 text-center">
                         <Shield className="w-16 h-16 text-amber-500 mx-auto mb-4" />
                         <h2 className="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
-                        <p className="text-slate-500">Apenas administradores podem acessar a configuração de módulos.</p>
+                        <p className="text-slate-500">Apenas o proprietário pode acessar a configuração de módulos.</p>
                     </CardContent>
                 </Card>
             </div>

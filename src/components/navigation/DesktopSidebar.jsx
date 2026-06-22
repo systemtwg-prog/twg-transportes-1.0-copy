@@ -81,7 +81,8 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle }) {
     const isAdminOrProp = isAdmin || isProprietario;
     const menuFiltrado = menuItems.filter(item => {
         if (item.href === "ConfiguracoesProprietario" && !isProprietario) return false;
-        return (item.href !== "AprovacaoUsuarios" && item.href !== "ConfiguracaoModulos") || isAdminOrProp;
+        if (item.href === "ConfiguracaoModulos" && !isProprietario) return false;
+        return (item.href !== "AprovacaoUsuarios") || isAdminOrProp;
     });
 
     const handleLogout = () => {

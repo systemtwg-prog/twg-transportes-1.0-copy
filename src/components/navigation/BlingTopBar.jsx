@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { 
     Home, FileText, Users, Package, Car, ClipboardList, 
     Settings, LayoutGrid, UserCheck, Bell, LogOut, 
-    Search, ChevronDown, Menu, PanelLeft, ExternalLink, Info, Key
+    Search, ChevronDown, Menu, PanelLeft, ExternalLink, Info, Key,
+    Sun, Moon
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import {
@@ -38,7 +39,7 @@ const adminItems = [
     { name: "Sobre", href: "Sobre", icon: Info },
 ];
 
-export default function BlingTopBar({ currentPage, onSwitchToSidebar }) {
+export default function BlingTopBar({ currentPage, onSwitchToSidebar, isDark, onToggleTheme }) {
     const navigate = useNavigate();
     const [searchOpen, setSearchOpen] = useState(false);
 
@@ -145,6 +146,19 @@ export default function BlingTopBar({ currentPage, onSwitchToSidebar }) {
 
                 {/* Área Direita: Busca, Notificações, Admin, Usuário */}
                 <div className="flex items-center gap-1">
+                    {/* Tema Claro/Escuro */}
+                    {onToggleTheme && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onToggleTheme}
+                            className="text-slate-400 hover:text-white hover:bg-slate-700 h-8 w-8"
+                            title={isDark ? "Modo claro" : "Modo escuro"}
+                        >
+                            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </Button>
+                    )}
+
                     {/* Busca */}
                     {searchOpen ? (
                         <div className="flex items-center">

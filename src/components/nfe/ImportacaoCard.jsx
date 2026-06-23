@@ -776,7 +776,7 @@ export default function ImportacaoCard({
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-semibold text-slate-800">
-                                        Importação #{importacao.id?.slice(-6).toUpperCase()}
+                                        RELATORIO STAHL
                                     </h3>
                                     <Badge className={getOrigemColor(importacao.origem)}>
                                         {getOrigemLabel(importacao.origem)}
@@ -817,11 +817,13 @@ export default function ImportacaoCard({
                                 )}
                             </Button>
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => setExpanded(!expanded)}
+                                className="border-purple-500 text-purple-600 hover:bg-purple-50 font-semibold"
                             >
-                                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                <MapPin className="w-4 h-4 mr-1" />
+                                ATRIBUIR FILIAL
                             </Button>
                             <Button
                                 variant="ghost"
@@ -834,78 +836,28 @@ export default function ImportacaoCard({
                         </div>
                     </div>
 
-                    {/* Lista de notas expandida */}
+                    {/* Painel ATRIBUIR FILIAL expandido */}
                     {expanded && (
                         <div className="mt-4 pt-4 border-t">
-                            <div className="flex flex-col gap-3 mb-3">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium text-slate-600">Notas com placa desta importação:</h4>
-                                    <div className="flex gap-2">
+                            <div className="flex flex-col gap-3">
+                                <p className="text-base font-bold text-slate-800 text-center px-2">
+                                    DIGITE ABAIXO 0 OU 1 PARA SEPERAR AS NOTAS DAS FILIAIS
+                                </p>
+                                <div className="flex justify-center">
                                     <Button 
                                         variant="outline" 
-                                        size="sm"
-                                        onClick={selecionarTodasExpanded}
+                                        size="lg"
+                                        onClick={() => {
+                                            const notasComPlaca = notasDaImportacao.filter(n => n.placa);
+                                            setNotasSelecionadasExpanded(notasComPlaca.map(n => n.id));
+                                            setShowEditFilialDialog(true);
+                                        }}
+                                        className="border-purple-500 text-purple-600 hover:bg-purple-50 font-bold text-lg px-8 py-6"
                                     >
-                                        {notasSelecionadasExpanded.length === notasDaImportacao.filter(n => n.placa).length ? "Desmarcar" : "Selecionar"} Todas com Placa
+                                        <MapPin className="w-5 h-5 mr-2" />
+                                        ATRIBUIR FILIAL
                                     </Button>
-                                    {notasSelecionadasExpanded.length > 0 && (
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => setShowEditFilialDialog(true)}
-                                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
-                                        >
-                                            <Pencil className="w-4 h-4 mr-1" />
-                                            Atribuir Filial ({notasSelecionadasExpanded.length})
-                                        </Button>
-                                    )}
                                 </div>
-                                </div>
-                                <Input
-                                    placeholder="Filtrar por NF ou Destinatário (começa com)..."
-                                    value={filtroNotas}
-                                    onChange={(e) => setFiltroNotas(e.target.value)}
-                                    className="bg-white"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-48 overflow-y-auto">
-                                {notasDaImportacao
-                                    .filter(nota => {
-                                        // Filtrar apenas notas com placa
-                                        if (!nota.placa) return false;
-                                        // Aplicar filtro de busca
-                                        if (!filtroNotas) return true;
-                                        const termo = filtroNotas.toLowerCase();
-                                        return nota.numero_nf?.toLowerCase().startsWith(termo) || 
-                                               nota.destinatario?.toLowerCase().startsWith(termo);
-                                    })
-                                    .map(nota => {
-                                    const selecionada = notasSelecionadasExpanded.includes(nota.id);
-                                    return (
-                                        <div 
-                                            key={nota.id} 
-                                            onClick={() => toggleNotaExpanded(nota.id)}
-                                            className={`p-2 rounded-lg border text-xs cursor-pointer transition-all ${
-                                                selecionada ? "bg-purple-50 border-purple-500" : "bg-white border-slate-200 hover:border-purple-300"
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-2">
-                                                <Checkbox checked={selecionada} className="pointer-events-none" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-blue-600">{nota.numero_nf}</p>
-                                                    <p className="text-slate-600 truncate" title={nota.destinatario}>
-                                                        {nota.destinatario}
-                                                    </p>
-                                                    {nota.filial && (
-                                                        <p className="text-purple-600 font-medium mt-1">
-                                                            {nota.filial}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
                             </div>
                         </div>
                     )}

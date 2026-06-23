@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink, Copy } from "lucide-react";
+import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink, Copy, MoreHorizontal } from "lucide-react";
 import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
 import NotaFiscalForm from "@/components/nfe/NotaFiscalForm";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1064,48 +1064,64 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         </div>
                     </div>
 
-                    {/* Botões de ação organizados */}
-                    <div className="flex gap-2 flex-wrap">
-                        <Button
-              onClick={() => {resetForm();setShowForm(true);}}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600">
+                    {/* Botões de ação organizados — principais em tamanho grande */}
+                    <div className="flex gap-2 flex-wrap items-center">
+                        <Button onClick={() => setShowImportador(true)} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 h-12 px-5 text-base font-semibold shadow-lg">
+                            <Upload className="w-5 h-5 mr-2" />
+                            IMPORTAR
+                        </Button>
+                        <Button onClick={() => {resetForm();setShowForm(true);}} className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 h-12 px-5 text-base font-semibold shadow-lg">
+                            <Plus className="w-5 h-5 mr-2" />
+                            NOVA NOTA
+                        </Button>
+                        <Button onClick={handleSubstituirWashington} variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50 h-12 px-5 text-base font-semibold">
+                            <Replace className="w-5 h-5 mr-2" />
+                            SUBST. WASHINGTON
+                        </Button>
+                        <Button onClick={handleLimparAntigas} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50 h-12 px-5 text-base font-semibold">
+                            <Trash2 className="w-5 h-5 mr-2" />
+                            LIMPAR ANTIGAS
+                        </Button>
+                        <Button onClick={() => setShowPostImportWizard(true)} className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 h-12 px-5 text-base font-semibold shadow-lg">
+                            <Sparkles className="w-5 h-5 mr-2" />
+                            INICIAR FLUXO
+                        </Button>
 
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nova Nota
-                        </Button>
-                        <Button onClick={() => {setShowPasteForm(true);setModoAtualizar(false);}} variant="outline" className="border-purple-500 text-purple-700 hover:bg-purple-50">
-                            <ClipboardPaste className="w-4 h-4 mr-2" />
-                            Colar
-                        </Button>
-                        <Button onClick={() => {setShowPasteForm(true);setModoAtualizar(true);}} variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Atualizar
-                        </Button>
-                        <Button onClick={handleSubstituirWashington} variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
-                            <Replace className="w-4 h-4 mr-2" />
-                            Subst. Washington
-                        </Button>
-                        <Link to={createPageUrl("RomaneiosGerados")}>
-                            <Button variant="outline" className="border-purple-500 text-purple-600 hover:bg-purple-50">
-                                <Package className="w-4 h-4 mr-2" />
-                                Romaneios Gerados
-                            </Button>
-                        </Link>
-                        
-                        <Button onClick={() => setShowImportador(true)} variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Importar
-                        </Button>
-                        <Button onClick={() => setShowPostImportWizard(true)} className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700">
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Iniciar Fluxo
-                        </Button>
-                        <a href="https://gestor-cte-copy-29b2bb80.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-teal-500 text-teal-700 hover:bg-teal-50"><ExternalLink className="w-4 h-4 mr-2" />Gestor CTE</Button></a>
-                        <a href="https://gestortwg.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-indigo-500 text-indigo-700 hover:bg-indigo-50"><ExternalLink className="w-4 h-4 mr-2" />TX Separação</Button></a>
-                        <Button onClick={handleLimparAntigas} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Limpar Antigas
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-12 w-12 border-slate-300">
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => {setShowPasteForm(true);setModoAtualizar(false);}}>
+                                    <ClipboardPaste className="w-4 h-4 mr-2 text-purple-500" />
+                                    Colar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {setShowPasteForm(true);setModoAtualizar(true);}}>
+                                    <RefreshCw className="w-4 h-4 mr-2 text-green-500" />
+                                    Atualizar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to={createPageUrl("RomaneiosGerados")} className="flex items-center">
+                                        <Package className="w-4 h-4 mr-2 text-purple-500" />
+                                        Romaneios Gerados
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href="https://gestor-cte-copy-29b2bb80.base44.app/" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                                        <ExternalLink className="w-4 h-4 mr-2 text-teal-500" />
+                                        Gestor CTE
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href="https://gestortwg.base44.app/" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                                        <ExternalLink className="w-4 h-4 mr-2 text-indigo-500" />
+                                        TX Separação
+                                    </a>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

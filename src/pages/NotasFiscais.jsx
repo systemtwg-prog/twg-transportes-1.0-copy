@@ -391,14 +391,19 @@ export default function NotasFiscais() {
 
   // Wizard: Marcar todos Romaneios Gerados como "realizado"
   const handleMarcarRomaneiosRealizados = async () => {
-    const romaneios = await base44.entities.RomaneioGerado.list("-created_date", 500);
-    const pendentes = romaneios.filter(r => r.status !== "realizado");
-    if (pendentes.length === 0) { toast.info("Todos os romaneios já estão como realizado."); return; }
-    for (const r of pendentes) {
-      await base44.entities.RomaneioGerado.update(r.id, { status: "realizado" });
+    let total = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const result = await base44.entities.RomaneioGerado.updateMany(
+        { status: { $ne: "realizado" } },
+        { $set: { status: "realizado" } }
+      );
+      total += result.modified_count || 0;
+      hasMore = result.has_more || false;
     }
+    if (total === 0) { toast.info("Todos os romaneios já estão como realizado."); return; }
     queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
-    toast.success(`${pendentes.length} romaneio(s) marcado(s) como realizado!`);
+    toast.success(`${total} romaneio(s) marcado(s) como realizado!`);
   };
 
   // Wizard: Scroll para importações

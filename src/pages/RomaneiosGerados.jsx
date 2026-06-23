@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
     Truck, Calendar, Search, Car, Package, Scale, FileText, 
-    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter, Settings, Mic, MicOff, Navigation, MapPin, Loader2, MoreVertical, ChevronRight
+    BarChart3, Pencil, Trash2, Eye, X, Save, Building2, ChevronDown, ChevronUp, AlertTriangle, Printer, Filter, Settings, Mic, MicOff, Navigation, MapPin, Loader2, MoreVertical, ChevronRight, CheckCircle2
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import TableColumnFilter from "@/components/shared/TableColumnFilter";
 import PrintConfigDialog from "@/components/shared/PrintConfigDialog";
 import { format } from "date-fns";
@@ -48,6 +49,48 @@ export default function RomaneiosGerados() {
     const [resultadoBuscaNota, setResultadoBuscaNota] = useState(null);
     const [showDetalhes, setShowDetalhes] = useState(false);
     const queryClient = useQueryClient();
+
+    // Seleção em massa
+    const [selecionados, setSelecionados] = useState([]);
+
+    const toggleSelecionado = (id) => {
+        setSelecionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const selecionarTodos = () => {
+        if (selecionados.length === filtered.length && filtered.length > 0) {
+            setSelecionados([]);
+        } else {
+            setSelecionados(filtered.map(r => r.id));
+        }
+    };
+
+    // Mutation para alterar status em massa
+    const bulkStatusMutation = useMutation({
+        mutationFn: async ({ ids, novoStatus }) => {
+            let total = 0;
+            let hasMore = true;
+            while (hasMore) {
+                const result = await base44.entities.RomaneioGerado.updateMany(
+                    { id: { $in: ids }, status: { $ne: novoStatus } },
+                    { $set: { status: novoStatus } }
+                );
+                total += result.modified_count || 0;
+                hasMore = result.has_more || false;
+            }
+            return total;
+        },
+        onSuccess: (total) => {
+            queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
+            setSelecionados([]);
+            toast.success(`${total} romaneio(s) atualizado(s)!`);
+        }
+    });
+
+    const handleBulkStatusChange = (novoStatus) => {
+        if (selecionados.length === 0) return;
+        bulkStatusMutation.mutate({ ids: selecionados, novoStatus });
+    };
 
     const { data: romaneios = [], isLoading } = useQuery({
         queryKey: ["romaneios-gerados"],
@@ -853,6 +896,70 @@ export default function RomaneiosGerados() {
                     </CardContent>
                 </Card>
 
+                {/* Ações em Massa */}
+                {selecionados.length > 0 && (
+                    <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300 shadow-lg">
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between flex-wrap gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Badge className="bg-indigo-100 text-indigo-700 text-sm px-3 py-1">
+                                        {selecionados.length} selecionado{selecionados.length > 1 ? "s" : ""}
+                                    </Badge>
+                                </div>
+                                <div className="flex gap-2 flex-wrap">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleBulkStatusChange("gerado")}
+                                        disabled={bulkStatusMutation.isPending}
+                                        variant="outline"
+                                        className="border-blue-500 text-blue-700 hover:bg-blue-50"
+                                    >
+                                        Marcar Gerado
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleBulkStatusChange("em_transito")}
+                                        disabled={bulkStatusMutation.isPending}
+                                        variant="outline"
+                                        className="border-amber-500 text-amber-700 hover:bg-amber-50"
+                                    >
+                                        Em Trânsito
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleBulkStatusChange("entregue")}
+                                        disabled={bulkStatusMutation.isPending}
+                                        className="bg-emerald-600 hover:bg-emerald-700"
+                                    >
+                                        {bulkStatusMutation.isPending ? (
+                                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                        ) : (
+                                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                                        )}
+                                        Marcar Entregue
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleBulkStatusChange("cancelado")}
+                                        disabled={bulkStatusMutation.isPending}
+                                        variant="outline"
+                                        className="border-red-500 text-red-700 hover:bg-red-50"
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setSelecionados([])}
+                                    >
+                                        <X className="w-4 h-4 mr-1" /> Limpar
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Tabela de Romaneios */}
                 <Card className="bg-white/90 border-0 shadow-lg">
                     <CardContent className="p-0">
@@ -860,6 +967,12 @@ export default function RomaneiosGerados() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50">
+                                        <TableHead className="w-10">
+                                            <Checkbox
+                                                checked={selecionados.length === filtered.length && filtered.length > 0}
+                                                onCheckedChange={selecionarTodos}
+                                            />
+                                        </TableHead>
                                         <TableHead>Data</TableHead>
                                         <TableHead>Nome</TableHead>
                                         <TableHead>
@@ -907,13 +1020,13 @@ export default function RomaneiosGerados() {
                                 <TableBody>
                                     {isLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={9} className="text-center py-12">
+                                            <TableCell colSpan={10} className="text-center py-12">
                                                 <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
                                             </TableCell>
                                         </TableRow>
                                     ) : filtered.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={9} className="text-center py-12 text-slate-500">
+                                            <TableCell colSpan={10} className="text-center py-12 text-slate-500">
                                                 <Truck className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                                                 Nenhum romaneio encontrado
                                             </TableCell>
@@ -921,7 +1034,13 @@ export default function RomaneiosGerados() {
                                     ) : (
                                         filtered.map((romaneio) => (
                                             <React.Fragment key={romaneio.id}>
-                                                <TableRow className="hover:bg-slate-50">
+                                                <TableRow className={`hover:bg-slate-50 ${selecionados.includes(romaneio.id) ? "bg-blue-50" : ""}`}>
+                                                    <TableCell>
+                                                        <Checkbox
+                                                            checked={selecionados.includes(romaneio.id)}
+                                                            onCheckedChange={() => toggleSelecionado(romaneio.id)}
+                                                        />
+                                                    </TableCell>
                                                    <TableCell className="font-medium">{formatDate(romaneio.data)}</TableCell>
                                                    <TableCell>
                                                        {romaneio.numero && (
@@ -983,7 +1102,7 @@ export default function RomaneiosGerados() {
                                                 </TableRow>
                                                 {expandedRomaneio === romaneio.id && (
                                                     <TableRow>
-                                                        <TableCell colSpan={9} className="bg-slate-50 p-4">
+                                                        <TableCell colSpan={10} className="bg-slate-50 p-4">
                                                             <div className="space-y-2">
                                                                 <p className="text-sm font-medium text-slate-600">Notas Fiscais:</p>
                                                                 <div className="flex flex-wrap gap-2">

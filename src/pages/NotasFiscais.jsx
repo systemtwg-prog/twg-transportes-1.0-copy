@@ -389,21 +389,21 @@ export default function NotasFiscais() {
     toast.success(`${notasWashington.length} atualizada(s)!`);
   };
 
-  // Wizard: Marcar todos Romaneios Gerados como "realizado"
+  // Wizard: Marcar romaneios "gerado" como "entregue"
   const handleMarcarRomaneiosRealizados = async () => {
     let total = 0;
     let hasMore = true;
     while (hasMore) {
       const result = await base44.entities.RomaneioGerado.updateMany(
-        { status: { $ne: "realizado" } },
-        { $set: { status: "realizado" } }
+        { status: "gerado" },
+        { $set: { status: "entregue" } }
       );
       total += result.modified_count || 0;
       hasMore = result.has_more || false;
     }
-    if (total === 0) { toast.info("Todos os romaneios já estão como realizado."); return; }
+    if (total === 0) { toast.info("Nenhum romaneio com status 'gerado' encontrado."); return; }
     queryClient.invalidateQueries({ queryKey: ["romaneios-gerados"] });
-    toast.success(`${total} romaneio(s) marcado(s) como realizado!`);
+    toast.success(`${total} romaneio(s) marcado(s) como entregue!`);
   };
 
   // Wizard: Scroll para importações

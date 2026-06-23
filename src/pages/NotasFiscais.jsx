@@ -1091,6 +1091,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             <Upload className="w-4 h-4 mr-2" />
                             Importar
                         </Button>
+                        <Button onClick={() => setShowPostImportWizard(true)} className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700">
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Iniciar Fluxo
+                        </Button>
                         <a href="https://gestor-cte-copy-29b2bb80.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-teal-500 text-teal-700 hover:bg-teal-50"><ExternalLink className="w-4 h-4 mr-2" />Gestor CTE</Button></a>
                         <a href="https://gestortwg.base44.app/" target="_blank" rel="noopener noreferrer"><Button variant="outline" className="border-indigo-500 text-indigo-700 hover:bg-indigo-50"><ExternalLink className="w-4 h-4 mr-2" />TX Separação</Button></a>
                         <Button onClick={handleLimparAntigas} variant="outline" className="border-red-400 text-red-600 hover:bg-red-50">
@@ -1920,7 +1924,6 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         onImportSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
           queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
-          setShowPostImportWizard(true);
         }} />
 
             {/* Dialog de Configuração de Impressão */}

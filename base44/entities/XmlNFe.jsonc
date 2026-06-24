@@ -1,0 +1,70 @@
+{
+  "name": "XmlNFe",
+  "type": "object",
+  "properties": {
+    "numero_nf": {
+      "type": "string",
+      "description": "N\u00famero da nota fiscal extra\u00eddo do XML"
+    },
+    "uf_origem": {
+      "type": "string",
+      "description": "UF do emitente/remetente"
+    },
+    "uf_destino": {
+      "type": "string",
+      "description": "UF do destinat\u00e1rio"
+    },
+    "cfop": {
+      "type": "string",
+      "description": "CFOP da opera\u00e7\u00e3o"
+    },
+    "transportadora_nome": {
+      "type": "string",
+      "description": "Nome da transportadora extra\u00eddo do XML"
+    },
+    "transportadora_cnpj": {
+      "type": "string",
+      "description": "CNPJ da transportadora extra\u00eddo do XML"
+    },
+    "remetente_nome": {
+      "type": "string",
+      "description": "Nome do remetente/emitente"
+    },
+    "remetente_cnpj": {
+      "type": "string",
+      "description": "CNPJ do remetente/emitente"
+    },
+    "destinatario_nome": {
+      "type": "string",
+      "description": "Nome do destinat\u00e1rio"
+    },
+    "destinatario_cnpj": {
+      "type": "string",
+      "description": "CNPJ do destinat\u00e1rio"
+    },
+    "valor_nfe": {
+      "type": "number",
+      "description": "Valor total da NFe"
+    },
+    "peso": {
+      "type": "string",
+      "description": "Peso bruto/l\u00edquido"
+    },
+    "volume": {
+      "type": "string",
+      "description": "Quantidade de volumes"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL do arquivo XML salvo no storage"
+    },
+    "data_importacao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de importa\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "numero_nf"
+  ]
+}

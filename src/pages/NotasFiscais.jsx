@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink, Copy, MoreHorizontal } from "lucide-react";
+import { Plus, FileText, Upload, Trash2, Pencil, Search, Save, X, ClipboardPaste, Sparkles, Car, Truck, Package, Building2, RefreshCw, Globe, Loader2, MapPin, History, Calendar, Printer, BarChart3, Settings, Replace, ExternalLink, Copy, MoreHorizontal, FileCode, Layers } from "lucide-react";
 import PasteNotasDialog from "@/components/nfe/PasteNotasDialog";
 import NotaFiscalForm from "@/components/nfe/NotaFiscalForm";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -18,6 +18,8 @@ import ImportadorNFE from "@/components/nfe/ImportadorNFE";
 import ImportacaoCard from "@/components/nfe/ImportacaoCard";
 import PrintConfigNFE from "@/components/nfe/PrintConfigNFE";
 import PostImportWizard from "@/components/nfe/PostImportWizard";
+import ImportadorXML from "@/components/nfe/ImportadorXML";
+import GerarSeparacao from "@/components/nfe/GerarSeparacao";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -76,6 +78,8 @@ export default function NotasFiscais() {
   const [layoutExpanded, setLayoutExpanded] = useState(false);
   const [showImportador, setShowImportador] = useState(false);
   const [showPostImportWizard, setShowPostImportWizard] = useState(false);
+  const [showImportadorXML, setShowImportadorXML] = useState(false);
+  const [showGerarSeparacao, setShowGerarSeparacao] = useState(false);
   const [modoAtualizar, setModoAtualizar] = useState(false);
 
   const queryClient = useQueryClient();
@@ -1070,6 +1074,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             <Upload className="w-5 h-5 mr-2" />
                             IMPORTAR
                         </Button>
+                        <Button onClick={() => setShowImportadorXML(true)} className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 h-12 px-5 text-base font-semibold shadow-lg">
+                            <FileCode className="w-5 h-5 mr-2" />
+                            IMPORTAR XML
+                        </Button>
                         <Button onClick={() => {resetForm();setShowForm(true);}} className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 h-12 px-5 text-base font-semibold shadow-lg">
                             <Plus className="w-5 h-5 mr-2" />
                             NOVA NOTA
@@ -1314,7 +1322,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                             </div>
 
                             {/* Botões de impressão */}
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Button
                                     onClick={() => handlePrintRomaneio()}
                                     disabled={selecionados.length === 0 || otimizandoRota}
@@ -1331,6 +1339,14 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                             Imprimir Romaneio ({selecionados.length})
                                         </>
                                     )}
+                                </Button>
+                                <Button
+                                    onClick={() => setShowGerarSeparacao(true)}
+                                    disabled={!notasDigitadas.trim()}
+                                    className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 px-6 flex-1 h-12 text-lg font-semibold"
+                                >
+                                    <Layers className="w-5 h-5 mr-2" />
+                                    GERAR SEPARAÇÃO
                                 </Button>
                             </div>
                         </div>
@@ -2075,6 +2091,19 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
               onScrollToImportacoes={scrollToImportacoes}
               onAtribuirFilialAuto={handleAtribuirFilialAuto}
               onImprimirImportacao={handleImprimirImportacao}
+            />
+
+            {/* Importador de XML */}
+            <ImportadorXML
+              open={showImportadorXML}
+              onClose={() => setShowImportadorXML(false)}
+            />
+
+            {/* Gerar Separação */}
+            <GerarSeparacao
+              open={showGerarSeparacao}
+              onClose={() => setShowGerarSeparacao(false)}
+              notasDigitadas={notasDigitadas}
             />
         </div>);
 

@@ -6,6 +6,11 @@
       "type": "string",
       "description": "N\u00famero da nota fiscal extra\u00eddo do XML"
     },
+    "data_emissao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de emiss\u00e3o da NFe"
+    },
     "uf_origem": {
       "type": "string",
       "description": "UF do emitente/remetente"
@@ -17,6 +22,10 @@
     "cfop": {
       "type": "string",
       "description": "CFOP da opera\u00e7\u00e3o"
+    },
+    "cte": {
+      "type": "string",
+      "description": "N\u00famero do CT-e associado (preenchido manualmente)"
     },
     "transportadora_nome": {
       "type": "string",

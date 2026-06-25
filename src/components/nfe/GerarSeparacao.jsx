@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Printer, Layers, MapPin, Building2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function GerarSeparacao({ open, onClose, notasDigitadas }) {
@@ -118,7 +118,7 @@ export default function GerarSeparacao({ open, onClose, notasDigitadas }) {
                             .forEach(([cfop, notas]) => {
                                 bodyHtml += `<div class="grupo-cfop"><h4 class="titulo-cfop">CFOP: ${cfop} (${notas.length} nota(s))</h4>`;
                                 bodyHtml += `<table class="tabela-notas"><thead><tr>
-                                    <th>NF</th><th>Remetente</th><th>Destinatário</th><th>Transportadora</th><th>CNPJ Transp.</th><th>Valor</th><th>Peso</th>
+                                    <th>NF</th><th>Data Emissão</th><th>CFOP</th><th>CT-e</th><th>Remetente</th><th>Destinatário</th><th>Transportadora</th><th>CNPJ Transp.</th><th>Valor</th><th>Peso</th>
                                 </tr></thead><tbody>`;
 
                                 notas.forEach(nota => {
@@ -127,8 +127,15 @@ export default function GerarSeparacao({ open, onClose, notasDigitadas }) {
                                     const transpKey = `${nota.transportadora_nome || "SEM TRANSPORTADORA"}|${nota.transportadora_cnpj || ""}`;
                                     transportadorasSet.add(transpKey);
 
+                                    const dataFmt = nota.data_emissao
+                                        ? format(parseISO(nota.data_emissao), "dd/MM/yyyy", { locale: ptBR })
+                                        : "-";
+
                                     bodyHtml += `<tr>
                                         <td class="nf">${nota.numero_nf || "-"}</td>
+                                        <td>${dataFmt}</td>
+                                        <td>${nota.cfop || "-"}</td>
+                                        <td>${nota.cte || "-"}</td>
                                         <td>${nota.remetente_nome || "-"}</td>
                                         <td>${nota.destinatario_nome || "-"}</td>
                                         <td class="transp">${nota.transportadora_nome || "-"}</td>
@@ -167,7 +174,7 @@ export default function GerarSeparacao({ open, onClose, notasDigitadas }) {
                 <title>Relatório de Separação - CT-e Globalizado</title>
                 <style>
                     @media print {
-                        @page { margin: 10mm; size: A4 portrait; }
+                        @page { margin: 8mm; size: A4 landscape; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     }
                     * { box-sizing: border-box; margin: 0; padding: 0; }

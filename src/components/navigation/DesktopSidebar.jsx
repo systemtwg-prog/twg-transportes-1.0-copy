@@ -153,9 +153,9 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle, onSwi
             <div className="p-3 border-b border-slate-700 flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                     <img 
-                        src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/1858ed22e_WhatsAppImage2026-03-20at125657.jpg" 
+                        src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/c61d7fba4_file_000000008b4c71f58992067827d28857.png" 
                         alt="Loggxy" 
-                        className="h-7 object-contain flex-shrink-0" 
+                        className="h-8 w-8 object-contain flex-shrink-0 rounded-lg" 
                     />
                     <div className="min-w-0">
                         <span className="text-white font-bold text-xs block truncate">Loggxy</span>

@@ -25,9 +25,9 @@ export default function Sobre() {
           <CardContent className="p-8 text-center">
             <div className="mb-6">
               <img 
-                src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/1858ed22e_WhatsAppImage2026-03-20at125657.jpg" 
+                src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/c61d7fba4_file_000000008b4c71f58992067827d28857.png" 
                 alt="Loggxy" 
-                className="h-20 mx-auto object-contain" 
+                className="h-28 mx-auto object-contain rounded-2xl" 
               />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-2">LOGGXY SISTEMA DE GESTÃO</h2>

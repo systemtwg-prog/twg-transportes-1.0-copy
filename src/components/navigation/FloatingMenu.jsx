@@ -105,9 +105,9 @@ export default function FloatingMenu({ currentPage }) {
                 <SheetContent side="left" className="w-80 bg-gradient-to-b from-slate-900 to-slate-800 border-0 p-0">
                     <div className="p-4 border-b border-white/10 flex items-center gap-3">
                         <img 
-                            src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/1858ed22e_WhatsAppImage2026-03-20at125657.jpg" 
+                            src="https://media.base44.com/images/public/695fa57f97d202e8a22b02c0/c61d7fba4_file_000000008b4c71f58992067827d28857.png" 
                             alt="Loggxy" 
-                            className="h-10 object-contain flex-shrink-0" 
+                            className="h-12 w-12 object-contain flex-shrink-0 rounded-xl" 
                         />
                         <div>
                             <h2 className="font-bold text-lg text-white leading-tight">Loggxy</h2>

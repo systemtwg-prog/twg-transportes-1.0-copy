@@ -152,8 +152,22 @@ export default function PainelProprietario() {
         }
     };
 
-    const handleSetProprietario = (u) => {
-        updateUserMutation.mutate({ id: u.id, data: { is_proprietario: !u.is_proprietario } });
+    // O "Tornar proprietário" promove SOMENTE o e-mail descarbel.sp@gmail.com como proprietário da plataforma
+    // (acesso a todas as empresas). Nunca promove o usuário da linha (ex.: system.twg) como proprietário.
+    const handleSetProprietario = async () => {
+        const descrbelUser = usuarios.find((u) => (u.email || "").toLowerCase() === "descarbel.sp@gmail.com");
+        if (!descrbelUser) {
+            toast.error("Usuário descarbel.sp@gmail.com não encontrado para promover como proprietário.");
+            return;
+        }
+        for (const u of usuarios) {
+            const shouldBeOwner = u.id === descrbelUser.id;
+            if (!!u.is_proprietario !== shouldBeOwner) {
+                try { await rawBase44.entities.User.update(u.id, { is_proprietario: shouldBeOwner }); } catch {}
+            }
+        }
+        toast.success("descarbel.sp@gmail.com definido como proprietário da plataforma (acesso a todas as empresas).");
+        refresh();
     };
 
     // Migra os dados criados por um usuário (empresa_id nulo) para a empresa informada, vinculando-os a ela.

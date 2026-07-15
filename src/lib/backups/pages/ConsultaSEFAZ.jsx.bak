@@ -1,0 +1,4 @@
+// BACKUP DA PÁGINA: ConsultaSEFAZ
+// Removida do app em 2026-07-15 a pedido do usuário (não utiliza mais a consulta SEFAZ)
+// Origem: src/pages/ConsultaSEFAZ.jsx
+// Observação: a função backend "consultaSEFAZ" NÃO pode ser excluída sem plano Builder+; este é apenas o backup do frontend.

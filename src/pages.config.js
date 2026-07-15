@@ -63,7 +63,6 @@ import ComprovantesEntrega from './pages/ComprovantesEntrega';
 import ComprovantesInternos from './pages/ComprovantesInternos';
 import ConfiguracaoModulos from './pages/ConfiguracaoModulos';
 import Configuracoes from './pages/Configuracoes';
-import ConsultaSEFAZ from './pages/ConsultaSEFAZ';
 import CrachaIdentificacao from './pages/CrachaIdentificacao';
 import Destinatarios from './pages/Destinatarios';
 import Documentos from './pages/Documentos';
@@ -113,7 +112,6 @@ export const PAGES = {
     "ComprovantesInternos": ComprovantesInternos,
     "ConfiguracaoModulos": ConfiguracaoModulos,
     "Configuracoes": Configuracoes,
-    "ConsultaSEFAZ": ConsultaSEFAZ,
     "CrachaIdentificacao": CrachaIdentificacao,
     "Destinatarios": Destinatarios,
     "Documentos": Documentos,

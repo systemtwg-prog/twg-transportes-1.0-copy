@@ -88,7 +88,6 @@ import Relatorios from './pages/Relatorios';
 import RomaneiosGerados from './pages/RomaneiosGerados';
 import RotasGPS from './pages/RotasGPS';
 import ServicosSNF from './pages/ServicosSNF';
-import SincronizacaoFirebase from './pages/SincronizacaoFirebase';
 import Transportadoras from './pages/Transportadoras';
 import Veiculos from './pages/Veiculos';
 import WhatsAppWeb from './pages/WhatsAppWeb';
@@ -137,7 +136,6 @@ export const PAGES = {
     "RomaneiosGerados": RomaneiosGerados,
     "RotasGPS": RotasGPS,
     "ServicosSNF": ServicosSNF,
-    "SincronizacaoFirebase": SincronizacaoFirebase,
     "Transportadoras": Transportadoras,
     "Veiculos": Veiculos,
     "WhatsAppWeb": WhatsAppWeb,

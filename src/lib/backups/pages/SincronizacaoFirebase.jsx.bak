@@ -1,0 +1,5 @@
+// BACKUP DA PÁGINA: SincronizacaoFirebase (e componentes RastreamentoGPS, ChatFirebase)
+// Removida do app em 2026-07-15 a pedido do usuário (não utiliza rastreamento GPS via firebaseSync)
+// Origem: src/pages/SincronizacaoFirebase.jsx, src/components/firebase/RastreamentoGPS.jsx, src/components/firebase/ChatFirebase.jsx
+// Observação: a função backend "firebaseSync" NÃO pode ser excluída sem plano Builder+; este é apenas o backup do frontend.
+// As páginas de Rastreamento (mapa), RotasGPS e AtualizarLocalizacao NÃO dependem dessa função e continuam funcionando.

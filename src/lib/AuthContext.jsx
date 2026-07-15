@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { setTenantContext, setActiveEmpresa } from '@/lib/tenantContext';
 
 const AuthContext = createContext();
 
@@ -94,6 +95,12 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      // Configura o contexto de tenant (empresa) para o isolamento de dados SaaS.
+      setTenantContext({
+        empresaId: currentUser?.empresa_id,
+        isProprietario: !!currentUser?.is_proprietario,
+      });
+      setActiveEmpresa(currentUser?.active_empresa_id || null);
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);

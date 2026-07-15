@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -8,8 +8,13 @@ const DefaultFallback = () => (
   </div>
 );
 
-export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthenticatedElement }) {
-  const { isAuthenticated, isLoadingAuth, authError } = useAuth();
+export default function ProtectedRoute({
+  fallback = <DefaultFallback />,
+  unauthenticatedElement,
+  requireCompany = true,
+  requireProprietario = false,
+}) {
+  const { isAuthenticated, isLoadingAuth, authError, user } = useAuth();
 
   if (isLoadingAuth) {
     return fallback;
@@ -24,6 +29,17 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
 
   if (!isAuthenticated) {
     return unauthenticatedElement;
+  }
+
+  const isProprietarioPlataforma = !!user?.is_proprietario;
+  const temEmpresa = !!user?.empresa_id;
+
+  if (requireProprietario && !isProprietarioPlataforma) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireCompany && !isProprietarioPlataforma && !temEmpresa) {
+    return <Navigate to="/CadastroEmpresa" replace />;
   }
 
   return <Outlet />;

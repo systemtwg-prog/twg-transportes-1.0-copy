@@ -10,6 +10,8 @@ import PageNotFound from './lib/PageNotFound';
 import Bono from './pages/Bono';
 import Sobre from './pages/Sobre';
 import ConfiguracoesProprietario from './pages/ConfiguracoesProprietario';
+import CadastroEmpresa from './pages/CadastroEmpresa';
+import PainelProprietario from './pages/PainelProprietario';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -33,8 +35,18 @@ const AppRoutes = () => (
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
 
-    {/* Protected app routes — unauthenticated users land on /login */}
-    <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+    {/* Rotas de cadastro de empresa (autenticado, sem empresa) */}
+    <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} requireCompany={false} />}>
+      <Route path="/CadastroEmpresa" element={<LayoutWrapper currentPageName="CadastroEmpresa"><CadastroEmpresa /></LayoutWrapper>} />
+    </Route>
+
+    {/* Painel do proprietário da plataforma (super-admin) */}
+    <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} requireCompany={false} requireProprietario={true} />}>
+      <Route path="/PainelProprietario" element={<LayoutWrapper currentPageName="PainelProprietario"><PainelProprietario /></LayoutWrapper>} />
+    </Route>
+
+    {/* Rotas protegidas do app — requer empresa (ou proprietário) */}
+    <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} requireCompany={true} />}>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />

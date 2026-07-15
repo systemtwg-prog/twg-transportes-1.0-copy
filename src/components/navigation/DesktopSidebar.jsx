@@ -37,6 +37,7 @@ const menuItems = [
     { name: "Config. Módulos", href: "ConfiguracaoModulos", icon: LayoutGrid, category: "admin" },
     { name: "Config. Proprietário", href: "ConfiguracoesProprietario", icon: Key, category: "admin" },
     { name: "Sobre", href: "Sobre", icon: Info, category: "admin" },
+    { name: "Painel Proprietário", href: "PainelProprietario", icon: Building2, category: "admin" },
 
 ];
 
@@ -77,11 +78,12 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle, onSwi
     });
 
     const isAdmin = currentUser?.role === "admin";
-    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario";
+    const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario" || currentUser?.is_proprietario;
     const isAdminOrProp = isAdmin || isProprietario;
     const menuFiltrado = menuItems.filter(item => {
         if (item.href === "ConfiguracoesProprietario" && !isProprietario) return false;
         if (item.href === "ConfiguracaoModulos" && !isProprietario) return false;
+        if (item.href === "PainelProprietario" && !currentUser?.is_proprietario) return false;
         return (item.href !== "AprovacaoUsuarios") || isAdminOrProp;
     });
 

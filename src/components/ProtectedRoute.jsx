@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { getActiveEmpresa } from '@/lib/tenantContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 const DefaultFallback = () => (
@@ -33,7 +34,7 @@ export default function ProtectedRoute({
 
   const isProprietarioPlataforma = !!user?.is_proprietario ||
     (user?.email || "").toLowerCase() === "descarbel.sp@gmail.com";
-  const temEmpresa = !!user?.empresa_id;
+  const temEmpresa = !!user?.empresa_id || !!getActiveEmpresa();
 
   // Proprietário da plataforma sem empresa própria vai direto ao painel do proprietário
   if (isProprietarioPlataforma && !temEmpresa && requireCompany && !requireProprietario) {

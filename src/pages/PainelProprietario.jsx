@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { rawBase44, base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { setActiveEmpresa, setTenantContext } from "@/lib/tenantContext";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
     Building2, ShieldCheck, Clock, ShieldAlert, Ban, CheckCircle,
-    Loader2, Users, Database, Crown, KeyRound, LogOut, Eye,
+    Loader2, Users, Database, Crown, KeyRound, LogOut, Eye, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
@@ -32,6 +33,7 @@ const TENTANT_BLACKLIST = new Set(["User", "Empresa"]);
 
 export default function PainelProprietario() {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [migrando, setMigrando] = useState(false);
     const [novoVencimento, setNovoVencimento] = useState({});
@@ -92,15 +94,61 @@ export default function PainelProprietario() {
         });
     };
 
-    const handleSelecionarEmpresa = async (empresa) => {
+    // "Visualizar dados": ativa a empresa na sessão (memória) e abre a página do cliente (Home).
+    const handleSelecionarEmpresa = (empresa) => {
+        setActiveEmpresa(empresa.id);
+        setTenantContext({ empresaId: empresa.id, isProprietario: true });
+        toast.success(`Visualizando dados de ${empresa.razao_social || empresa.nome_fantasia || ""}`);
+        navigate("/");
+    };
+
+    const normalizar = (s) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    // Detecta empresas duplicadas (mesmo CNPJ ou mesmo nome normalizado)
+    const detectarDuplicadas = () => {
+        const grupos = {};
+        empresas.forEach((e) => {
+            const key = normalizar(e.cnpj) || normalizar(e.razao_social) || normalizar(e.nome_fantasia);
+            if (!key) return;
+            (grupos[key] = grupos[key] || []).push(e);
+        });
+        return Object.values(grupos).filter((g) => g.length > 1);
+    };
+
+    const handleMesclarDuplicadas = async () => {
+        const grupos = detectarDuplicadas();
+        const total = grupos.reduce((acc, g) => acc + (g.length - 1), 0);
+        if (total === 0) { toast.info("Nenhuma empresa duplicada encontrada."); return; }
+        if (!confirm(`Foram encontradas ${total} empresa(s) duplicada(s). As duplicadas serão mescladas na mais antiga (usuários e dados migrados) e removidas. Continuar?`)) return;
+        setMigrando(true);
         try {
-            await base44.auth.updateMe({ active_empresa_id: empresa.id });
-            setActiveEmpresa(empresa.id);
-            setTenantContext({ empresaId: empresa.id, isProprietario: true });
-            window.location.href = "/";
+            const entityNames = Object.keys(rawBase44.entities).filter((n) => !TENTANT_BLACKLIST.has(n));
+            let removidas = 0;
+            for (const grupo of grupos) {
+                grupo.sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+                const keep = grupo[0];
+                for (const dup of grupo.slice(1)) {
+                    // move usuários que apontam para a duplicada
+                    for (const u of usuarios) {
+                        if (u.empresa_id === dup.id) {
+                            try { await rawBase44.entities.User.update(u.id, { empresa_id: keep.id }); } catch {}
+                        }
+                    }
+                    // move registros de domínio
+                    for (const name of entityNames) {
+                        try { await rawBase44.entities[name].updateMany({ empresa_id: dup.id }, { $set: { empresa_id: keep.id } }); } catch {}
+                    }
+                    // remove a duplicada
+                    try { await rawBase44.entities.Empresa.delete(dup.id); removidas++; } catch (e) { console.error(e); }
+                }
+            }
+            toast.success(`${removidas} empresa(s) duplicada(s) removida(s).`);
+            refresh();
         } catch (e) {
             console.error(e);
-            toast.error("Erro ao selecionar empresa.");
+            toast.error("Erro ao mesclar: " + (e?.message || ""));
+        } finally {
+            setMigrando(false);
         }
     };
 
@@ -223,6 +271,33 @@ export default function PainelProprietario() {
                         </Button>
                     </CardContent>
                 </Card>
+
+                {/* Empresas duplicadas */}
+                {detectarDuplicadas().length > 0 && (
+                    <Card className="border-0 shadow-lg border-l-4 border-l-amber-400">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2 text-amber-700">
+                                <AlertTriangle className="w-5 h-5" /> Empresas Duplicadas
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-slate-600 mb-3">
+                                Foram detectadas empresas duplicadas (mesmo CNPJ/nome). A mescla mantém a empresa mais antiga e migra usuários e dados das duplicadas para ela, removendo-as.
+                            </p>
+                            <div className="space-y-2 mb-3">
+                                {detectarDuplicadas().map((g, i) => (
+                                    <div key={i} className="text-xs text-slate-500">
+                                        <strong>{g[0].razao_social || g[0].nome_fantasia}</strong> — {g.length} registros — CNPJs: {g.map((e) => e.cnpj || "—").join(", ")}
+                                    </div>
+                                ))}
+                            </div>
+                            <Button onClick={handleMesclarDuplicadas} disabled={migrando} variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                                {migrando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
+                                Mesclar empresas duplicadas
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Empresas */}
                 <Card className="border-0 shadow-lg">

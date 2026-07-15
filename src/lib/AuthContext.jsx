@@ -122,12 +122,15 @@ export const AuthProvider = ({ children }) => {
       }
 
       setUser(currentUser);
+      const isPropPlat = !!currentUser?.is_proprietario || em === "descarbel.sp@gmail.com";
       // Configura o contexto de tenant (empresa) para o isolamento de dados SaaS.
       setTenantContext({
         empresaId: currentUser?.empresa_id,
-        isProprietario: !!currentUser?.is_proprietario || em === "descarbel.sp@gmail.com",
+        isProprietario: isPropPlat,
       });
-      setActiveEmpresa(currentUser?.active_empresa_id || null);
+      // Proprietário da plataforma não usa empresa_id fixo — "empresa ativa" é por sessão (memória),
+      // para que ao logar caia no painel e só visualize uma empresa ao clicar em "Visualizar dados".
+      setActiveEmpresa(isPropPlat ? null : (currentUser?.active_empresa_id || null));
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);

@@ -119,13 +119,15 @@ export default function PainelProprietario() {
         try {
             // 1. Procura ou cria empresa TWG
             let twg = empresas.find((e) =>
+                e.cnpj === "69.133.510/0001-33" ||
                 (e.razao_social || "").toUpperCase().includes("TWG") ||
                 ["twg.transportes1@gmail.com", "system.twg@gmail.com"].includes((e.email || "").toLowerCase())
             );
             if (!twg) {
                 twg = await rawBase44.entities.Empresa.create({
-                    razao_social: "TWG Transportes",
+                    razao_social: "TWG TRANSPORTES",
                     nome_fantasia: "TWG",
+                    cnpj: "69.133.510/0001-33",
                     email: "twg.transportes1@gmail.com",
                     status: "ativa",
                     plano: "anual",

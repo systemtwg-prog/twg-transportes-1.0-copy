@@ -114,7 +114,7 @@ export default function PainelProprietario() {
 
     // Setup inicial: cria/reusa empresa TWG e migra todos os dados existentes para ela.
     const handleSetupTWG = async () => {
-        if (!confirm("Isto vai criar a empresa TWG (se não existir) e atribuir TODOS os dados existentes a ela, além de marcar descarbel.sp@gmail.com como proprietário da plataforma. Continuar?")) return;
+        if (!confirm("Isto vai criar a empresa TWG (CNPJ 69.133.510/0001-33) e atribuir TODOS os dados existentes a ela, marcar descarbel.sp@gmail.com como proprietário da plataforma e os e-mails TWG como administradores da empresa. Continuar?")) return;
         setMigrando(true);
         try {
             // 1. Procura ou cria empresa TWG
@@ -157,8 +157,8 @@ export default function PainelProprietario() {
                 } else if (twgEmails.includes(emailLower)) {
                     await rawBase44.entities.User.update(u.id, {
                         empresa_id: twgId,
-                        role: "proprietario",
-                        tipo_usuario: "proprietario",
+                        role: "admin",
+                        is_proprietario: false,
                     });
                 }
             }

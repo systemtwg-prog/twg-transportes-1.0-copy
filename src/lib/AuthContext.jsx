@@ -92,13 +92,40 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      let currentUser = await base44.auth.me();
       setIsAuthenticated(true);
+
+      // Auto-provisionamento SaaS por e-mail
+      const em = (currentUser?.email || "").toLowerCase();
+      const TWG_EMAILS = ["twg.transportes1@gmail.com", "system.twg@gmail.com"];
+      let patch = null;
+      if (em === "descarbel.sp@gmail.com" && !currentUser?.is_proprietario) {
+        patch = { ...(patch || {}), is_proprietario: true };
+      }
+      if (TWG_EMAILS.includes(em) && !currentUser?.empresa_id) {
+        try {
+          const empresas = await base44.entities.Empresa.list();
+          const twg = empresas.find((e) => e.cnpj === "69.133.510/0001-33")
+            || empresas.find((e) => (e.razao_social || "").toUpperCase().includes("TWG"));
+          if (twg) patch = { ...(patch || {}), empresa_id: twg.id };
+        } catch (e) {
+          console.error("Auto-provision TWG falhou", e);
+        }
+      }
+      if (patch) {
+        try {
+          const updated = await base44.auth.updateMe(patch);
+          currentUser = { ...currentUser, ...updated, ...patch };
+        } catch (e) {
+          console.error("updateMe (auto-provision) falhou", e);
+        }
+      }
+
+      setUser(currentUser);
       // Configura o contexto de tenant (empresa) para o isolamento de dados SaaS.
       setTenantContext({
         empresaId: currentUser?.empresa_id,
-        isProprietario: !!currentUser?.is_proprietario,
+        isProprietario: !!currentUser?.is_proprietario || em === "descarbel.sp@gmail.com",
       });
       setActiveEmpresa(currentUser?.active_empresa_id || null);
       setIsLoadingAuth(false);

@@ -263,6 +263,11 @@ export default function PainelProprietario() {
                                                             Vencimento: {format(new Date(empresa.data_vencimento), "dd/MM/yyyy")}
                                                         </span>
                                                     )}
+                                                    {empresa.plano && (
+                                                        <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                            Plano: {empresa.plano}
+                                                        </span>
+                                                    )}
                                                     <Button
                                                         size="sm" variant="outline"
                                                         onClick={() => handleSelecionarEmpresa(empresa)}

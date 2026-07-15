@@ -22,7 +22,9 @@ export default function Login() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = "/";
+      const em = (email || "").trim().toLowerCase();
+      // Proprietário da plataforma vai direto ao painel do proprietário
+      window.location.href = em === "descarbel.sp@gmail.com" ? "/PainelProprietario" : "/";
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {

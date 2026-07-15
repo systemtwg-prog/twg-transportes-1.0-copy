@@ -79,11 +79,13 @@ export default function DesktopSidebar({ currentPage, collapsed, onToggle, onSwi
 
     const isAdmin = currentUser?.role === "admin";
     const isProprietario = currentUser?.role === "proprietario" || currentUser?.tipo_usuario === "proprietario" || currentUser?.is_proprietario;
+    const isProprietarioPlataforma = !!currentUser?.is_proprietario ||
+        (currentUser?.email || "").toLowerCase() === "descarbel.sp@gmail.com";
     const isAdminOrProp = isAdmin || isProprietario;
     const menuFiltrado = menuItems.filter(item => {
-        if (item.href === "ConfiguracoesProprietario" && !isProprietario) return false;
-        if (item.href === "ConfiguracaoModulos" && !isProprietario) return false;
-        if (item.href === "PainelProprietario" && !currentUser?.is_proprietario) return false;
+        if (item.href === "ConfiguracoesProprietario" && !isProprietarioPlataforma) return false;
+        if (item.href === "ConfiguracaoModulos" && !isProprietarioPlataforma) return false;
+        if (item.href === "PainelProprietario" && !isProprietarioPlataforma) return false;
         return (item.href !== "AprovacaoUsuarios") || isAdminOrProp;
     });
 

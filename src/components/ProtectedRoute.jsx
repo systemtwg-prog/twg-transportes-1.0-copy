@@ -35,6 +35,11 @@ export default function ProtectedRoute({
     (user?.email || "").toLowerCase() === "descarbel.sp@gmail.com";
   const temEmpresa = !!user?.empresa_id;
 
+  // Proprietário da plataforma sem empresa própria vai direto ao painel do proprietário
+  if (isProprietarioPlataforma && !temEmpresa && requireCompany && !requireProprietario) {
+    return <Navigate to="/PainelProprietario" replace />;
+  }
+
   if (requireProprietario && !isProprietarioPlataforma) {
     return <Navigate to="/" replace />;
   }

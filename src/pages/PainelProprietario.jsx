@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
     Building2, ShieldCheck, Clock, ShieldAlert, Ban, CheckCircle,
-    Loader2, Users, Database, Crown, KeyRound, LogOut, Eye, AlertTriangle,
+    Loader2, Users, Database, Crown, KeyRound, LogOut, Eye, AlertTriangle, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
@@ -156,8 +156,59 @@ export default function PainelProprietario() {
         updateUserMutation.mutate({ id: u.id, data: { is_proprietario: !u.is_proprietario } });
     };
 
-    const handleAtribuirEmpresa = (u, empresaId) => {
-        updateUserMutation.mutate({ id: u.id, data: { empresa_id: empresaId || null } });
+    // Migra os dados criados por um usuário (empresa_id nulo) para a empresa informada, vinculando-os a ela.
+    const migrarDadosUsuario = async (userId, empresaId) => {
+        const entityNames = Object.keys(rawBase44.entities).filter((n) => !TENTANT_BLACKLIST.has(n));
+        for (const name of entityNames) {
+            try {
+                await rawBase44.entities[name].updateMany(
+                    { created_by_id: userId, empresa_id: null },
+                    { $set: { empresa_id: empresaId } }
+                );
+            } catch {}
+        }
+    };
+
+    const handleAtribuirEmpresa = async (u, empresaId) => {
+        try {
+            await rawBase44.entities.User.update(u.id, { empresa_id: empresaId || null });
+            if (empresaId) {
+                toast.info("Vinculando os dados existentes deste usuário à empresa...");
+                await migrarDadosUsuario(u.id, empresaId);
+                toast.success("Usuário atribuído e dados vinculados à empresa.");
+            } else {
+                toast.success("Usuário removido da empresa.");
+            }
+            refresh();
+        } catch (e) {
+            console.error(e);
+            toast.error("Erro ao atribuir usuário.");
+        }
+    };
+
+    // Exclui a empresa. Os dados cadastrados são preservados (desvinculados) e os usuários ficam sem empresa.
+    const handleDeletarEmpresa = async (empresa) => {
+        if (!confirm(`Excluir a empresa "${empresa.razao_social}"? Os dados já cadastrados serão preservados (desvinculados) e os usuários atribuídos ficarão sem empresa. Esta ação não pode ser desfeita.`)) return;
+        setMigrando(true);
+        try {
+            const entityNames = Object.keys(rawBase44.entities).filter((n) => !TENTANT_BLACKLIST.has(n));
+            for (const name of entityNames) {
+                try { await rawBase44.entities[name].updateMany({ empresa_id: empresa.id }, { $set: { empresa_id: null } }); } catch {}
+            }
+            for (const u of usuarios) {
+                if (u.empresa_id === empresa.id) {
+                    try { await rawBase44.entities.User.update(u.id, { empresa_id: null }); } catch {}
+                }
+            }
+            await rawBase44.entities.Empresa.delete(empresa.id);
+            toast.success("Empresa excluída. Dados preservados (sem vínculo).");
+            refresh();
+        } catch (e) {
+            console.error(e);
+            toast.error("Erro ao excluir empresa: " + (e?.message || ""));
+        } finally {
+            setMigrando(false);
+        }
     };
 
     // Setup inicial: cria/reusa empresa TWG e migra todos os dados existentes para ela.
@@ -377,6 +428,9 @@ export default function PainelProprietario() {
                                                     Definir vencimento
                                                 </Button>
                                             </div>
+                                            <Button size="sm" variant="outline" onClick={() => handleDeletarEmpresa(empresa)} className="border-red-300 text-red-600 hover:bg-red-50 ml-auto" disabled={migrando}>
+                                                <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                                            </Button>
                                         </div>
                                     </div>
                                 );

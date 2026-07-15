@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, rawBase44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { setTenantContext, setActiveEmpresa } from '@/lib/tenantContext';
@@ -107,7 +107,21 @@ export const AuthProvider = ({ children }) => {
           const empresas = await base44.entities.Empresa.list();
           const twg = empresas.find((e) => e.cnpj === "69.133.510/0001-33")
             || empresas.find((e) => (e.razao_social || "").toUpperCase().includes("TWG"));
-          if (twg) patch = { ...(patch || {}), empresa_id: twg.id };
+          if (twg) {
+            patch = { ...(patch || {}), empresa_id: twg.id };
+            // Vincula os dados já criados por este usuário (sem empresa) à empresa TWG para não perdê-los.
+            try {
+              const entityNames = Object.keys(rawBase44.entities).filter((n) => n !== "User" && n !== "Empresa");
+              for (const name of entityNames) {
+                try {
+                  await rawBase44.entities[name].updateMany(
+                    { created_by_id: currentUser?.id, empresa_id: null },
+                    { $set: { empresa_id: twg.id } }
+                  );
+                } catch {}
+              }
+            } catch (e) { console.error("Migração de dados do TWG falhou", e); }
+          }
         } catch (e) {
           console.error("Auto-provision TWG falhou", e);
         }

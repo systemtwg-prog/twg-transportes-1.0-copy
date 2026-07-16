@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
+import ImportadorColetas from "@/components/coletas/ImportadorColetas";
 import { ptBR } from "date-fns/locale";
 
 export default function ColetasDiarias() {
@@ -23,6 +24,7 @@ export default function ColetasDiarias() {
     const [ordenacao, setOrdenacao] = useState("prioridade"); // prioridade, cidade
     const [activeTab, setActiveTab] = useState("pendentes");
     const [criandoOrdem, setCriandoOrdem] = useState(null);
+    const [importadorOpen, setImportadorOpen] = useState(false);
     const printRef = useRef();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -526,6 +528,14 @@ export default function ColetasDiarias() {
                             Adicionar
                         </Button>
                         <Button 
+                            onClick={() => setImportadorOpen(true)}
+                            variant="outline" 
+                            className="border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Importar
+                        </Button>
+                        <Button 
                             onClick={() => {
                                 queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] });
                                 queryClient.invalidateQueries({ queryKey: ["coletas-diarias-home"] });
@@ -768,6 +778,8 @@ export default function ColetasDiarias() {
                         </CardContent>
                     </Card>
                 )}
+
+                <ImportadorColetas open={importadorOpen} onClose={() => setImportadorOpen(false)} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })} />
             </div>
         </div>
     );

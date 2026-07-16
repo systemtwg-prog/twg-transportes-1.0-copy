@@ -63,6 +63,10 @@
       "type": "string",
       "description": "Nome fantasia do destinat\u00e1rio"
     },
+    "transportadora": {
+      "type": "string",
+      "description": "Nome da transportadora extra\u00edda do documento"
+    },
     "motorista_id": {
       "type": "string",
       "description": "ID do motorista"

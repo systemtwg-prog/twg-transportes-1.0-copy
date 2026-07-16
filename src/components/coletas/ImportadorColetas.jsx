@@ -1,9 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileCode, FileSpreadsheet, FileText, Loader2, CheckCircle, X, AlertTriangle, Trash2 } from "lucide-react";
+import { Upload, FileCode, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -132,94 +130,83 @@ const parsearExcel = async (file) => {
 };
 
 export default function ImportadorColetas({ open, onClose, onSuccess }) {
-    const [linhas, setLinhas] = useState([]);
     const [processando, setProcessando] = useState(false);
-    const [salvando, setSalvando] = useState(false);
     const fileInputRef = useRef(null);
 
-    const reset = () => { setLinhas([]); if (fileInputRef.current) fileInputRef.current.value = ""; };
+    const reset = () => { if (fileInputRef.current) fileInputRef.current.value = ""; };
 
     const handleFiles = async (e) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
         setProcessando(true);
-        const novas = [];
+
+        const lidas = [];
+        const ignoradas = [];
         for (const file of files) {
             const ext = file.name.toLowerCase().split(".").pop();
             try {
+                let resultados = [];
                 if (ext === "xml") {
-                    const r = await parsearXML(file);
-                    novas.push({ ...r, ok: true, incluir: true, origem: "XML", arquivo: file.name });
+                    resultados = [await parsearXML(file)];
                 } else if (ext === "xlsx" || ext === "xls" || ext === "csv") {
-                    const arr = await parsearExcel(file);
-                    arr.forEach(r => novas.push({ ...r, ok: true, incluir: true, origem: "Excel", arquivo: file.name }));
+                    resultados = await parsearExcel(file);
                 } else if (ext === "pdf") {
-                    const r = await parsearPDF(file);
-                    novas.push({ ...r, ok: true, incluir: true, origem: "PDF", arquivo: file.name });
+                    resultados = [await parsearPDF(file)];
                 } else {
-                    novas.push({ numero_nf: "", remetente_nome: "", destinatario_nome: "", transportadora: "", peso: "", volume: "", data_coleta: hoje(), ok: false, incluir: false, origem: ext.toUpperCase(), arquivo: file.name });
+                    ignoradas.push(`${file.name} (formato não suportado)`);
+                    continue;
                 }
+                resultados.forEach((r) => {
+                    if (r.remetente_nome && r.destinatario_nome) {
+                        lidas.push({
+                            data_coleta: r.data_coleta || hoje(),
+                            remetente_nome: r.remetente_nome,
+                            destinatario_nome: r.destinatario_nome,
+                            transportadora: r.transportadora || "",
+                            peso: r.peso ? String(r.peso) : "",
+                            volume: r.volume ? String(r.volume) : "",
+                            nfe: r.numero_nf ? String(r.numero_nf) : "",
+                            status: "pendente"
+                        });
+                    } else {
+                        ignoradas.push(`${file.name} (remetente/destinatário não identificados)`);
+                    }
+                });
             } catch (err) {
-                novas.push({ numero_nf: "", remetente_nome: "", destinatario_nome: "", transportadora: "", peso: "", volume: "", data_coleta: hoje(), ok: false, incluir: false, origem: ext.toUpperCase(), arquivo: file.name });
+                ignoradas.push(`${file.name} (erro ao ler)`);
             }
         }
-        setLinhas(prev => [...prev, ...novas]);
-        setProcessando(false);
-        const invalidos = novas.filter(n => !n.ok).length;
-        if (invalidos > 0) {
-            toast.warning(`${novas.length - invalidos} linha(s) lida(s). ${invalidos} arquivo(s) não reconhecido(s).`);
-        } else {
-            toast.success(`${novas.length} linha(s) lida(s). Revise e confirme.`);
-        }
-    };
 
-    const atualizar = (i, campo, valor) => {
-        setLinhas(prev => prev.map((l, idx) => idx === i ? { ...l, [campo]: valor } : l));
-    };
-    const toggleIncluir = (i) => {
-        setLinhas(prev => prev.map((l, idx) => idx === i ? { ...l, incluir: !l.incluir, ok: true } : l));
-    };
-    const remover = (i) => setLinhas(prev => prev.filter((_, idx) => idx !== i));
-
-    const salvar = async () => {
-        const selecionados = linhas.filter(l => l.incluir && l.remetente_nome && l.destinatario_nome);
-        if (selecionados.length === 0) {
-            toast.error("Nenhuma linha válida para importar (remetente e destinatário obrigatórios).");
-            return;
-        }
-        setSalvando(true);
         try {
-            const registros = selecionados.map(l => ({
-                data_coleta: l.data_coleta || hoje(),
-                remetente_nome: l.remetente_nome,
-                destinatario_nome: l.destinatario_nome,
-                transportadora: l.transportadora || "",
-                peso: l.peso ? String(l.peso) : "",
-                volume: l.volume ? String(l.volume) : "",
-                nfe: l.numero_nf ? String(l.numero_nf) : "",
-                status: "pendente"
-            }));
-            await base44.entities.ColetaDiaria.bulkCreate(registros);
-            toast.success(`${registros.length} coleta(s) importada(s) com sucesso!`);
+            if (lidas.length > 0) {
+                await base44.entities.ColetaDiaria.bulkCreate(lidas);
+            }
+            if (lidas.length > 0) {
+                toast.success(`${lidas.length} coleta(s) adicionada(s) à lista!`);
+            }
+            if (ignoradas.length > 0) {
+                toast.warning(`${ignoradas.length} arquivo(s) ignorado(s): ${ignoradas.slice(0, 3).join(", ")}${ignoradas.length > 3 ? "..." : ""}`);
+            }
+            if (lidas.length === 0 && ignoradas.length > 0) {
+                toast.error("Nenhuma coleta válida encontrada nos arquivos.");
+            }
             if (onSuccess) onSuccess();
             reset();
             onClose();
         } catch (err) {
             toast.error("Erro ao salvar: " + (err.message || "tente novamente"));
         } finally {
-            setSalvando(false);
+            setProcessando(false);
         }
     };
 
-    const verificasValidas = (l) => l.remetente_nome && l.destinatario_nome;
-
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onClose(); }}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="w-5 h-5 text-sky-600" />
-                        Importar Coletas (XML / Excel) — sem IA
+                        Importar Coletas (XML / Excel / PDF) — sem IA
                     </DialogTitle>
                 </DialogHeader>
 
@@ -232,103 +219,28 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
                     className="hidden"
                 />
 
-                {linhas.length === 0 && !processando ? (
-                    <div className="text-center py-10">
+                {processando ? (
+                    <div className="text-center py-12">
+                        <Loader2 className="w-10 h-10 animate-spin text-sky-600 mx-auto mb-3" />
+                        <p className="text-slate-600">Lendo arquivos e adicionando coletas...</p>
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
                         <div className="flex items-center justify-center gap-3 mb-4">
                             <FileCode className="w-12 h-12 text-blue-500" />
                             <FileSpreadsheet className="w-12 h-12 text-emerald-500" />
                             <FileText className="w-12 h-12 text-red-400" />
                         </div>
                         <p className="text-slate-700 font-medium mb-1">Selecione arquivos XML, Excel ou PDF (DANFE)</p>
-                        <p className="text-xs text-slate-400 mb-4">
-                            Leitura 100% local — sem IA e sem consumo de créditos. Campos lidos: remetente, destinatário, transportadora, peso, volume e nº da NF.
-                        </p>
-                        <p className="text-xs text-slate-400">
-                            Suporta XML de NFe, planilhas Excel e PDF (DANFE) — leitura local via pdf.js, sem IA e sem créditos.
+                        <p className="text-xs text-slate-400 mb-6 px-4">
+                            As coletas são adicionadas automaticamente à lista de Coletas Diárias (status Pendente),
+            com todas as funções disponíveis: editar, clonar, ordem de coleta, compartilhar, imprimir e mudar status.
+            Leitura 100% local — sem IA e sem créditos.
                         </p>
                         <Button onClick={() => fileInputRef.current?.click()} className="bg-sky-600 hover:bg-sky-700">
                             <Upload className="w-4 h-4 mr-2" />
                             Selecionar Arquivos
                         </Button>
-                    </div>
-                ) : processando ? (
-                    <div className="text-center py-12">
-                        <Loader2 className="w-10 h-10 animate-spin text-sky-600 mx-auto mb-3" />
-                        <p className="text-slate-600">Lendo arquivos...</p>
-                    </div>
-                ) : (
-                    <div className="flex flex-col flex-1 overflow-hidden">
-                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                            <p className="text-sm text-slate-600">
-                                {linhas.filter(l => l.incluir && verificasValidas(l)).length} de {linhas.length} prontas para importar
-                            </p>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="w-4 h-4 mr-1" /> Adicionar mais
-                                </Button>
-                                <Button onClick={salvar} disabled={salvando} className="bg-emerald-600 hover:bg-emerald-700">
-                                    {salvando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                                    Confirmar Importação
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="overflow-auto border rounded-lg flex-1">
-                            <table className="w-full text-sm">
-                                <thead className="sticky top-0 bg-slate-100 z-10">
-                                    <tr>
-                                        <th className="p-2 w-8"></th>
-                                        <th className="p-2 text-left">NF</th>
-                                        <th className="p-2 text-left">Remetente</th>
-                                        <th className="p-2 text-left">Destinatário</th>
-                                        <th className="p-2 text-left">Transportadora</th>
-                                        <th className="p-2 text-left">Peso</th>
-                                        <th className="p-2 text-left">Volume</th>
-                                        <th className="p-2 text-left">Data</th>
-                                        <th className="p-2 w-10"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {linhas.map((l, i) => {
-                                        const valida = verificasValidas(l);
-                                        return (
-                                            <tr key={i} className={`border-t ${!valida ? "bg-amber-50" : ""}`}>
-                                                <td className="p-2 text-center">
-                                                    <Checkbox checked={l.incluir} onCheckedChange={() => toggleIncluir(i)} />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input value={l.numero_nf} onChange={e => atualizar(i, "numero_nf", e.target.value)} className="h-8 text-xs min-w-[90px]" />
-                                                </td>
-                                                <td className="p-1">
-                                                    {!valida && <AlertTriangle className="inline w-3 h-3 text-amber-500 mr-1" />}
-                                                    <Input value={l.remetente_nome} onChange={e => atualizar(i, "remetente_nome", e.target.value)} className="h-8 text-xs min-w-[140px]" placeholder="Obrigatório" />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input value={l.destinatario_nome} onChange={e => atualizar(i, "destinatario_nome", e.target.value)} className="h-8 text-xs min-w-[140px]" placeholder="Obrigatório" />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input value={l.transportadora} onChange={e => atualizar(i, "transportadora", e.target.value)} className="h-8 text-xs min-w-[130px]" />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input value={l.peso} onChange={e => atualizar(i, "peso", e.target.value)} className="h-8 text-xs w-20" />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input value={l.volume} onChange={e => atualizar(i, "volume", e.target.value)} className="h-8 text-xs w-20" />
-                                                </td>
-                                                <td className="p-1">
-                                                    <Input type="date" value={l.data_coleta} onChange={e => atualizar(i, "data_coleta", e.target.value)} className="h-8 text-xs w-36" />
-                                                </td>
-                                                <td className="p-1 text-center">
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remover(i)}>
-                                                        <Trash2 className="w-3 h-3 text-red-500" />
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 )}
             </DialogContent>

@@ -65,6 +65,7 @@ export default function NotasFiscais() {
   const [dataRomaneio, setDataRomaneio] = useState(format(new Date(), "yyyy-MM-dd"));
   const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
   const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
+  const [observacaoRomaneio, setObservacaoRomaneio] = useState("");
   const [notasDigitadas, setNotasDigitadas] = useState("");
   const [ordenacaoNotas, setOrdenacaoNotas] = useState("digitacao");
   const [otimizandoRota, setOtimizandoRota] = useState(false);
@@ -781,6 +782,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
         pagesHtml += `
           <div class="page">
             ${gerarCabecalho()}
+            ${observacaoRomaneio ? `<div class="observacao"><strong>Observações:</strong> ${observacaoRomaneio.replace(/</g, "<").replace(/>/g, ">")}</div>` : ''}
             <table>
               <thead>
                 <tr>
@@ -931,6 +933,13 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     /* Blocos vazios mantêm a estrutura mas sem conteúdo visível */
                     .bloco-vazio td {
                         color: transparent;
+                    }
+                    .observacao {
+                        margin: 6px 0 10px;
+                        padding: 6px 8px;
+                        border-left: 4px solid #0ea5e9;
+                        background: #f0f9ff;
+                        font-size: 11px;
                     }
                 </style>
             </head>
@@ -1254,6 +1263,16 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <Label>Observações do Romaneio</Label>
+                            <Textarea
+                                value={observacaoRomaneio}
+                                onChange={(e) => setObservacaoRomaneio(e.target.value)}
+                                placeholder="Observações a serem impressas no romaneio..."
+                                rows={2}
+                                className="bg-white"
+                            />
                         </div>
                     </CardContent>
                 </Card>

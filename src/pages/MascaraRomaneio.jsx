@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
     FileText, Printer, Truck, Calendar, Search, X, Plus, Car, Building2, Save, Pencil, Trash2, Package, Scale, BarChart3, MapPin
 } from "lucide-react";
@@ -27,6 +28,7 @@ export default function MascaraRomaneio() {
     const [filterPlaca, setFilterPlaca] = useState("");
     const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
     const [remetenteSelecionado, setRemetenteSelecionado] = useState("");
+    const [observacaoRomaneio, setObservacaoRomaneio] = useState("");
     const [notasDigitadas, setNotasDigitadas] = useState("");
     const [notasNaoEncontradas, setNotasNaoEncontradas] = useState([]);
     const [showCadastroRemetente, setShowCadastroRemetente] = useState(false);
@@ -449,6 +451,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                                                         <p class="motorista-veiculo">Motorista: ${motoristaObj ? motoristaObj.nome : "_________________"} | Veículo: ${veiculoDisplay || "_________________"}</p>
                             </div>
                         </div>
+                        ${observacaoRomaneio ? `<div class="observacao"><strong>Observações:</strong> ${observacaoRomaneio.replace(/</g, "<").replace(/>/g, ">")}</div>` : ""}
                         
                         <table>
                             <thead>
@@ -582,6 +585,13 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                             .nota-row.vazia td,
                                             .transportadora-row.vazia td {
                                                 border: none !important;
+                                            }
+                                            .observacao {
+                                                margin: 6px 0;
+                                                padding: 6px 10px;
+                                                border-left: 4px solid #0ea5e9;
+                                                background: #f0f9ff;
+                                                font-size: 13px;
                                             }
                                         </style>
             </head>
@@ -776,6 +786,16 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                                     </Button>
                                 </div>
                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Observações do Romaneio</Label>
+                            <Textarea
+                                value={observacaoRomaneio}
+                                onChange={(e) => setObservacaoRomaneio(e.target.value)}
+                                placeholder="Observações a serem impressas no romaneio..."
+                                rows={2}
+                                className="bg-white"
+                            />
                         </div>
                     </CardContent>
                     </Card>

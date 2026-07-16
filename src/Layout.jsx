@@ -15,12 +15,7 @@ export default function Layout({ children, currentPageName }) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [useBlingMode, setUseBlingMode] = useState(false);
-    const [isDark, setIsDark] = useState(() => {
-        const saved = localStorage.getItem("theme");
-        if (saved === "dark") return true;
-        if (saved === "light") return false;
-        return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    });
+    const [isDark, setIsDark] = useState(() => localStorage.getItem("theme") === "dark");
     const navigate = useNavigate();
     const location = useLocation();
 

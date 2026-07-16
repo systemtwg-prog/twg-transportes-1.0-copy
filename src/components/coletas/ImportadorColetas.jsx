@@ -9,9 +9,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
-import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker();
 
 const hoje = () => format(new Date(), "yyyy-MM-dd");
 

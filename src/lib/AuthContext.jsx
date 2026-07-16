@@ -161,6 +161,24 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
+      // Migração de segurança (roda a cada login, quando o usuário já tem empresa_id):
+      // garante que coletas/notas criadas pelo usuário que ficaram sem empresa_id (órfãs)
+      // sejam reatribuídas à empresa dele, para aparecerem no filtro multi-tenant.
+      if (currentUser?.empresa_id && !currentUser?.is_proprietario && em !== "descarbel.sp@gmail.com" && !TWG_EMAILS.includes(em)) {
+        try {
+          const entityNames = Object.keys(rawBase44.entities).filter((n) => n !== "User" && n !== "Empresa");
+          for (const name of entityNames) {
+            if (name === "ListaColeta") continue; // isenta de tenant
+            try {
+              await rawBase44.entities[name].updateMany(
+                { created_by_id: currentUser?.id, empresa_id: null },
+                { $set: { empresa_id: currentUser.empresa_id } }
+              );
+            } catch {}
+          }
+        } catch (e) { console.error("Migração periódica de órfãos falhou", e); }
+      }
+
       setUser(currentUser);
       const isPropPlat = !!currentUser?.is_proprietario || em === "descarbel.sp@gmail.com";
       // Configura o contexto de tenant (empresa) para o isolamento de dados SaaS.

@@ -8,6 +8,10 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
+import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const hoje = () => format(new Date(), "yyyy-MM-dd");
 
@@ -49,6 +53,56 @@ const parsearXML = async (file) => {
         peso: extrairTag(xml, "pesoB") || extrairTag(xml, "pesoL"),
         volume: extrairTag(xml, "qVol"),
         data_coleta: formatarData(dataRaw) || hoje()
+    };
+};
+
+const firstMatch = (text, regexes) => {
+    for (const re of regexes) {
+        const m = text.match(re);
+        if (m && m[1] && String(m[1]).trim()) return String(m[1]).trim();
+    }
+    return "";
+};
+
+const parsearPDF = async (file) => {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let texto = "";
+    for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        texto += content.items.map((it) => it.str).join(" ") + "\n";
+    }
+    const t = texto.replace(/\s+/g, " ");
+    const dataMatch = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    const data_coleta = dataMatch ? `${dataMatch[3]}-${dataMatch[2]}-${dataMatch[1]}` : hoje();
+    return {
+        numero_nf: firstMatch(t, [
+            /N[UÚ]MERO DA NOTA[\s:A-Z]*0*(\d{6,9})/i,
+            /N[UÚ]MERO[\s:]*0*(\d{6,9})/i,
+            /NF-?E[\s:]*0*(\d{6,9})/i
+        ]),
+        remetente_nome: firstMatch(t, [
+            /EMITENTE\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i,
+            /REMETENTE\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+        ]),
+        destinatario_nome: firstMatch(t, [
+            /DESTINAT[ÁA]RIO[\/\s]+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+        ]),
+        transportadora: firstMatch(t, [
+            /TRANSPORTADOR(?:A)?[\/\s]*VOLUMES TRANSPORTADOS?\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i,
+            /TRANSPORTADOR(?:A)?\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+        ]),
+        peso: firstMatch(t, [
+            /PESO BRUTO[\s:]*([\d.,]+)/i,
+            /PESO L[IÍ]QUIDO[\s:]*([\d.,]+)/i,
+            /PESO[\s:]*([\d.,]+)/i
+        ]),
+        volume: firstMatch(t, [
+            /QTD\.? VOLUMES?[\s:]*([\d]+(?:[.,]\d+)?)/i,
+            /VOLUMES?[\s:]*([\d]+(?:[.,]\d+)?)/i
+        ]),
+        data_coleta
     };
 };
 
@@ -99,8 +153,11 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
                 } else if (ext === "xlsx" || ext === "xls" || ext === "csv") {
                     const arr = await parsearExcel(file);
                     arr.forEach(r => novas.push({ ...r, ok: true, incluir: true, origem: "Excel", arquivo: file.name }));
+                } else if (ext === "pdf") {
+                    const r = await parsearPDF(file);
+                    novas.push({ ...r, ok: true, incluir: true, origem: "PDF", arquivo: file.name });
                 } else {
-                    novas.push({ numero_nf: "", remetente_nome: "", destinatario_nome: "", transportadora: "", peso: "", volume: "", data_coleta: hoje(), ok: false, incluir: false, origem: "PDF", arquivo: file.name });
+                    novas.push({ numero_nf: "", remetente_nome: "", destinatario_nome: "", transportadora: "", peso: "", volume: "", data_coleta: hoje(), ok: false, incluir: false, origem: ext.toUpperCase(), arquivo: file.name });
                 }
             } catch (err) {
                 novas.push({ numero_nf: "", remetente_nome: "", destinatario_nome: "", transportadora: "", peso: "", volume: "", data_coleta: hoje(), ok: false, incluir: false, origem: ext.toUpperCase(), arquivo: file.name });
@@ -110,7 +167,7 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
         setProcessando(false);
         const invalidos = novas.filter(n => !n.ok).length;
         if (invalidos > 0) {
-            toast.warning(`${novas.length - invalidos} linha(s) lida(s). PDF sem IA requer biblioteca — use XML/Excel.`);
+            toast.warning(`${novas.length - invalidos} linha(s) lida(s). ${invalidos} arquivo(s) não reconhecido(s).`);
         } else {
             toast.success(`${novas.length} linha(s) lida(s). Revise e confirme.`);
         }
@@ -169,7 +226,7 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".xml,.xlsx,.xls,.csv"
+                    accept=".xml,.xlsx,.xls,.csv,.pdf"
                     multiple
                     onChange={handleFiles}
                     className="hidden"
@@ -180,13 +237,14 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
                         <div className="flex items-center justify-center gap-3 mb-4">
                             <FileCode className="w-12 h-12 text-blue-500" />
                             <FileSpreadsheet className="w-12 h-12 text-emerald-500" />
+                            <FileText className="w-12 h-12 text-red-400" />
                         </div>
-                        <p className="text-slate-700 font-medium mb-1">Selecione arquivos XML de NFe ou planilhas Excel</p>
+                        <p className="text-slate-700 font-medium mb-1">Selecione arquivos XML, Excel ou PDF (DANFE)</p>
                         <p className="text-xs text-slate-400 mb-4">
                             Leitura 100% local — sem IA e sem consumo de créditos. Campos lidos: remetente, destinatário, transportadora, peso, volume e nº da NF.
                         </p>
-                        <p className="text-xs text-amber-500 mb-4">
-                            PDFs não são lidos sem IA. Para PDF, use o Importador de Documentos Fiscais (consome créditos) ou converta para Excel/XML.
+                        <p className="text-xs text-slate-400">
+                            Suporta XML de NFe, planilhas Excel e PDF (DANFE) — leitura local via pdf.js, sem IA e sem créditos.
                         </p>
                         <Button onClick={() => fileInputRef.current?.click()} className="bg-sky-600 hover:bg-sky-700">
                             <Upload className="w-4 h-4 mr-2" />

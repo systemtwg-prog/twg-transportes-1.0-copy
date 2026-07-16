@@ -126,6 +126,32 @@ export const AuthProvider = ({ children }) => {
           console.error("Auto-provision TWG falhou", e);
         }
       }
+      // Auto-vincular usuário comum (sem empresa_id) à empresa que criou ou associada por e-mail.
+      // Garante que cadastros de motoristas/veículos/coletas sejam salvos com empresa_id (isolamento SaaS).
+      if (!currentUser?.is_proprietario && em !== "descarbel.sp@gmail.com" && !TWG_EMAILS.includes(em) && !currentUser?.empresa_id) {
+        try {
+          const empresas = await rawBase44.entities.Empresa.list();
+          let minha = empresas.find((e) => (e.email || "").toLowerCase() === em);
+          if (!minha) minha = empresas.find((e) => e.created_by_id === currentUser?.id);
+          if (minha) {
+            patch = { ...(patch || {}), empresa_id: minha.id };
+            // Vincula dados já criados por este usuário (sem empresa) à empresa encontrada.
+            try {
+              const entityNames = Object.keys(rawBase44.entities).filter((n) => n !== "User" && n !== "Empresa");
+              for (const name of entityNames) {
+                try {
+                  await rawBase44.entities[name].updateMany(
+                    { created_by_id: currentUser?.id, empresa_id: null },
+                    { $set: { empresa_id: minha.id } }
+                  );
+                } catch {}
+              }
+            } catch (e) { console.error("Migração de dados do usuário falhou", e); }
+          }
+        } catch (e) {
+          console.error("Auto-vincular empresa ao usuário falhou", e);
+        }
+      }
       if (patch) {
         try {
           const updated = await base44.auth.updateMe(patch);

@@ -17,6 +17,7 @@ import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { resolveEmpresaId } from "@/lib/tenantContext";
 
 export default function MascaraRomaneio() {
     const [motorista, setMotorista] = useState("");
@@ -80,6 +81,17 @@ export default function MascaraRomaneio() {
     });
 
     const config = configs[0] || {};
+
+    const { data: minhaEmpresa = null } = useQuery({
+        queryKey: ["minha-empresa-romaneio"],
+        queryFn: async () => {
+            const eid = await resolveEmpresaId();
+            if (!eid) return null;
+            const empresas = await base44.entities.Empresa.list();
+            return empresas.find((e) => e.id === eid) || null;
+        }
+    });
+    const nomeEmpresa = config.nome_empresa || minhaEmpresa?.nome_fantasia || minhaEmpresa?.razao_social || "EMPRESA";
 
     // Dashboard por placa e filial
     const dashboardPorPlaca = useMemo(() => {
@@ -424,11 +436,11 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                     <div class="page">
                         <div class="header">
                             <div class="logo">
-                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">TWG</div>'}
+                                ${config.logo_url ? `<img src="${config.logo_url}" alt="Logo" style="max-width: 100%; max-height: 80px; object-fit: contain;" />` : '<div class="logo-placeholder">' + (nomeEmpresa.replace(/[^A-Za-z0-9]/g, "").substring(0, 3).toUpperCase() || "EMP") + '</div>'}
                             </div>
                             <div class="company-info">
-                                <p class="company-name">TWG TRANSPORTES</p>
-                                <p class="company-address">${config.endereco || ""} - ${config.cep ? "CEP " + config.cep : ""}</p>
+                                <p class="company-name">${nomeEmpresa}</p>
+                                <p class="company-address">${config.endereco || ""}${config.cep ? " - CEP " + config.cep : ""}</p>
                                 <p class="company-address">${config.telefone ? "Tel: " + config.telefone : ""}</p>
                             </div>
                             <div class="romaneio-info">

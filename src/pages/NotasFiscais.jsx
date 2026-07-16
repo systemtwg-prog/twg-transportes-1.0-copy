@@ -514,11 +514,7 @@ export default function NotasFiscais() {
       return;
     }
 
-    const ultimaImportacao = importacoes[0];
-    if (!ultimaImportacao) {
-      toast.error("Nenhuma importação encontrada");
-      return;
-    }
+    const ultimaImportacao = importacoes[0] || null;
 
     // 1. Atualizar placa das notas selecionadas
     const placaParaAtribuir = veiculoSelecionado && veiculoSelecionado !== "individual" ? veiculoSelecionado : null;
@@ -528,16 +524,19 @@ export default function NotasFiscais() {
       await base44.entities.NotaFiscal.update(nota.id, { placa });
     }
 
-    // 2. Adicionar notas à última importação
-    const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
-    for (const nota of notasSelecionadas) {
-      notasIdsImportacao.add(nota.id);
+    // 2. Adicionar notas à última importação (somente se houver registro de importação)
+    if (ultimaImportacao) {
+      const notasIdsImportacao = new Set(ultimaImportacao.notas_ids || []);
+      for (const nota of notasSelecionadas) {
+        notasIdsImportacao.add(nota.id);
+      }
+      try {
+        await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
+          notas_ids: Array.from(notasIdsImportacao),
+          quantidade_notas: notasIdsImportacao.size
+        });
+      } catch (e) { console.error("Falha ao atualizar importação", e); }
     }
-
-    await base44.entities.RegistroImportacao.update(ultimaImportacao.id, {
-      notas_ids: Array.from(notasIdsImportacao),
-      quantidade_notas: notasIdsImportacao.size
-    });
 
     // Recarregar dados
     await queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });

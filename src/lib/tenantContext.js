@@ -59,7 +59,7 @@ export async function resolveIsProprietario() {
 }
 
 // Entidades isentas do filtro automático (não são dados de tenant).
-const EXEMPT = new Set(["User", "Empresa"]);
+const EXEMPT = new Set(["User", "Empresa", "ListaColeta"]);
 export function isExempt(name) {
     return EXEMPT.has(name);
 }

@@ -1,0 +1,27 @@
+{
+  "name": "ListaColeta",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da lista (ex.: Transportadora, Carro Pr\u00f3prio, Retira)"
+    },
+    "cor": {
+      "type": "string",
+      "description": "Cor de identifica\u00e7\u00e3o da lista (hex)"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se a lista est\u00e1 ativa"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

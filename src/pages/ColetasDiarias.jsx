@@ -8,13 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy, AlertTriangle, Bell, RefreshCw
+    Calendar, Printer, Package, CheckCircle, XCircle, Clock, Search, X, MapPin, ArrowDown, ArrowUp, Share2, FileText, Copy, AlertTriangle, Bell, RefreshCw, ListPlus
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import ImportadorColetas from "@/components/coletas/ImportadorColetas";
+import CadastrarListasDialog from "@/components/coletas/CadastrarListasDialog";
+import AtribuirListaDialog from "@/components/coletas/AtribuirListaDialog";
 import { ptBR } from "date-fns/locale";
 
 export default function ColetasDiarias() {
@@ -25,6 +27,9 @@ export default function ColetasDiarias() {
     const [activeTab, setActiveTab] = useState("pendentes");
     const [criandoOrdem, setCriandoOrdem] = useState(null);
     const [importadorOpen, setImportadorOpen] = useState(false);
+    const [cadastrarListaOpen, setCadastrarListaOpen] = useState(false);
+    const [atribuirColeta, setAtribuirColeta] = useState(null);
+    const [activeLista, setActiveLista] = useState("todas");
     const printRef = useRef();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -45,6 +50,11 @@ export default function ColetasDiarias() {
     });
 
     const config = configs[0] || {};
+
+    const { data: listas = [] } = useQuery({
+        queryKey: ["listas-coleta"],
+        queryFn: () => base44.entities.ListaColeta.list("ordem")
+    });
 
     const { data: avisosAtivos = [] } = useQuery({
         queryKey: ["avisos-ativos-coletas"],
@@ -159,6 +169,12 @@ export default function ColetasDiarias() {
 
     if (motoristaFiltro) {
         coletasFiltradas = coletasFiltradas.filter(c => c.motorista_id === motoristaFiltro);
+    }
+
+    if (activeLista === "sem_lista") {
+        coletasFiltradas = coletasFiltradas.filter(c => !c.lista_id);
+    } else if (activeLista !== "todas") {
+        coletasFiltradas = coletasFiltradas.filter(c => c.lista_id === activeLista);
     }
 
     // Ordenar coletas
@@ -478,6 +494,15 @@ export default function ColetasDiarias() {
                             >
                                 <Copy className="w-3 h-3 text-purple-600" />
                             </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => setAtribuirColeta(coleta)}
+                                title="Atribuir à Lista"
+                            >
+                                <ListPlus className="w-3 h-3 text-amber-600" />
+                            </Button>
                             {isDesktop && (
                                 <Button
                                     variant="ghost"
@@ -534,6 +559,14 @@ export default function ColetasDiarias() {
                         >
                             <FileText className="w-4 h-4 mr-2" />
                             Importar
+                        </Button>
+                        <Button 
+                            onClick={() => setCadastrarListaOpen(true)}
+                            variant="outline" 
+                            className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                        >
+                            <ListPlus className="w-4 h-4 mr-2" />
+                            Cadastrar Lista
                         </Button>
                         <Button 
                             onClick={() => {
@@ -616,6 +649,20 @@ export default function ColetasDiarias() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Abas de Listas */}
+                {listas.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button variant={activeLista === "todas" ? "default" : "outline"} size="sm" onClick={() => setActiveLista("todas")}>Todas</Button>
+                        {listas.map(l => (
+                            <Button key={l.id} variant={activeLista === l.id ? "default" : "outline"} size="sm" onClick={() => setActiveLista(l.id)} className={activeLista === l.id ? "text-white border-transparent" : ""} style={activeLista === l.id ? { background: l.cor || "#0ea5e9" } : {}}>
+                                <span className="w-2 h-2 rounded-full inline-block mr-1.5" style={{ background: l.cor || "#94a3b8" }} />
+                                {l.nome}
+                            </Button>
+                        ))}
+                        <Button variant={activeLista === "sem_lista" ? "default" : "outline"} size="sm" onClick={() => setActiveLista("sem_lista")}>Sem lista</Button>
+                    </div>
+                )}
 
                 {/* Tabs */}
                 <Tabs defaultValue="pendentes" value={activeTab} onValueChange={setActiveTab}>
@@ -780,6 +827,8 @@ export default function ColetasDiarias() {
                 )}
 
                 <ImportadorColetas open={importadorOpen} onClose={() => setImportadorOpen(false)} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })} />
+                <CadastrarListasDialog open={cadastrarListaOpen} onClose={() => setCadastrarListaOpen(false)} />
+                <AtribuirListaDialog coleta={atribuirColeta} onClose={() => setAtribuirColeta(null)} />
             </div>
         </div>
     );

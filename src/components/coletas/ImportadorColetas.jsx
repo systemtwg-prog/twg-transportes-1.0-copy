@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
-import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker();
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const hoje = () => format(new Date(), "yyyy-MM-dd");
 
@@ -72,24 +72,37 @@ const parsearPDF = async (file) => {
         texto += content.items.map((it) => it.str).join(" ") + "\n";
     }
     const t = texto.replace(/\s+/g, " ");
-    const dataMatch = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    // Normaliza quebras de linha relevantes para capturas multiline antes de unificar
+    const dataMatch = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
     const data_coleta = dataMatch ? `${dataMatch[3]}-${dataMatch[2]}-${dataMatch[1]}` : hoje();
+    const firstLineMatch = (text, regexes) => {
+        for (const re of regexes) {
+            const m = text.match(re);
+            if (m && m[1] && String(m[1]).trim()) return String(m[1]).trim();
+        }
+        return "";
+    };
     return {
         numero_nf: firstMatch(t, [
             /N[UÚ]MERO DA NOTA[\s:A-Z]*0*(\d{6,9})/i,
+            /N[UÚ]MERO DA NF-?E[\s:]*0*(\d{6,9})/i,
             /N[UÚ]MERO[\s:]*0*(\d{6,9})/i,
-            /NF-?E[\s:]*0*(\d{6,9})/i
+            /NF-?E[\s:]*0*(\d{6,9})/i,
+            /\b0*(\d{6,9})\b/
         ]),
         remetente_nome: firstMatch(t, [
-            /EMITENTE\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i,
-            /REMETENTE\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+            /EMITENTE[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i,
+            /REMETENTE[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i,
+            /FORNECEDOR[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i
         ]),
         destinatario_nome: firstMatch(t, [
-            /DESTINAT[ÁA]RIO[\/\s]+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+            /DESTINAT[ÁA]RIO[:\s/]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i,
+            /CLIENTE[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i,
+            /CONSIGNAT[ÁA]RIO[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i
         ]),
         transportadora: firstMatch(t, [
-            /TRANSPORTADOR(?:A)?[\/\s]*VOLUMES TRANSPORTADOS?\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i,
-            /TRANSPORTADOR(?:A)?\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9 .,/&\-]{2,55})/i
+            /TRANSPORTADOR(?:A)?[\/\s:]*VOLUMES TRANSPORTADOS?\s+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i,
+            /TRANSPORTADOR(?:A)?[:\s]+([A-Za-zÀ-ú0-9][A-Za-zÀ-ú0-9 .,/&\-'"]{2,60})/i
         ]),
         peso: firstMatch(t, [
             /PESO BRUTO[\s:]*([\d.,]+)/i,
@@ -156,21 +169,23 @@ export default function ImportadorColetas({ open, onClose, onSuccess }) {
                     ignoradas.push(`${file.name} (formato não suportado)`);
                     continue;
                 }
+                const baseNome = file.name.replace(/\.[^.]+$/, "").slice(0, 40);
                 resultados.forEach((r) => {
-                    if (r.remetente_nome && r.destinatario_nome) {
-                        lidas.push({
-                            data_coleta: r.data_coleta || hoje(),
-                            remetente_nome: r.remetente_nome,
-                            destinatario_nome: r.destinatario_nome,
-                            transportadora: r.transportadora || "",
-                            peso: r.peso ? String(r.peso) : "",
-                            volume: r.volume ? String(r.volume) : "",
-                            nfe: r.numero_nf ? String(r.numero_nf) : "",
-                            status: "pendente"
-                        });
-                    } else {
-                        ignoradas.push(`${file.name} (remetente/destinatário não identificados)`);
+                    const temAlgumDado = r.remetente_nome || r.destinatario_nome || r.numero_nf || r.transportadora || r.peso || r.volume;
+                    if (!temAlgumDado) {
+                        ignoradas.push(`${file.name} (nenhum dado identificado)`);
+                        return;
                     }
+                    lidas.push({
+                        data_coleta: r.data_coleta || hoje(),
+                        remetente_nome: r.remetente_nome || `Importado — ${baseNome}`,
+                        destinatario_nome: r.destinatario_nome || `Importado — ${baseNome}`,
+                        transportadora: r.transportadora || "",
+                        peso: r.peso ? String(r.peso) : "",
+                        volume: r.volume ? String(r.volume) : "",
+                        nfe: r.numero_nf ? String(r.numero_nf) : "",
+                        status: "pendente"
+                    });
                 });
             } catch (err) {
                 ignoradas.push(`${file.name} (erro ao ler)`);

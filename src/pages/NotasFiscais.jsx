@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,8 @@ import PrintConfigNFE from "@/components/nfe/PrintConfigNFE";
 import PostImportWizard from "@/components/nfe/PostImportWizard";
 import ImportadorXML from "@/components/nfe/ImportadorXML";
 import GerarSeparacao from "@/components/nfe/GerarSeparacao";
+import ImportadorDocumentosFiscais from "@/components/nfe/ImportadorDocumentosFiscais";
+import AtribuirRemetenteRomaneioDialog from "@/components/nfe/AtribuirRemetenteRomaneioDialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -81,6 +83,10 @@ export default function NotasFiscais() {
   const [showImportadorXML, setShowImportadorXML] = useState(false);
   const [showGerarSeparacao, setShowGerarSeparacao] = useState(false);
   const [modoAtualizar, setModoAtualizar] = useState(false);
+  const [showImportadorDocumentos, setShowImportadorDocumentos] = useState(false);
+  const [showAtribuirRemetente, setShowAtribuirRemetente] = useState(false);
+  const [pendingPrintConfig, setPendingPrintConfig] = useState(null);
+  const remetentesIndividuaisRef = useRef({});
 
   const queryClient = useQueryClient();
 
@@ -503,6 +509,17 @@ export default function NotasFiscais() {
     await handlePrintRomaneio(printConfig);
   };
 
+  // Confirma a atribuição individual de remetente (uma empresa por nota) e prossegue com a impressão
+  const onConfirmAtribuirRemetente = async (remetentesPorNota) => {
+    for (const [id, nome] of Object.entries(remetentesPorNota)) {
+      try { await base44.entities.NotaFiscal.update(id, { remetente: nome }); } catch (e) { console.error(e); }
+    }
+    queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+    setShowAtribuirRemetente(false);
+    remetentesIndividuaisRef.current = remetentesPorNota;
+    await handlePrintRomaneio(pendingPrintConfig);
+  };
+
   // Imprimir romaneio
   const handlePrintRomaneio = async (printConfig = null) => {
     const notasSelecionadas = selecionados.
@@ -511,6 +528,13 @@ export default function NotasFiscais() {
 
     if (notasSelecionadas.length === 0) {
       toast.error("Selecione ao menos uma nota");
+      return;
+    }
+
+    // Modo "individual": perguntar qual empresa (remetente) atribuir a cada nota do romaneio
+    if (!remetenteSelecionado && Object.keys(remetentesIndividuaisRef.current).length === 0) {
+      setPendingPrintConfig(printConfig);
+      setShowAtribuirRemetente(true);
       return;
     }
 
@@ -735,7 +759,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
             rowsHtml += '<td class="volume">&nbsp;</td>';
             rowsHtml += '</tr>';
           } else {
-            const remetente = remetenteSelecionado || nota.remetente || "";
+            const remetente = remetentesIndividuaisRef.current[nota.id] || remetenteSelecionado || nota.remetente || "";
             const destinatario = nota.destinatario || "";
             const numeroNf = nota.numero_nf || "";
             const transportadora = nota.transportadora || "";
@@ -961,6 +985,7 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
       });
     });
 
+    remetentesIndividuaisRef.current = {};
     toast.success("Romaneio impresso e registrado!");
   };
 
@@ -1072,6 +1097,10 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
                         <Button onClick={() => setShowImportador(true)} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 h-12 px-5 text-base font-semibold shadow-lg">
                             <Upload className="w-5 h-5 mr-2" />
                             IMPORTAR
+                        </Button>
+                        <Button onClick={() => setShowImportadorDocumentos(true)} className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 h-12 px-5 text-base font-semibold shadow-lg">
+                            <FileText className="w-5 h-5 mr-2" />
+                            IMPORTAR DOCUMENTOS FISCAIS
                         </Button>
                         <Button onClick={() => setShowImportadorXML(true)} className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 h-12 px-5 text-base font-semibold shadow-lg">
                             <FileCode className="w-5 h-5 mr-2" />
@@ -2103,6 +2132,23 @@ Retorne apenas a lista de IDs na ordem ideal de entrega.`,
               open={showGerarSeparacao}
               onClose={() => setShowGerarSeparacao(false)}
               notasDigitadas={notasDigitadas}
+            />
+
+            <ImportadorDocumentosFiscais
+              open={showImportadorDocumentos}
+              onClose={() => setShowImportadorDocumentos(false)}
+              onImportSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+                queryClient.invalidateQueries({ queryKey: ["registros-importacao"] });
+              }}
+            />
+
+            <AtribuirRemetenteRomaneioDialog
+              open={showAtribuirRemetente}
+              notas={selecionados.map((id) => notas.find((n) => n.id === id)).filter(Boolean)}
+              empresas={empresasRemetentes}
+              onConfirm={onConfirmAtribuirRemetente}
+              onCancel={() => setShowAtribuirRemetente(false)}
             />
         </div>);
 

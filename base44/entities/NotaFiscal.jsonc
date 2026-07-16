@@ -14,6 +14,10 @@
       "type": "string",
       "description": "Nome do destinat\u00e1rio"
     },
+    "endereco_entrega": {
+      "type": "string",
+      "description": "Endere\u00e7o de entrega (logradouro, n\u00famero, bairro, cidade/UF)"
+    },
     "peso": {
       "type": "string",
       "description": "Peso da carga"

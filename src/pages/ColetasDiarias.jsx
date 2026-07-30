@@ -56,6 +56,12 @@ export default function ColetasDiarias() {
         queryFn: () => base44.entities.ListaColeta.list("ordem")
     });
 
+    const { data: clientes = [] } = useQuery({
+        queryKey: ["clientes-coleta"],
+        queryFn: () => base44.entities.Cliente.list()
+    });
+    const destinatariosMap = React.useMemo(() => Object.fromEntries(clientes.map(c => [c.id, c])), [clientes]);
+
     const { data: avisosAtivos = [] } = useQuery({
         queryKey: ["avisos-ativos-coletas"],
         queryFn: async () => {
@@ -71,6 +77,11 @@ export default function ColetasDiarias() {
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, status }) => base44.entities.ColetaDiaria.update(id, { status }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
+    });
+
+    const updateModoMutation = useMutation({
+        mutationFn: ({ id, modo }) => base44.entities.ColetaDiaria.update(id, { modo }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coletas-diarias"] })
     });
 
@@ -198,19 +209,41 @@ export default function ColetasDiarias() {
         coletasFiltradas.filter(c => c.status === "pendente" || !c.status)
     );
     const coletasRealizadas = ordenarColetas(
-        coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado")
+        coletasFiltradas.filter(c => c.status === "realizado" || c.status === "cancelado" || c.status === "entregue")
     );
 
     const statusColors = {
         pendente: "bg-amber-100 text-amber-700",
         realizado: "bg-emerald-100 text-emerald-700",
+        entregue: "bg-blue-100 text-blue-700",
         cancelado: "bg-red-100 text-red-700"
     };
 
     const statusLabels = {
         pendente: "Pendente",
         realizado: "Realizado",
+        entregue: "Entregue",
         cancelado: "Cancelado"
+    };
+
+    // Resolve qual endereço exibir conforme o modo da coleta:
+    // entrega -> dados do destinatário (do cadastro de Clientes); coleta -> dados do remetente
+    const resolverEndereco = (coleta) => {
+        if (coleta.modo === "entrega") {
+            const dest = destinatariosMap[coleta.destinatario_id] || {};
+            return {
+                endereco: [dest.endereco, dest.bairro, dest.cidade, dest.cep].filter(Boolean).join(" - "),
+                telefone: dest.telefone || "",
+                horario: dest.horario_funcionamento_inicio ? `${dest.horario_funcionamento_inicio}${dest.horario_funcionamento_fim ? " às " + dest.horario_funcionamento_fim : ""}` : "",
+                intervalo: dest.horario_almoco_inicio ? `${dest.horario_almoco_inicio}${dest.horario_almoco_fim ? " às " + dest.horario_almoco_fim : ""}` : ""
+            };
+        }
+        return {
+            endereco: [coleta.remetente_endereco, coleta.remetente_bairro, coleta.remetente_cidade, coleta.remetente_cep].filter(Boolean).join(" - "),
+            telefone: coleta.remetente_telefone || "",
+            horario: coleta.remetente_horario || "",
+            intervalo: coleta.remetente_intervalo || ""
+        };
     };
 
     const formatDate = (dateStr) => {
@@ -288,14 +321,14 @@ export default function ColetasDiarias() {
                         </thead>
                         <tbody>
                             ${coletasParaImprimir.map((c, idx) => {
-                                const enderecoCompleto = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade, c.remetente_cep].filter(Boolean).join(" - ");
+                                const info = resolverEndereco(c);
                                 const dataCadastro = c.created_date ? format(new Date(c.created_date), "dd/MM", { locale: ptBR }) : "";
                                 return `
                                     <tr class="${c.prioridade ? 'priority' : ''}">
                                         <td class="num">${idx + 1}<br><span style="font-size:9px;color:#64748b;">${dataCadastro}</span></td>
                                         <td>
                                             <strong>${c.remetente_fantasia || c.remetente_nome || ""} / ${c.destinatario_fantasia || c.destinatario_nome || ""}</strong>${c.prioridade ? ' ⚡' : ''}<br>
-                                            ${enderecoCompleto ? `📍 ${enderecoCompleto}<br>` : ""}${c.remetente_telefone ? `📞 ${c.remetente_telefone}` : ""} ${c.remetente_horario ? `| ⏰ ${c.remetente_horario}` : ""} ${c.remetente_intervalo ? `| Intervalo: ${c.remetente_intervalo}` : ""}
+                                            ${info.endereco ? `📍 ${info.endereco}<br>` : ""}${info.telefone ? `📞 ${info.telefone}` : ""} ${info.horario ? `| ⏰ ${info.horario}` : ""} ${info.intervalo ? `| Intervalo: ${info.intervalo}` : ""}
                                             ${c.recado ? `<br>📝 ${c.recado}` : ""}
                                         </td>
                                         <td class="carga">${c.volume || "-"} / ${c.peso || "-"}<br>NF: ${c.nfe || "-"}</td>
@@ -349,11 +382,12 @@ export default function ColetasDiarias() {
         texto += `📦 ${coletasParaCompartilhar.length} coleta(s) ${activeTab === "pendentes" ? "pendentes" : "realizadas"}\n\n`;
         
         coletasParaCompartilhar.forEach((c, idx) => {
-            const endereco = [c.remetente_endereco, c.remetente_bairro, c.remetente_cidade].filter(Boolean).join(" - ");
+            const info = resolverEndereco(c);
+            const endereco = info.endereco;
             texto += `*${idx + 1}.* ${c.remetente_fantasia || c.remetente_nome} / ${c.destinatario_fantasia || c.destinatario_nome}${c.prioridade ? ' ⚡' : ''}\n`;
             if (endereco) texto += `📍 ${endereco}\n`;
-            if (c.remetente_telefone) texto += `📞 ${c.remetente_telefone}`;
-            if (c.remetente_horario) texto += ` - ⏰ ${c.remetente_horario}`;
+            if (info.telefone) texto += `📞 ${info.telefone}`;
+            if (info.horario) texto += ` - ⏰ ${info.horario}`;
             texto += `\n`;
             if (c.volume || c.peso) texto += `📦 ${c.volume || "-"} / ${c.peso || "-"}`;
             if (c.nfe) texto += ` | NF: ${c.nfe}`;
@@ -374,11 +408,7 @@ export default function ColetasDiarias() {
     }, []);
 
     const renderColetaRow = (coleta, index) => {
-        const endereco = [
-            coleta.remetente_endereco,
-            coleta.remetente_bairro,
-            coleta.remetente_cidade
-        ].filter(Boolean).join(" - ");
+        const { endereco, telefone, horario, intervalo } = resolverEndereco(coleta);
 
         return (
             <tr key={coleta.id} className={`border-b-4 border-slate-400 hover:bg-sky-50/50 ${coleta.prioridade ? "bg-yellow-50" : ""}`}>
@@ -414,8 +444,8 @@ export default function ColetasDiarias() {
                                 {endereco}
                             </a>
                         )}
-                        <p>{coleta.remetente_telefone || "-"}</p>
-                        <p>HORARIO: {coleta.remetente_horario || "-"}{coleta.remetente_intervalo ? ` - INTERVALO ${coleta.remetente_intervalo}` : ""}</p>
+                        <p>{telefone || "-"}</p>
+                        <p>HORARIO: {horario || "-"}{intervalo ? ` - INTERVALO ${intervalo}` : ""}</p>
                         {coleta.recado && (
                             <p className="text-sky-600"><strong>RECADO:</strong> {coleta.recado}</p>
                         )}
@@ -446,9 +476,24 @@ export default function ColetasDiarias() {
                                               <SelectItem value="realizado">
                                                   <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Realizado</span>
                                               </SelectItem>
+                                              <SelectItem value="entregue">
+                                                  <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Entregue</span>
+                                              </SelectItem>
                                               <SelectItem value="cancelado">
                                                   <span className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Cancelado</span>
                                               </SelectItem>
+                                          </SelectContent>
+                                      </Select>
+                                      <Select
+                                          value={coleta.modo || "coleta"}
+                                          onValueChange={(v) => updateModoMutation.mutate({ id: coleta.id, modo: v })}
+                                      >
+                                          <SelectTrigger className="w-28 h-7 text-xs">
+                                              <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                              <SelectItem value="coleta">Coleta</SelectItem>
+                                              <SelectItem value="entrega">Entrega</SelectItem>
                                           </SelectContent>
                                       </Select>
                         <div className="flex gap-1">

@@ -11,6 +11,15 @@
       "format": "date",
       "description": "Data da coleta"
     },
+    "modo": {
+      "type": "string",
+      "enum": [
+        "coleta",
+        "entrega"
+      ],
+      "default": "coleta",
+      "description": "Modo da opera\u00e7\u00e3o: coleta (usar endere\u00e7o do remetente) ou entrega (usar endere\u00e7o do destinat\u00e1rio)"
+    },
     "remetente_id": {
       "type": "string",
       "description": "ID do cliente remetente"
@@ -65,7 +74,7 @@
     },
     "transportadora": {
       "type": "string",
-      "description": "Nome da transportadora extra\uedda do documento"
+      "description": "Nome da transportadora extra\u00edda do documento"
     },
     "motorista_id": {
       "type": "string",
@@ -96,6 +105,7 @@
       "enum": [
         "pendente",
         "realizado",
+        "entregue",
         "cancelado"
       ],
       "default": "pendente",
